@@ -75,6 +75,29 @@ test('Fornecedor HTTP uses canonical persistence/replay/reversal in synthetic PG
       assert.equal(await count(), 1);
       assert.equal((await f.admin.query<{ n: number }>("SELECT count(*)::int AS n FROM audit_logs WHERE entity='Fornecedor'")).rows[0].n, 3);
     });
+    await t.test('HTTP replay denies create permission revoked during audit and rolls back', async () => {
+      const before = {
+        supplier: (await f.admin.query('SELECT * FROM fornecedores ORDER BY id')).rows,
+        profile: (await f.admin.query('SELECT * FROM profiles ORDER BY id')).rows,
+        audit: (await f.admin.query('SELECT * FROM audit_logs ORDER BY id')).rows,
+      };
+      // Fixture-owner revocation only. No real Auth session or operational privilege change.
+      await f.exec(`CREATE FUNCTION supplier_http_revoke_create() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER
+        SET search_path=pg_catalog,public AS $$ BEGIN
+        UPDATE public.profiles SET permissoes=jsonb_set(permissoes,'{Cadastros,fornecedor}',
+          (permissoes #> '{Cadastros,fornecedor}') - 'criar') WHERE id=NEW.actor_id;
+        RETURN NEW; END $$;
+        CREATE TRIGGER supplier_http_revoke_create AFTER INSERT ON audit_logs FOR EACH ROW
+        WHEN (NEW.entity='Fornecedor' AND NEW.action='possible_duplicate') EXECUTE FUNCTION supplier_http_revoke_create()`);
+      try {
+        const denied = await request('/importar','POST',payload);
+        assert.equal(denied.status,403); assert.equal(denied.headers.get('cache-control'),'no-store');
+        const body = await denied.text(); assert.equal(body.includes(payload.razao_social),false);
+        assert.deepEqual((await f.admin.query('SELECT * FROM fornecedores ORDER BY id')).rows,before.supplier);
+        assert.deepEqual((await f.admin.query('SELECT * FROM profiles ORDER BY id')).rows,before.profile);
+        assert.deepEqual((await f.admin.query('SELECT * FROM audit_logs ORDER BY id')).rows,before.audit);
+      } finally { await f.exec('DROP TRIGGER supplier_http_revoke_create ON audit_logs; DROP FUNCTION supplier_http_revoke_create()'); }
+    });
     await t.test('invalid identity, extra fields and divergent replay never mutate', async () => {
       assert.equal((await request('/not-a-uuid')).status, 422);
       assert.equal((await request('/' + randomUUID())).status, 404);

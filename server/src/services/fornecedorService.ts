@@ -49,7 +49,7 @@ export class FornecedorService {
         await this.audit.append({ groupId: ctx.groupId, empresaId: null, actorId: ctx.actorId,
           entity: 'Fornecedor', entityId: known.id, action: 'possible_duplicate',
           afterData: { ...snapshot(known), identicalReplay: true }, requestId: ctx.requestId }, q);
-        await this.authorize(ctx, 'importar', q);
+        await this.authorize(ctx, 'importar', q); await this.authorize(ctx, 'criar', q);
         return { registro: known, reutilizado: true };
       }
       if (await this.repo.conflict(ctx.groupId, data, q)) {

@@ -116,3 +116,48 @@ test('Fornecedor master: PostgreSQL engine synthetic fixture, not operational pr
     }
   } finally { await f.close(); }
 });
+
+
+test('Fornecedor identical replay must revalidate both permissions after SQL revocation', async () => {
+  const f = await localCrmFixture();
+  try {
+    await f.exec(await readFile(new URL('../schema-candidates/fornecedor_master.sql', import.meta.url), 'utf8'));
+    await f.exec(`GRANT SELECT,INSERT,UPDATE ON fornecedores TO ${ROLE};
+      CREATE POLICY supplier_replay_fixture ON fornecedores FOR ALL TO ${ROLE}
+      USING(group_id=NULLIF(current_setting('app.group_id',true),'')::uuid)
+      WITH CHECK(group_id=NULLIF(current_setting('app.group_id',true),'')::uuid);
+      CREATE POLICY supplier_replay_audit ON audit_logs FOR INSERT TO ${ROLE}
+      WITH CHECK(group_id=NULLIF(current_setting('app.group_id',true),'')::uuid AND empresa_id IS NULL);
+      SELECT set_config('app.group_id','${ID.groupA}',false),set_config('app.empresa_id','',false)`);
+    await f.admin.query('UPDATE profiles SET permissoes=$1::jsonb WHERE id=$2',
+      [JSON.stringify({ Cadastros: { fornecedor: ['visualizar','importar','criar','inativar'] } }), ID.runtimeActorA]);
+    const service = new FornecedorService(new PostgresFornecedorRepository(f.data), new PostgresAuditRepository(f.data), new PostgresRbacGuard(f.data));
+    const ctx = { groupId: ID.groupA, empresaId: null, actorId: ID.runtimeActorA, requestId: randomUUID() };
+    const payload = { tipo_pessoa: 'Pessoa Juridica', cpf_cnpj: SEED_DOCS.clientePjA,
+      razao_social: 'SYNTHETIC REPLAY REVOCATION', codigo: '000079', status: 'Ativo', status_fornecedor: 'Ativo',
+      codigo_legado: '79', legacy_id: '79', source_system: 'SYNTHETIC', migration_batch: randomUUID() };
+    const created = await service.importar(ctx, payload);
+    // Only the fixture owner may revoke; the service stays NOSUPERUSER/NOBYPASSRLS.
+    await f.exec(`CREATE FUNCTION supplier_replay_revoke() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER
+      SET search_path=pg_catalog,public AS $$ BEGIN
+      UPDATE public.profiles SET permissoes=jsonb_set(permissoes,'{Cadastros,fornecedor}',
+        (permissoes #> '{Cadastros,fornecedor}') - TG_ARGV[0]) WHERE id=NEW.actor_id;
+      RETURN NEW; END $$`);
+    const snapshot = async () => ({
+      suppliers: (await f.admin.query('SELECT * FROM fornecedores ORDER BY id')).rows,
+      profiles: (await f.admin.query('SELECT * FROM profiles ORDER BY id')).rows,
+      audit: (await f.admin.query('SELECT * FROM audit_logs ORDER BY id')).rows,
+      codes: (await f.admin.query('SELECT * FROM entity_code_sequences ORDER BY group_id,entity_name')).rows,
+    });
+    for (const action of ['criar','importar']) {
+      await f.exec(`CREATE TRIGGER supplier_replay_revoke AFTER INSERT ON audit_logs FOR EACH ROW
+        WHEN (NEW.entity='Fornecedor' AND NEW.action='possible_duplicate') EXECUTE FUNCTION supplier_replay_revoke('${action}')`);
+      const before = await snapshot();
+      await assert.rejects(service.importar(ctx, payload), { code: 'PERMISSION_DENIED', statusCode: 403 });
+      assert.deepEqual(await snapshot(), before, 'revocation, audit, supplier and sequence changes must roll back');
+      await f.exec('DROP TRIGGER supplier_replay_revoke ON audit_logs');
+    }
+    const replay = await service.importar(ctx, payload);
+    assert.equal(replay.reutilizado, true); assert.deepEqual(replay.registro, created.registro);
+  } finally { await f.close(); }
+});

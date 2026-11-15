@@ -1,3 +1,44 @@
+## Fila Casa independente do backup Empresa: Fornecedor replay (2026-11-15)
+
+Decisao EXPRESSA vigente: continuar pacotes independentes emCasa; backup/copia
+externa ficam SOMENTE naEmpresa. A escolha2 NAO pausa todafila de codigo/testes.
+Nao criar pasta/ACL/copiarbackupCasa. Mesmaautomacao reativada com tarefa real,
+executorCasa/branchcodex/casa-fechamento-hml-20261114,basea8455476/CI7189 limpa/
+remotaigual/semwriter;reserva594/6898998466/trava propria. Nao depende deVPS/backup.
+
+Pacote FUNCIONAL:Fornecedor.importar replayidentico exigeimportar+criar antes,
+mas antesdo fix só importar era revalidado DEPOISdo audit. Contraprova SQL em
+PGliteSINTETICO revogoucriar no trigger de audit e replayfoiaceito indevidamente
+(Missing expected rejection). ServicoCANONICO agora revalidatambemcriar antes
+retornar replay; nao outroservico/importador/rota/modulo. HTTP JAEXISTIA neste
+HEAD;trechoantigoprograma corrigido,naoreimplementado. FlagOFFdefault preservada.
+
+19focaisPASS0FAIL0SKIP:revogacaoSQLcriar eimportar,rollbackexato deperfil/audit/
+fornecedor/sequence,retrypositivoidentico. PercursoHTTPrealapp/router/service/PG
+enginePGlite comtransporteAuthSINTETICO nega403/no-store/semdadosdocadastro e
+reverteauditoria/perfil;positivos/criar1/replay/reversao/conflitos/isolamento/
+flagOFF/DEVnegado/contextomutavelpreservados. Triggerdefiner SOFIXTUREsimula
+administradormudandopermissao;servico continuaNOSUPER/NOBYPASS. NAOAuthreal/PG
+fisico/navegador/HML ougrantoperacional. Scriptantes falhou por cwd de edicao;
+17testsoriginaisPASSnaoeramcontraprova. Contraprova NOVAconfirmou falhaantesfix.
+
+Checksfechamento eCIporSHA registrados594;globalWindowsPOSIX/process.getuid/
+GitBash conhecido naoreruncego/nãorelaxado,fechamentocompletoCILinuxpropria.
+Nenhumprovider/flag/grant/migration/VPS/SQLreal/carga/backup/deployalterado.
+Codigo existente e dados/IDs/codigos/historicos/reversaoCAS preservados.
+
+FILA FINITA EM CASA:
+| Item | Responsavel/estado | Dependencia/arquivos | Aceite/proxima acao |
+|---|---|---|---|
+| Fornecedor replay duplapermissao | CodexCasa,implementado/fechandoCI | fornecedorService;fornecedor-import/http testes atuais | Contraprova antes/depois,19focais,CIterminalSHA/revisao solicitada;liberarreserva |
+| Fornecedor HTTP PostgreSQL isolado | Codexativo,READYaposcheckpoint | db-tenant-context-postgres.test.ts EXISTENTE/runnerTENANT_CONTEXT;reservaranteseditar | SuitePGatual provaFornecedor peloSERVICOmanual,naopeloHTTP;appsyntheticflag/rotas+LOGINrestrito+revogacaoSQLcriar/rollbacksemampliargrants. Reusarfixture/caminhocanonico;naocriarnovoschemaoperacional/suiteparalela;CIobrigatoria0skip |
+| Offsite backup | Empresa,separado | canal/destinoprivadoEmpresa/manifest/SHA/ack | Nao bloqueia dois itensCasa,naopresumiracesso entrePCs/nenhuma copiaCasa |
+
+Ao concluir item passar ao proximo liberado e atualizarcheckpoint;nao encerrar
+filaCasa porque backup/revisaoHMLaguarda. ACTIVE15min dependeexecutor/app/rede/
+creditos;umwriter/lock/reservas,naoexecucaopermanente. PublicacaoHML/producao e
+importacaoreal mantemgates específicos;revisaosolicitada/CI!=aprovacao.
+
 ## Preparacao executavel offline do overlay, sem DDL (2026-11-15)
 
 Retomada nativa17:12:04Z Casa,9eca84cf/CI7186 local=remoto/limpo/semwriter;

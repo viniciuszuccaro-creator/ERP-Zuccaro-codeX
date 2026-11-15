@@ -47,9 +47,12 @@ ausente. Referencias antigas de ondas abaixo permanecem programa, nao autorizaca
   `fornecedorImportSchema` e `server/schema-candidates/fornecedor_master.sql`.
   Servico exige Grupo e permissoes explicitas importar+criar, locks por identidade/
   codigo/documento, replay identico e reversao CAS por lote/revisao/fingerprint.
-  Nao esta conectado por rota HTTP no router/app inspecionados; nao anunciar tela
-  persistente homologada. Namespace HML atual precisa envelope proprio e RBAC
-  fornecedor antes de carga; nenhum DDL/grant executado nesta rodada.
+  Atualizado15/11: router/app JA montam fornecedorRoutes GETpontual/importar/reverter,
+  sob ENABLE_FORNECEDOR_HTTP OFFdefault+sessao verificada. Nao usar contrato reduzido
+  de importacao como savegenerico daUI; nao anunciar tela/HMLhomologada. Replay
+  exige importar+criar revalidados apos audit; revogacao SQL/rollback testados em
+  fixtures. Proxima prova: HTTP no PostgreSQLrestrito EXISTENTE, separado do PGlite.
+  Namespace HML precisa envelope/RBAC proprio antescarga;nenhumDDL/grantoperacional.
 - Produto: reutilizar `pilot-functional-products.mjs`, mapeadores/pins e aprovacao
   privada existentes. Executor historico cria contexto sintetico: NAO executa-lo
   cegamente ou reapontar seus pointers para a HML CPA. Conferir o lote e os IDs
