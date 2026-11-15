@@ -1,3 +1,15 @@
+## Orcamentos016: dependencia de produto provada e plano HML concreto (15/11/2026)
+
+Pais009/014/015 originais,17+18colunas,tenant/vinculosativos/numericos/numero/
+cancelado/zero/snapshots/ID/inativo/timestamp,3controles e rollback em memoria.
+SETCONSTRAINTSIMMEDIATE dispara100percent DEFERRED antesrollback;46focais
+PASS0skip/18goldens/lintdirecionado/diffcheck,audit/CIporSHA594 no fechamento.
+Schema/app/RBAC/HMLreal NAO atestados.5reviews/225objetos/101clausulas/SQLguardado
+preservados,canApplyfalse;runtime/pacotee920 intocados.0dadosreaisprocessados.
+HANDOFF consolida10pendencias HML com evidencia/falta/acao/responsavel/decisao,
+sem outro manual. Proximo017+pais011/012/013,depois041callbacks/overlayrestaurado.
+Mesmoheartbeat ACTIVE15min;este lote manual nao e nova provaautomatica.
+
 ## Produto por Empresa041: fonte e policy sintetica provadas (15/11/2026)
 
 041relacao11colunas/defaults inativos/version/FKscompostas/unique/perfis/RLS

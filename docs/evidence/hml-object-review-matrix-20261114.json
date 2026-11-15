@@ -3347,6 +3347,96 @@
         "syntheticWithCheckEvaluated": true,
         "invalidContextRejectedCode": "22P02"
       }
+    },
+    "orcamentos": {
+      "reviewHead": "70a621c3616b4443968f5cb9d4adf2ea6de86b13",
+      "status": "SOURCE_016_ROWS_AND_DEFERRED_PARENTS_REHEARSAL_TARGET_PENDING",
+      "sourcePins": [
+        {
+          "path": "server/migrations/001_foundation.sql",
+          "sha256": "857c9e37c237a42e1bda425903e5ccbb7bac4d762829d48e1738ea2913d95d5f",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/migrations/003_marcas_pilot.sql",
+          "sha256": "886715dead23f37a752be8f9973b942d968c8ab15feecb42a45eda07d4b5d43c",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/migrations/004_tenant_integrity.sql",
+          "sha256": "c64cb2cf172a591264834a126a2d0afd15e963d98d4a95ecc8ebabb60aca1c04",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/migrations/005_cadastros_simples.sql",
+          "sha256": "e754793c4ce65f99e06a7216c365812c20f50af96fd6d54adf6f002e76f02c20",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/migrations/006_produtos_base.sql",
+          "sha256": "0111511d0d6354222f48e29f7596cd137f851a9208e79baad36911bd344f9a58",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/migrations/009_clientes_master_data.sql",
+          "sha256": "24406cc992094edab8ffeb1150ead7fb61581a247ec547b47e3ee4c6e0417842",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/migrations/014_condicoes_pagamento.sql",
+          "sha256": "e650cf385f7dff36d96f82a1aeaa95cfac1a2e6526ccc766e6325d375c4cb6a6",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/migrations/015_condicoes_pagamento_hardening.sql",
+          "sha256": "1bc4954860c84e3fbffb02e89e18382347b588cf0b8d706b3d1e527718eaadb6",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/migrations/016_orcamentos_comercial_360.sql",
+          "sha256": "15c3f127a9b8a46309dae6690c664710e91e34caa27582da9b66533e632802e4",
+          "encoding": "raw Git blob UTF-8 LF"
+        }
+      ],
+      "test": "tests/hml-vps-bootstrap.test.js: orcamentos016 canonical source memory rehearsal",
+      "restoredHmlAttested": false,
+      "canApply": false,
+      "existingProposalSqlChanged": false,
+      "existingObjectsReclassifiedAsApplied": false,
+      "rowBackfillExecuted": false,
+      "remainingGates": [
+        "016 is original baseline only;039 price table and later changes not exercised here",
+        "017 canonical011/012/013 parents and041 replacement callbacks remain pending",
+        "Target custom controls/owners/security/search_path/policies and real principal/RBAC not attested",
+        "Fresh backup/isolated restore/external ack/reversal/review/window/specific DDL/deploy authorization"
+      ],
+      "validation": {
+        "engine": "PGlite synthetic memory only",
+        "headerColumns": 17,
+        "itemColumns": 18,
+        "canonicalParentSources": [
+          "001",
+          "003",
+          "004",
+          "005",
+          "006",
+          "009",
+          "014",
+          "015"
+        ],
+        "deferred100PercentExplicitlyFlushed": true,
+        "negativeControls": 3,
+        "realRbacOrRestoredHmlProven": false,
+        "fullCommercialJourneyProven": false,
+        "focusedPass": 46,
+        "focusedFail": 0,
+        "focusedSkip": 0,
+        "cancelledNumberNotReused": true,
+        "zeroPriceAllowedByOriginal016": true,
+        "activeConditionRequires100Percent": true,
+        "headerAndItemTenantControls": true,
+        "snapshotsAndProductInactivePreserved": true
+      }
     }
   }
 }

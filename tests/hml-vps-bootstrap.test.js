@@ -313,6 +313,94 @@ test('produto_empresas: fonte041 inativa, FKs compostas e policy em memoria com 
   } finally { await db.close(); }
 });
 
+
+test('orcamentos016: pais canonicos, linhas, vinculos e checks deferred antes do rollback', async t => {
+  const { matrix, review, sources } = await loadCanonicalRehearsalSources('orcamentos');
+  assert.equal(matrix.canApply, false); assert.equal(review.restoredHmlAttested, false);
+  const { PGlite } = createRequire(new URL('../server/package.json', import.meta.url))('@electric-sql/pglite');
+  const db = new PGlite(), f = sources['001_foundation.sql'];
+  const timestamp = f.match(/CREATE OR REPLACE FUNCTION set_updated_at\(\)[\s\S]*?\$\$ LANGUAGE plpgsql;/)?.[0];
+  const tenant = sources['004_tenant_integrity.sql'].match(/CREATE OR REPLACE FUNCTION assert_empresa_belongs_to_group\(\)[\s\S]*?\$\$ LANGUAGE plpgsql;/)?.[0];
+  assert.ok(timestamp && tenant);
+  const g1='11111111-1111-4111-8111-111111111111',g2='22222222-2222-4222-8222-222222222222';
+  const e1='33333333-3333-4333-8333-333333333333',e2='44444444-4444-4444-8444-444444444444';
+  const rejected = async (sql,values,code) => {
+    await db.exec('SAVEPOINT rejected_quote'); await assert.rejects(db.query(sql,values),err=>err.code===code);
+    await db.exec('ROLLBACK TO SAVEPOINT rejected_quote; RELEASE SAVEPOINT rejected_quote');
+  };
+  try {
+    await db.exec("CREATE TABLE public.keep_quote_review(id integer PRIMARY KEY,label text); INSERT INTO public.keep_quote_review VALUES(1,'SYNTHETIC_KEEP'); CREATE INDEX keep_quote_label ON public.keep_quote_review(label)");
+    const before=(await db.query('SELECT * FROM public.keep_quote_review')).rows;
+    await db.exec(`BEGIN; CREATE SCHEMA quote_review_synthetic; SET LOCAL search_path TO quote_review_synthetic,pg_catalog;
+      ${timestamp}\n${tenant}\n${['groups','empresas','profiles'].map(n=>canonicalTable(f,n)).join('\n')}`);
+    for(const name of ['003_marcas_pilot.sql','005_cadastros_simples.sql','006_produtos_base.sql','009_clientes_master_data.sql','014_condicoes_pagamento.sql','015_condicoes_pagamento_hardening.sql','016_orcamentos_comercial_360.sql']) await db.exec(sources[name]);
+    await db.query("INSERT INTO groups(id,nome_do_grupo) VALUES($1,'SYNTHETIC A'),($2,'SYNTHETIC B')",[g1,g2]);
+    await db.query("INSERT INTO empresas(id,group_id,razao_social) VALUES($1,$2,'SYNTHETIC A'),($3,$4,'SYNTHETIC B')",[e1,g1,e2,g2]);
+    const fixtureRows=[];
+    for(const [group,company] of [[g1,e1],[g2,e2]]) {
+      const client=(await db.query("INSERT INTO clientes(group_id,codigo,tipo,nome) VALUES($1,'000001','Pessoa Jurídica','SYNTHETIC CLIENT') RETURNING id",[group])).rows[0].id;
+      const link=(await db.query('INSERT INTO cliente_empresas(group_id,cliente_id,empresa_id) VALUES($1,$2,$3) RETURNING id',[group,client,company])).rows[0].id;
+      const condition=(await db.query("INSERT INTO condicoes_pagamento(group_id,empresa_id,codigo,nome) VALUES($1,$2,'000001','SYNTHETIC TERMS') RETURNING id",[group,company])).rows[0].id;
+      await db.query('INSERT INTO condicao_pagamento_empresas(group_id,empresa_id,condicao_pagamento_id) VALUES($1,$2,$3)',[group,company,condition]);
+      await db.query('INSERT INTO condicao_pagamento_parcelas(group_id,condicao_pagamento_id,ordem,dias,percentual) VALUES($1,$2,1,0,100)',[group,condition]);
+      const unit=(await db.query("INSERT INTO unidades_medida(group_id,sigla,nome_completo) VALUES($1,'UN','SYNTHETIC UNIT') RETURNING id",[group])).rows[0].id;
+      const product=(await db.query("INSERT INTO produtos(group_id,empresa_id,unidade_medida_id,codigo,descricao,ativo) VALUES($1,$2,$3,'SOURCE-CODE','SYNTHETIC PRODUCT',false) RETURNING id",[group,company,unit])).rows[0].id;
+      fixtureRows.push({link,condition,unit,product});
+    }
+    await db.exec('SET CONSTRAINTS ALL IMMEDIATE'); // Flush actual015; ROLLBACK alone would never exercise deferred triggers.
+    const a=fixtureRows[0],b=fixtureRows[1];
+    const quote=(await db.query("INSERT INTO orcamentos(group_id,empresa_id,numero,cliente_empresa_id,condicao_pagamento_id,validade_em,subtotal,total) VALUES($1,$2,'00000001',$3,$4,'2030-01-01',20,20) RETURNING *",[g1,e1,a.link,a.condition])).rows[0];
+    const item=(await db.query("INSERT INTO orcamento_itens(group_id,empresa_id,orcamento_id,produto_id,unidade_id,descricao_snapshot,unidade_snapshot,quantidade,preco_unitario,subtotal,total) VALUES($1,$2,$3,$4,$5,'SYNTHETIC SNAPSHOT','UN',2,10,20,20) RETURNING *",[g1,e1,quote.id,a.product,a.unit])).rows[0];
+    assert.equal(Object.keys(quote).length,17); assert.equal(Object.keys(item).length,18); assert.equal(quote.status,'EM_ABERTO');
+    await rejected('UPDATE orcamentos SET empresa_id=$1 WHERE id=$2',[e2,quote.id],'P0001');
+    await rejected('UPDATE orcamentos SET cliente_empresa_id=$1 WHERE id=$2',[b.link,quote.id],'P0001');
+    await rejected('UPDATE orcamentos SET condicao_pagamento_id=$1 WHERE id=$2',[b.condition,quote.id],'P0001');
+    for(const [table,field,id] of [['cliente_empresas','cliente_empresa_id',a.link],['condicao_pagamento_empresas','condicao_pagamento_id',a.condition],['condicoes_pagamento','condicao_pagamento_id',a.condition]]) {
+      await db.exec('SAVEPOINT inactive_quote_dependency');
+      await db.query(`UPDATE ${table} SET ativo=false WHERE ${table==='condicao_pagamento_empresas'?'condicao_pagamento_id':'id'}=$1`,[id]);
+      await rejected(`UPDATE orcamentos SET ${field}=$1 WHERE id=$2`,[id,quote.id],'P0001');
+      await db.exec('ROLLBACK TO SAVEPOINT inactive_quote_dependency; RELEASE SAVEPOINT inactive_quote_dependency');
+    }
+    for(const [sql,values] of [["UPDATE orcamentos SET numero='1' WHERE id=$1",[quote.id]],['UPDATE orcamentos SET desconto=21 WHERE id=$1',[quote.id]],["UPDATE orcamentos SET status='CANCELADO' WHERE id=$1",[quote.id]],['UPDATE orcamento_itens SET quantidade=0 WHERE id=$1',[item.id]],["UPDATE orcamento_itens SET descricao_snapshot='' WHERE id=$1",[item.id]],['UPDATE orcamento_itens SET preco_unitario=-1 WHERE id=$1',[item.id]]]) await rejected(sql,values,'23514');
+    await rejected('UPDATE orcamento_itens SET produto_id=$1 WHERE id=$2',[b.product,item.id],'P0001');
+    await rejected('UPDATE orcamento_itens SET unidade_id=$1 WHERE id=$2',[b.unit,item.id],'P0001');
+    await rejected('UPDATE orcamento_itens SET empresa_id=$1 WHERE id=$2',[e2,item.id],'P0001');
+    await db.exec('SAVEPOINT invalid_deferred_condition; SET CONSTRAINTS ALL DEFERRED');
+    await db.query("INSERT INTO condicoes_pagamento(group_id,empresa_id,codigo,nome) VALUES($1,$2,'000002','SYNTHETIC INVALID WITHOUT PARCELAS')",[g1,e1]);
+    await assert.rejects(db.exec('SET CONSTRAINTS ALL IMMEDIATE'),err=>err.code==='P0001'&&err.message.includes('CONDICAO_PAGAMENTO_INVALID_PARCELAS'));
+    await db.exec('ROLLBACK TO SAVEPOINT invalid_deferred_condition; RELEASE SAVEPOINT invalid_deferred_condition');
+    for(const [table,trigger,sql,values] of [
+      ['orcamentos','trg_orcamentos_tenant','UPDATE orcamentos SET condicao_pagamento_id=$1 WHERE id=$2',[b.condition,quote.id]],
+      ['orcamento_itens','trg_orcamento_itens_tenant','UPDATE orcamento_itens SET produto_id=$1 WHERE id=$2',[b.product,item.id]],
+    ]) {
+      await db.exec(`SAVEPOINT negative_quote_control; ALTER TABLE ${table} DISABLE TRIGGER ${trigger}`);
+      assert.equal((await db.query(`${sql} RETURNING id`,values)).rows.length,1);
+      await db.exec('ROLLBACK TO SAVEPOINT negative_quote_control; RELEASE SAVEPOINT negative_quote_control');
+    }
+    await db.exec('SAVEPOINT negative_deferred_control; ALTER TABLE condicoes_pagamento DISABLE TRIGGER trg_condicoes_pagamento_parcelas_validas');
+    assert.equal((await db.query("INSERT INTO condicoes_pagamento(group_id,empresa_id,codigo,nome) VALUES($1,$2,'000002','SYNTHETIC INVALID CONTROL') RETURNING id",[g1,e1])).rows.length,1);
+    await db.exec('SET CONSTRAINTS ALL IMMEDIATE; ROLLBACK TO SAVEPOINT negative_deferred_control; RELEASE SAVEPOINT negative_deferred_control');
+    await db.query("UPDATE orcamentos SET observacoes='SYNTHETIC NOTE',updated_at='1990-01-01' WHERE id=$1",[quote.id]);
+    const kept=(await db.query('SELECT * FROM orcamentos WHERE id=$1',[quote.id])).rows[0];
+    for(const key of ['id','numero','cliente_empresa_id','condicao_pagamento_id','status','ativo']) assert.equal(kept[key],quote[key]);
+    assert.ok(new Date(kept.updated_at).getUTCFullYear()>2000); assert.deepEqual((await db.query('SELECT * FROM orcamento_itens WHERE id=$1',[item.id])).rows[0],item);
+    assert.equal((await db.query('SELECT ativo FROM produtos WHERE id=$1',[a.product])).rows[0].ativo,false); //016 original allows this; eligibility evolution is041, not a new draft rule.
+    await db.exec('SAVEPOINT positive_quote_cancel');
+    const cancelled=(await db.query("UPDATE orcamentos SET status='CANCELADO',ativo=false WHERE id=$1 RETURNING status,ativo",[quote.id])).rows[0];
+    assert.deepEqual(cancelled,{status:'CANCELADO',ativo:false});
+    await rejected('INSERT INTO orcamentos(group_id,empresa_id,numero,cliente_empresa_id,condicao_pagamento_id,validade_em,subtotal,total) SELECT group_id,empresa_id,numero,cliente_empresa_id,condicao_pagamento_id,validade_em,subtotal,total FROM orcamentos WHERE id=$1',[quote.id],'23505');
+    await db.exec('ROLLBACK TO SAVEPOINT positive_quote_cancel; RELEASE SAVEPOINT positive_quote_cancel; SAVEPOINT positive_zero_price');
+    assert.equal(Number((await db.query('UPDATE orcamento_itens SET preco_unitario=0,subtotal=0,total=0 WHERE id=$1 RETURNING preco_unitario',[item.id])).rows[0].preco_unitario),0);
+    await db.exec('ROLLBACK TO SAVEPOINT positive_zero_price; RELEASE SAVEPOINT positive_zero_price');
+    for(const table of ['orcamentos','orcamento_itens']) assert.deepEqual((await db.query(`SELECT relrowsecurity,relforcerowsecurity FROM pg_class WHERE oid='${table}'::regclass`)).rows[0],{relrowsecurity:true,relforcerowsecurity:true});
+    await db.exec('SET CONSTRAINTS ALL IMMEDIATE; ROLLBACK');
+    assert.equal((await db.query("SELECT to_regclass('quote_review_synthetic.orcamentos') relation")).rows[0].relation,null);
+    assert.deepEqual((await db.query('SELECT * FROM public.keep_quote_review')).rows,before);
+    assert.equal((await db.query("SELECT count(*)::integer n FROM pg_indexes WHERE schemaname='public' AND indexname='keep_quote_label'")).rows[0].n,1);
+    t.diagnostic('Original016 only, true009/014/015 parents/deferred checks/3 controls/rollback; not039/017/041 replacements, application eligibility, real RBAC, restored HML or commercial journey proof.');
+  } finally {await db.close();}
+});
+
 function fixture() {
   const expected = { database: 'hml_test', schema: 'hml_test', role: 'hml_app',
     clusterIdentifier: '123456', schemaOid: '17000',

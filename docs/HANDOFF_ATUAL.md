@@ -1,3 +1,67 @@
+## Continuidade assumida: orcamentos016 e pendencias concretas HML (2026-11-15)
+
+Codex ativo assume frentes Cursor sem credito, sem editar branches Cursor/Empresa.
+Instrucao consolidada do proprietario conciliada aqui, sem novo manual/fila.
+Base70a621c3/CI7179SUCCESS local=remoto/limpo, AGENTS sem delta, sem writer alheio;
+reserva594/6896447530/trava propria. Referencias privadas acessiveis neste Casa:
+00_LEIA_PRIMEIRO.md, dossieDOCX, especificacaoTXT, LAYOUT_ORIGINAL_01.png e videoMP4.
+Analise anterior/5hashes/limite audio nao transcrito preservados; nao repetir nem
+publicar midia. Texto aprovado prevalece, nenhuma apresentacao alterada aqui.
+
+Avanco EXECUTADO: no MESMO harness,016 com pais originais001/003/004/005/006/
+009/014/015, sem seeds/038/stubs. Orcamento17colunas/itens18; positivos e negativos
+clienteEmpresa/condicao vinculados e ativos, Empresa/Grupo/produto/unidade,
+numero8digitos,unique inclusive cancelado,numericos/snapshot/status,timestamp,
+ID/codigo/inativo preservados. Precozero comprovado permitido na016 original;
+produto inativo tambem aceito nessa fonte original, NAO equivale a elegibilidade
+operacional atual nem regra nova para rascunho.041 evolui guards depois.
+015 DEFERRED foi realmente disparada com SET CONSTRAINTS ALL IMMEDIATE ANTES
+rollback: condicao sem parcelas100percent recusada; fixtures validas passam.
+3controles removem guardheader/item/deferred, violacao passa, savepoint restaura.
+Rollbacktotal remove schema novo e preserva linha/indice anteriores.46focais
+PASS/0skip/18goldens,lintdirecionado/diffcheckPASS,audit no fechamento; CIporSHA
+na594. SO teste/matriz/docs, sem runtime: reusar e920/build/typecheck/CI7176,
+sem reconstruir pacote por SHA documental. Limites Windows conhecidos nao
+mascarados; CI Linux completa do novoSHA fecha o lote.
+Matriz adiciona relationReviews.orcamentos/9pins;5reviews anteriores/225objetos/
+101clausulas/18pinsoriginais/SQLguardado intactos,canApplyfalse.016 nao e039,
+017/041callbacks nem jornada navegador/API/PG. Nenhum dado real processado.
+
+### Lista UNICA para disponibilizar API/web e920 na HML existente
+
+Responsavel tecnico de todas as acoes abaixo: Codex ativo Casa OU Empresa,
+um escritor/lease por recurso. Aceite/autorizacao especifica: proprietario.
+Fontes: plano privado promotion-81d1e849.plan.private.json e recibos existentes;
+identidades observadas historicamente NAO sao declaradas frescas nesta retomada.
+
+| Item | Evidencia existente | Falta / acao seguinte executavel | Decisao do proprietario |
+|---|---|---|---|
+| Codigo/revisao | e920/CI7176; 12cenarios Reactcompostos, pacote PUBLISHED_CLEAN | Revisao independente solicitada594, ainda sem parecer; revisar exatamente delta3componentes/backend6arquivos contraHMLd054, nao reabrir provas estaveis | Se nao houver revisor, definir aceite/revisor antes de publicar; autorrevisao nao vira independente |
+| Pacote | API/web e920 iguais;2216arquivos/17887136bytes;filesSha077bb96a16d80278d68ab3083eec003085326e6710a525161dd3b6690f9d4269 | Reutilizar diretorio privado runtime-e92045a0-candidate; preparar arquivo/manifesto somente para canal autorizado, ainda NAO transferido/deploy | Transferencia nova e920 distinta da81; usar alcance aprovado, nunca repetir81 |
+| Schema/dependencias | 8relacoes preservadas comparadas;12ausentes,225objetos/101clausulas guardadas; fontes simples/produto/041relacao/016 em memoria | Fechar017+pais011/012/013,callbacks041,039/040/042/043/044/045/customcontrols; comparar overlay na copia restaurada; manter RAISE+ROLLBACK ate revisao | DDL exata ainda nao pronta: nao solicitar autorizacao generica nem aplicar34migrations/journalvazio |
+| Contatos045/dados existentes | coluna atual nullable/defaultNULL;fonte querNOTNULL/default[];extras/custompolicies preservados | Auditar somente alcance autorizado via ator/caminho canonico antes de NOTNULL; distinguir ausencia real de naoimportado, sem inventar[] | Qualquer conciliacao/escrita precisa lote/semantica comprovados; leitura nao autoriza backfill |
+| Identidade/destino | HML ultima observada d054 e metadados privados14/11; operacional separado | Revalidar confighash/owner/mode/mount/container/image/cluster/DB/role/schemaOID/ator/Grupo e espaco>=20GiB+reserva usando helper existente no canal privado | Nenhuma alteracao de permissao/host permitida para contornar falha; se canal expirar, intervencao pontual identificada |
+| Menor privilegio | RLS/forceRLS e controles existentes observados; role sintetica041 so prova policy em memoria | Comparar owners/security/search_path/policies/indexes/triggers do destino; testar principal real semBYPASS como autorizacao, RBAC explicito/contexto | Grants operacionais minimos somente se contrato especifico revisado/autorizado, nao promoveradmin |
+| Backup atualizado | helperHML SHAa803c07d... e timer/servico existentes; sucesso de timer isolado nao basta | Apos pins/espaco/ausenciawriter, executar helperHML existente sob lease compativel e conferir dump/manifests/receipt fresco; nunca forjar leasebackup-retention | Somente backup no alcance existente; nenhuma restauracao sobre base atual |
+| Restauracao/ackexterno | procedimento isolado existente compara16tabelas/IDs/conteudo; recibos historicos preservados | Obter receipt de restore em destino isolado identificado + hash/bytes da copiaexterna + ackpareado; nao usar arquivo81 como backupDB | Confirmacao externa concreta quando artefato fresco estiver pronto; nao pedir ack de copia inexistente |
+| Reversao | plano mantem imagens/specs/config anteriores, sem restauracao automaticaDB | Capturar specs/pins frescos API+web e guardar config/runtime antigos; preparar troca pareada/reversao e validar ready/version/401/contexto | RestoreDB separado em base nova, nunca sobrescrever operacional/HML por inferencia |
+| Janela/publicacao | URL existente https://hml-erp.cpaferroeaco.com.br; e920 ainda local | Depois anteriores: apresentar SHA/pacote/DDL exata/impacto/duracao/reversao; adquirirlease,transferir so artefato novo pinado,API+web mesma janela,provar login/Grupo/persistencia e saudeoperacional | Autorizacao ESPECIFICA dessa publicacao HML; nao promoveproducao |
+
+Nao ha pedido de decisao prematuro: faltam closure de schema/restore/pins antes
+de uma publicacao concreta revisavel. Preparacao avanca offline; nao executar
+SQL/grant/DDL/deploy real pelo fato de tabela acima conter comandos/acoes.
+Legado centralizado/FINAL/IDs/codigos/1500ensaiosinativos/contatos/locais e
+recibos privados preservados;0registros reais lidos/importados neste lote.
+Nao retransferirHD/81/reinventariar/recriar clientes/ativar locais por inferencia.
+
+PROXIMO EXECUTAVEL:017_pedidos_comercial_360 com pais011/012/013 CANONICOS
+(incluindo funcs/tabelas verdadeiras); depois callbacks041. Usar mesma matriz/
+harness/refatorar helperTESTONLY se ultrapassar limiar, nunca stubs para passar.
+Automacao MESMA ACTIVE15min, ultima retomada NATIVA14:44 resultou70a621c3/CI7179;
+este lote e MANUAL, nao prova novoheartbeat. Trava desta tarefa liberada no
+fechamento, parada porfila concluida/bloqueio indispensavel/limiteplataforma.
+Depende PC/app/rede/ferramentas/creditos, sem workerpermanente nem polling vazio.
+
 ## Produto por Empresa: relacao041 provada, callbacks ainda pendentes (2026-11-15)
 
 Retomada NATIVA14:44:32Z, dcc02838 local=remoto/limpo, sem escritor/trava alheia;
