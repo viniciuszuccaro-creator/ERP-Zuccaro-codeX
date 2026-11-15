@@ -1,3 +1,17 @@
+## Central360: referencia privada analisada e fechamento coerente (15/11/2026)
+
+Guia inicial, dossie DOCX, texto, imagem e video fornecidos pelo proprietario
+analisados privadamente; 5 hashes conferidos. Video139.933s com47quadros/3s e
+ampliacoes; analise visual sem transcricao de audio. Nenhuma midia/dado real no
+Git/build. Texto aprovado prevalece sobre ilustracao; estrutura existente e
+trabalho Cursor preservados. Detalhes/limites no HANDOFF atual.
+
+OrcamentosTab existente: botao de confirmar exige data ja obrigatoria no
+handler; rascunho/API/persistencia inalterados. Contraprova anterior reproduzida,
+56focaisPASS/0skip incluindo18goldens. Proxima entrega continua revisao/endereco
+Orcamentos e port controlado Shell+Pedido+Orcamentos na mesma candidata Casa;
+nao ha port/deploy/carga liberados por esta referencia. CI por SHA no GitHub.
+
 ## Codex assume frentes Cursor e protege selecao da Central (2026-11-15)
 
 DiretrizEXPLICITAproprietario: Cursorsemcredito; Codexativo assumeUI/Cadastros/

@@ -21,6 +21,28 @@ import * as picker from '../src/components/comercial/comercialMasterPicker.js';
 import * as proposalFixture from '../src/components/comercial/comercialProposalFixture.js';
 import * as navigation from '../src/components/comercial/centralCliente360Navigation.js';
 
+test('Fechar orçamento: data obrigatória controla botão sem iniciar conversão', async () => {
+  const h = await mount();
+  h.setProps({ ...cpa, centralLayout: true, selectedCentralId: 'o-1' });
+  h.render(); h.render();
+  await h.find(n => n.props['data-action'] === 'central360-fechar-orcamento').props.onClick();
+  await flush(); h.render();
+  const confirm = () => h.find(n => n.props['data-action'] === 'orcamento-converter-pedido');
+  assert.equal(confirm().props.disabled, true);
+  await confirm().props.onClick();
+  assert.equal(h.calls.filter(c => c.method === 'convert').length, 0);
+  const dateInput = () => h.nodes().filter(n => n.type === 'Input' && n.props.type === 'date').at(-1);
+  dateInput().props.onChange({ target: { value: '2027-01-31' } });
+  h.render();
+  assert.equal(confirm().props.disabled, false);
+  assert.equal(h.calls.filter(c => c.method === 'convert').length, 0);
+  assert.equal(dateInput().props.value, '2027-01-31');
+  dateInput().props.onChange({ target: { value: '' } });
+  h.render();
+  assert.equal(confirm().props.disabled, true);
+  assert.equal(h.calls.filter(c => c.method === 'convert').length, 0);
+});
+
 const deferred = () => { let resolve; let reject; const promise = new Promise((yes, no) => { resolve = yes; reject = no; }); return { promise, resolve, reject }; };
 const flush = () => new Promise((resolve) => setImmediate(resolve));
 const cpa = { groupId: 'g', empresaId: 'cpa', actorId: 'u' };

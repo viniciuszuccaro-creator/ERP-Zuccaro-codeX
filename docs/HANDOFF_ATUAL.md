@@ -1,3 +1,38 @@
+## Referencias privadas Central360 e disponibilidade do fechamento (2026-11-15)
+
+Casa leu primeiro o guia do pacote privado fornecido pelo proprietario, depois
+o dossie DOCX (1212 paragrafos, 3 tabelas e imagem), texto extraido e layout.
+Cinco hashes do manifesto conferidos. Video original: 139.933s, 47 quadros
+temporizados a cada 3s via decoder nativo, visao geral e trechos ampliados;
+analise VISUAL, sem transcricao/validacao de audio. Primeira captura WPF repetia
+quadro e foi descartada como prova; a decodificacao WinRT posterior foi validada.
+Pacote, quadros, recibo e conteudo comercial/pessoal SOMENTE privados foraGit.
+Referencia nao e prova de persistencia/backend, autorizacao operacional nem
+ordem para copiar outro modulo. Regras textuais aprovadas prevalecem sobre
+ilustracao: 12 colunas, duas grades simultaneas, selecao contextual, acoes por
+situacao e separacao fechar/cancelar; preservar dominios/RBAC existentes.
+
+Continuacao executada na MESMA branch Casa, base f619e9de; Cursor1a5bc05e
+preservado. Reserva594/6894587877, trava exclusiva propria. No OrcamentosTab
+existente, Confirmar fechamento agora tambem exige a data que o handler JA
+exigia. Sem regra nova para salvar/editar rascunho, sem alterar API/backend.
+Contraprova ANTES falhou false!=true (botao disponivel sem data). DEPOIS teste
+do consumidor existente verifica vazio bloqueado/handler sem conversao,
+data habilita sem gravar e limpar bloqueia novamente. Harness de hooks
+deterministas/transportes sinteticos, NAO prova React montado/API/PG real.
+56 testes focais PASS/0skip, inclusive preservacao dos18goldens, sem mudar
+manifesto/normalizador. Audit/lint(0erros/2warnings existentes)/typecheck/build
+(26.37s; aviso tamanho existente)/diffcheck PASS. Suite global Windows nao
+repetida: impedimentos POSIX/getuid/hang documentados ainda nao resolvidos;
+Python embarcado localizado, mas isso sozinho nao resolve os demais. CI Linux
+completa do SHA deve fechar o lote; resultado terminal registrado no GitHub.
+
+PROXIMO: continuar revisao Orcamentosd43/endereco e conciliar os TRES componentes
+no mapa privado existente, preservando a nova condicao de data E a fix f619 de
+revogacao do Shell. Nao aplicar proposta com marcadores de conflito; nenhum
+port Cursor/HML/SQL/carga executado neste lote. Automacao existente depende
+do executor disponivel e usa esta mesma fila/reserva, sem novo agendamento.
+
 ## Codex assume frentes Cursor e protege selecao da Central (2026-11-15)
 
 DiretrizEXPLICITAproprietario: Cursorsemcredito; Codexativo assumeUI/Cadastros/
