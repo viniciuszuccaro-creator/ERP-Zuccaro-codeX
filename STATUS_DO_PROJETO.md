@@ -1,3 +1,16 @@
+## Esquema HML: tres cadastros provados offline (15/11/2026)
+
+Unidades/grupos de produto/setores: fontes001/004/005/038 pinadas na matriz
+existente; um ensaio PGlite parametrizado provou45colunas/6triggers,tenant/
+indices/defaults/origem/inativo/timestamp/rollback e9controles negativos.
+43focaisPASS/0skip,18goldensintactos,audit/lint/diffcheckPASS.
+Sem codigo aplicativo/SQLguardado/migrations alterados;225objetos/101clausulas
+anteriores preservados. canApply=false e destino restaurado/RBAC/backup/restore
+continuam pendentes. Nao confundir ensaio com aplicacaoHML.
+Proximo: produtos006/007/008/evolucoes pinadas no mesmo harness/matriz.
+Runtimee920/CI7176 e
+pacote API/web preparados preservados, sem rebuild por SHA documental/deploy.
+
 ## Central360: resposta antiga descartada apos revogar/restaurar (15/11/2026)
 
 Composicao3b0bb255/CI7175 SUCCESS, seguida de contraprova nova React real:

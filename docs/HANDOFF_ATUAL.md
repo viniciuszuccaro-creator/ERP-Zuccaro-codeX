@@ -1,3 +1,48 @@
+## Tres cadastros simples: fechamento de fonte provado em memoria (2026-11-15)
+
+Retomada NATIVA13:41:32Z, Casa e92045a0 limpo/local=remoto, sem escritor no
+checkout; reserva594/6895227043 e trava CreateNew propria. AGENTS sem delta.
+Avancou unidades_medida, depois grupos_produto e setores_atividade no mesmo
+ensaio parametrizado, sem duplicar modulo/teste, acessar VPS ou banco real.
+
+Matriz existente ganhou SOMENTE relationReviews dessas tres relacoes. Os225objetos,
+101clausulas emitidas,18pins anteriores e SQL guardado/hash permanecem intactos.
+Novos pins de revisao sao blobs GitLF de001/004/005/038 na fonte e920. Funcoes
+set_updated_at e assert_empresa_belongs_to_group, tabela/indices/RLS005 e
+adicoes codigo/codigo_origem/indice038 exercitados a partir da fonte canonica,
+nao de um esquema equivalente reescrito. Unidades17colunas/grupos15/setores13;
+codigo de grupos JA EXISTE005, adicao038 so codigo_origem. Sem backfill/ledger.
+
+Teste EXISTENTE hml-vps-bootstrap ampliado com PGlite so em MEMORIA sintetica:
+45colunas,6triggers, defaults/nullability, flagsRLS/sem policy permissiva,
+tenant insert/update,
+unicidade de sigla/codigo por Grupo sem distinguir maiusculas, codigo inativo
+nao reutilizavel, mesmo codigo permitido em outro Grupo pelo indice canonico,
+empresa NULL compartilhavel e campos de origem/codigo/inativo preservados.
+Timestamp imposto pelo trigger e rollback total com linha/indice anterior
+preservados. Nove controles negativos (tres por relacao) em savepoints desabilitam
+temporariamente
+trigger tenant/timestamp e indice codigo: mostram que a protecao desaparece,
+depois rollback os restaura. Tudo ocorre apenas nesse engine efemero.
+43focais PASS/0skip (8HML+35publication/18goldens), audit/lint do teste/diffcheck
+PASS. Nenhum codigo de aplicacao mudou; build/typecheck/runtime e920/CI7176
+reutilizados, sem reconstruir pacote imutavel por SHA de teste/documentacao.
+CI completa do novo SHA registrada no GitHub; nao inferir sucesso antes do fim.
+
+Status: fonte estrutural e dependencias COMPROVADAS NO ENSAIO, destino restaurado
+NAO atestado. Permanece canApply=false/completeMigration=false/RAISE+ROLLBACK;
+nenhuma migration canônica ou propostaSQL modificada, grant/DDL/carga operacional.
+Sem prova de ator/RBAC real, menor privilegio, funcao/owner/security/search_path
+do destino, backfill autorizado ou recuperacao. Os124itens diferidos nao foram
+silenciosamente promovidos para aplicados. Gates de backupFRESCO/restauracao/
+ack/reversao/janela/revisao/autorizacao permanecem.
+
+PROXIMO INDEPENDENTE: produtos na MESMA matriz/harness, fontes006/007/008 e
+evolucoes ja pinadas, uma clausula ainda pendente por vez. Preservar FKs/escopo/
+unidades/codigos/origem e provar rollback sem backfill/schema paralelo.
+Reusar pacote API+web e920 preparado e
+verificado (2216files/17887136bytes), sem transferir/implantar por inferencia.
+
 ## Revogacao/restauracao encerra a selecao antiga (2026-11-15)
 
 A composicao 3b0bb255 passou na CI7175/run43718579713 (frontend, backend/PG e

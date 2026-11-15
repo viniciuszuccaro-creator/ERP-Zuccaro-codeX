@@ -2834,5 +2834,284 @@
   "canApply": false,
   "completeMigration": false,
   "requiresFreshBackupIsolatedRestoreAndReview": true,
-  "preserveExistingEight": true
+  "preserveExistingEight": true,
+  "relationReviews": {
+    "unidades_medida": {
+      "reviewHead": "e92045a05909d43125a14d03394b80ad3ebb086e",
+      "status": "CANONICAL_SOURCE_REHEARSAL_PROVEN_RESTORED_TARGET_PENDING",
+      "sourcePins": [
+        {
+          "path": "server/migrations/001_foundation.sql",
+          "sha256": "857c9e37c237a42e1bda425903e5ccbb7bac4d762829d48e1738ea2913d95d5f",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/migrations/004_tenant_integrity.sql",
+          "sha256": "c64cb2cf172a591264834a126a2d0afd15e963d98d4a95ecc8ebabb60aca1c04",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/migrations/005_cadastros_simples.sql",
+          "sha256": "e754793c4ce65f99e06a7216c365812c20f50af96fd6d54adf6f002e76f02c20",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/migrations/038_cadastros_codigo_registro.sql",
+          "sha256": "ea7f3f90f4a4035418afeca7e2771a8b65f81524588c2e21f1753f8f21e1dbee",
+          "encoding": "raw Git blob UTF-8 LF"
+        }
+      ],
+      "structuralSources": [
+        {
+          "source": "005_cadastros_simples.sql",
+          "statementOffsets": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            6,
+            8,
+            9,
+            10
+          ]
+        },
+        {
+          "source": "038_cadastros_codigo_registro.sql",
+          "statementOffsets": [
+            6,
+            7,
+            8
+          ]
+        }
+      ],
+      "functionDependencies": [
+        {
+          "source": "001_foundation.sql",
+          "name": "set_updated_at()",
+          "effect": "BEFORE UPDATE timestamp only"
+        },
+        {
+          "source": "004_tenant_integrity.sql",
+          "name": "assert_empresa_belongs_to_group()",
+          "effect": "Reject empresa/group mismatch; group-shared empresa NULL allowed"
+        }
+      ],
+      "test": "tests/hml-vps-bootstrap.test.js: unidades_medida canonical memory rehearsal",
+      "restoredHmlAttested": false,
+      "canApply": false,
+      "existingProposalSqlChanged": false,
+      "existingObjectsReclassifiedAsApplied": false,
+      "rowBackfillExecuted": false,
+      "remainingGates": [
+        "Fresh restored-target function signatures/source/security/search_path/owners and dependency identities",
+        "Keep original existing eight relations and custom policies/triggers/indexes/rows",
+        "038 data backfill and entity_code_sequences changes require separate data/scope/authorization proof; no implicit run",
+        "Least-privilege real actor/session/group/RBAC not established by owner-role synthetic test",
+        "Fresh backup/isolated restore/external ack/reversal/window/review and explicit deployment gate"
+      ],
+      "validation": {
+        "engine": "PGlite synthetic memory only",
+        "focusedTestsPass": 43,
+        "focusedTestsFail": 0,
+        "focusedTestsSkip": 0,
+        "negativeControls": 3,
+        "canonicalTriggersExercised": 2,
+        "columnsVerified": 17,
+        "requiredGroupAndNameVerified": true,
+        "canonicalDefaultsVerified": true,
+        "sameGroupCaseInsensitiveCodeUniqueness": true,
+        "inactiveCodeRetainedAndCannotBeReused": true,
+        "differentGroupCodeReuseAllowedByCanonicalIndex": true,
+        "existingSyntheticDataAndIndexPreservedAfterRollback": true,
+        "guardedProposalSqlUnchanged": true,
+        "restoredHmlOrRealRbacProven": false
+      }
+    },
+    "grupos_produto": {
+      "reviewHead": "e92045a05909d43125a14d03394b80ad3ebb086e",
+      "status": "CANONICAL_SOURCE_REHEARSAL_PROVEN_RESTORED_TARGET_PENDING",
+      "sourcePins": [
+        {
+          "path": "server/migrations/001_foundation.sql",
+          "sha256": "857c9e37c237a42e1bda425903e5ccbb7bac4d762829d48e1738ea2913d95d5f",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/migrations/004_tenant_integrity.sql",
+          "sha256": "c64cb2cf172a591264834a126a2d0afd15e963d98d4a95ecc8ebabb60aca1c04",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/migrations/005_cadastros_simples.sql",
+          "sha256": "e754793c4ce65f99e06a7216c365812c20f50af96fd6d54adf6f002e76f02c20",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/migrations/038_cadastros_codigo_registro.sql",
+          "sha256": "ea7f3f90f4a4035418afeca7e2771a8b65f81524588c2e21f1753f8f21e1dbee",
+          "encoding": "raw Git blob UTF-8 LF"
+        }
+      ],
+      "structuralSources": [
+        {
+          "source": "005_cadastros_simples.sql",
+          "statementOffsets": [
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            18,
+            20,
+            21,
+            22
+          ]
+        },
+        {
+          "source": "038_cadastros_codigo_registro.sql",
+          "statementOffsets": [
+            9
+          ]
+        }
+      ],
+      "functionDependencies": [
+        {
+          "source": "001_foundation.sql",
+          "name": "set_updated_at()",
+          "effect": "BEFORE UPDATE timestamp only"
+        },
+        {
+          "source": "004_tenant_integrity.sql",
+          "name": "assert_empresa_belongs_to_group()",
+          "effect": "Reject empresa/group mismatch; group-shared empresa NULL allowed"
+        }
+      ],
+      "test": "tests/hml-vps-bootstrap.test.js: grupos_produto canonical memory rehearsal",
+      "restoredHmlAttested": false,
+      "canApply": false,
+      "existingProposalSqlChanged": false,
+      "existingObjectsReclassifiedAsApplied": false,
+      "rowBackfillExecuted": false,
+      "remainingGates": [
+        "Fresh restored-target function signatures/source/security/search_path/owners and dependency identities",
+        "Keep original existing eight relations and custom policies/triggers/indexes/rows",
+        "038 data backfill and entity_code_sequences changes require separate data/scope/authorization proof; no implicit run",
+        "Least-privilege real actor/session/group/RBAC not established by owner-role synthetic test",
+        "Fresh backup/isolated restore/external ack/reversal/window/review and explicit deployment gate"
+      ],
+      "existingCodigoColumnPreserved": true,
+      "onlyAddedColumn": "codigo_origem",
+      "validation": {
+        "engine": "PGlite synthetic memory only",
+        "focusedTestsPass": 43,
+        "focusedTestsFail": 0,
+        "focusedTestsSkip": 0,
+        "negativeControls": 3,
+        "canonicalTriggersExercised": 2,
+        "columnsVerified": 15,
+        "requiredGroupAndNameVerified": true,
+        "canonicalDefaultsVerified": true,
+        "sameGroupCaseInsensitiveCodeUniqueness": true,
+        "inactiveCodeRetainedAndCannotBeReused": true,
+        "differentGroupCodeReuseAllowedByCanonicalIndex": true,
+        "existingSyntheticDataAndIndexPreservedAfterRollback": true,
+        "guardedProposalSqlUnchanged": true,
+        "restoredHmlOrRealRbacProven": false
+      }
+    },
+    "setores_atividade": {
+      "reviewHead": "e92045a05909d43125a14d03394b80ad3ebb086e",
+      "status": "CANONICAL_SOURCE_REHEARSAL_PROVEN_RESTORED_TARGET_PENDING",
+      "sourcePins": [
+        {
+          "path": "server/migrations/001_foundation.sql",
+          "sha256": "857c9e37c237a42e1bda425903e5ccbb7bac4d762829d48e1738ea2913d95d5f",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/migrations/004_tenant_integrity.sql",
+          "sha256": "c64cb2cf172a591264834a126a2d0afd15e963d98d4a95ecc8ebabb60aca1c04",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/migrations/005_cadastros_simples.sql",
+          "sha256": "e754793c4ce65f99e06a7216c365812c20f50af96fd6d54adf6f002e76f02c20",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/migrations/038_cadastros_codigo_registro.sql",
+          "sha256": "ea7f3f90f4a4035418afeca7e2771a8b65f81524588c2e21f1753f8f21e1dbee",
+          "encoding": "raw Git blob UTF-8 LF"
+        }
+      ],
+      "structuralSources": [
+        {
+          "source": "005_cadastros_simples.sql",
+          "statementOffsets": [
+            23,
+            24,
+            25,
+            26,
+            27,
+            29,
+            31,
+            32,
+            33
+          ]
+        },
+        {
+          "source": "038_cadastros_codigo_registro.sql",
+          "statementOffsets": [
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "functionDependencies": [
+        {
+          "source": "001_foundation.sql",
+          "name": "set_updated_at()",
+          "effect": "BEFORE UPDATE timestamp only"
+        },
+        {
+          "source": "004_tenant_integrity.sql",
+          "name": "assert_empresa_belongs_to_group()",
+          "effect": "Reject empresa/group mismatch; group-shared empresa NULL allowed"
+        }
+      ],
+      "test": "tests/hml-vps-bootstrap.test.js: setores_atividade canonical memory rehearsal",
+      "restoredHmlAttested": false,
+      "canApply": false,
+      "existingProposalSqlChanged": false,
+      "existingObjectsReclassifiedAsApplied": false,
+      "rowBackfillExecuted": false,
+      "remainingGates": [
+        "Fresh restored-target function signatures/source/security/search_path/owners and dependency identities",
+        "Keep original existing eight relations and custom policies/triggers/indexes/rows",
+        "038 data backfill and entity_code_sequences changes require separate data/scope/authorization proof; no implicit run",
+        "Least-privilege real actor/session/group/RBAC not established by owner-role synthetic test",
+        "Fresh backup/isolated restore/external ack/reversal/window/review and explicit deployment gate"
+      ],
+      "validation": {
+        "engine": "PGlite synthetic memory only",
+        "focusedTestsPass": 43,
+        "focusedTestsFail": 0,
+        "focusedTestsSkip": 0,
+        "negativeControls": 3,
+        "canonicalTriggersExercised": 2,
+        "columnsVerified": 13,
+        "requiredGroupAndNameVerified": true,
+        "canonicalDefaultsVerified": true,
+        "sameGroupCaseInsensitiveCodeUniqueness": true,
+        "inactiveCodeRetainedAndCannotBeReused": true,
+        "differentGroupCodeReuseAllowedByCanonicalIndex": true,
+        "existingSyntheticDataAndIndexPreservedAfterRollback": true,
+        "guardedProposalSqlUnchanged": true,
+        "restoredHmlOrRealRbacProven": false
+      }
+    }
+  }
 }
