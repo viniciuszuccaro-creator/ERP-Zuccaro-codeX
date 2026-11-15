@@ -214,7 +214,7 @@ if (process.env.DATABASE_URL) test('Entrada PostgreSQL: login Grupo Cliente Orca
     const url = (role: string) => { const u = new URL(process.env.DATABASE_URL!); u.username = role; u.password = password; u.searchParams.set('options', '-c search_path=' + schema + ',pg_catalog'); return u.toString(); };
     const config = loadConfig({ NODE_ENV: 'test', ERP_ENV: 'dev', ERP_AUTH_MODE: 'supabase_user',
       SUPABASE_URL: 'http://127.0.0.1:' + p.port, SUPABASE_ANON_KEY: 'synthetic',
-      DATABASE_URL: url(dataRole), AUTH_DATABASE_URL: url(authRole), ENABLE_TENANT_CONTEXT: 'true', ENABLE_PRODUTO_EMPRESA: 'true' });
+      DATABASE_URL: url(dataRole), AUTH_DATABASE_URL: url(authRole), ENABLE_TENANT_CONTEXT: 'true', ENABLE_PRODUTO_EMPRESA: 'true', ENABLE_FORNECEDOR_HTTP: 'true' });
     clients = await createRuntimeDbClients(config);
     for (const db of [clients.db, clients.authDb]) {
       const flags = (await db.query<{ rolsuper: boolean; rolbypassrls: boolean; rolcreatedb: boolean;
@@ -246,9 +246,9 @@ if (process.env.DATABASE_URL) test('Entrada PostgreSQL: login Grupo Cliente Orca
     const groupHeaders = { authorization: 'Bearer synthetic-entry-token', 'x-group-id': ID.groupA, 'Content-Type': 'application/json' };
     const companyHeaders = { ...groupHeaders, 'x-empresa-id': ID.empresaA };
     type Row = { id: string; codigo?: string; cliente_id?: string; empresa_id?: string | null; status?: string; orcamento_id?: string; itens?: unknown[] };
-    const request = async (method: string, path: string, expected: number, body?: unknown, headers: Record<string, string> = companyHeaders) => {
+    const request = async <T = Row>(method: string, path: string, expected: number, body?: unknown, headers: Record<string, string> = companyHeaders) => {
       const response = await fetch(base + path, { method, headers, ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
-      const result = await response.json() as { data: Row; error?: { code?: string }; };
+      const result = await response.json() as { data: T; error?: { code?: string }; };
       assert.equal(response.status, expected, method + ' ' + path + ':' + result.error?.code);
       return result.data;
     };
@@ -387,6 +387,37 @@ if (process.env.DATABASE_URL) test('Entrada PostgreSQL: login Grupo Cliente Orca
       assert.equal(result.registro.codigo, '000077');
       assert.equal(result.registro.origem, 'MIGRACAO');
       assert.equal((await supplier.importar(ctx, payload)).registro.id, result.registro.id);
+      const supplierAuditCount = async () => (await admin.query<{ n: number }>(
+        "SELECT count(*)::int AS n FROM audit_logs WHERE entity='Fornecedor'")).rows[0].n;
+      assert.equal(await supplierAuditCount(), 3); // Existing service create/raced replay/sequential replay.
+      const supplierPath = '/api/v1/fornecedores';
+      const httpReplay = await request<{ registro: { id: string; codigo: string }; reutilizado: boolean }>(
+        'POST', supplierPath + '/importar', 200, payload, groupHeaders);
+      assert.equal(httpReplay.reutilizado, true);
+      assert.equal(httpReplay.registro.id, result.registro.id); assert.equal(httpReplay.registro.codigo, payload.codigo);
+      assert.equal((await request('GET', supplierPath + '/' + result.registro.id, 200, undefined, groupHeaders)).id, result.registro.id);
+      assert.equal(await supplierAuditCount(), 4); // One additional canonical HTTP replay audit, no read audit.
+      const replaySnapshot = async () => (await admin.query(`SELECT
+        (SELECT jsonb_agg(to_jsonb(p) ORDER BY p.id) FROM profiles p) AS profiles,
+        (SELECT jsonb_agg(to_jsonb(f) ORDER BY f.id) FROM fornecedores f) AS suppliers,
+        (SELECT jsonb_agg(to_jsonb(a) ORDER BY a.id) FROM audit_logs a) AS audits,
+        (SELECT jsonb_agg(to_jsonb(s) ORDER BY to_jsonb(s)::text) FROM entity_code_sequences s) AS sequences`)).rows[0];
+      const beforeReplayRevocation = await replaySnapshot();
+      // Definer is this isolated fixture owner only; HTTP data/auth connections remain restricted LOGIN roles.
+      await admin.query(`CREATE FUNCTION supplier_entry_revoke_create() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER
+        SET search_path=pg_catalog,${schema} AS $$ BEGIN
+        UPDATE ${schema}.profiles SET permissoes=jsonb_set(permissoes,'{Cadastros,fornecedor}',
+          (permissoes #> '{Cadastros,fornecedor}') - 'criar') WHERE id=NEW.actor_id;
+        RETURN NEW; END $$;
+        CREATE TRIGGER supplier_entry_revoke_create AFTER INSERT ON audit_logs FOR EACH ROW
+        WHEN (NEW.entity='Fornecedor' AND NEW.action='possible_duplicate') EXECUTE FUNCTION supplier_entry_revoke_create()`);
+      try {
+        await request('POST', supplierPath + '/importar', 403, payload, groupHeaders);
+        assert.deepEqual(await replaySnapshot(), beforeReplayRevocation);
+      } finally {
+        await admin.query('DROP TRIGGER supplier_entry_revoke_create ON audit_logs; DROP FUNCTION supplier_entry_revoke_create()');
+      }
+      console.log('FORNECEDOR_HTTP_PG_REPLAY_REVOCATION_VERIFIED');
       const row = result.registro;
       await assert.rejects(supplier.softDelete(ctx, row.id, row.revision + 1, row.source_system, row.migration_batch, fingerprintFornecedor(row)), { code: 'FORNECEDOR_REVISION_CONFLICT' });
       await assert.rejects(supplier.softDelete(ctx, row.id, row.revision, row.source_system, row.migration_batch, '0'.repeat(64)), { code: 'FORNECEDOR_REVISION_CONFLICT' });
@@ -418,7 +449,7 @@ if (process.env.DATABASE_URL) test('Entrada PostgreSQL: login Grupo Cliente Orca
     await assert.rejects(clients.authDb.withAuthIdentity!(authUser, q => q.query("UPDATE profiles SET role='admin'")), /read-only|permission denied/i);
     const audits = (await admin.query<{ entity: string; n: number }>('SELECT entity,count(*)::int AS n FROM audit_logs GROUP BY entity')).rows;
     for (const entity of ['Cliente', 'Orcamento', 'Pedido', 'Fornecedor']) assert.ok(audits.some(row => row.entity === entity && row.n > 0), entity);
-    assert.equal(audits.find(row => row.entity === 'Fornecedor')?.n, 4); // create + concurrent replay + sequential replay + reversal.
+    assert.equal(audits.find(row => row.entity === 'Fornecedor')?.n, 5); // create + concurrent replay + sequential replay + HTTP replay + reversal.
   } finally {
     if (api) await new Promise<void>(resolve => api!.close(() => resolve()));
     await new Promise<void>(resolve => provider.close(() => resolve()));
