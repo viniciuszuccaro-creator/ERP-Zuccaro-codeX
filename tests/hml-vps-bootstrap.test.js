@@ -1,10 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { readFile, mkdtemp, writeFile, unlink, rmdir } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { execFileSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { loadCanonicalRehearsalSources } from './helpers/hmlCanonicalSourceRehearsal.js';
 import './helpers/hmlCanonicalCommercialRehearsal.js';
-import { validateHmlConfig, readHmlConfig, hmlAuthFetch, preflightHml } from '../scripts/vps/hml-bootstrap.mjs';
+import { validateHmlConfig, readHmlConfig, hmlAuthFetch, preflightHml, reviewHmlClienteContracts } from '../scripts/vps/hml-bootstrap.mjs';
 
 const simpleRelationCases = [
   { table: 'unidades_medida', nextMarker: '-- grupos_produto', nameColumn: 'nome_completo', sigla: true,
@@ -376,4 +380,36 @@ test('HML review SQL guards abort in memory and minimal rehearsal preserves exis
   } finally {
     await db.close();
   }
+});
+
+
+test('HML offline contract review follows NULL-CAS and exact scoped definitions, never authorizes DDL', async()=>{
+  const {canonicalTable}=await import('./helpers/hmlCanonicalSourceRehearsal.js');
+  const {PGlite}=createRequire(new URL('../server/package.json',import.meta.url))('@electric-sql/pglite');
+  const sources={contactsNullCas:await readFile(new URL('../server/schema-candidates/cliente_contatos_null_cas.sql',import.meta.url),'utf8'),legacyIdentity:await readFile(new URL('../server/schema-candidates/cliente_legacy_identity.sql',import.meta.url),'utf8')};
+  const db=new PGlite();let snapshot;
+  try{
+    const foundation=(await readFile(new URL('../server/migrations/001_foundation.sql',import.meta.url),'utf8')).replace(/\r\n/g,'\n');
+    const clients=(await readFile(new URL('../server/migrations/009_clientes_master_data.sql',import.meta.url),'utf8')).replace(/\r\n/g,'\n');
+    await db.exec('CREATE SCHEMA hml_contract;SET search_path=hml_contract,pg_catalog;'+['groups','empresas','profiles'].map(n=>canonicalTable(foundation,n)).join('\n')+canonicalTable(clients,'clientes'));
+    await db.exec(await readFile(new URL('../server/migrations/045_clientes_contatos_jsonb.sql',import.meta.url),'utf8'));await db.exec(sources.contactsNullCas);await db.exec(sources.legacyIdentity);
+    const column=(await db.query("SELECT udt_name AS type,is_nullable='YES' AS nullable,column_default AS default FROM information_schema.columns WHERE table_schema='hml_contract' AND table_name='clientes' AND column_name='contatos'")).rows[0];
+    const contactsConstraint=(await db.query("SELECT n.nspname AS schema,c.relname AS table,k.conname AS name,k.convalidated AS validated,pg_get_constraintdef(k.oid) AS definition FROM pg_constraint k JOIN pg_class c ON c.oid=k.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE k.conrelid='clientes'::regclass AND k.conname='clientes_contatos_array_limit'")).rows[0];
+    const legacyIndex=(await db.query("SELECT n.nspname AS schema,c.relname AS table,x.relname AS name,i.indisunique AS unique,i.indisvalid AS valid,i.indisready AS ready,pg_get_indexdef(x.oid) AS definition FROM pg_index i JOIN pg_class x ON x.oid=i.indexrelid JOIN pg_class c ON c.oid=i.indrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE x.oid='clientes_legacy_identity_uidx'::regclass")).rows[0];
+    snapshot={kind:'HML_CLIENTE_CONTRACT_METADATA',schema:'hml_contract',observedAt:'2026-11-15T00:00:00Z',receiptSha256:'b'.repeat(64),column,contactsConstraint,legacyIndex};
+  }finally{await db.close();}
+  const report=reviewHmlClienteContracts(snapshot,sources);assert.equal(report.column,'MATCHES_CURRENT_NULL_CAS');assert.equal(report.columnAction,'PRESERVE_NO_COLUMN_CHANGE_JUSTIFIED');assert.equal(report.contactsConstraint,'MATCHES_CANONICAL_DEFINITION');assert.equal(report.legacyIndex,'MATCHES_CANONICAL_DEFINITION');assert.equal(report.canApply,false);assert.equal(report.targetAttested,false);assert.equal(report.businessRowsRead,0);assert.equal(report.ddlExecuted,false);
+  for(const [change,field,status] of [
+    [s=>{s.column.nullable=false;},'column','REVIEW_EXISTING_NULL_CAS_CANDIDATE'],[s=>{s.column.default="'[]'::jsonb";},'column','REVIEW_EXISTING_NULL_CAS_CANDIDATE'],[s=>{s.column.type='text';},'column','BLOCKED_TYPE'],
+    [s=>{s.contactsConstraint=null;},'contactsConstraint','UNVERIFIED'],[s=>{s.contactsConstraint.schema='hml_foreign';},'contactsConstraint','BLOCKED_SCOPE'],[s=>{s.contactsConstraint.validated=false;},'contactsConstraint','BLOCKED_UNVALIDATED'],[s=>{s.contactsConstraint.definition+=' OR true';},'contactsConstraint','BLOCKED_DEFINITION'],[s=>{s.contactsConstraint.definition=s.contactsConstraint.definition.replace('200','201');},'contactsConstraint','BLOCKED_DEFINITION'],
+    [s=>{s.legacyIndex.table='other';},'legacyIndex','BLOCKED_SCOPE'],[s=>{s.legacyIndex.name='same_purpose_different_name';},'legacyIndex','BLOCKED_NAME'],[s=>{s.legacyIndex.unique=false;},'legacyIndex','BLOCKED_INDEX_STATE'],[s=>{s.legacyIndex.valid=false;},'legacyIndex','BLOCKED_INDEX_STATE'],[s=>{s.legacyIndex.ready=false;},'legacyIndex','BLOCKED_INDEX_STATE'],[s=>{s.legacyIndex.definition=s.legacyIndex.definition.replace('group_id','empresa_id');},'legacyIndex','BLOCKED_DEFINITION'],
+  ]){const changed=structuredClone(snapshot);change(changed);const result=reviewHmlClienteContracts(changed,sources);assert.equal(result[field],status);assert.equal(result.canApply,false);assert.equal(result.targetAttested,false);}
+  const incomplete={...snapshot,schema:null,observedAt:null,receiptSha256:null,contactsConstraint:null,legacyIndex:null};const partial=reviewHmlClienteContracts(incomplete,sources);assert.equal(partial.column,'MATCHES_CURRENT_NULL_CAS');assert.equal(partial.contactsConstraint,'UNVERIFIED');assert.deepEqual(partial.evidencePresent,{schema:false,time:false,receipt:false});assert.equal(partial.canApply,false);
+  assert.throws(()=>reviewHmlClienteContracts({...snapshot,canApply:true},sources),/HML_CLIENTE_METADATA_INVALID/);assert.throws(()=>reviewHmlClienteContracts(snapshot,{...sources,contactsNullCas:sources.contactsNullCas+'\n-- altered source'}),/HML_CANONICAL_SOURCE_CHANGED/);assert.throws(()=>reviewHmlClienteContracts(snapshot,{...sources,legacyIdentity:sources.legacyIdentity.replace('UNIQUE INDEX','INDEX')}),/HML_CANONICAL_SOURCE_CHANGED/);
+  assert.equal(JSON.stringify(report).includes('hml_contract'),false);assert.equal(JSON.stringify(report).includes('CREATE UNIQUE INDEX'),false);
+  const folder=await mkdtemp(path.join(tmpdir(),'hml-offline-contract-'));const file=path.join(folder,'metadata.json');
+  try{
+    await writeFile(file,JSON.stringify(snapshot));const result=JSON.parse(execFileSync(process.execPath,[fileURLToPath(new URL('../scripts/vps/hml-bootstrap.mjs',import.meta.url)),'--review-cliente-contracts',file],{encoding:'utf8',env:{PATH:process.env.PATH,NODE_ENV:'production',DATABASE_URL:'postgresql://forbidden.invalid/never'},timeout:5000}));assert.deepEqual(result,report);
+    await writeFile(file,JSON.stringify({password:'SYNTHETIC-DO-NOT-ECHO'}));assert.throws(()=>execFileSync(process.execPath,[fileURLToPath(new URL('../scripts/vps/hml-bootstrap.mjs',import.meta.url)),'--review-cliente-contracts',file],{encoding:'utf8',stdio:'pipe',timeout:5000}),err=>err.status===1&&String(err.stderr).includes('HML_CLIENTE_CONTRACT_REVIEW_FAILED')&&!String(err.stderr).includes('SYNTHETIC-DO-NOT-ECHO')&&String(err.stdout)==='');
+  }finally{await unlink(file);await rmdir(folder);}
 });

@@ -3855,6 +3855,58 @@
         "syntheticOnlyControls": 2,
         "providerOrTargetRbacProven": false
       }
+    },
+    "cliente_composed_contract": {
+      "reviewHead": "7f81cf19c1c644b9d87ce18d6968c8f726c698dc",
+      "status": "OFFLINE_COMPOSED_SOURCE_CONTRACT_REVIEW_IMPLEMENTED_TARGET_PENDING",
+      "candidatePins": [
+        {
+          "path": "server/schema-candidates/cliente_contatos_null_cas.sql",
+          "sha256": "3645227e5e622dfb1ee432157175ff41c0f18105b8b6720f8cbeeb40fc95320a",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/schema-candidates/cliente_legacy_identity.sql",
+          "sha256": "7ad80cecfdd1eed9b75fb478a0910f65cb57d13bd07e94abd75cd724405ae272",
+          "encoding": "raw Git blob UTF-8 LF"
+        }
+      ],
+      "tool": "scripts/vps/hml-bootstrap.mjs --review-cliente-contracts <private-metadata.json>",
+      "test": "tests/hml-vps-bootstrap.test.js: HML offline contract review",
+      "currentContract": {
+        "contacts": "jsonb NULL allowed, no default; NULL unknown, [] explicit clear; array constraint <=200",
+        "identity": "group_id/source_system/codigo_legado unique with original partial predicate; exact schema/table/definition/state required"
+      },
+      "historicalSource045AloneIsNotCurrentContract": true,
+      "historicalGuardedProposalDefaultArrayIsNotCurrentDelta": true,
+      "canApply": false,
+      "restoredHmlAttested": false,
+      "targetAttested": false,
+      "existingProposalSqlChanged": false,
+      "existingObjectsReclassifiedAsApplied": false,
+      "rowBackfillExecuted": false,
+      "validation": {
+        "focusedPass": 50,
+        "focusedFail": 0,
+        "focusedSkip": 0,
+        "sourcePinsVerifiedAgainstCanonicalSql": true,
+        "positiveMetadataCompiledFromCanonicalSqlInMemory": true,
+        "changedSourceRejected": true,
+        "scopeDefinitionIndexStateAndLimitChangesBlocked": true,
+        "partialMetadataNeverAttestsTarget": true,
+        "cliExercisedWithProductionEnvAndForbiddenDatabaseUrl": true,
+        "cliDoesNotStartApiOrConnectDatabase": true,
+        "secretShapedJsonRejectedWithoutEcho": true,
+        "normalStartHmlFunctionUnchanged": true,
+        "historicalPrivateObservationColumnMatchesCurrentNullCas": true,
+        "historicalConstraintAndIndexRemainUnverified": true
+      },
+      "remainingGates": [
+        "Historical column shape match is not current physical target/role/data proof",
+        "Fresh exact scoped metadata/index and constraint definitions/state; no recreation by name",
+        "Restored overlay and real principal/RBAC plus backup/restore/ack/reversal/review/window/authorization",
+        "New offline operator tool changes script packaged by future runtime kit; old e920 package remains immutable and no relabel/redeploy occurred"
+      ]
     }
   }
 }

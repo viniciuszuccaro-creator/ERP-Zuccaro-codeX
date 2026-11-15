@@ -1,10 +1,81 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const sha = /^[a-f0-9]{40}$/;
+
+// Offline comparison extracted from the private HML contract review, not a DB permission or DDL executor.
+const clienteSourcePins = {
+  contactsNullCas: '3645227e5e622dfb1ee432157175ff41c0f18105b8b6720f8cbeeb40fc95320a',
+  legacyIdentity: '7ad80cecfdd1eed9b75fb478a0910f65cb57d13bd07e94abd75cd724405ae272',
+};
+const contactsCheck = "CHECK (((contatos IS NULL) OR CASE WHEN (jsonb_typeof(contatos) = 'array'::text) THEN (jsonb_array_length(contatos) <= 200) ELSE false END))";
+const normalizeCatalog = value => typeof value === 'string' ? value.replace(/\s+/g, ' ').trim() : '';
+const exactKeys = (value, keys) => assert.ok(value && typeof value === 'object' && !Array.isArray(value)
+  && JSON.stringify(Object.keys(value).sort()) === JSON.stringify(keys.slice().sort()), 'HML_CLIENTE_METADATA_INVALID');
+
+export function reviewHmlClienteContracts(snapshot, canonicalSources) {
+  exactKeys(canonicalSources, ['contactsNullCas', 'legacyIdentity']);
+  for (const [key, expected] of Object.entries(clienteSourcePins)) {
+    assert.equal(typeof canonicalSources[key], 'string', 'HML_CANONICAL_SOURCE_REQUIRED');
+    assert.equal(createHash('sha256').update(canonicalSources[key].replace(/\r\n/g, '\n')).digest('hex'), expected, 'HML_CANONICAL_SOURCE_CHANGED');
+  }
+  exactKeys(snapshot, ['kind', 'schema', 'observedAt', 'receiptSha256', 'column', 'contactsConstraint', 'legacyIndex']);
+  assert.equal(snapshot.kind, 'HML_CLIENTE_CONTRACT_METADATA');
+  assert.ok(snapshot.schema === null || /^hml[0-9a-z_]+$/.test(snapshot.schema), 'HML_CLIENTE_SCOPE_INVALID');
+  assert.ok(snapshot.observedAt === null || (typeof snapshot.observedAt === 'string' && /Z$/.test(snapshot.observedAt) && Number.isFinite(Date.parse(snapshot.observedAt))), 'HML_METADATA_TIME_INVALID');
+  assert.ok(snapshot.receiptSha256 === null || /^[a-f0-9]{64}$/.test(snapshot.receiptSha256), 'HML_METADATA_RECEIPT_INVALID');
+  let column = 'UNVERIFIED';
+  if (snapshot.column !== null) {
+    exactKeys(snapshot.column, ['type', 'nullable', 'default']);
+    assert.equal(typeof snapshot.column.nullable, 'boolean');
+    assert.ok(typeof snapshot.column.type === 'string' && (snapshot.column.default === null || typeof snapshot.column.default === 'string'), 'HML_COLUMN_INVALID');
+    column = snapshot.column.type !== 'jsonb' ? 'BLOCKED_TYPE'
+      : snapshot.column.nullable && snapshot.column.default === null ? 'MATCHES_CURRENT_NULL_CAS' : 'REVIEW_EXISTING_NULL_CAS_CANDIDATE';
+  }
+  const scope = object => snapshot.schema !== null && object.schema === snapshot.schema && object.table === 'clientes';
+  let contactsConstraint = 'UNVERIFIED';
+  if (snapshot.contactsConstraint !== null) {
+    const object = snapshot.contactsConstraint;
+    exactKeys(object, ['schema', 'table', 'name', 'validated', 'definition']);
+    assert.equal(typeof object.validated, 'boolean');
+    contactsConstraint = !scope(object) ? 'BLOCKED_SCOPE' : object.name !== 'clientes_contatos_array_limit' ? 'BLOCKED_NAME'
+      : !object.validated ? 'BLOCKED_UNVALIDATED'
+        : normalizeCatalog(object.definition) === contactsCheck ? 'MATCHES_CANONICAL_DEFINITION' : 'BLOCKED_DEFINITION';
+  }
+  let legacyIndex = 'UNVERIFIED';
+  if (snapshot.legacyIndex !== null) {
+    const object = snapshot.legacyIndex;
+    exactKeys(object, ['schema', 'table', 'name', 'unique', 'valid', 'ready', 'definition']);
+    for (const key of ['unique', 'valid', 'ready']) assert.equal(typeof object[key], 'boolean');
+    const expected = `CREATE UNIQUE INDEX clientes_legacy_identity_uidx ON ${snapshot.schema}.clientes USING btree (group_id, source_system, codigo_legado) WHERE ((source_system IS NOT NULL) AND (codigo_legado IS NOT NULL))`;
+    legacyIndex = !scope(object) ? 'BLOCKED_SCOPE' : object.name !== 'clientes_legacy_identity_uidx' ? 'BLOCKED_NAME'
+      : !object.unique || !object.valid || !object.ready ? 'BLOCKED_INDEX_STATE'
+        : normalizeCatalog(object.definition) === expected ? 'MATCHES_CANONICAL_DEFINITION' : 'BLOCKED_DEFINITION';
+  }
+  return {
+    kind: 'PREPARATION_ONLY_HML_CLIENTE_CONTRACT_REVIEW', contract: 'CURRENT_NULL_CAS_200_AND_GROUP_LEGACY_IDENTITY',
+    sourcesVerified: true, column, contactsConstraint, legacyIndex,
+    columnAction: column === 'MATCHES_CURRENT_NULL_CAS' ? 'PRESERVE_NO_COLUMN_CHANGE_JUSTIFIED' : 'REVIEW_CANONICAL_CONTACTS_PATH',
+    evidencePresent: { schema: snapshot.schema !== null, time: snapshot.observedAt !== null, receipt: snapshot.receiptSha256 !== null },
+    forbiddenInferredActions: ['SET_NOT_NULL', 'SET_DEFAULT_EMPTY_ARRAY', 'BACKFILL_NULL_TO_EMPTY_ARRAY', 'RECREATE_INDEX_BY_NAME'],
+    canApply: false, targetAttested: false, businessRowsRead: 0, ddlExecuted: false,
+  };
+}
+
+function reviewClienteMetadataFile(file) {
+  assert.ok(typeof file === 'string' && path.isAbsolute(file), 'PRIVATE_METADATA_PATH_REQUIRED');
+  const stat = fs.lstatSync(file);
+  assert.ok(stat.isFile() && !stat.isSymbolicLink() && stat.size <= 256 * 1024, 'HML_METADATA_FILE_INVALID');
+  const snapshot = JSON.parse(fs.readFileSync(file, 'utf8'));
+  const canonicalSources = Object.fromEntries([
+    ['contactsNullCas', 'cliente_contatos_null_cas.sql'], ['legacyIdentity', 'cliente_legacy_identity.sql'],
+  ].map(([key, name]) => [key, fs.readFileSync(new URL(`../../server/schema-candidates/${name}`, import.meta.url), 'utf8')]));
+  return reviewHmlClienteContracts(snapshot, canonicalSources);
+}
 
 // Portable form of the recovered private HML bootstrap; app/Auth/DB remain canonical.
 export function validateHmlConfig(value, now = Date.now()) {
@@ -138,8 +209,18 @@ export async function startHml(file, apiRoot) {
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  startHml(process.argv[2], process.argv[3]).catch(() => {
-    console.error('HML_STARTUP_PREFLIGHT_FAILED');
-    process.exitCode = 1;
-  });
+  if (process.argv[2] === '--review-cliente-contracts') {
+    try {
+      assert.equal(process.argv.length, 4);
+      console.log(JSON.stringify(reviewClienteMetadataFile(process.argv[3])));
+    } catch {
+      console.error('HML_CLIENTE_CONTRACT_REVIEW_FAILED');
+      process.exitCode = 1;
+    }
+  } else {
+    startHml(process.argv[2], process.argv[3]).catch(() => {
+      console.error('HML_STARTUP_PREFLIGHT_FAILED');
+      process.exitCode = 1;
+    });
+  }
 }

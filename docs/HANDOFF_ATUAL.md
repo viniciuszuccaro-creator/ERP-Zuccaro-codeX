@@ -1,3 +1,61 @@
+## Comparador composto Cliente: metadados offline, sem DDL inferida (2026-11-15)
+
+Retomada NATIVA16:15:34Z Casa,7f81cf19/CI7183 local=remoto/limpo,AGENTSsemDelta,
+semwriter/travaalheia;reserva594/6897548279/travaCreateNew propria. Pesquisa previa
+achou extratores privados existentes e contratosCASCANONICOS; nao criou outro
+modulo/endpoint/ERP. Portou a comparacao para ferramenta EXISTENTE
+scripts/vps/hml-bootstrap.mjs e seu modo EXCLUSIVAMENTEoffline:
+`node scripts/vps/hml-bootstrap.mjs --review-cliente-contracts <arquivo-absoluto-privado.json>`.
+Entrada pequena JSONdeMETADADOS foraGit, arquivo regular nao-symlink; nenhuma
+conexaoDB/API,perfil,token ou dado de cliente e consultado. Saida naoecoaschema,
+definicoesSQL,IDs ouconteudoprivado;JSONcomcamposcredenciais e recusado semeco.
+O fluxo normalstartHml foi comparado ao blobanterior:corpoIDENTICO. Flagoffline
+naoiniciaAPI nemleconfiguracaoDB,mesmocomNODE_ENVproduction/DATABASE_URLinvalida.
+
+Expectativa COMPOSTA:cliente_contatos_null_cas.sql ecliente_legacy_identity.sql
+originais com hashescanonicos verificados,nao045isolada/default[]/NOTNULL. Definicoes
+esperadas sao as produzidas emPGlite por SQLCANONICO,comparacaoestrita(sóespacos)
+deCHECK200 e indiceUNIQUEGrupo/source_system/codigo_legado/predicadooriginais.
+Nome deobjeto SO nao aprova: schema/tabela/nome/validado/unique/valid/ready e
+DEFINICAO conferidos. Alias/outroescopo/indiceigualnomeoucolunasdiferentes/ORtrue/
+limite201 bloqueiam;fonteSQLalterada bloqueia hash,naorebaselineautomatico.
+Metadadosincompletos ficamUNVERIFIED,naoABSENT nemREADY. Todoscaminhos retornam
+canApplyfalse/targetAttestedfalse;nenhumDDLgerado/executado e0businessRowsRead.
+
+Consumidor REAL:extratorprivadoexisting-five recebeu modo --composed queusa o
+MESMOexport;originalscript/baselineJSONhistoricos preservados. CLIpublico tambem
+executado com observacaoprivadaHISTORICA14/11:contatosjsonb/nullable/defaultNULL
+MATCHES_CURRENT_NULL_CAS, PRESERVE_NO_COLUMN_CHANGE_JUSTIFIED;constraint/indice
+UNVERIFIED poisnaohaescopo/definicoeslocaiscomprovados. Nao inventou schema/nome,
+naorecopiouVPS/HD nemacessobusinessdata. Canonical-fiveCOMPOSTO privado inclui
+NULLCAS;arquivooriginal045-base eSQLguardadohistorico24ca71c2/8f30eda0mantidos.
+Nao usar terceira clausefuturedefault[] como reconciliacaoatual. Snapshotvelho
+nao atestaestadoatual,role/frescor/restore/backup/aceite;proximo passo efresco.
+
+50focaisPASS0skip/18goldens,audit/lintdirecionado/diffcheckPASS;CIporSHA na594.
+Testepositivo compilacatalogo deSQLreal;contraprovas deescopo/definicao/flags/
+fonte/NULLsemantica/entradaextra/CLIsemDB eeco desegredos.9reviewsanteriores
+naoalteradas,225objetos/101clausulas/18pinsoriginais intactos,
+124diferidosnaopromovidos. Nova reviewcliente_composed_contract,canApplyfalse.
+
+IMPACTOARTEFATO:novo CODIGODEFERRAMENTAOPERADORA,nao apenasMarkdown/teste.
+Packagercopia hml-bootstrap parafuturokit; este sourcechanged precisa pins/revisao
+proprios sevierasercopiado. API/web src/server semdelta, compilados e920 validos;
+KITe920preparadoIMUTAVEL NAOrebuild/relabel/transfer/deploy. Nao alegar que tool
+novo esteja naHML/d054 nem no kitold. TestesglobaisWindows/POSIXnao relaxados;
+CI LinuxcompletadesteSHAfecha oschecks.0VPS/DDLreal/grants/import/deploy.
+
+PROXIMO EXECUTAVEL:prechecks deMETADADOS SOMENTELEITURA noMESMOcanalVPSautorizado:
+identidadeAPI/web/container/imagem/config/cluster/role/schema/lease/espaco e
+CHECK/indiceCliente exatos(esquema/tabela/definicao/estado),sem consultasdeclientes.
+Usarhelpers/contratos existentes eguardarJSONprivado paraestecomparador;naoinferir
+DDL nem executar todosmigrates/journalvazio. SSHchavesrecusadas naorepetir;
+consoleweb/sessaoautorizadaouintervencaopontual,semcredenciais/workaround.
+Commetadadosfrescos, produzir deltaMINIMOrevisavel/overlayrestaurado antesjanela/
+backup/restore/ack/reversao/autorizacaoespecifica. Seunicoimpedimento foracesso,
+registrarexatamente qualsessao faltou eavancarindependenteexistente,semensaios
+artificiais/novomanual/polling. HMLtabelaUNICA10pendencias continuavigente.
+
 ## Compensador044 existente e bootstrap042: composicao canonica (2026-11-15)
 
 Retomada NATIVA15:50:33Z,9514db2d/CI7182 local=remoto/limpo,AGENTSsemDelta,

@@ -1,3 +1,16 @@
+## ClienteHML: comparador offline de contrato COMPOSTO entregue (15/11/2026)
+
+Toolhml-bootstrap --review-cliente-contracts comhashesNULLCAS/identitycanonicos,
+CHECK200/indiceexatos+scope+flags;metadadosdesconhecidosUNVERIFIED,canApplyfalse
+sempre. Consumidorprivadoexistente eCLI executados:observacaoHISTORICAtemcoluna
+jsonb/nullable/defaultNULL correta paraCAS,naorequerNOTNULL/[]porinferência;
+constraint/indexaindanaoverificados.50focais0skip/18goldens/audit/lint/diffcheck,
+CIporSHA594.9reviews/225objetos/101clausulas/SQLguardado preservados.
+NOVOcodigotooloperador;startHmlnormalIDENTICO,API/web unchanged. Kit e920imutavel,
+naorebuild/relabel/transfer/deploy.0VPS/SQLreal/dadosreais/import.
+Proximo precheckMETADADOSfresh porcanalautorizado,naorepetirSSHrecusado;fonte+
+overlay/restauracao/privilégios/backup/ack/reversao/janela/aceiteseguemcondicoes.
+
 ## Compensador044 reutilizado; bootstrap042 com pais verdadeiros (15/11/2026)
 
 Corrigida classificacao:044 JA temcandidatocanonico7ae5bcd9/testesPGlitePGpassados
