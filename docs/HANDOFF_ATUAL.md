@@ -22,6 +22,12 @@ Os8incluemDOIS WITHhistoricos038 que escrevem dados, nao classificados como
 comentarios/inocuos. Original225/101/18pins,SQLguardados e124DEFER inalterados;
 nenhumfoipromovidoAPPLIED,naonovaMigration/nem124novaslacunas.
 
+Fechamento:CI7187 frontendfalhou em marcadorUTF8 do testeantigounidades_medida,
+corrompido pela edicao local;naodefeitoSQL/infra. Contraprovalocal reproduziu
+codeEnd=-1;prefixo INTEGRAL do teste restaurado dosbytes9eca84cf,sem alterar
+assert/fonte/expectativas. Depois2focaisPASS0FAIL0SKIP(unidades+overlay),lint/diff
+PASS;novoSHA/CI exigidos,naoreruncego nemdeclarar7187verde.
+
 Teste novo:1focalPASS0FAIL0SKIP, positivos/negativos de fonte/matriz/status/pins,
 WITHDML,preservar8,tamper/flagsdeapply,referenciasnaoaprovam eCLIsemDB/semecho.
 Antes faltavaexport:novafuncionalidade depreparo,naoachadoproduto recemdescoberto.

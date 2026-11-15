@@ -35,7 +35,7 @@ for (const cfg of simpleRelationCases) {
     const relationSql = simple.slice(start, end);
     const codes = sources['038_cadastros_codigo_registro.sql'];
     const codeStart = codes.indexOf(`ALTER TABLE ${cfg.table} ADD COLUMN`);
-    const codeEnd = cfg.sigla ? codes.indexOf('-- grupos_produto jÃƒÂ¡ tem codigo')
+    const codeEnd = cfg.sigla ? codes.indexOf('-- grupos_produto já tem codigo')
       : cfg.table === 'setores_atividade' ? codes.indexOf('-- unidades_medida') : codes.indexOf(';', codeStart) + 1;
     assert.ok(codeStart >= 0 && codeEnd > codeStart);
     const additions = codes.slice(codeStart, codeEnd);
