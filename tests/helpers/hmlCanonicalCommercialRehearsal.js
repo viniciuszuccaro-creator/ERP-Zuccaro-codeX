@@ -378,3 +378,61 @@ test('consultas039040: preco escopado e CRM com policy/sequence originais soment
     t.diagnostic('039/040 original rows/policy/sequence,5 controls/rollback in memory; no042/043/real actor/RBAC/restored target/multi-session concurrency/import/deploy claim.');
   }finally{await db.close();}
 });
+test('042 e compensador044 existentes: composicao com pais017 verdadeiros e atomicidade', async t=>{
+  const {matrix,review,sources}=await loadCanonicalRehearsalSources('bootstrap_compensador');assert.equal(matrix.canApply,false);assert.equal(review.newCompensatorOrMigrationCreated,false);
+  const candidate=sources['pedido_idempotency_pair.sql'];assert.ok(candidate);assert.doesNotMatch(candidate,/INSERT\s+INTO\s+schema_migrations/i);
+  const {PGlite}=createRequire(new URL('../../server/package.json',import.meta.url))('@electric-sql/pglite');
+  const g1='11111111-1111-4111-8111-111111111111',g2='22222222-2222-4222-8222-222222222222';
+  const e1='33333333-3333-4333-8333-333333333333',e2='44444444-4444-4444-8444-444444444444';
+  const key='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',otherKey='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+  for(const dirty of [true,false]){
+    const db=new PGlite();try{
+      await db.exec("CREATE TABLE public.keep_pair_review(id integer PRIMARY KEY,label text); INSERT INTO public.keep_pair_review VALUES(1,'SYNTHETIC_KEEP'); CREATE INDEX keep_pair_label ON public.keep_pair_review(label)");const keep=(await db.query('SELECT * FROM public.keep_pair_review')).rows;
+      await installCanonicalCommercialParents(db,sources,'pair_review_synthetic');
+      for(const table of ['audit_logs','integration_events'])await db.exec(canonicalTable(sources['001_foundation.sql'],table));
+      await db.exec(sources['004_tenant_integrity.sql']);await db.exec(sources['002_rls_foundation.sql']);await db.exec(sources['042_auth_bootstrap_select.sql']);
+      await db.query("INSERT INTO groups(id,nome_do_grupo) VALUES($1,'SYNTHETIC A'),($2,'SYNTHETIC B')",[g1,g2]);await db.query("INSERT INTO empresas(id,group_id,razao_social) VALUES($1,$2,'SYNTHETIC A'),($3,$4,'SYNTHETIC B')",[e1,g1,e2,g2]);
+      const [a,b]=await seedCanonicalCommercialContexts(db,g1,g2,e1,e2);await db.exec('SET CONSTRAINTS ALL IMMEDIATE');
+      const auth='cccccccc-cccc-4ccc-8ccc-cccccccccccc',ownerAuth='dddddddd-dddd-4ddd-8ddd-dddddddddddd';
+      await db.query('UPDATE profiles SET auth_user_id=$1 WHERE id=$2',[auth,a.profile]);
+      const ownerProfile=(await db.query("INSERT INTO profiles(group_id,auth_user_id,email) VALUES($1,$2,'synthetic-owner@example.invalid') RETURNING id",[g1,ownerAuth])).rows[0].id;
+      const e3=(await db.query("INSERT INTO empresas(group_id,razao_social) VALUES($1,'SYNTHETIC GROUP BRANCH') RETURNING id",[g1])).rows[0].id;
+      await db.exec('CREATE ROLE pair_auth_reader NOLOGIN NOSUPERUSER NOBYPASSRLS; GRANT USAGE ON SCHEMA pair_review_synthetic TO pair_auth_reader; SAVEPOINT no_bootstrap_grant; SET LOCAL ROLE pair_auth_reader');
+      await assert.rejects(db.query('SELECT id FROM profiles'),err=>err.code==='42501');await db.exec('ROLLBACK TO SAVEPOINT no_bootstrap_grant; RELEASE SAVEPOINT no_bootstrap_grant; GRANT SELECT ON profiles,groups,empresas TO pair_auth_reader');
+      const readScope=async(id,expectedIds=null)=>{
+        await db.query("SELECT set_config('app.auth_user_id',$1,true)",[id]);await db.exec('SET LOCAL ROLE pair_auth_reader');const counts={};for(const table of ['profiles','groups','empresas']){const rows=(await db.query(`SELECT id FROM ${table} ORDER BY id`)).rows;counts[table]=rows.length;if(expectedIds)assert.deepEqual(rows.map(r=>r.id),expectedIds[table].slice().sort());}await db.exec('RESET ROLE');return counts;
+      };
+      assert.deepEqual(await readScope(''),{profiles:0,groups:0,empresas:0});assert.deepEqual(await readScope('ffffffff-ffff-4fff-8fff-ffffffffffff'),{profiles:0,groups:0,empresas:0});assert.deepEqual(await readScope(auth,{profiles:[a.profile],groups:[g1],empresas:[e1]}),{profiles:1,groups:1,empresas:1});assert.deepEqual(await readScope(ownerAuth,{profiles:[ownerProfile],groups:[g1],empresas:[e1,e3]}),{profiles:1,groups:1,empresas:2});
+      await db.exec('SAVEPOINT bootstrap_write; SET LOCAL ROLE pair_auth_reader');await assert.rejects(db.query("UPDATE profiles SET role='admin'"),err=>err.code==='42501');await db.exec('ROLLBACK TO SAVEPOINT bootstrap_write; RELEASE SAVEPOINT bootstrap_write');
+      await db.exec('SAVEPOINT revoked_bootstrap');await db.query('UPDATE profiles SET ativo=false WHERE id=$1',[a.profile]);assert.deepEqual(await readScope(auth),{profiles:0,groups:0,empresas:0});await db.exec('ROLLBACK TO SAVEPOINT revoked_bootstrap; RELEASE SAVEPOINT revoked_bootstrap');
+      await db.exec('SAVEPOINT inactive_bootstrap');await db.query("UPDATE empresas SET status='Inativa' WHERE id=$1",[e1]);assert.deepEqual(await readScope(auth),{profiles:1,groups:0,empresas:0});await db.exec('ROLLBACK TO SAVEPOINT inactive_bootstrap; RELEASE SAVEPOINT inactive_bootstrap');
+      await db.exec('SAVEPOINT bad_bootstrap_context');await db.query("SELECT set_config('app.auth_user_id','invalid-uuid',true)");await db.exec('SET LOCAL ROLE pair_auth_reader');await assert.rejects(db.query('SELECT id FROM profiles'),err=>err.code==='22P02');await db.exec('ROLLBACK TO SAVEPOINT bad_bootstrap_context; RELEASE SAVEPOINT bad_bootstrap_context');
+      await db.exec('SAVEPOINT negative_bootstrap_policy; ALTER POLICY profiles_auth_bootstrap_select ON profiles USING(true)');assert.equal((await readScope('')).profiles,3);await db.exec('ROLLBACK TO SAVEPOINT negative_bootstrap_policy; RELEASE SAVEPOINT negative_bootstrap_policy');assert.deepEqual(await readScope(''),{profiles:0,groups:0,empresas:0});
+      await db.exec(sources['044_pedidos_idempotencia_direta.sql']);
+      const insert=(number,k,fingerprint,ctx=a)=>db.query("INSERT INTO pedidos(group_id,empresa_id,numero,cliente_empresa_id,condicao_pagamento_id,vendedor_id,tipo_operacao,data_entrega_solicitada,subtotal,total,idempotency_key,payload_fingerprint) VALUES($1,$2,$3,$4,$5,$6,'RETIRADA','2030-01-01',0,0,$7,$8) RETURNING *",[ctx.group,ctx.company,number,ctx.link,ctx.condition,ctx.profile,k,fingerprint]);
+      await insert('00000001',null,null);await insert('00000002',key,dirty?null:'a'.repeat(64));await db.exec('SET CONSTRAINTS ALL IMMEDIATE; COMMIT'); // Candidate has its OWN BEGIN/VALIDATE/COMMIT; never nest it in a disposable savepoint.
+      await db.exec('SET search_path TO pair_review_synthetic,pg_catalog'); // SET LOCAL from fixture ended at COMMIT; pin the candidate session to the same exact isolated schema.
+      const rowsBefore=(await db.query('SELECT * FROM pedidos ORDER BY numero')).rows;
+      const indexesBefore=(await db.query("SELECT indexname,indexdef FROM pg_indexes WHERE schemaname='pair_review_synthetic' AND tablename='pedidos' ORDER BY indexname")).rows;
+      if(dirty){
+        await assert.rejects(db.exec(candidate),err=>err.code==='23514'&&err.message.includes('pedidos_idempotency_pair_complete_check'));await db.exec('ROLLBACK');
+        assert.equal((await db.query("SELECT count(*)::integer n FROM pg_constraint WHERE conrelid='pedidos'::regclass AND conname='pedidos_idempotency_pair_complete_check'")).rows[0].n,0);
+        assert.equal((await db.query('SELECT payload_fingerprint FROM pedidos WHERE idempotency_key=$1',[key])).rows[0].payload_fingerprint,null);
+      }else{
+        await db.exec(candidate);assert.equal((await db.query("SELECT convalidated FROM pg_constraint WHERE conrelid='pedidos'::regclass AND conname='pedidos_idempotency_pair_complete_check'")).rows[0].convalidated,true);
+        await db.exec('BEGIN');
+        const reject=async(number,k,fingerprint,code)=>{await db.exec('SAVEPOINT pair_reject');await assert.rejects(insert(number,k,fingerprint),err=>err.code===code);await db.exec('ROLLBACK TO SAVEPOINT pair_reject; RELEASE SAVEPOINT pair_reject');};
+        await reject('00000003',otherKey,null,'23514');await reject('00000003',null,'b'.repeat(64),'23514');await reject('00000003',otherKey,'bad','23514');await reject('00000003',key,'a'.repeat(64),'23505');
+        assert.equal((await insert('00000003',otherKey,'b'.repeat(64))).rows.length,1);assert.equal((await insert('00000004',null,null)).rows.length,1);
+        assert.equal((await insert('00000001',key,'a'.repeat(64),b)).rows.length,1);
+        const thirdLink=(await db.query('INSERT INTO cliente_empresas(group_id,empresa_id,cliente_id) VALUES($1,$2,$3) RETURNING id',[g1,e3,a.client])).rows[0].id;await db.query('INSERT INTO condicao_pagamento_empresas(group_id,empresa_id,condicao_pagamento_id) VALUES($1,$2,$3)',[g1,e3,a.condition]);assert.equal((await insert('00000001',key,'a'.repeat(64),{...a,company:e3,link:thirdLink})).rows.length,1);
+        await db.exec('SAVEPOINT negative_pair_guard; ALTER TABLE pedidos DROP CONSTRAINT pedidos_idempotency_pair_complete_check');assert.equal((await insert('00000005','eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee',null)).rows.length,1);await db.exec('ROLLBACK TO SAVEPOINT negative_pair_guard; RELEASE SAVEPOINT negative_pair_guard');
+        await reject('00000005','eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee',null,'23514');await db.exec('SET CONSTRAINTS ALL IMMEDIATE; ROLLBACK');
+      }
+      assert.deepEqual((await db.query('SELECT * FROM pedidos ORDER BY numero')).rows,rowsBefore);assert.deepEqual((await db.query("SELECT indexname,indexdef FROM pg_indexes WHERE schemaname='pair_review_synthetic' AND tablename='pedidos' ORDER BY indexname")).rows,indexesBefore);assert.deepEqual((await db.query('SELECT * FROM public.keep_pair_review')).rows,keep);assert.equal((await db.query("SELECT count(*)::integer n FROM pg_indexes WHERE schemaname='public' AND indexname='keep_pair_label'")).rows[0].n,1);
+      assert.equal((await db.query("SELECT count(*)::integer n FROM pg_constraint WHERE conrelid='pedidos'::regclass AND conname='pedidos_idempotency_pair_check'")).rows[0].n,1);
+      // The entire fixture, including committed synthetic setup/roles, is discarded by closing this memory-only engine.
+    }finally{await db.close();}
+  }
+  t.diagnostic('Existing7ae compensator reused, no new migration/fix; real017/001/002/042 source composition in memory, atomic dirty rollback and clean validation. Not operational actor/provider/RBAC/restored HML or apply permission.');
+});

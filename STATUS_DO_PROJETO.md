@@ -1,3 +1,14 @@
+## Compensador044 reutilizado; bootstrap042 com pais verdadeiros (15/11/2026)
+
+Corrigida classificacao:044 JA temcandidatocanonico7ae5bcd9/testesPGlitePGpassados
+CI7182. Nao criou050 nemalterouSQL/044. Nova COMPOSICAO com017paisreais e0015tabelas/
+002042:dirtyreverteALTER/preservalinha;cleanVALIDATEpassa/preservaIDsdadosindices;
+roleSEMBYPASSsintetica/IDsescopados/revogacao/denies/2controls.49focais0skip/18goldens/
+audit/lintdirecionado/diffcheck;CIporSHA594.8reviews/225objetos/101clausulas/SQL
+intactos,canApplyfalse.0dadosreais/VPS/import/deploy;runtimee920imutavel.
+Proximo043/045reutilizarcandidatoslegacyeNULLCAS/testesatuais;naoimporNOTNULL/[]
+baseado045isolada. ForaMigrador/aplicacaoHMLseguemgateespecifico,naoaceiteporCI.
+
 ## Preco039/CRM040: fechamento de fonte com policy e sequence (15/11/2026)
 
 Orcamento18colunas/precoNULLopcional/tenantvinculoativo preservado;CRM44colunas/

@@ -1,3 +1,62 @@
+## Compensador044 existente e bootstrap042: composicao canonica (2026-11-15)
+
+Retomada NATIVA15:50:33Z,9514db2d/CI7182 local=remoto/limpo,AGENTSsemDelta,
+semwriter/travaalheia;reserva594/6897238694/travaCreateNewpropria.
+CORRECAO DO CHECKPOINT ANTERIOR: a lacunaSQLNULLda044 JA tinha compensacao
+canonica publicada7ae5bcd9:server/schema-candidates/pedido_idempotency_pair.sql.
+O registro anterior tratou indevidamente como correcao de codigo ainda ausente.
+Pesquisa de equivalentes/registro achou candidato+testesPGlite/PostgreSQL e
+historicoHANDOFF;NAO criou050/migration/modulo equivalente,NAO alterou044 nem
+copiouSQLprivada.045-049privadasforaMigrador preservadas;refs main/594/595/596
+conferidas.344/6897107360 e594/6897059707 conciliadas594/6897215262.
+
+Reutilizou provas EXISTENTES doCI7182/backend132863303359 com linhasPASSexplicitas:
+Auth042ok28/compensadorengineok451/AuthbootstrapPGok2/compensadorPGok5. Provider e
+dados desses testes sao sinteticos;LOGINrealrestrito doPGisolado!=sessao realHML.
+Nao rerodou estas suites isoladas sem delta. Nova cobertura e COMPOSICAO:
+candidato EXATO com017/paiscanonicos emvezdeTEMPtableminima, e002042sobre001
+verdadeiras(groups/empresas/profiles/audit_logs/integration_events)+003004.
+LoaderSQLexistente recebeu SOMENTEallowlistexata docandidato,semabrirpathsgerais.
+
+EmduasbasesPGliteMEMORIAsemURL, instala pais017/010DDLsemUPDATEhistorico efixtures
+sinteticas;002RLS+042policiesORIGINAIS. RoleNOLOGIN/NOSUPERUSER/NOBYPASSRLS,
+semSELECTnega42501;vazio/desconhecido0;perfilEmpresa/Grupo retornam IDsEXATOS
+permitidos,writeobjectprivilege42501;revogacao0;EmpresaInativa profiles1/groups0/
+empresas0 conforme042;UUIDinvalido22P02. Alargarpolicyprofiles deixa3visiveis com
+identidadevazia,rollback restaura0. Nao provaassinaturaSupabase/permissaoapp.
+
+Fixturecompleta e COMMITADA antes candidato, pois ele tem PROPRIOBEGIN/VALIDATE/
+COMMIT. Datasetdirty:044ORIGINAL aceita key-onlyNULLfp; candidato integral recusa
+23514 eROLLBACK reverteTODOALTER, constraintnova ausente, rowinvalidopreservado.
+Datasetclean:ambosNULLlegado+parvalido permanecem INTEGROS, candidatoCOMMITpassa,
+constraintnova convalidatedtrue,044constraintoriginal+indexes preservados.
+Key-only/fp-only/malformadonegam23514,duplicidade23505;paresvalidos/legadosNULL e
+scopesoutroGrupo/Empresa funcionam pelosguards017reais. Removerconstraintnova
+emsavepoint fazkey-onlypassar,rollback devolvenegativa. Semdeletar/repararlinha,
+preencherfp/inventarfingerprintreal/renumerar/reativar. Fixturesdescartadas ao
+fecharmemoria. Erroinicial42P01doNOVOteste veio deSETLOCALsearch_path terminado
+noCOMMITfixture; corrigiu pinDESSASESSAOisolada,semalterarSQLcandidato/bypass.
+
+49focaisPASS0skip/18goldens,audit/lintdirecionado/diffcheckPASS;CIporSHA na594.
+MatrizSOreviewbootstrap_compensador com18pinsSQL+4pinsdetestes/reusoevidencia;
+8reviewsanteriores/225objetos/101clausulas/18pinsoriginais/SQLguardado intactos,
+124diferidosNAOpromovidos/canApplyfalse. Main379/helper438. NenhumSQL/migration/
+API/web/runtime alterado;reusar e920/CI7176/pacoteimutavel,NAOrebuild/relabel.
+0VPS/DBreal/dadosreais/grantsreais/import/deploy. CompensadorCANDIDATOforaMigrador,
+naoimplantado;alvo/duplicados/pairs existentes/backup/restore/janela precisamgate.
+
+CONTRATOS A CONCILIAR A SEGUIR (pesquisaANTESdenovoSQL/testerepetido):045 e
+server/schema-candidates/cliente_contatos.sql+cliente_contatos_null_cas.sql JA
+coexistem;CAS atual define NULLdesconhecido/defaultNULL/limite200,naopreencher[]
+nemimporNOTNULLporque045historicausavaoutrodefault. Ha tambem candidato
+cliente_legacy_identity.sql,subconjunto043comguarddeindice/duplicados;pesquisar
+provasexistentes antesdeclararcorrecaoausente. Proximo: reconciliar043/045 e
+candidatosatuais contra8relacoespreservadas/matriz,nao aplicarporjournalvazio.
+Reavaliar propostahistoricaguardadaexisting-five que contemdefault[]:hashmantido,
+NAO e deltaautorizadoparaCAS atual. TabelaUNICA10pendencias abaixo atualizada
+paraessecontrato;dados/NULL/[]/extras/IDs persistem. Source42memoria e candidato44
+preparado NAO sao overlayrestaurado/atorreal/RBAC/backup/restore/ack/deploy.
+
 ## Preco039 e CRM040: linhas/policy/sequence provados em memoria (2026-11-15)
 
 Retomada NATIVA15:28:33Z Casa,078b485d/CI7181 local=remoto/limpo,AGENTSsemDelta,
@@ -149,7 +208,7 @@ identidades observadas historicamente NAO sao declaradas frescas nesta retomada.
 | Codigo/revisao | e920/CI7176; 12cenarios Reactcompostos, pacote PUBLISHED_CLEAN | Revisao independente solicitada594, ainda sem parecer; revisar exatamente delta3componentes/backend6arquivos contraHMLd054, nao reabrir provas estaveis | Se nao houver revisor, definir aceite/revisor antes de publicar; autorrevisao nao vira independente |
 | Pacote | API/web e920 iguais;2216arquivos/17887136bytes;filesSha077bb96a16d80278d68ab3083eec003085326e6710a525161dd3b6690f9d4269 | Reutilizar diretorio privado runtime-e92045a0-candidate; preparar arquivo/manifesto somente para canal autorizado, ainda NAO transferido/deploy | Transferencia nova e920 distinta da81; usar alcance aprovado, nunca repetir81 |
 | Schema/dependencias | 8relacoes preservadas comparadas;12ausentes,225objetos/101clausulas guardadas; fontes simples/produto/041relacao/016 em memoria | 017/041/039/040fechadosSOemmemoria;fechar042/043/044/045/customcontrols; comparar overlay na copia restaurada; manter RAISE+ROLLBACK ate revisao | DDL exata ainda nao pronta: nao solicitar autorizacao generica nem aplicar34migrations/journalvazio |
-| Contatos045/dados existentes | coluna atual nullable/defaultNULL;fonte querNOTNULL/default[];extras/custompolicies preservados | Auditar somente alcance autorizado via ator/caminho canonico antes de NOTNULL; distinguir ausencia real de naoimportado, sem inventar[] | Qualquer conciliacao/escrita precisa lote/semantica comprovados; leitura nao autoriza backfill |
+| Contatos045/CAS atual | nullable/defaultNULL observado;045historica difere, mas candidato null_cas exige NULLdesconhecido/defaultNULL/limite200;extras/custompolicies preservados | Conciliar045+candidatos+API/testesatuais;verificarconstraintEXATA/escopo/definicao;naoimporNOTNULL/default[] ouinventarbackfill | Somente alteracaorevisada/scopeautorizado;NULLnaoeerroautomatico nem[]inventado |
 | Identidade/destino | HML ultima observada d054 e metadados privados14/11; operacional separado | Revalidar confighash/owner/mode/mount/container/image/cluster/DB/role/schemaOID/ator/Grupo e espaco>=20GiB+reserva usando helper existente no canal privado | Nenhuma alteracao de permissao/host permitida para contornar falha; se canal expirar, intervencao pontual identificada |
 | Menor privilegio | RLS/forceRLS e controles existentes observados; role sintetica041 so prova policy em memoria | Comparar owners/security/search_path/policies/indexes/triggers do destino; testar principal real semBYPASS como autorizacao, RBAC explicito/contexto | Grants operacionais minimos somente se contrato especifico revisado/autorizado, nao promoveradmin |
 | Backup atualizado | helperHML SHAa803c07d... e timer/servico existentes; sucesso de timer isolado nao basta | Apos pins/espaco/ausenciawriter, executar helperHML existente sob lease compativel e conferir dump/manifests/receipt fresco; nunca forjar leasebackup-retention | Somente backup no alcance existente; nenhuma restauracao sobre base atual |

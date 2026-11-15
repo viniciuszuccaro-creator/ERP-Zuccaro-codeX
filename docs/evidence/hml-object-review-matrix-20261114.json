@@ -3694,6 +3694,167 @@
         "legacyTextIdsLeadingZeroCodeAndExactDecimalPreserved": true,
         "originalRowsAndIndexPreservedAfterRollback": true
       }
+    },
+    "bootstrap_compensador": {
+      "reviewHead": "9514db2dad0725dad79312f23219b94e62caefee",
+      "status": "EXISTING_042_AND_044_COMPENSATOR_TRUE_PARENT_COMPOSITION_REHEARSAL_TARGET_PENDING",
+      "sourcePins": [
+        {
+          "path": "server/migrations/001_foundation.sql",
+          "sha256": "857c9e37c237a42e1bda425903e5ccbb7bac4d762829d48e1738ea2913d95d5f",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/migrations/002_rls_foundation.sql",
+          "sha256": "4d0dd05c5380e57e1c328428ce223b6b1dff8b59b42daf3203f8c26358aed1be",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/migrations/003_marcas_pilot.sql",
+          "sha256": "886715dead23f37a752be8f9973b942d968c8ab15feecb42a45eda07d4b5d43c",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/migrations/004_tenant_integrity.sql",
+          "sha256": "c64cb2cf172a591264834a126a2d0afd15e963d98d4a95ecc8ebabb60aca1c04",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/migrations/005_cadastros_simples.sql",
+          "sha256": "e754793c4ce65f99e06a7216c365812c20f50af96fd6d54adf6f002e76f02c20",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/migrations/006_produtos_base.sql",
+          "sha256": "0111511d0d6354222f48e29f7596cd137f851a9208e79baad36911bd344f9a58",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/migrations/009_clientes_master_data.sql",
+          "sha256": "24406cc992094edab8ffeb1150ead7fb61581a247ec547b47e3ee4c6e0417842",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/migrations/010_cliente_empresas_comercial.sql",
+          "sha256": "ed8621a4ebbd12eea3613acb88d2fde0b4fea0abcb5701c6284cfcc51ce47577",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/migrations/011_cliente_locais.sql",
+          "sha256": "357f9eafc874dc3bcd8c5d78a050d9b5e37299ca85017ba088213473862afbc3",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/migrations/012_obras.sql",
+          "sha256": "9b3ad7126d9fe112c7a9739767a8d86641a36fbe7587b9cb58a8206735f3174b",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/migrations/013_tabelas_preco.sql",
+          "sha256": "a8eeefac1a0b9457f524e3e4bafe46112b02d879f36f81180dc343fe777f0882",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/migrations/014_condicoes_pagamento.sql",
+          "sha256": "e650cf385f7dff36d96f82a1aeaa95cfac1a2e6526ccc766e6325d375c4cb6a6",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/migrations/015_condicoes_pagamento_hardening.sql",
+          "sha256": "1bc4954860c84e3fbffb02e89e18382347b588cf0b8d706b3d1e527718eaadb6",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/migrations/016_orcamentos_comercial_360.sql",
+          "sha256": "15c3f127a9b8a46309dae6690c664710e91e34caa27582da9b66533e632802e4",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/migrations/017_pedidos_comercial_360.sql",
+          "sha256": "4cd70614b08962b8129fcdf857f5e1df2ffe324b93446155a34235544c855426",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/migrations/042_auth_bootstrap_select.sql",
+          "sha256": "a4d6d14dd0c6d05cc7fe5f2e2d264ce6e459f3b60e3f9c53084e76ad6b917441",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/migrations/044_pedidos_idempotencia_direta.sql",
+          "sha256": "6d9ccf72d9258cdb41c50d84efc0183b7757a82ddb7c685ed2e53889f8ff3540",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/schema-candidates/pedido_idempotency_pair.sql",
+          "sha256": "ccd36c1caddfbe6ae2b77b117459f3ca2e0c328ed02b015ab14996d53066ed0a",
+          "encoding": "raw Git blob UTF-8 LF"
+        }
+      ],
+      "test": "tests/helpers/hmlCanonicalCommercialRehearsal.js:042 and existing044 compensator with canonical017 parents",
+      "knownCompensatorOrigin": "7ae5bcd96b816e51c6d448c2a17d870ab4d324b8",
+      "newCompensatorOrMigrationCreated": false,
+      "restoredHmlAttested": false,
+      "canApply": false,
+      "existingProposalSqlChanged": false,
+      "existingObjectsReclassifiedAsApplied": false,
+      "rowBackfillExecuted": false,
+      "reusedEvidence": {
+        "sourceHead": "9514db2dad0725dad79312f23219b94e62caefee",
+        "ciRun": 7182,
+        "ciId": 43731040318,
+        "backendJob": 132863303359,
+        "terminal": "SUCCESS",
+        "explicitLogPasses": [
+          "Auth 042 ok28",
+          "044 compensador engine ok451",
+          "Auth bootstrap PostgreSQL ok2",
+          "044 compensador PostgreSQL ok5"
+        ],
+        "testPins": [
+          {
+            "path": "server/tests/runtime09-pedido-migration.test.ts",
+            "sha256": "2614046f0aa290cd5e41b90fec98204c374d49f8258b64d39c646fe04820e3d9"
+          },
+          {
+            "path": "server/tests/db-tenant-context-postgres.test.ts",
+            "sha256": "85854ebb92a5ebd411f670eb5e9de51d3dc92d3f54c2682300d603234f2e7fc5"
+          },
+          {
+            "path": "server/tests/auth-bootstrap-rls.test.ts",
+            "sha256": "7a8fa4e5e3963a759c44f50f633b0bbb55c9d7856df5ff496d685f1cde16ac59"
+          },
+          {
+            "path": "server/tests/helpers/authBootstrapFixture.ts",
+            "sha256": "07f8f4c84e4a175fe769187fa2cb85fde2563887cc52bb8e0fa2f4698d836ada"
+          }
+        ],
+        "providerAndDataAreSynthetic": true,
+        "realProviderSessionOrTargetRbacProven": false
+      },
+      "remainingGates": [
+        "Existing compensator already implements fix; do not duplicate migration or change immutable044",
+        "Atomic VALIDATE must refuse any preexisting malformed pair and revert all; no invented fingerprint/deletion",
+        "Exact target constraints/data semantics/custom policies/owner/search_path/role/actor require restored HML proof",
+        "Original043 identity/045 nullable contacts and historical038/010 data semantics remain separate",
+        "Fresh backup/isolated restore/external ack/reversal/review/window/specific candidate authorization"
+      ],
+      "validation": {
+        "engine": "PGlite synthetic memory with true canonical parents;existing isolated PostgreSQL proof reused",
+        "original001FiveTables002042Used": true,
+        "realProviderSessionOrTargetProven": false,
+        "focusedPass": 49,
+        "focusedFail": 0,
+        "focusedSkip": 0,
+        "knownCompensatorReusedWithoutSqlChange": true,
+        "actual017HeaderParentsTraversed": true,
+        "canonical002042IdentityPolicyWithExactIdsAndRevocation": true,
+        "dirtyLegacyRowRetainedAndCandidateFullyRolledBack": true,
+        "cleanCandidateValidatedAndRowsIndexesOldConstraintRetained": true,
+        "candidateOwnTransactionRespected": true,
+        "sessionSearchPathRepinnedAfterFixtureCommit": true,
+        "syntheticOnlyControls": 2,
+        "providerOrTargetRbacProven": false
+      }
     }
   }
 }

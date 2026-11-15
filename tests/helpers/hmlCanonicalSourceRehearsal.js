@@ -9,7 +9,7 @@ export async function loadCanonicalRehearsalSources(table) {
   assert.ok(review, 'A prova exige revisao de fonte vinculada, nao atestado do destino');
   const sources = {};
   for (const pin of review.sourcePins) {
-    assert.match(pin.path, /^server\/migrations\/\d{3}_[a-z0-9_]+\.sql$/);
+    assert.match(pin.path, /^server\/(?:migrations\/\d{3}_[a-z0-9_]+\.sql|schema-candidates\/pedido_idempotency_pair\.sql)$/);
     const sql = (await readFile(new URL(`../../${pin.path}`, import.meta.url), 'utf8')).replace(/\r\n/g, '\n');
     assert.equal(createHash('sha256').update(sql).digest('hex'), pin.sha256, pin.path);
     sources[pin.path.split('/').at(-1)] = sql;
