@@ -1,3 +1,11 @@
+## Continuidade Casa: prova HTTP PostgreSQL de Fornecedor (2026-11-15)
+
+Correcao funcional publicada em f2b1f69325f860ad43915bdc86949fcc3158c934, CI7190/run43746120007 SUCCESS. Contraprova anterior reproduziu replay aceito apos revogacao de criar; 19 testes focados passaram depois da revalidacao. Backup externo continua exclusivo da Empresa.
+
+Proximo pacote publicado em32e193c4 sob reserva594/6899100201: entrada PostgreSQL obrigatoria existente estendida, sem nova suite/recurso, para POST replay e GET fornecedor pelo app/router reais com roles LOGIN NOSUPER/NOBYPASS. Trigger somente do dono da fixture revoga criar durante audit; exige403 e rollback exato de perfil, fornecedor, audit e sequencia. Contagens anteriores continuam verificadas; GET nao acrescenta audit. Auth remoto permanece transporte sintetico. Typecheck server PASS; prova fisica depende da CI Linux deste SHA, ainda nao declarada executada localmente. withTenantContext apenas delimita AsyncLocalStorage, sem transacao/conexao externa retida durante as requisicoes HTTP.
+
+Sem SQL operacional, importacao, grants operacionais, flags reais ou deploy. Mesma automacao ACTIVE retoma prova/diagnostico por SHA, preservando exclusividade e gates; nao depende do backup Empresa. Depois, selecionar somente pendencia independente comprovada nos deltas existentes. Falha do alias python local impediu apenas a primeira atualizacao documental; runtime Python embarcado utilizado nesta atualizacao, sem efeito no teste publicado.
+
 ## Fila Casa independente do backup Empresa: Fornecedor replay (2026-11-15)
 
 Decisao EXPRESSA vigente: continuar pacotes independentes emCasa; backup/copia
