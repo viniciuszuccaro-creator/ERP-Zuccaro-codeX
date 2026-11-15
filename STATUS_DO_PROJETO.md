@@ -1,3 +1,14 @@
+## Produtos/canais: fonte comprovada offline,043 continua bloqueada (15/11/2026)
+
+Produto006/007/008/material023:39colunas/3triggers/FKs/tenant/indices/defaults/
+ID/codigo/origem de classe/inativo preservados. Canal024 usa ownershipFINAL019:
+14colunas/SKU/contexto/RASCUNHO exclusivo,sem provedor/publicacao. Guard043ORIGINAL
+recusou pre-requisitos ausentes e preservou linhas/colunas; nenhuma identidade
+legada completa presumida.44focaisPASS0skip/18goldens e5controles negativos.
+So teste/matriz/STATUS/HANDOFF;225objetos/101clausulas/3reviews anteriores e SQL
+intactos,canApplyfalse. CIporSHA na594. Proximo: produto_empresas041 e seus pais
+canonicos,sem ativacao. Runtime/pacotee920 imutaveis;nenhumDBreal/carga/deploy.
+
 ## Esquema HML: tres cadastros provados offline (15/11/2026)
 
 Unidades/grupos de produto/setores: fontes001/004/005/038 pinadas na matriz

@@ -1,3 +1,52 @@
+## Produtos e canais em rascunho: prova de fonte, sem liberar043 (2026-11-15)
+
+Retomada NATIVA14:04:32Z, Casa71c276fd limpo/local=remoto, sem escritor no
+checkout; reserva594/6895652398 e extensao6895781851, trava CreateNew propria.
+AGENTS sem delta. Avancou produto006/007/008, material023 e relacao024 ja
+pendentes, no teste/matriz EXISTENTES, somente PGlite em MEMORIA sintetica.
+
+relationReviews.produtos adicionada com pins GitLF001/003/004/005/006/007/008/
+019/023/024/043 na fonte71. As3revisoes anteriores,225objetos/101clausulas/
+18pins anteriores e SQL guardado/hash intactos; nenhum diferido promovido a
+aplicado. Produto base/master/material:39colunas,3triggers, FKs de marca/unidade/
+grupo/setor no mesmo Grupo e Empresa vinculada ao Grupo; codigo/barcode sem distinguir
+maiusculas, codigo inativo nao reutilizavel, ID/codigo/grupo_legado/inativo/status
+preservados. Material/liga/norma respeitam limites da023 e NULL permitido.
+Defaults JSON/numericos/cadastrais canonicos, sem inventar preco/saldo/conversao
+real. Campos opcionais da006 continuam opcionais: nenhuma regra nova criada.
+
+Depois exercitou024 com a funcao FINAL019 de ownership (nao a018, que so verifica
+Grupo):14colunas, RASCUNHO como unico status, SKU por Grupo/Empresa/canal,
+produto de empresa propria e produto compartilhado ligados corretamente;
+cross-Grupo/cross-Empresa/empresa ausente e tentativa PUBLICADO recusados.
+Sem provedor, chamada externa, emissao ou publicacao. Presenca da024 no destino
+e corpo/owner/security/search_path da funcao ainda NAO atestados.
+
+O guard ORIGINAL043 foi executado no engine e recusou as dependencias ausentes
+com LEGACY_IDENTITY_REQUIRES_038_042; rollback preservou linha e39colunas, sem
+origem/codigo_legado/legacy_id/source_system/migration_batch adicionados. Nao
+removeu DOguard, nao fabricou tabelas/policies para libera-lo, nao executou
+backfill038/ledger e nao afirma identidade compartilhada completa.
+Cinco controles negativos em savepoints provaram dependencia dos triggers FK,
+Empresa,timestamp,indicecodigo e ownershipcanal; rollback total preservou linha/
+indice anteriores.44focais PASS/0skip (9HML+35publication/18goldens). Audit/lint
+do teste/diffcheck no fechamento; CI do SHA registrado na594. Sem codigo
+aplicativo/migration/SQLguardado alterado, reusar build/typecheck/runtime/pacote
+e920/CI7176, NAO rebuild/relabel por SHA de teste/documentacao.
+
+canApply=false/completeMigration=false/RAISE+ROLLBACK e gates do destino real
+permanecem. PGlite owner-role nao prova ator/RBAC/menor privilegio, overlay
+restaurado/backup/restore/ack/reversao/janela ou autorizacao operacional.
+NaoVPS/grants/DDLreal/import/deploy. RestantePIM018/019 e043 continuam pendentes.
+
+PROXIMO INDEPENDENTE: produto_empresas041 na MESMA matriz/harness, com pais
+canonicos001 e dependencias verificadas; provar defaults inativos/inelegiveis,
+FKs compostas Grupo/Empresa/Produto e version, sem ativacao ou atualizacao de
+historicos. Nao fabricar UNIQUE de pai para fazer041 passar: usar definicao
+canonica. Callbacks041 de itens exigem016/017 e deps reais no ensaio, nao stubs.
+Se faltar fechamento de pais, registrar e avancar essa dependencia de fonte.
+Pacotes e920/81 preservados, nenhuma transferencia/deploy autorizada por isto.
+
 ## Tres cadastros simples: fechamento de fonte provado em memoria (2026-11-15)
 
 Retomada NATIVA13:41:32Z, Casa e92045a0 limpo/local=remoto, sem escritor no

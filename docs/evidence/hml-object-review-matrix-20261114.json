@@ -3112,6 +3112,153 @@
         "guardedProposalSqlUnchanged": true,
         "restoredHmlOrRealRbacProven": false
       }
+    },
+    "produtos": {
+      "reviewHead": "71c276fd646667a7a39905a42a7d871bae04a37d",
+      "status": "BASE_MASTER_FK_MATERIAL_AND_DRAFT_CHANNEL_REHEARSED_FULL_IDENTITY_TARGET_PENDING",
+      "sourcePins": [
+        {
+          "path": "server/migrations/001_foundation.sql",
+          "sha256": "857c9e37c237a42e1bda425903e5ccbb7bac4d762829d48e1738ea2913d95d5f",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/migrations/003_marcas_pilot.sql",
+          "sha256": "886715dead23f37a752be8f9973b942d968c8ab15feecb42a45eda07d4b5d43c",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/migrations/004_tenant_integrity.sql",
+          "sha256": "c64cb2cf172a591264834a126a2d0afd15e963d98d4a95ecc8ebabb60aca1c04",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/migrations/005_cadastros_simples.sql",
+          "sha256": "e754793c4ce65f99e06a7216c365812c20f50af96fd6d54adf6f002e76f02c20",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/migrations/006_produtos_base.sql",
+          "sha256": "0111511d0d6354222f48e29f7596cd137f851a9208e79baad36911bd344f9a58",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/migrations/007_produtos_master_data.sql",
+          "sha256": "47a481a189d68f48651e446a93f600f78091c22d8d25883172bf6846933c9794",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/migrations/008_produtos_fk_tenant.sql",
+          "sha256": "2c3ce529ab427358ffcd65c6fb3d7c3f363b519d5efde2273ddfce9f83c39d51",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/migrations/023_produto_material_norma.sql",
+          "sha256": "2aa4d035afaa1bc4a2c47d2254778959358471eb0eebeb369e5e46bc87e2bc7c",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/migrations/043_legado_identidade_compartilhada.sql",
+          "sha256": "806935ea96fad35b383fb116b5cb6e17fcd4868a94c3825a0a0c10cfe7de1009",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/migrations/019_produto_relacoes_tenant.sql",
+          "sha256": "108dbcda5ec3bc531b393f39ee1e7aec5f2d36e9b6484b830dac852305b7984b",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/migrations/024_produto_canais_rascunho.sql",
+          "sha256": "943cabd66f8e9258b4edcea9c3f52a5668b8bf02aeb0862efb5119f31678a59a",
+          "encoding": "raw Git blob UTF-8 LF"
+        }
+      ],
+      "structuralSources": [
+        {
+          "source": "006_produtos_base.sql",
+          "statementOffsets": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15
+          ]
+        },
+        {
+          "source": "007_produtos_master_data.sql",
+          "statementOffsets": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ]
+        },
+        {
+          "source": "008_produtos_fk_tenant.sql",
+          "statementOffsets": [
+            0,
+            1,
+            2
+          ]
+        },
+        {
+          "source": "023_produto_material_norma.sql",
+          "statementOffsets": []
+        }
+      ],
+      "test": "tests/hml-vps-bootstrap.test.js: produtos canonical source memory rehearsal",
+      "restoredHmlAttested": false,
+      "canApply": false,
+      "existingProposalSqlChanged": false,
+      "existingObjectsReclassifiedAsApplied": false,
+      "rowBackfillExecuted": false,
+      "remainingGates": [
+        "043 original prerequisite guard must remain intact; full038/040/041/042 and duplicate identity reconciliation not established here",
+        "019 final ownership function with024 draft relation proven only in memory; target presence/function identity/rest of018/019 PIM/real RBAC remain unverified",
+        "Fresh restored-target function signatures/source/security/search_path/owners/dependency identities and original custom controls",
+        "Real actor/session/group/RBAC and least-privilege are not proven by owner-role synthetic memory",
+        "Fresh backup/isolated restore/external ack/reversal/window/review and explicit deployment gate"
+      ],
+      "validation": {
+        "engine": "PGlite synthetic memory only",
+        "focusedTestsPass": 44,
+        "focusedTestsFail": 0,
+        "focusedTestsSkip": 0,
+        "productColumnsVerified": 39,
+        "productTriggersExercised": 3,
+        "foreignMasterGroupBindingsVerified": 4,
+        "materialLengthConstraintsVerified": 3,
+        "negativeControls": 5,
+        "caseInsensitiveCodeAndBarcodeUniqueness": true,
+        "inactiveCodeAndIdAndGroupOriginPreserved": true,
+        "original043GuardRejectedMissingDependencies": true,
+        "full043Applied": false,
+        "draftChannelColumnsVerified": 14,
+        "draftChannelDefaultAndOnlyStatus": "RASCUNHO",
+        "channelGroupAndCompanyAndSharedProductBindingsVerified": true,
+        "019FinalOwnershipFunctionUsed": true,
+        "allPimRelationsRehearsed": false,
+        "targetChannelPresenceVerified": false,
+        "rollbackPreservesPreviousSyntheticRowAndIndex": true,
+        "realRbacOrRestoredHmlProven": false
+      }
     }
   }
 }
