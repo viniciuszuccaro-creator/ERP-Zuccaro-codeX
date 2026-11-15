@@ -1,3 +1,46 @@
+## Prechecks VPS frescos pela conexao HML (2026-11-15)
+
+Retomada nativa16:40:04Z Casa, base1aa5c041/CI7184 verde; reserva594/6897810316,
+checkout limpo/local=remoto e trava propria. ConsoleWeb Hostinger existente
+recuperada sem novo login/chave/SSH retry; SFTP existente preservado. Fonte
+privada legado presente/root0700, sem inventario ou transferencia integral.
+
+Docker inspecionado somente em campos selecionados, sem env/segredos: API/web
+HML em rede separada, app/config mounts readonly, web loopback13081; PG rede
+none/semports, limites API512MiB/.30CPU,web128MiB/.05CPU,PG1GiB/.40CPU preservados.
+Disco disponivel29.327.196.160bytes; exceder20GiB NAO comprova reserva completa de
+recuperacao. Deployment.lock ausente NAO significa lease adquirida. Config
+uid1000/mode0400/naosymlink/hash privado registrado, sem exibir conteudo.
+
+Consulta pontual pelo driver PG EXISTENTE dentro do container API, usando
+/run/hml-config.json internamente, sem copiar token/senha/URL ao worker.
+BEGIN READ ONLY/statement_timeout5000/ROLLBACK: database,role,schema,OID iguais
+aos pins privados; role sem SUPERUSER/BYPASSRLS/CREATEROLE/CREATEDB. Clientes
+RLS+FORCE ativos. Isso prova conexao e catalogo, NAO sessao/ator/permissao de ler
+clientes. Zero linhas de negocio consultadas, zero escrita de negocio/DDL/grants.
+Helperbackup canônico hash a803 validado e Database(config) reutilizado apenas
+para provar clusterfisico/isolamento e contar journal em READ ONLY/ROLLBACK.
+Journaladmin0 NAO equivale a migrations aplicadas nem autoriza migrate.
+
+Recibo privado fresco16:44:41Z foi derivado sem traducao de terminal; bytes/hash
+do snapshot local conferidos com SHA produzido na VPS. CLI1aa5 existente executado:
+coluna MATCHES_CURRENT_NULL_CAS/PRESERVE; CHECKcontatos200 VALIDADO e definicao
+canônica confirmada por schema+tabela+nome. Indice de NOME canônico retornou0
+no escopo exato; outroindice equivalente nao foi investigado, nao presumir
+unicidade. Comparador continua legacyIndexUNVERIFIED,canApplyfalse,targetAttestedfalse.
+Nao criar indice sem prova autorizada de duplicidades e gates; nao alterar
+NULL/default nem usar proposta historica futuredefault[].
+
+HML permanece API/web d054, nao candidata1aa5/e920; kit e920 imutavel intocado.
+Plano privado v25 preserva v24/recibos e separa fonte/metadata/DDL/backup/restore/
+import/deploy. Apenas docs nesta publicacao: diffcheck, sem repetir50focais/18goldens
+intactos; nenhuma mudanca runtime/API/UI/SQL/testes. CI por SHA registrada na594.
+
+PROXIMO: metadados pontuais somenteleitura de menorprivilegio/prerequisitos do
+schema pelo mesmo canal; conciliar overlay EXISTENTE com fatos frescos, sem
+consultar clientes/aplicarDDL. Backup fresco/restore isolado/ack/reversao/janela/
+lease/aceite especifico continuam gates. Nao reconstruir kit nem promover dados.
+
 ## Comparador composto Cliente: metadados offline, sem DDL inferida (2026-11-15)
 
 Retomada NATIVA16:15:34Z Casa,7f81cf19/CI7183 local=remoto/limpo,AGENTSsemDelta,
