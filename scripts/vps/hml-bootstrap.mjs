@@ -77,6 +77,109 @@ function reviewClienteMetadataFile(file) {
   return reviewHmlClienteContracts(snapshot, canonicalSources);
 }
 
+// Ported tokenizer from the existing private object-delta preparation; never execute its generator.
+function splitOverlaySql(sql) {
+  const result = [];
+  let buffer = '', quote = null, dollar = null, lineComment = false, blockDepth = 0;
+  for (let i = 0; i < sql.length; i++) {
+    const char = sql[i], next = sql[i + 1];
+    if (lineComment) {
+      if (char === '\n') { lineComment = false; buffer += '\n'; }
+      continue;
+    }
+    if (blockDepth) {
+      if (char === '/' && next === '*') { blockDepth++; i++; }
+      else if (char === '*' && next === '/') { blockDepth--; i++; }
+      continue;
+    }
+    if (dollar) {
+      if (sql.startsWith(dollar, i)) { buffer += dollar; i += dollar.length - 1; dollar = null; }
+      else buffer += char;
+      continue;
+    }
+    if (quote) {
+      buffer += char;
+      if (char === quote) {
+        if (next === quote) { buffer += next; i++; }
+        else quote = null;
+      }
+      continue;
+    }
+    if (char === '-' && next === '-') { lineComment = true; i++; continue; }
+    if (char === '/' && next === '*') { blockDepth = 1; i++; continue; }
+    if (char === "'" || char === '"') { quote = char; buffer += char; continue; }
+    if (char === '$') {
+      const tag = sql.slice(i).match(/^\$[A-Za-z_0-9]*\$/);
+      if (tag) { dollar = tag[0]; buffer += dollar; i += dollar.length - 1; continue; }
+    }
+    if (char === ';') {
+      if (buffer.trim()) result.push(buffer.trim() + ';');
+      buffer = '';
+    } else buffer += char;
+  }
+  assert.ok(!quote && !dollar && !blockDepth, 'HML_OVERLAY_UNCLOSED_SQL');
+  if (buffer.trim()) result.push(buffer.trim());
+  return result;
+}
+
+const overlayMatrixPin = '0e32130faf5f87e66c1022d9bd1dd57806678d856f5caf0a579de5f62498ff45';
+const overlayHash = value => createHash('sha256').update(value).digest('hex');
+function checkOverlayMatrix(matrix) {
+  assert.equal(overlayHash(JSON.stringify({ sources: matrix.sources, objects: matrix.objects, emitted: matrix.emitted })), overlayMatrixPin, 'HML_OVERLAY_MATRIX_CHANGED');
+  assert.ok(matrix.canApply === false && matrix.completeMigration === false && matrix.preserveExistingEight === true, 'HML_OVERLAY_NOT_EXECUTABLE');
+}
+
+// Historical DEFER status and a source reference are not per-statement approval or target evidence.
+export function reviewHmlOverlayObjects(matrix, canonicalSources) {
+  checkOverlayMatrix(matrix);
+  exactKeys(canonicalSources, matrix.sources.map(pin => pin.path));
+  const statements = {};
+  for (const pin of matrix.sources) {
+    const sql = canonicalSources[pin.path];
+    assert.equal(typeof sql, 'string', 'HML_OVERLAY_SOURCE_REQUIRED');
+    const normalized = sql.replace(/\r\n/g, '\n');
+    assert.equal(overlayHash(normalized), pin.sha256, 'HML_OVERLAY_SOURCE_CHANGED');
+    statements[pin.path.split('/').at(-1)] = splitOverlaySql(normalized);
+  }
+  const references = source => Object.entries(matrix.relationReviews || {}).flatMap(([relation, review]) =>
+    (review.sourcePins || []).some(pin => pin.path === `server/migrations/${source}` && matrix.sources.some(p => p.path === pin.path && p.sha256 === pin.sha256))
+      ? [{ relation, reviewHead: review.reviewHead, evidence: 'SOURCE_REFERENCE_ONLY' }] : []);
+  const preserved = new Set(['cliente_empresas','cliente_locais','clientes','condicoes_pagamento','empresas','groups','marcas','profiles']);
+  const objects = [];
+  for (const object of matrix.objects) {
+    const sql = statements[object.source]?.[object.statement];
+    assert.equal(typeof sql, 'string', 'HML_OVERLAY_STATEMENT_REQUIRED');
+    assert.equal(overlayHash(sql), object.sha256, 'HML_OVERLAY_STATEMENT_CHANGED');
+    if (object.status !== 'DEFER_REVIEW_KEEP_EXISTING') continue;
+    let action = 'REVIEW_CANONICAL_RESTORE_PREREQUISITES';
+    if (/^(UPDATE|INSERT|DELETE|TRUNCATE)\b/i.test(sql) || (/^WITH\b/i.test(sql) && /\b(UPDATE|INSERT|DELETE)\s+/i.test(sql))) {
+      action = 'HISTORICAL_DATA_WRITE_REQUIRES_SEPARATE_GATE';
+    } else if (/^COMMENT\b/i.test(sql)) {
+      action = 'METADATA_ONLY_NOT_FUNCTIONAL_PROOF';
+    } else if (preserved.has(object.table)) {
+      action = 'PRESERVE_EXISTING_REQUIRES_RESTORED_DIFF';
+    } else if (/^(DROP|REVOKE|GRANT)\b/i.test(sql) || object.kind === 'ALTER_TABLE') {
+      action = 'REVIEW_DEFINITION_AND_LEAST_PRIVILEGE_NO_AUTOMATIC_CHANGE';
+    } else if (object.kind === 'CONDITIONAL_REVIEW') {
+      action = 'KEEP_ORIGINAL_GUARDS_TARGET_EVIDENCE_REQUIRED';
+    }
+    objects.push({ source: object.source, statement: object.statement, sha256: object.sha256,
+      kind: object.kind, table: object.table, name: object.name, historicalStatus: object.status,
+      action, sourceReviewReferences: references(object.source), perStatementAcceptanceProven: false, canApply: false });
+  }
+  return { kind: 'PREPARATION_ONLY_HML_OVERLAY_REVIEW', originalObjects: matrix.objects.length,
+    originalEmitted: matrix.emitted.length, sourcesVerified: matrix.sources.length, objects,
+    actionCounts: Object.fromEntries([...new Set(objects.map(x => x.action))].map(action => [action, objects.filter(x => x.action === action).length])),
+    completeMigration: false, canApply: false, targetAttested: false, businessRowsRead: 0, ddlExecuted: false };
+}
+
+function reviewOverlayRepository() {
+  const matrix = JSON.parse(fs.readFileSync(new URL('../../docs/evidence/hml-object-review-matrix-20261114.json', import.meta.url), 'utf8'));
+  checkOverlayMatrix(matrix);
+  const sources = Object.fromEntries(matrix.sources.map(pin => [pin.path, fs.readFileSync(new URL(`../../${pin.path}`, import.meta.url), 'utf8')]));
+  return reviewHmlOverlayObjects(matrix, sources);
+}
+
 // Portable form of the recovered private HML bootstrap; app/Auth/DB remain canonical.
 export function validateHmlConfig(value, now = Date.now()) {
   assert.ok(value && typeof value === 'object' && !Array.isArray(value));
@@ -209,7 +312,15 @@ export async function startHml(file, apiRoot) {
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  if (process.argv[2] === '--review-cliente-contracts') {
+  if (process.argv[2] === '--review-overlay') {
+    try {
+      assert.equal(process.argv.length, 3);
+      console.log(JSON.stringify(reviewOverlayRepository()));
+    } catch {
+      console.error('HML_OVERLAY_REVIEW_FAILED');
+      process.exitCode = 1;
+    }
+  } else if (process.argv[2] === '--review-cliente-contracts') {
     try {
       assert.equal(process.argv.length, 4);
       console.log(JSON.stringify(reviewClienteMetadataFile(process.argv[3])));

@@ -35,7 +35,7 @@ for (const cfg of simpleRelationCases) {
     const relationSql = simple.slice(start, end);
     const codes = sources['038_cadastros_codigo_registro.sql'];
     const codeStart = codes.indexOf(`ALTER TABLE ${cfg.table} ADD COLUMN`);
-    const codeEnd = cfg.sigla ? codes.indexOf('-- grupos_produto já tem codigo')
+    const codeEnd = cfg.sigla ? codes.indexOf('-- grupos_produto jÃƒÂ¡ tem codigo')
       : cfg.table === 'setores_atividade' ? codes.indexOf('-- unidades_medida') : codes.indexOf(';', codeStart) + 1;
     assert.ok(codeStart >= 0 && codeEnd > codeStart);
     const additions = codes.slice(codeStart, codeEnd);
@@ -412,4 +412,54 @@ test('HML offline contract review follows NULL-CAS and exact scoped definitions,
     await writeFile(file,JSON.stringify(snapshot));const result=JSON.parse(execFileSync(process.execPath,[fileURLToPath(new URL('../scripts/vps/hml-bootstrap.mjs',import.meta.url)),'--review-cliente-contracts',file],{encoding:'utf8',env:{PATH:process.env.PATH,NODE_ENV:'production',DATABASE_URL:'postgresql://forbidden.invalid/never'},timeout:5000}));assert.deepEqual(result,report);
     await writeFile(file,JSON.stringify({password:'SYNTHETIC-DO-NOT-ECHO'}));assert.throws(()=>execFileSync(process.execPath,[fileURLToPath(new URL('../scripts/vps/hml-bootstrap.mjs',import.meta.url)),'--review-cliente-contracts',file],{encoding:'utf8',stdio:'pipe',timeout:5000}),err=>err.status===1&&String(err.stderr).includes('HML_CLIENTE_CONTRACT_REVIEW_FAILED')&&!String(err.stderr).includes('SYNTHETIC-DO-NOT-ECHO')&&String(err.stdout)==='');
   }finally{await unlink(file);await rmdir(folder);}
+});
+
+
+test('HML offline overlay binds historical deferred objects and refuses implicit execution', async () => {
+  const { reviewHmlOverlayObjects } = await import('../scripts/vps/hml-bootstrap.mjs');
+  const matrix = JSON.parse(await readFile(new URL('../docs/evidence/hml-object-review-matrix-20261114.json', import.meta.url), 'utf8'));
+  const sources = Object.fromEntries(await Promise.all(matrix.sources.map(async pin => [pin.path, await readFile(new URL(`../${pin.path}`, import.meta.url), 'utf8')])));
+  const before = JSON.stringify(matrix);
+  const report = reviewHmlOverlayObjects(matrix, sources);
+  assert.equal(report.objects.length, 124);
+  assert.equal(report.originalObjects, 225);
+  assert.equal(report.originalEmitted, 101);
+  assert.equal(report.canApply, false);
+  assert.equal(report.targetAttested, false);
+  assert.equal(report.completeMigration, false);
+  assert.equal(report.ddlExecuted, false);
+  assert.equal(report.businessRowsRead, 0);
+  assert.equal(JSON.stringify(matrix), before);
+  for (const object of report.objects) {
+    assert.equal(object.historicalStatus, 'DEFER_REVIEW_KEEP_EXISTING');
+    assert.equal(object.perStatementAcceptanceProven, false);
+    assert.ok(object.sourceReviewReferences.length > 0);
+    assert.equal(object.canApply, false);
+  }
+  const cte = report.objects.filter(x => x.source === '038_cadastros_codigo_registro.sql' && [15,16].includes(x.statement));
+  assert.equal(cte.length, 2);
+  assert.ok(cte.every(x => x.action === 'HISTORICAL_DATA_WRITE_REQUIRES_SEPARATE_GATE'));
+  assert.ok(report.objects.filter(x => x.source === '038_cadastros_codigo_registro.sql' && [10,12,13,18,19,20].includes(x.statement)).every(x => x.action === 'HISTORICAL_DATA_WRITE_REQUIRES_SEPARATE_GATE'));
+  const existing = report.objects.filter(x => ['cliente_empresas','cliente_locais','condicoes_pagamento'].includes(x.table) && x.kind !== 'OTHER');
+  assert.ok(existing.length > 0);
+  assert.ok(existing.every(x => x.action === 'PRESERVE_EXISTING_REQUIRES_RESTORED_DIFF'));
+  assert.ok(report.objects.some(x => x.action === 'KEEP_ORIGINAL_GUARDS_TARGET_EVIDENCE_REQUIRED'));
+  assert.ok(report.objects.some(x => x.action === 'METADATA_ONLY_NOT_FUNCTIONAL_PROOF'));
+  assert.ok(report.objects.some(x => x.action === 'REVIEW_DEFINITION_AND_LEAST_PRIVILEGE_NO_AUTOMATIC_CHANGE'));
+  assert.equal(report.sql, undefined);
+  assert.equal(report.objects.some(x => Object.hasOwn(x, 'sourceSql')), false);
+  for (const change of [m => {m.objects[0].status='APPLIED';}, m => {m.sources[0].sha256='0'.repeat(64);}, m => {m.objects[0].sha256='0'.repeat(64);}, m => {m.objects.pop();}, m => {m.emitted.pop();}]) {
+    const altered=structuredClone(matrix);change(altered);
+    assert.throws(()=>reviewHmlOverlayObjects(altered,sources),/HML_OVERLAY_MATRIX_CHANGED/);
+  }
+  assert.throws(()=>reviewHmlOverlayObjects({...matrix,canApply:true},sources),/HML_OVERLAY_NOT_EXECUTABLE/);
+  assert.throws(()=>reviewHmlOverlayObjects({...matrix,completeMigration:true},sources),/HML_OVERLAY_NOT_EXECUTABLE/);
+  const pin=matrix.sources[0].path;
+  assert.throws(()=>reviewHmlOverlayObjects(matrix,{...sources,[pin]:sources[pin]+'\n-- mutation'}),/HML_OVERLAY_SOURCE_CHANGED/);
+  assert.throws(()=>reviewHmlOverlayObjects(matrix,{...sources,extra:'SELECT 1'}),/HML_CLIENTE_METADATA_INVALID/);
+  const ref=structuredClone(matrix);ref.relationReviews.extra={reviewHead:'a'.repeat(40),sourcePins:[matrix.sources[0]]};
+  const extra=reviewHmlOverlayObjects(ref,sources);assert.ok(extra.objects.some(x=>x.sourceReviewReferences.some(r=>r.relation==='extra')));assert.equal(extra.objects[0].perStatementAcceptanceProven,false);
+  const cli=JSON.parse(execFileSync(process.execPath,[fileURLToPath(new URL('../scripts/vps/hml-bootstrap.mjs',import.meta.url)),'--review-overlay'],{encoding:'utf8',env:{PATH:process.env.PATH,NODE_ENV:'production',DATABASE_URL:'postgresql://forbidden.invalid/never'},timeout:5000}));
+  assert.deepEqual(cli,report);
+  assert.throws(()=>execFileSync(process.execPath,[fileURLToPath(new URL('../scripts/vps/hml-bootstrap.mjs',import.meta.url)),'--review-overlay','SYNTHETIC-DO-NOT-ECHO'],{encoding:'utf8',stdio:'pipe',timeout:5000}),err=>err.status===1&&String(err.stderr).trim()==='HML_OVERLAY_REVIEW_FAILED'&&!String(err.stderr).includes('SYNTHETIC-DO-NOT-ECHO')&&String(err.stdout)==='');
 });

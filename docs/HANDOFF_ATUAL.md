@@ -1,3 +1,50 @@
+## Preparacao executavel offline do overlay, sem DDL (2026-11-15)
+
+Retomada nativa17:12:04Z Casa,9eca84cf/CI7186 local=remoto/limpo/semwriter;
+reserva594/6898222152/trava propria. Portou o tokenizer do preparador privado
+EXISTENTE para a ferramenta scripts/vps/hml-bootstrap.mjs, sem executar novamente
+o gerador antigo com pins/checkpoint historicos. Novo modo EXCLUSIVAMENTEoffline:
+`node scripts/vps/hml-bootstrap.mjs --review-overlay`.
+
+Verifica projecao IMUTAVEL sources/objects/emitted da matriz225/101,18hashesRAW
+normalizadosLF e CADAstatement tokenizado/hash. Fonte/offset/status/hash/objeto
+ouemitidos alterados bloqueiam; nao rebaselineautomatico. Nao gera SQL nem
+conectaAPI/DB/configprovider, inclusive NODE_ENVproduction/DATABASE_URLinvalida.
+Saida inclui124acoes por fonte/offset/hash e referencias dasrevisoes existentes,
+mas perStatementAcceptanceProvenfalse: referenciahash nao equivale a prova de
+qualquerstatement/aceite independente/destino. StatusoriginaisDEFER preservados.
+
+Resultado do consumidor REAL CLI, incorporado ao plano privado EXISTENTE v27:
+26definicao/menorprivilegio semalteracaoautomatica;38prerequisitos paraensaio em
+restaurado;14comentarios semprovafuncional;36preservarrelacaoexistente/diffreal;
+8escritashistoricas queexigemgateproprio;2guardsoriginais queexigemdados/destino.
+Os8incluemDOIS WITHhistoricos038 que escrevem dados, nao classificados como
+comentarios/inocuos. Original225/101/18pins,SQLguardados e124DEFER inalterados;
+nenhumfoipromovidoAPPLIED,naonovaMigration/nem124novaslacunas.
+
+Teste novo:1focalPASS0FAIL0SKIP, positivos/negativos de fonte/matriz/status/pins,
+WITHDML,preservar8,tamper/flagsdeapply,referenciasnaoaprovam eCLIsemDB/semecho.
+Antes faltavaexport:novafuncionalidade depreparo,naoachadoproduto recemdescoberto.
+Audit/lintglobal0erros(2warningspreexistentes),typecheck/build/diffcheckPASS.
+GlobaltestWindowsPOSIX/process.getuid/GitBash conhecido nao repetido/relaxado;
+CI Linux doSHAfecha checks. Provas9rehearsals/18goldens intactas nao rerodadaslocal.
+Corpo startHml byte-equivalente ao HEADanterior; API/UI/migrations/SQLcandidatos
+inalterados. FerramentaoperadoraMUDOU:kitfuturo precisa pins/revisao proprios;
+KITe920IMUTAVEL NAOrebuild/relabel/transfer/deploy, HMLd054 permanece.
+
+Proximo gate concreto preparado no plano privado: helperHML EXISTENTE --backup
+com configprivada pinada; validaidentidade/isolamento/espaco/lease+flock, geradump,
+restaura emSEU bancoefemero, comparaIDs/conteudo,verificaroles,removeSEUclone e
+aplicaRETENCAOexistente(apenasbackupsantigoscomackexterno). NAOEXECUTADO por esta
+retomada; exige autorizacaoespecifica desse alcance. Nao restaurarsobreHMLatual/
+operacional;nenhumgrant/DDLoverlay/deploy/importincluido. Copiaexterna/hash/ack
+continua gate,naopedirackdearquivoaindainexistente. Segredos/dadosforadoGit.
+
+Offlinepreparo concluiu com canApplyfalse/targetAttestedfalse,0linhasnegocio/DDL/
+backup/restore/grants/deploy. Se nao existir outroitemindependenteliberado,
+pausar MESMAautomacao e apresentar apenas essa decisao concreta;naorepetircatalogos,
+124ensaios/Markdown ou aguardarPRvazio. Reativaraposdependenciaautorizada.
+
 ## Catalogo de privilegios HML reconciliado sem grants (2026-11-15)
 
 Retomada nativa16:57:04Z Casa,c2497771/CI7185 limpo/local=remoto/semwriter,
