@@ -1,3 +1,44 @@
+## Catalogo de privilegios HML reconciliado sem grants (2026-11-15)
+
+Retomada nativa16:57:04Z Casa,c2497771/CI7185 limpo/local=remoto/semwriter,
+reserva594/6898008056/trava propria. Mesmo ConsoleWeb/driverPG/configinternos;
+BEGIN READ ONLY/statement_timeout5000/ROLLBACK, nenhum token/URL exportado.
+Escopo EXATO:18relacoes da matriz existente+groups/profiles=20, pg_policies
+somente profiles_auth_bootstrap_select em schema comprovado. Nao leu clientes,
+perfis de pessoas ou outras linhas de negocio; so catalogos/has_table_privilege.
+Recibo fresco16:58:21Z privado, resumo bytes/SHA conferidos sem traducao daUI.
+
+8PRESENTES:cliente_empresas,cliente_locais,clientes,condicoes_pagamento,empresas,
+groups,marcas,profiles.12AUSENTES:grupos_produto,obras,oportunidades,orcamento_itens,
+orcamentos,pedido_itens,pedidos,produto_empresas,produtos,setores_atividade,
+tabelas_preco,unidades_medida. Todas8 RLS+FORCE. Role efetiva tem SELECT nas6:
+cliente_empresas,cliente_locais,clientes,empresas,groups,profiles; INSERT/UPDATE
+somente nas3 cliente_empresas/cliente_locais/clientes; DELETE em nenhuma das20.
+Privilegio de tabela NAO prova acesso de linha/perfil/ator nem permissao app.
+AusenciaSELECT emmarcas/condicoes_pagamento nao autoriza grant automatico;
+consumidores/contratos devem justificar minimo antes de qualquer proposta.
+
+Policy de NOMEcanonico profiles_auth_bootstrap_select:0 noescopo. Isso, mais
+oportunidades/produto_empresas ausentes, comprova que guard ORIGINAL043 exige
+038/042 ainda nao satisfeitos. Nao removerguard, criarprereqfake ou migrar043
+integralmente por journal0. Nao inferir que login global esteja quebrado:
+policies alternativas/sessao/ator nao foram testados neste catalogo.
+Reutilizar042original e candidatoClienteSUBSET043 revisados, nao outra migration.
+NULLCAS/CHECK200 confirmados no recibo anterior continuam preservados; indice
+canonico segue gate/duplicidades autorizadas, sem consulta de negocio aqui.
+
+Plano privado v26 preserva v25 e vincula discrepancias aos contratos existentes.
+CanApplyfalse/targetAttestedfalse: zero DDL/grants/backup/restore/import/deploy.
+Kit e920/HMLd054/API/UI/SQL/testes inalterados. Publicacao SOMENTEdocs: diffcheck;
+nao repetir provas50focais/18goldens/React intactas, CI propria porSHA na594.
+
+PROXIMO EXECUTAVEL OFFLINE: qualificar os124objetos diferidos da matriz EXISTENTE
+225/101, em ordem das dependencias criticas Produto/orcamento/Pedido, com fontes/
+hashes/guards/preservar-criar-diferir e acao revisavel. Nao outro modulo/manual/
+migration/blanketgrant. Preparar deltaMINIMO/overlayrestaurado, mantendo8tabelas e
+dados, antes backupfresco/restoreisolado/ack/reversao/janela/lease/autorizespecifica.
+Nao executar essas operacoes por inferencia nem reconsultar catalogo intacto.
+
 ## Prechecks VPS frescos pela conexao HML (2026-11-15)
 
 Retomada nativa16:40:04Z Casa, base1aa5c041/CI7184 verde; reserva594/6897810316,
