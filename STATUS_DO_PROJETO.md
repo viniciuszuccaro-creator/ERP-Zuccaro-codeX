@@ -1,3 +1,16 @@
+## Pedido017/guards041: fechamento de fonte composto (15/11/2026)
+
+23+19+10colunas/parents010DDLsemUPDATEhistorico/011012013/headers/itens/historico/
+contexto/ativos/constraints/callbacks041reais provados em memoria. Sharedmaster
+inativo nega,linkelegivelSINTETICO permiteorcamento+pedido,revogacaonega;rollback
+restaura inativo e preserva IDs/codigos/linhas/indiceanteriores.5controles,
+47focaisPASS0skip/18goldens/audit/lintdirecionado/diffcheck;CIporSHA na594.
+RefatoracaoTESTONLYpreserva assertions041/016,main379/helper314.6reviews/225objetos/
+101clausulas/SQLguardado intactos,canApplyfalse.0dadosreais/ativacoesreais.
+NaoRBACreal/addresspurposeDB/transicoesAPI/restoredHML/deploy. Proximo039/040,
+depois042/043/044/045 eoverlayrestaurado/backuprestore/aceiteespecifico.
+Runtime/pacotee920intactos;mesmaautomacao atualizada nofechamento.
+
 ## Orcamentos016: dependencia de produto provada e plano HML concreto (15/11/2026)
 
 Pais009/014/015 originais,17+18colunas,tenant/vinculosativos/numericos/numero/

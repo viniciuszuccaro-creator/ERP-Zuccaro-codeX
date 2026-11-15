@@ -1,3 +1,59 @@
+## Pedido017 e guards041: fonte composta provada, HML ainda separada (2026-11-15)
+
+Retomada NATIVA15:10:33Z Casa, base3aa49623/CI7180 local=remoto/limpo,AGENTSsemDelta,
+sem writer/trava alheia;reserva594/6896651957 e trava CreateNew propria.
+Antes novo teste, extraiu provas041/016 do MESMO harness559linhas para helper
+TEST-ONLY hmlCanonicalCommercialRehearsal.js, importado pelo entrypoint existente.
+Assertions anteriores comparadas ao blobGit: IGUAIS salvo path relativo do import.
+Main379linhas/helper314;sem modulo aplicativo/banco paralelo/broadcrmFixture.
+
+017 original com pais001/003/004/005/006/009/011/012/013/014/015/016 eDDL010
+ORIGINAL: primeiro ALTER e DO/indices posteriores; UPDATEhistorico010 excluido,
+sem inventarcolunas/UNIQUE/policies.015100percent DEFERRED realmente flushed
+porSETCONSTRAINTSIMMEDIATE antesrollback. Pedido23colunas/itens19/historico10:
+headerpositivo ENTREGAvinculado local/obra/tabela/condicao/clienteEmpresa,
+RETIRADA comlocalNULL conforme fonte, estados validos e cancelamento coerente;
+numero8digitos/unique inclusivecancelado e uniqueorcamentoEmpresa/numericos/
+snapshots/dataobrigatoria/ordemhistorico, vendedor/actorFK.
+Negativos crossGrupo E outraEmpresa no MESMOGrupo, clienteEmpresa inativo/
+desabilitado/bloqueado(com010canonico), locais/obra/tabela/condicao sem vinculo
+ativo, produto/unidadeinativos/contextoerrado, atorinexistente/historicoforaescopo.
+
+Depois040 SO UNIQUEempresas original e041 INTEGRAL (relacao/policy+callbacks)
+com pais verdadeiros. ANTES016/017recusam master compartilhado empresaNULL;
+DEPOIS041linkdefaultinativo/inelegivel continua recusado. Ativar link SOMENTE
+emsavepointSINTETICO permite item deorcamento E pedido com precozero; revogar
+habilitacao/ativo/produto/Empresa ou mudarvinculo para outraEmpresa mesmoGrupo
+nega ambos. Unidadedesativada negaPedido;naocriar regra diferente paraOrcamento
+onde041checa soGrupo. Repor cadafuncao ORIGINAL016/017 separadamente faz positivo
+compartilhado falhar;rollback recupera041. Maiscontroles removemguardheader,
+guarditem eFKcompostahistorico: total5controles. Rollbacksavepoint devolve link
+inativo/inelegivel e elimina itensdeensaio;produtos/header/itens/historico/IDs/
+codigos anteriores preservados. RollbackTOTAL preserva linhapublica/indiceantigo.
+Nenhuma ativacao, importacao ou escrita nooperacional/HML/VPS.
+
+47focaisPASS/0skip/18goldens; audit/lintdirecionado/diffcheckPASS;CIporSHA na594.
+Novo relationReviews.pedidos com16pins,6reviewsanteriores/225objetos/101clausulas/
+18pinsoriginais/SQLguardado INTACTOS;124diferidosNAOpromovidos,canApplyfalse.
+Sem codigoAPI/web/migration alterado,reusar runtime/pacotee920/CI7176 semrebuild.
+LimitesWindowsglobais conhecidos nao relaxados;CI Linux completa fecha o SHA.
+
+LIMITES EXPLICITOS: vendedor/actor na017 sao FKs, NAO prova principal/RBAC.
+017 verifica localativo/vinculoCliente;finalidadeENTREGA/completude seguem
+servico canonico e provasUI existentes,NAO sao guardDBda017. Estados permitidos
+na tabela NAO provam transicoes autorizadas/aprovacao comercial. Historico com
+FK/enum/ordem nao prova append-only aplicado pela API. DonoPGlitesintetico nao
+prova role real/menorprivilegio,overlayrestaurado,backup/restore/ack/janela/aceite.
+Nao039/040CRMcompleto/042/043/044/045 aplicados;guard043 intacto,naodesbloquear
+por fabricar prerequisito. Tabela unica10pendenciasHML abaixo continua vigente.
+
+PROXIMO INDEPENDENTE:039tabelaPrecoOrcamento e040oportunidades/sequence/policy,
+no MESMO harness/matriz com pais ja comprovados e fontes originais. Distinguir
+codigo6-19digitos do limiteBIGINT/GREATEST no trigger real,nao inferir cobertura
+pelaCHECKsó. 042/043/auth/grants/dadoslegados permanecem etapas especificas.
+EnquantoCI/revisao, preparar closure039/040 real em memoria,sem repetir provas
+estaveis nem usarVPSoperacional. Pacotee920 imutavel/d054ultimoHMLnaoatualizado.
+
 ## Continuidade assumida: orcamentos016 e pendencias concretas HML (2026-11-15)
 
 Codex ativo assume frentes Cursor sem credito, sem editar branches Cursor/Empresa.
@@ -38,7 +94,7 @@ identidades observadas historicamente NAO sao declaradas frescas nesta retomada.
 |---|---|---|---|
 | Codigo/revisao | e920/CI7176; 12cenarios Reactcompostos, pacote PUBLISHED_CLEAN | Revisao independente solicitada594, ainda sem parecer; revisar exatamente delta3componentes/backend6arquivos contraHMLd054, nao reabrir provas estaveis | Se nao houver revisor, definir aceite/revisor antes de publicar; autorrevisao nao vira independente |
 | Pacote | API/web e920 iguais;2216arquivos/17887136bytes;filesSha077bb96a16d80278d68ab3083eec003085326e6710a525161dd3b6690f9d4269 | Reutilizar diretorio privado runtime-e92045a0-candidate; preparar arquivo/manifesto somente para canal autorizado, ainda NAO transferido/deploy | Transferencia nova e920 distinta da81; usar alcance aprovado, nunca repetir81 |
-| Schema/dependencias | 8relacoes preservadas comparadas;12ausentes,225objetos/101clausulas guardadas; fontes simples/produto/041relacao/016 em memoria | Fechar017+pais011/012/013,callbacks041,039/040/042/043/044/045/customcontrols; comparar overlay na copia restaurada; manter RAISE+ROLLBACK ate revisao | DDL exata ainda nao pronta: nao solicitar autorizacao generica nem aplicar34migrations/journalvazio |
+| Schema/dependencias | 8relacoes preservadas comparadas;12ausentes,225objetos/101clausulas guardadas; fontes simples/produto/041relacao/016 em memoria | 017/041fechadosSOemmemoria;fechar039/040/042/043/044/045/customcontrols; comparar overlay na copia restaurada; manter RAISE+ROLLBACK ate revisao | DDL exata ainda nao pronta: nao solicitar autorizacao generica nem aplicar34migrations/journalvazio |
 | Contatos045/dados existentes | coluna atual nullable/defaultNULL;fonte querNOTNULL/default[];extras/custompolicies preservados | Auditar somente alcance autorizado via ator/caminho canonico antes de NOTNULL; distinguir ausencia real de naoimportado, sem inventar[] | Qualquer conciliacao/escrita precisa lote/semantica comprovados; leitura nao autoriza backfill |
 | Identidade/destino | HML ultima observada d054 e metadados privados14/11; operacional separado | Revalidar confighash/owner/mode/mount/container/image/cluster/DB/role/schemaOID/ator/Grupo e espaco>=20GiB+reserva usando helper existente no canal privado | Nenhuma alteracao de permissao/host permitida para contornar falha; se canal expirar, intervencao pontual identificada |
 | Menor privilegio | RLS/forceRLS e controles existentes observados; role sintetica041 so prova policy em memoria | Comparar owners/security/search_path/policies/indexes/triggers do destino; testar principal real semBYPASS como autorizacao, RBAC explicito/contexto | Grants operacionais minimos somente se contrato especifico revisado/autorizado, nao promoveradmin |
