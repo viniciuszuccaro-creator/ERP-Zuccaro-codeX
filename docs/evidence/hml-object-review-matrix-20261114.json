@@ -3259,6 +3259,94 @@
         "rollbackPreservesPreviousSyntheticRowAndIndex": true,
         "realRbacOrRestoredHmlProven": false
       }
+    },
+    "produto_empresas": {
+      "reviewHead": "dcc028383abf7e284bb8d5c4fcdaf80dd33dff78",
+      "status": "RELATION_AND_SYNTHETIC_POLICY_REHEARSED_ITEM_CALLBACKS_AND_TARGET_PENDING",
+      "sourcePins": [
+        {
+          "path": "server/migrations/001_foundation.sql",
+          "sha256": "857c9e37c237a42e1bda425903e5ccbb7bac4d762829d48e1738ea2913d95d5f",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/migrations/003_marcas_pilot.sql",
+          "sha256": "886715dead23f37a752be8f9973b942d968c8ab15feecb42a45eda07d4b5d43c",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/migrations/004_tenant_integrity.sql",
+          "sha256": "c64cb2cf172a591264834a126a2d0afd15e963d98d4a95ecc8ebabb60aca1c04",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/migrations/005_cadastros_simples.sql",
+          "sha256": "e754793c4ce65f99e06a7216c365812c20f50af96fd6d54adf6f002e76f02c20",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/migrations/006_produtos_base.sql",
+          "sha256": "0111511d0d6354222f48e29f7596cd137f851a9208e79baad36911bd344f9a58",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/migrations/040_crm_oportunidades.sql",
+          "sha256": "25975ead474c03b3f66d500598f2efbd1a93720f4f2c3efb504ba471f27b6219",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/migrations/041_produto_empresas_operacao.sql",
+          "sha256": "a827b21c952bf159d8575d0e6881bef11bea52a2d7227d28e0507549f342ba03",
+          "encoding": "raw Git blob UTF-8 LF"
+        }
+      ],
+      "test": "tests/hml-vps-bootstrap.test.js: produto_empresas canonical source memory rehearsal",
+      "canonicalFragments": [
+        "001 CREATE groups/empresas/profiles only; original timestamp function",
+        "004 original company tenant function",
+        "003/005/006 canonical product dependency DDL",
+        "040 uq_empresas_id_group_scope only; no opportunities replay",
+        "041 relation DDL before item guard extension marker only"
+      ],
+      "restoredHmlAttested": false,
+      "canApply": false,
+      "existingProposalSqlChanged": false,
+      "existingObjectsReclassifiedAsApplied": false,
+      "rowBackfillExecuted": false,
+      "remainingGates": [
+        "041 item callbacks require true016/017 parent closure; NOT exercised here",
+        "Full038/040/042/043 and original043 prerequisites/identity reconciliation not established",
+        "Real actor/session/profile/Group/explicit permission and least privilege not proven by synthetic NOLOGIN role",
+        "Fresh restored-target signatures/owners/security/search_path/dependencies/custom controls",
+        "Independent review/fresh backup/isolated restore/external ack/reversal/window/specific deployment authorization"
+      ],
+      "validation": {
+        "engine": "PGlite synthetic memory only",
+        "columnsVerified": 11,
+        "defaultAtivo": false,
+        "defaultHabilitadoOperacao": false,
+        "defaultVersion": 1,
+        "compoundFksVerified": 2,
+        "missing040ParentRejectedCode": "42830",
+        "canonical040UniqueUsed": true,
+        "uniqueGroupCompanyProductVerified": true,
+        "positiveVersionAndIneligibleInactiveCheckVerified": true,
+        "profileFksAndNotNullVerified": true,
+        "rlsEnabledAndForced": true,
+        "syntheticNoLoginNonBypassPolicyEvaluation": true,
+        "missingSelectDeniedCode": "42501",
+        "emptyOrCrossContextDenied": true,
+        "negativeControls": 2,
+        "noActivationOrProductMutation": true,
+        "rollbackPreservesPreviousSyntheticRowAndIndex": true,
+        "itemCallbacksProven": false,
+        "realRbacOrRestoredHmlProven": false,
+        "focusedTestsPass": 45,
+        "focusedTestsFail": 0,
+        "focusedTestsSkip": 0,
+        "syntheticWithCheckEvaluated": true,
+        "invalidContextRejectedCode": "22P02"
+      }
     }
   }
 }

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
-import { createHash } from 'node:crypto';
+import { loadCanonicalRehearsalSources, canonicalTable } from './helpers/hmlCanonicalSourceRehearsal.js';
 import { validateHmlConfig, readHmlConfig, hmlAuthFetch, preflightHml } from '../scripts/vps/hml-bootstrap.mjs';
 
 const simpleRelationCases = [
@@ -21,15 +21,7 @@ for (const cfg of simpleRelationCases) {
   test(`${cfg.table}: clausulas canonicas e dependencias funcionam somente no ensaio memoria`, async t => {
     const require = createRequire(new URL('../server/package.json', import.meta.url));
     const { PGlite } = require('@electric-sql/pglite');
-    const matrix = JSON.parse(await readFile(new URL('../docs/evidence/hml-object-review-matrix-20261114.json', import.meta.url), 'utf8'));
-    const review = matrix.relationReviews?.[cfg.table];
-    assert.ok(review, 'A prova deve estar vinculada ao fechamento de fonte, nao ao destino real');
-    const sources = {};
-    for (const pin of review.sourcePins) {
-      const sql = (await readFile(new URL(`../${pin.path}`, import.meta.url), 'utf8')).replace(/\r\n/g, '\n');
-      assert.equal(createHash('sha256').update(sql).digest('hex'), pin.sha256, pin.path);
-      sources[pin.path.split('/').at(-1)] = sql;
-    }
+    const { matrix, review, sources } = await loadCanonicalRehearsalSources(cfg.table);
     const foundation = sources['001_foundation.sql'].match(/CREATE OR REPLACE FUNCTION set_updated_at\(\)[\s\S]*?\$\$ LANGUAGE plpgsql;/)?.[0];
     const tenant = sources['004_tenant_integrity.sql'].match(/CREATE OR REPLACE FUNCTION assert_empresa_belongs_to_group\(\)[\s\S]*?\$\$ LANGUAGE plpgsql;/)?.[0];
     const simple = sources['005_cadastros_simples.sql'];
@@ -112,15 +104,7 @@ for (const cfg of simpleRelationCases) {
 test('produtos: fonte base/master/FKs/material e gate043 preservados em memoria', async t => {
   const require = createRequire(new URL('../server/package.json', import.meta.url));
   const { PGlite } = require('@electric-sql/pglite');
-  const matrix = JSON.parse(await readFile(new URL('../docs/evidence/hml-object-review-matrix-20261114.json', import.meta.url), 'utf8'));
-  const review = matrix.relationReviews?.produtos;
-  assert.ok(review, 'A prova exige fontes e pendencias registradas');
-  const sources = {};
-  for (const pin of review.sourcePins) {
-    const sql = (await readFile(new URL(`../${pin.path}`, import.meta.url), 'utf8')).replace(/\r\n/g, '\n');
-    assert.equal(createHash('sha256').update(sql).digest('hex'), pin.sha256, pin.path);
-    sources[pin.path.split('/').at(-1)] = sql;
-  }
+  const { matrix, review, sources } = await loadCanonicalRehearsalSources('produtos');
   const foundation = sources['001_foundation.sql'].match(/CREATE OR REPLACE FUNCTION set_updated_at\(\)[\s\S]*?\$\$ LANGUAGE plpgsql;/)?.[0];
   const tenant = sources['004_tenant_integrity.sql'].match(/CREATE OR REPLACE FUNCTION assert_empresa_belongs_to_group\(\)[\s\S]*?\$\$ LANGUAGE plpgsql;/)?.[0];
   assert.ok(foundation && tenant);
@@ -231,6 +215,101 @@ test('produtos: fonte base/master/FKs/material e gate043 preservados em memoria'
     assert.deepEqual((await db.query('SELECT * FROM public.keep_product_review')).rows, before);
     assert.equal((await db.query("SELECT count(*)::integer AS n FROM pg_indexes WHERE schemaname='public' AND indexname='keep_product_review_label'")).rows[0].n, 1);
     t.diagnostic('Canonical006/007/008/023 plus019 function/024 draft relation in memory only; original043 refused. Not full PIM/043, restored HML, real RBAC, import, stock/fiscal, external publication or deploy evidence.');
+  } finally { await db.close(); }
+});
+
+
+test('produto_empresas: fonte041 inativa, FKs compostas e policy em memoria com rollback', async t => {
+  const { matrix, review, sources } = await loadCanonicalRehearsalSources('produto_empresas');
+  assert.equal(matrix.canApply, false); assert.equal(review.restoredHmlAttested, false);
+  const require = createRequire(new URL('../server/package.json', import.meta.url));
+  const { PGlite } = require('@electric-sql/pglite');
+  const db = new PGlite();
+  const foundation = sources['001_foundation.sql'];
+  const timestamp = foundation.match(/CREATE OR REPLACE FUNCTION set_updated_at\(\)[\s\S]*?\$\$ LANGUAGE plpgsql;/)?.[0];
+  const tenant = sources['004_tenant_integrity.sql'].match(/CREATE OR REPLACE FUNCTION assert_empresa_belongs_to_group\(\)[\s\S]*?\$\$ LANGUAGE plpgsql;/)?.[0];
+  const companyKey = sources['040_crm_oportunidades.sql'].match(/CREATE UNIQUE INDEX IF NOT EXISTS uq_empresas_id_group_scope ON empresas\(id, group_id\);/)?.[0];
+  const ddl = sources['041_produto_empresas_operacao.sql'].split('-- Extend the existing item guards explicitly;')[0];
+  assert.ok(timestamp && tenant && companyKey); assert.doesNotMatch(ddl, /\b(?:INSERT|UPDATE|DELETE)\s+(?:INTO|FROM|produtos|produto_empresas)\b/i);
+  const g1 = '11111111-1111-4111-8111-111111111111', g2 = '22222222-2222-4222-8222-222222222222';
+  const e1 = '33333333-3333-4333-8333-333333333333', e2 = '44444444-4444-4444-8444-444444444444';
+  const rejected = async (sql, values, code) => {
+    await db.exec('SAVEPOINT rejected_link');
+    await assert.rejects(db.query(sql, values), error => error.code === code);
+    await db.exec('ROLLBACK TO SAVEPOINT rejected_link; RELEASE SAVEPOINT rejected_link');
+  };
+  try {
+    await db.exec("CREATE TABLE public.keep_link_review(id integer PRIMARY KEY,label text); INSERT INTO public.keep_link_review VALUES(1,'SYNTHETIC_KEEP'); CREATE INDEX keep_link_label ON public.keep_link_review(label);");
+    const before = (await db.query('SELECT * FROM public.keep_link_review')).rows;
+    await db.exec(`BEGIN; CREATE SCHEMA link_review_synthetic; SET LOCAL search_path TO link_review_synthetic,pg_catalog;
+      ${timestamp}\n${tenant}\n${['groups','empresas','profiles'].map(name=>canonicalTable(foundation,name)).join('\n')}
+      ${sources['003_marcas_pilot.sql']}\n${sources['005_cadastros_simples.sql']}\n${sources['006_produtos_base.sql']}`);
+    // Counterproof:001 alone is not a valid compound FK parent. Never fabricate its UNIQUE.
+    await db.exec('SAVEPOINT missing_canonical_040');
+    await assert.rejects(db.exec(ddl), error => error.code === '42830');
+    await db.exec('ROLLBACK TO SAVEPOINT missing_canonical_040; RELEASE SAVEPOINT missing_canonical_040');
+    await db.exec(`${companyKey}\n${ddl}`);
+    await db.query("INSERT INTO groups(id,nome_do_grupo) VALUES($1,'SYNTHETIC A'),($2,'SYNTHETIC B')", [g1,g2]);
+    await db.query("INSERT INTO empresas(id,group_id,razao_social) VALUES($1,$2,'SYNTHETIC A'),($3,$4,'SYNTHETIC B')", [e1,g1,e2,g2]);
+    const profile = (await db.query("INSERT INTO profiles(email,group_id,empresa_id) VALUES('synthetic@example.invalid',$1,$2) RETURNING id", [g1,e1])).rows[0].id;
+    const products = [];
+    for (const group of [g1,g2]) products.push((await db.query("INSERT INTO produtos(group_id,descricao,codigo,ativo) VALUES($1,'SYNTHETIC SHARED','SOURCE-CODE',false) RETURNING *", [group])).rows[0]);
+    const originalProducts = (await db.query('SELECT * FROM produtos ORDER BY id')).rows;
+    const row = (await db.query('INSERT INTO produto_empresas(group_id,empresa_id,produto_id,created_by,updated_by) VALUES($1,$2,$3,$4,$4) RETURNING *', [g1,e1,products[0].id,profile])).rows[0];
+    assert.deepEqual(Object.keys(row), ['id','group_id','empresa_id','produto_id','ativo','habilitado_operacao','version','created_by','updated_by','created_at','updated_at']); assert.equal(row.ativo, false); assert.equal(row.habilitado_operacao, false); assert.equal(row.version, 1);
+    await rejected('UPDATE produto_empresas SET empresa_id=$1 WHERE id=$2', [e2,row.id], '23503');
+    await rejected('UPDATE produto_empresas SET produto_id=$1 WHERE id=$2', [products[1].id,row.id], '23503');
+    await rejected('UPDATE produto_empresas SET group_id=$1 WHERE id=$2', [g2,row.id], '23503');
+    await rejected('UPDATE produto_empresas SET version=0 WHERE id=$1', [row.id], '23514');
+    await rejected('UPDATE produto_empresas SET habilitado_operacao=true WHERE id=$1', [row.id], '23514');
+    await rejected('UPDATE produto_empresas SET created_by=$1 WHERE id=$2', [e1,row.id], '23503');
+    await rejected('UPDATE produto_empresas SET updated_by=NULL WHERE id=$1', [row.id], '23502');
+    await rejected('INSERT INTO produto_empresas(group_id,empresa_id,produto_id,created_by,updated_by) VALUES($1,$2,$3,$4,$4)', [g1,e1,products[0].id,profile], '23505');
+    assert.deepEqual((await db.query("SELECT relrowsecurity,relforcerowsecurity FROM pg_class WHERE oid='produto_empresas'::regclass")).rows[0], { relrowsecurity: true, relforcerowsecurity: true });
+    assert.equal((await db.query("SELECT count(*)::integer n FROM pg_policies WHERE schemaname='link_review_synthetic' AND tablename='produto_empresas'")).rows[0].n, 1);
+    // Synthetic NOLOGIN role tests actual policy evaluation, not owner bypass or real actor/RBAC.
+    await db.exec('CREATE ROLE link_review_reader NOLOGIN NOSUPERUSER NOBYPASSRLS; GRANT USAGE ON SCHEMA link_review_synthetic TO link_review_reader');
+    await db.exec('SAVEPOINT reader_no_grant; SET LOCAL ROLE link_review_reader');
+    await assert.rejects(db.query('SELECT id FROM produto_empresas'), error=>error.code==='42501');
+    await db.exec('ROLLBACK TO SAVEPOINT reader_no_grant; RELEASE SAVEPOINT reader_no_grant; GRANT SELECT ON produto_empresas TO link_review_reader');
+    const visible = async (group, company) => {
+      await db.query("SELECT set_config('app.group_id',$1,true),set_config('app.empresa_id',$2,true)", [group,company]);
+      await db.exec('SET LOCAL ROLE link_review_reader');
+      const rows = (await db.query('SELECT id FROM produto_empresas')).rows;
+      await db.exec('RESET ROLE'); return rows;
+    };
+    assert.deepEqual(await visible('',''), []); assert.deepEqual(await visible(g2,e2), []);
+    assert.deepEqual(await visible(g1,''), []); assert.deepEqual(await visible(g1,e2), []);
+    assert.deepEqual(await visible(g1,e1), [{ id: row.id }]);
+    await db.exec('SAVEPOINT synthetic_write_check');
+    const e3 = (await db.query("INSERT INTO empresas(group_id,razao_social) VALUES($1,'SYNTHETIC SAME GROUP') RETURNING id", [g1])).rows[0].id;
+    await db.exec('GRANT UPDATE ON produto_empresas TO link_review_reader; SET LOCAL ROLE link_review_reader');
+    assert.equal((await db.query('UPDATE produto_empresas SET version=2 WHERE id=$1 RETURNING version', [row.id])).rows[0].version, 2);
+    await rejected('UPDATE produto_empresas SET empresa_id=$1 WHERE id=$2', [e3,row.id], '42501');
+    await db.exec('RESET ROLE; ROLLBACK TO SAVEPOINT synthetic_write_check; RELEASE SAVEPOINT synthetic_write_check');
+    await db.exec('SAVEPOINT invalid_policy_context');
+    await db.query("SELECT set_config('app.group_id','invalid-uuid',true)");
+    await db.exec('SET LOCAL ROLE link_review_reader');
+    await assert.rejects(db.query('SELECT id FROM produto_empresas'), error=>error.code==='22P02');
+    await db.exec('ROLLBACK TO SAVEPOINT invalid_policy_context; RELEASE SAVEPOINT invalid_policy_context');
+    await db.exec('SAVEPOINT negative_link_policy; ALTER POLICY produto_empresas_tenant_scope ON produto_empresas USING(true)');
+    assert.deepEqual(await visible(g2,e2), [{ id: row.id }]);
+    await db.exec('ROLLBACK TO SAVEPOINT negative_link_policy; RELEASE SAVEPOINT negative_link_policy');
+    assert.deepEqual(await visible(g2,e2), []);
+    await db.exec('SAVEPOINT negative_link_fk');
+    const compoundFks = (await db.query("SELECT conname FROM pg_constraint WHERE conrelid='produto_empresas'::regclass AND contype='f' AND array_length(conkey,1)=2")).rows;
+    assert.equal(compoundFks.length, 2);
+    for (const { conname } of compoundFks) { assert.match(conname, /^[a-z_]+$/); await db.exec(`ALTER TABLE produto_empresas DROP CONSTRAINT ${conname}`); }
+    assert.equal((await db.query('UPDATE produto_empresas SET group_id=$1 WHERE id=$2 RETURNING group_id', [g2,row.id])).rows[0].group_id, g2);
+    await db.exec('ROLLBACK TO SAVEPOINT negative_link_fk; RELEASE SAVEPOINT negative_link_fk');
+    await rejected('UPDATE produto_empresas SET group_id=$1 WHERE id=$2', [g2,row.id], '23503');
+    assert.deepEqual((await db.query('SELECT * FROM produto_empresas')).rows, [row]);
+    assert.deepEqual((await db.query('SELECT * FROM produtos ORDER BY id')).rows, originalProducts);
+    await db.exec('ROLLBACK');
+    assert.equal((await db.query("SELECT to_regclass('link_review_synthetic.produto_empresas') relation")).rows[0].relation, null);
+    assert.deepEqual((await db.query('SELECT * FROM public.keep_link_review')).rows, before);
+    assert.equal((await db.query("SELECT count(*)::integer n FROM pg_indexes WHERE schemaname='public' AND indexname='keep_link_label'")).rows[0].n, 1);
+    t.diagnostic('041 relation only; canonical001/040 parents, synthetic policy evaluation/2 controls/rollback. No activation, backfill, real principal, target, item callbacks016/017, grants or deployment evidence.');
   } finally { await db.close(); }
 });
 

@@ -1,3 +1,49 @@
+## Produto por Empresa: relacao041 provada, callbacks ainda pendentes (2026-11-15)
+
+Retomada NATIVA14:44:32Z, dcc02838 local=remoto/limpo, sem escritor/trava alheia;
+AGENTS sem delta; reserva594/6896311564 e trava CreateNew propria. Reserva
+anterior6896139457 ja liberada6896181947 sem edicao, nao duplicada.
+No harness/matriz EXISTENTES, fonte001 original define groups/empresas/profiles;
+003/004/005/006 fecham pais do produto. Fonte040 fornece SOMENTE o UNIQUE
+empresas(id,group_id): contraprova no engine sem040 recusa041 com42830; com a
+clausula canonica a mesma041 passa, sem UNIQUE manual/prerequisito ficticio.
+
+Prova de fonte da relacao041 ANTES dos callbacks:11colunas exatas, defaults
+ativo=false/habilitado_operacao=false/version1; version0, habilitar inativo,
+duplicidade Grupo/Empresa/Produto, perfil ausente/NULL e FKs compostas recusados.
+Produtos compartilhados/inativos, IDs/codigos e campos preservados, nenhuma
+ativacao/backfill/038/estoque/preco/historico. RLS enabled+forced e policy original
+exercitados com role SINTETICA NOLOGIN/NOSUPERUSER/NOBYPASSRLS: SELECT sem grant
+nega42501; contexto vazio/incompleto/cross-Grupo/cross-Empresa nega; contexto
+correto retorna so a linha; UUID invalido falha22P02. USING e WITH CHECK reais
+avaliados, permissao UPDATE somente sintetica e revertida no savepoint. Isto
+NAO e autorizacao de usuario real, RBAC da aplicacao ou menor privilegio HML.
+Dois controles negativos provam que remover FKs compostas ou alargar policy
+permite a violacao; rollback restaura restricoes. Rollback total remove relacao,
+role/grants sinteticos e schema, preservando linha/indice publico anteriores.
+
+Extraido loader duplicado para helper TEST-ONLY hmlCanonicalSourceRehearsal:
+valida pins rawGitLF e extrai CREATE original; nenhum equivalente viavel sem
+replay038/seeds/autoativacao do crmFixture. Nao cria modulo aplicativo nem banco
+paralelo; PGlite memoria sem URL/config operacional. Provas anteriores mantidas.
+45focais PASS/0skip, incluindo18goldens; audit/lintdirecionado/diffcheck PASS.
+Erro inicial do novo teste esperava12colunas; contagem manual corrigida para
+lista EXATA11 da fonte, nao alterada migration/constraint para passar.
+Sem src/server/scripts/migrations/runtime alterados; reutilizar build/typecheck
+runtimee920/CI7176 e pacote imutavel. GlobalWindows POSIX/getuid/hang conhecidos
+nao repetidos/relaxados; CI Linux completa por SHA fecha os checks aplicaveis.
+
+Matriz adiciona SO relationReviews.produto_empresas e7pins.225objetos/101clausulas/
+18pins originais/4reviews anteriores/SQLguardado intactos;124diferidos NAO
+promovidos,canApplyfalse/completeMigrationfalse/RAISE+ROLLBACK preservados.
+Callbacks041 de itens NAO provados: exigem016_orcamentos_comercial_360 e
+017_pedidos_comercial_360 com pais reais009clientes/014condicoes/015hardening,
+e depois011locais/012obras/013tabelas para017. Proximo independente: fechar
+closure016 no mesmo ensaio com fontes canonicas e sem stubs/038/backfill;
+depois017 e callbacks041. Guard043 permanece intacto, sem full043 presumida.
+NaoVPS/SQLreal/grantreal/import/deploy. Destino restaurado/ator/RBAC/backupfresh/
+restore/ack/reversao/janela/revisao independente/autorizacao continuam gates.
+
 ## Produtos e canais em rascunho: prova de fonte, sem liberar043 (2026-11-15)
 
 Retomada NATIVA14:04:32Z, Casa71c276fd limpo/local=remoto, sem escritor no

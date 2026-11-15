@@ -1,3 +1,14 @@
+## Produto por Empresa041: fonte e policy sintetica provadas (15/11/2026)
+
+041relacao11colunas/defaults inativos/version/FKscompostas/unique/perfis/RLS
+USING+WITHCHECK provados em memoria. Sem040UNIQUEcanonico recusa42830; com ele
+passa. RoleNOLOGINsintetica semBYPASS, deny42501/UUIDinvalido22P02,2controles
+negativos e rollback completo; nenhum ator real/RBAC/destino atestado.
+45focaisPASS0skip/18goldens/audit/lintdirecionado/diffcheck; CIporSHA na594.
+225objetos/101clausulas/4reviews/SQLguardado preservados,canApplyfalse.
+Proximo016comclosure009/014/015 canonica, depois017/041callbacks; nao stubs.
+Runtime/pacotee920 intactos;semVPS/ativacao/backfill/carga/grantreal/deploy.
+
 ## Produtos/canais: fonte comprovada offline,043 continua bloqueada (15/11/2026)
 
 Produto006/007/008/material023:39colunas/3triggers/FKs/tenant/indices/defaults/
