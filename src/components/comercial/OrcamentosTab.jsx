@@ -104,6 +104,11 @@ export default function OrcamentosTab({
   const initialOpened = useRef(null);
   const initialCreateOpened = useRef(null);
   const detailRequest = useRef(0);
+  /** Sessão monotônica A→B→A (paridade PedidoCanonico) — ≠ só token igual. */
+  const hydrateEpoch = useRef(0);
+  const hydrateIntentIdRef = useRef(null);
+  const detailInflightRef = useRef(new Map());
+  const canViewLiveRef = useRef(false);
   const selectionEpochLiveRef = useRef(selectionEpoch);
   selectionEpochLiveRef.current = selectionEpoch;
   const formScope = useRef(null);
@@ -147,6 +152,9 @@ export default function OrcamentosTab({
   useEffect(() => {
     if (!centralLayout) return undefined;
     detailRequest.current += 1;
+    hydrateEpoch.current += 1;
+    hydrateIntentIdRef.current = null;
+    detailInflightRef.current.clear();
     // invalidate() zera pending sem liberar UI — sem setSubmitting(false) Fechar/Salvar ficam sticky.
     actionGate.current.invalidate();
     setSubmitting(false);
@@ -159,7 +167,12 @@ export default function OrcamentosTab({
       setFilters((prev) => ({ ...prev, status: 'EM_ABERTO', validadeAte: '' }));
       setAppliedFilters((prev) => ({ ...prev, status: 'EM_ABERTO', validadeAte: '' }));
     }
-    return () => { detailRequest.current += 1; };
+    return () => {
+      detailRequest.current += 1;
+      hydrateEpoch.current += 1;
+      hydrateIntentIdRef.current = null;
+      detailInflightRef.current.clear();
+    };
   }, [centralLayout, centralSituacao]);
   useEffect(() => {
     if (!centralLayout) return undefined;
@@ -183,6 +196,7 @@ export default function OrcamentosTab({
     });
   };
   const canView = canUseOrcamentoAction(hasPermission, 'visualizar');
+  canViewLiveRef.current = canView;
   const canCreate = canUseOrcamentoAction(hasPermission, 'criar');
   const canEdit = (row) => canUseOrcamentoAction(hasPermission, 'editar', row?.status);
   const canCancel = (row) => canUseOrcamentoAction(hasPermission, 'cancelar', row?.status);
@@ -353,7 +367,29 @@ export default function OrcamentosTab({
     [masters.produtos, produtoQuery],
   );
 
-  useEffect(() => { actionGate.current.invalidate(); formScope.current = null; cancelScope.current = null; conversionScope.current = null; setSubmitting(false); setPage(1); setSelected(null); setDetailOpen(false); setFormOpen(false); setPendingCancel(null); setPendingConversion(null); setConversionEndereco(null); setProposalStage('lista'); setFilters({ search: '', status: 'TODOS', clienteEmpresaId: 'TODOS', validadeDe: '', validadeAte: '' }); setAppliedFilters({ search: '', status: 'TODOS', clienteEmpresaId: 'TODOS', validadeDe: '', validadeAte: '' }); }, [groupId, empresaId, actorId, sessionIdentity, proposalMode]);
+  useEffect(() => {
+    // Geração monotônica: token A→B→A não reabre GET da sessão antiga (paridade PedidoCanonico).
+    // Limpa inflight: senão o 1º clique no novo gen reusa Promise N e recebe null (Bugbot).
+    actionGate.current.invalidate();
+    detailRequest.current += 1;
+    hydrateEpoch.current += 1;
+    hydrateIntentIdRef.current = null;
+    detailInflightRef.current.clear();
+    formScope.current = null;
+    cancelScope.current = null;
+    conversionScope.current = null;
+    setSubmitting(false);
+    setPage(1);
+    setSelected(null);
+    setDetailOpen(false);
+    setFormOpen(false);
+    setPendingCancel(null);
+    setPendingConversion(null);
+    setConversionEndereco(null);
+    setProposalStage('lista');
+    setFilters({ search: '', status: 'TODOS', clienteEmpresaId: 'TODOS', validadeDe: '', validadeAte: '' });
+    setAppliedFilters({ search: '', status: 'TODOS', clienteEmpresaId: 'TODOS', validadeDe: '', validadeAte: '' });
+  }, [groupId, empresaId, actorId, sessionIdentity, proposalMode]);
   useEffect(() => {
     const warn = (event) => { if (dirty) { event.preventDefault(); event.returnValue = ''; } };
     window.addEventListener('beforeunload', warn);
@@ -405,46 +441,62 @@ export default function OrcamentosTab({
     setDirty(false); setDetailOpen(false); setFormOpen(true);
     if (proposalMode) setProposalStage('edicao');
   };
-  const detailInflightRef = useRef(new Map());
-  /** GET compartilhado por id; epoch/situação validam no caller — reuso não prende epoch do 1º clique. */
-  const fetchOrcamentoDetail = async (row, { epochAtClick = null } = {}) => {
+  /** GET compartilhado por id; sessão monotônica + epoch/intent/RBAC validam no waiter. */
+  const fetchOrcamentoDetail = async (row, { epochAtClick = null, sessionGenAtClick = null } = {}) => {
     if (!row?.id) return null;
-    let flight = detailInflightRef.current.get(row.id);
+    if (!canViewLiveRef.current) return null;
+    const requestId = row.id;
+    let flight = detailInflightRef.current.get(requestId);
     if (!flight) {
-      const request = ++detailRequest.current;
       const opened = { ...renderedScope.current, token: activeScope()?.token };
+      // Geração no início do flight — A→B→A não reusa resultado (≠ só token igual).
+      const openedGen = hydrateEpoch.current;
       flight = (async () => {
         try {
-          const detail = await api.get(row.id);
-          if (request !== detailRequest.current) return null;
+          const detail = await api.get(requestId);
+          if (hydrateEpoch.current !== openedGen) return null;
+          if (!canViewLiveRef.current) return null;
           if (!sameOrcamentoScope(opened, renderedScope.current, activeScope())) return null;
           return detail;
         } catch (error) {
-          if (request === detailRequest.current && sameOrcamentoScope(opened, renderedScope.current, activeScope())) {
+          // Mesmo guard do sucesso: sessão monotônica + intenção vigente.
+          if (hydrateEpoch.current !== openedGen) return null;
+          if (!canViewLiveRef.current) return null;
+          if (hydrateIntentIdRef.current === requestId
+            && sameOrcamentoScope(opened, renderedScope.current, activeScope())) {
             toast.error(errorMessage(error));
           }
           return null;
         } finally {
-          detailInflightRef.current.delete(row.id);
+          detailInflightRef.current.delete(requestId);
         }
       })();
-      detailInflightRef.current.set(row.id, flight);
+      detailInflightRef.current.set(requestId, flight);
     }
     const detail = await flight;
     if (!detail) return null;
+    // Waiter: situação, orçamento, sessão monotônica, RBAC — sem nullar o flight compartilhado.
     if (epochAtClick != null && epochAtClick !== selectionEpochLiveRef.current) return null;
+    if (sessionGenAtClick != null && sessionGenAtClick !== hydrateEpoch.current) return null;
+    if (hydrateIntentIdRef.current !== requestId) return null;
+    if (!canViewLiveRef.current) return null;
     return detail;
   };
   const openEditHydrated = async (row) => {
     if (proposalMode) { openEdit(row); return; }
-    if (!canEdit(row) || !row?.id) return;
+    if (!canViewLiveRef.current || !canEdit(row) || !row?.id) return;
     // Duplo clique compartilha GET com selectCentralRow — não abortar grades/pagamento-resumo.
     const epochAtClick = selectionEpochLiveRef.current;
+    const sessionGenAtClick = hydrateEpoch.current;
+    hydrateIntentIdRef.current = row.id;
     setSelected(row);
     notifyCentralSelect(row, epochAtClick);
-    const detail = await fetchOrcamentoDetail(row, { epochAtClick });
+    const detail = await fetchOrcamentoDetail(row, { epochAtClick, sessionGenAtClick });
     if (!detail) return;
     if (epochAtClick !== selectionEpochLiveRef.current) return;
+    if (sessionGenAtClick !== hydrateEpoch.current) return;
+    if (hydrateIntentIdRef.current !== row.id) return;
+    if (!canViewLiveRef.current) return;
     setSelected(detail);
     notifyCentralSelect(detail, epochAtClick);
     openEdit(detail);
@@ -916,15 +968,20 @@ const convertToPedido = async () => {
   };
   /** Clique simples: seleciona já e sempre GET canônico (lista pode trazer itens stub sem total/parcelas). Sem mutation gate. */
   const selectCentralRow = async (row) => {
-    if (!row?.id) return;
-    // Congela epoch no clique — notify pós-await não pode ler selectionEpochLiveRef “vivo” da nova situação.
+    if (!row?.id || !canViewLiveRef.current) return;
+    // Congela epoch + gen no clique — notify pós-await não lê refs “vivos” da nova sessão/situação.
     const epochAtClick = selectionEpochLiveRef.current;
+    const sessionGenAtClick = hydrateEpoch.current;
+    hydrateIntentIdRef.current = row.id;
     setSelected(row);
     notifyCentralSelect(row, epochAtClick);
     if (proposalMode) return;
-    const detail = await fetchOrcamentoDetail(row, { epochAtClick });
+    const detail = await fetchOrcamentoDetail(row, { epochAtClick, sessionGenAtClick });
     if (!detail) return;
     if (epochAtClick !== selectionEpochLiveRef.current) return;
+    if (sessionGenAtClick !== hydrateEpoch.current) return;
+    if (hydrateIntentIdRef.current !== row.id) return;
+    if (!canViewLiveRef.current) return;
     setSelected(detail);
     notifyCentralSelect(detail, epochAtClick);
   };

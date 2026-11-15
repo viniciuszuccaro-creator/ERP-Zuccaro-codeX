@@ -1,3 +1,10 @@
+## Cursor — PR596 OrcamentosTab sessão monotônica (2026-11-15 America/Sao_Paulo)
+
+Executor: **Cursor**. PedidoCanonico residual Casa fechado no tip; OrcamentosTab
+paridade hydrateEpoch/canViewLive/inflight. Sem Completo/SFTP/deploy.
+tip ≠ HML `d054e2b3`. Freeze `0ffff5100` / port `81d1e849`.
+Casa: Completo + pacote privado ~4MB + preflight 81.
+
 ## Cursor — PR596 tip 5cf08bb77 CI SUCCESS (2026-11-14 America/Sao_Paulo)
 
 Pin Dashboard + Bugbot/Security lote. CI SUCCESS. tip ≠ HML `d054e2b3`.

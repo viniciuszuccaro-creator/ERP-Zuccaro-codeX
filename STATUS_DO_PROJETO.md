@@ -1,3 +1,12 @@
+## Cursor — PR596 OrcamentosTab sessão monotônica (2026-11-15 America/Sao_Paulo)
+
+Continuidade 15/11: **Cursor** — Cadastros/Dash/C360 sem Completo.
+PedidoCanonico tip `5cf08` já cobre A→B→A / RBAC / toast (não reabrir).
+OrcamentosTab: `hydrateEpoch` + `canViewLiveRef` + inflight clear + intent
+(paridade PedidoCanonico; Bugbot High stale GET). Sem Completo/SFTP/deploy.
+Freeze `0ffff5100` / port `81d1e849`. tip ≠ HML `d054e2b3`.
+Casa: Completo ownership + pacote privado + preflight 81.
+
 ## Cursor — PR596 tip 5cf08bb77 CI SUCCESS (2026-11-14 America/Sao_Paulo)
 
 HEAD **`5cf08bb77` CI SUCCESS**. Pin Dashboard `a2e0cc61…` + lote Bugbot/Security

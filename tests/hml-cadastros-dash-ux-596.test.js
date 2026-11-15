@@ -236,7 +236,16 @@ test('OrcamentosTab Bugbot: epochAtClick no select + submitting após invalidate
   assert.match(orc, /epochAtClick != null && epochAtClick !== selectionEpochLiveRef\.current/);
   assert.match(orc, /detailInflightRef/);
   assert.match(orc, /fetchOrcamentoDetail/);
-  assert.match(orc, /actionGate\.current\.invalidate\(\);\s*\n\s*setSubmitting\(false\)/);
+  assert.match(orc, /actionGate\.current\.invalidate\(\)/);
+  assert.match(orc, /setSubmitting\(false\)/);
+  // Paridade PedidoCanonico: sessão monotônica A→B→A + RBAC pós-await + inflight clear.
+  assert.match(orc, /sessionGenAtClick/);
+  assert.match(orc, /hydrateEpoch\.current !== openedGen/);
+  assert.match(orc, /sessionGenAtClick != null && sessionGenAtClick !== hydrateEpoch\.current/);
+  assert.match(orc, /canViewLiveRef/);
+  assert.match(orc, /detailInflightRef\.current\.clear\(\)/);
+  assert.match(orc, /hydrateIntentIdRef\.current !== requestId/);
+  assert.match(orc, /\[groupId, empresaId, actorId, sessionIdentity, proposalMode\]/);
 });
 
 test('LogisticaEntregaTab: seletor recebe groupId/empresaId', () => {
