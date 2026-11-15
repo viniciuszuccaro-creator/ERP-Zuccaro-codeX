@@ -1,3 +1,14 @@
+## Preco039/CRM040: fechamento de fonte com policy e sequence (15/11/2026)
+
+Orcamento18colunas/precoNULLopcional/tenantvinculoativo preservado;CRM44colunas/
+FKscompostas/indicesidempotencia-legado-ownerinclusiveinativo/decimais/JSON/codigo
+textual/sequenceINVOKER-GREATEST/rollback/boundsBIGINT e policySEM-BYPASSsintetica.
+5controles,48focaisPASS0skip/18goldens/audit/lintdirecionado/diffcheck;CIporSHA594.
+7reviews/225objetos/101clausulas/SQLguardado intactos,canApplyfalse.0dadosreais.
+Naoautenticacaoreal/RBAC/concorrenciamultissessao/restoredHML/import/deploy.
+Proximo042comRLS002original/pais001 verdadeiros;043/044/045gates separados.
+Runtime/pacotee920intactos;mesmaautomacao/checkpoint atualizadosnofechamento.
+
 ## Pedido017/guards041: fechamento de fonte composto (15/11/2026)
 
 23+19+10colunas/parents010DDLsemUPDATEhistorico/011012013/headers/itens/historico/

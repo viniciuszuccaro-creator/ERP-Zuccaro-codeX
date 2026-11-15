@@ -1,3 +1,57 @@
+## Preco039 e CRM040: linhas/policy/sequence provados em memoria (2026-11-15)
+
+Retomada NATIVA15:28:33Z Casa,078b485d/CI7181 local=remoto/limpo,AGENTSsemDelta,
+semwriter/travaalheia;reserva594/6896879749/travaCreateNewpropria. Reutilizou
+harness/helper/matriz existentes. Extraiu SO setup017 de pais e fixtures
+sinteticas para funcoes internas compartilhadas; assertions017 mantidas,
+reexecutadas pela mudanca de setup. Sem broadcrmFixture/038/seeds/autoativacao.
+
+039ORIGINAL sobre orcamento anterior17colunas:18colunas depois, tabelaPrecoNULL
+opcional, TODOScampos/IDs anteriores preservados. Preco Grupo+Empresa comheader
+e vinculoativos permite; crossGrupo/OUTRAEmpresa noMESMOGrupo ou inativacao
+nega. GuardsclienteEmpresa/condicao anteriores continuam negando. Reporfuncao
+016ORIGINAL deixa priceforaescopo passar;savepointrestaura039 e nega novamente.
+Nenhuma obrigatoriedade nova criada para rascunho.
+
+040INTEGRAL com pais verdadeiros009/010DDLsemUPDATEhistorico/011-017:44colunas,
+FKcompostaEmpresa/clienteEmpresa, codigoUNICOporGrupo(inclusiveoutraEmpresa),
+chaveidempotencia/codigoOportunidade/legacyStore porGrupoEmpresa, ownershipPedido
+inclusivequandoinativo. Mesmoidlegado/chave emoutraEmpresaouGrupo permitido
+conformeindicescanonicos; IDslegadosTEXTUAIS e zeros do codigo preservados,
+sem converter referencia textual em UUID. Valoresdecimais exatos/arraysJSON/
+version/limites/NaN/ausenciaidentificacao testados,sem dadosreais.
+
+TriggerORIGINALsync_oportunidade_codigo SECURITYINVOKER/UPSERTGREATEST avanca
+sequenceporGrupo, nao regride comcodigo inferior, rollbackdeinsertfalho reverte
+reserva. BIGINTmax+1 e overflow19digitos recusam22003: CHECK6-19digitos SOZINHA
+NAO promete aceitar todo19digitos. Nao e geracaonavegador/MAX+1 nem prova de
+concorrencia multissessao(PostgreSQL real segueCI/provas anteriores).
+RLSenabled+forced/policyUSING+WITHCHECK originais exercitados com roleSINTETICA
+NOLOGIN/NOSUPERUSER/NOBYPASSRLS:semSELECT42501,contextovazio/incompleto/cross0,
+contextocorreto soIDspermitidos,UUIDinvalido22P02. WITHCHECKnega moverEmpresa
+mesmocomFKs/chavesunicasvalidas. GrantUPDATE/versao2 SOsavepoint,rollbackrestaura.
+Isso NAO verifica Supabase/sessao/perfil/permissao reais nem menorprivilegioHML.
+
+5controles:funcao039anterior,triggersequence desativado,FKcomposta removida,
+indiceownership removido e policyalargada. Violacoes passamapenasnoscontroles;
+rollback restaura. Linhas/orcamento/code/IDslegados/decimais/sequenceporGrupo
+preservados;rollbacktotal remove novoschema/role/grants e mantemlinha/indice
+publicos anteriores.48focaisPASS0skip/18goldens,audit/lintdirecionado/diffcheckPASS.
+CIporSHAna594;sem src/server/scripts/migration/runtime alterados, reusar e920/
+CI7176/pacoteimutavel semrebuild. SuiteWindowsglobal conhecida nao relaxada.
+MatrizSO relationReviews.oportunidades/17pins;7reviewsanteriores/225objetos/
+101clausulas/18pinsoriginais/SQLguardado intactos;124diferidosNAOpromovidos,
+canApplyfalse/completeMigrationfalse/RAISE+ROLLBACK mantidos.0VPS/DBreal/grantsreais/
+ativacao/import/deploy. Fonte!=overlayrestaurado/RBACreal/HMLhomologada.
+
+PROXIMO INDEPENDENTE:042bootstrapSELECT comRLS002ORIGINAL sobre tabelas001
+verdadeiras(incluiraudit_logs/integration_events exigidas002),sem inventarpolicy
+para satisfazer043. Provarlimitesauth_user_id/perfilativo/Grupo/Empresaativa,
+sem declararidentidadeprovider validada por fixture.043guard+identidade e
+044idempotencia/045contatos seguempropriasdeps/contraprovas e dados existentes.
+TabelaUNICA10pendenciasHML abaixo permanece: nenhum apply34/journalvazio,
+backupfresh/restore/ack/overlay/privilégios/reversao/janela/autorizacao exigidos.
+
 ## Pedido017 e guards041: fonte composta provada, HML ainda separada (2026-11-15)
 
 Retomada NATIVA15:10:33Z Casa, base3aa49623/CI7180 local=remoto/limpo,AGENTSsemDelta,
@@ -94,7 +148,7 @@ identidades observadas historicamente NAO sao declaradas frescas nesta retomada.
 |---|---|---|---|
 | Codigo/revisao | e920/CI7176; 12cenarios Reactcompostos, pacote PUBLISHED_CLEAN | Revisao independente solicitada594, ainda sem parecer; revisar exatamente delta3componentes/backend6arquivos contraHMLd054, nao reabrir provas estaveis | Se nao houver revisor, definir aceite/revisor antes de publicar; autorrevisao nao vira independente |
 | Pacote | API/web e920 iguais;2216arquivos/17887136bytes;filesSha077bb96a16d80278d68ab3083eec003085326e6710a525161dd3b6690f9d4269 | Reutilizar diretorio privado runtime-e92045a0-candidate; preparar arquivo/manifesto somente para canal autorizado, ainda NAO transferido/deploy | Transferencia nova e920 distinta da81; usar alcance aprovado, nunca repetir81 |
-| Schema/dependencias | 8relacoes preservadas comparadas;12ausentes,225objetos/101clausulas guardadas; fontes simples/produto/041relacao/016 em memoria | 017/041fechadosSOemmemoria;fechar039/040/042/043/044/045/customcontrols; comparar overlay na copia restaurada; manter RAISE+ROLLBACK ate revisao | DDL exata ainda nao pronta: nao solicitar autorizacao generica nem aplicar34migrations/journalvazio |
+| Schema/dependencias | 8relacoes preservadas comparadas;12ausentes,225objetos/101clausulas guardadas; fontes simples/produto/041relacao/016 em memoria | 017/041/039/040fechadosSOemmemoria;fechar042/043/044/045/customcontrols; comparar overlay na copia restaurada; manter RAISE+ROLLBACK ate revisao | DDL exata ainda nao pronta: nao solicitar autorizacao generica nem aplicar34migrations/journalvazio |
 | Contatos045/dados existentes | coluna atual nullable/defaultNULL;fonte querNOTNULL/default[];extras/custompolicies preservados | Auditar somente alcance autorizado via ator/caminho canonico antes de NOTNULL; distinguir ausencia real de naoimportado, sem inventar[] | Qualquer conciliacao/escrita precisa lote/semantica comprovados; leitura nao autoriza backfill |
 | Identidade/destino | HML ultima observada d054 e metadados privados14/11; operacional separado | Revalidar confighash/owner/mode/mount/container/image/cluster/DB/role/schemaOID/ator/Grupo e espaco>=20GiB+reserva usando helper existente no canal privado | Nenhuma alteracao de permissao/host permitida para contornar falha; se canal expirar, intervencao pontual identificada |
 | Menor privilegio | RLS/forceRLS e controles existentes observados; role sintetica041 so prova policy em memoria | Comparar owners/security/search_path/policies/indexes/triggers do destino; testar principal real semBYPASS como autorizacao, RBAC explicito/contexto | Grants operacionais minimos somente se contrato especifico revisado/autorizado, nao promoveradmin |

@@ -3567,6 +3567,133 @@
         "serviceAddressPurposeAndCompletenessProven": false,
         "syntheticActivationPersisted": false
       }
+    },
+    "oportunidades": {
+      "reviewHead": "078b485da12b0950b7f5a3ad2088ad5062d1d008",
+      "status": "039_AND040_SOURCE_ROWS_POLICY_SEQUENCE_REHEARSAL_TARGET_PENDING",
+      "sourcePins": [
+        {
+          "path": "server/migrations/001_foundation.sql",
+          "sha256": "857c9e37c237a42e1bda425903e5ccbb7bac4d762829d48e1738ea2913d95d5f",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/migrations/003_marcas_pilot.sql",
+          "sha256": "886715dead23f37a752be8f9973b942d968c8ab15feecb42a45eda07d4b5d43c",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/migrations/004_tenant_integrity.sql",
+          "sha256": "c64cb2cf172a591264834a126a2d0afd15e963d98d4a95ecc8ebabb60aca1c04",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/migrations/005_cadastros_simples.sql",
+          "sha256": "e754793c4ce65f99e06a7216c365812c20f50af96fd6d54adf6f002e76f02c20",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/migrations/006_produtos_base.sql",
+          "sha256": "0111511d0d6354222f48e29f7596cd137f851a9208e79baad36911bd344f9a58",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/migrations/009_clientes_master_data.sql",
+          "sha256": "24406cc992094edab8ffeb1150ead7fb61581a247ec547b47e3ee4c6e0417842",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/migrations/014_condicoes_pagamento.sql",
+          "sha256": "e650cf385f7dff36d96f82a1aeaa95cfac1a2e6526ccc766e6325d375c4cb6a6",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/migrations/015_condicoes_pagamento_hardening.sql",
+          "sha256": "1bc4954860c84e3fbffb02e89e18382347b588cf0b8d706b3d1e527718eaadb6",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/migrations/016_orcamentos_comercial_360.sql",
+          "sha256": "15c3f127a9b8a46309dae6690c664710e91e34caa27582da9b66533e632802e4",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/migrations/011_cliente_locais.sql",
+          "sha256": "357f9eafc874dc3bcd8c5d78a050d9b5e37299ca85017ba088213473862afbc3",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/migrations/012_obras.sql",
+          "sha256": "9b3ad7126d9fe112c7a9739767a8d86641a36fbe7587b9cb58a8206735f3174b",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/migrations/013_tabelas_preco.sql",
+          "sha256": "a8eeefac1a0b9457f524e3e4bafe46112b02d879f36f81180dc343fe777f0882",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/migrations/017_pedidos_comercial_360.sql",
+          "sha256": "4cd70614b08962b8129fcdf857f5e1df2ffe324b93446155a34235544c855426",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/migrations/040_crm_oportunidades.sql",
+          "sha256": "25975ead474c03b3f66d500598f2efbd1a93720f4f2c3efb504ba471f27b6219",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/migrations/041_produto_empresas_operacao.sql",
+          "sha256": "a827b21c952bf159d8575d0e6881bef11bea52a2d7227d28e0507549f342ba03",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/migrations/010_cliente_empresas_comercial.sql",
+          "sha256": "ed8621a4ebbd12eea3613acb88d2fde0b4fea0abcb5701c6284cfcc51ce47577",
+          "encoding": "raw Git blob UTF-8 LF"
+        },
+        {
+          "path": "server/migrations/039_orcamentos_tabela_preco.sql",
+          "sha256": "bac3f714481f5028cfa5aac808680ab54082b21ddfa04bd40a24a63486ddf224",
+          "encoding": "raw Git blob UTF-8 LF"
+        }
+      ],
+      "test": "tests/helpers/hmlCanonicalCommercialRehearsal.js: consultas039040 canonical source memory rehearsal",
+      "restoredHmlAttested": false,
+      "canApply": false,
+      "existingProposalSqlChanged": false,
+      "existingObjectsReclassifiedAsApplied": false,
+      "rowBackfillExecuted": false,
+      "remainingGates": [
+        "Full042/043/044/045 and historical038/010 data semantics are not proven by039040 source rehearsal",
+        "Synthetic NOLOGIN non-BYPASS role is not verified user/session/profile permission or real target least privilege",
+        "PGlite serial operations do not prove multi-session PostgreSQL concurrency",
+        "Target preserved custom policies/functions/owners/search_path/dependencies require isolated restored overlay",
+        "Independent review/fresh backup/isolated restore/external ack/reversal/window/specific DDL/deploy authorization"
+      ],
+      "validation": {
+        "engine": "PGlite synthetic memory only",
+        "quoteColumnsAfter039": 18,
+        "opportunityColumns": 44,
+        "historical010UpdateExecuted": false,
+        "full042Or043Applied": false,
+        "realRbacOrRestoredHmlProven": false,
+        "focusedPass": 48,
+        "focusedFail": 0,
+        "focusedSkip": 0,
+        "negativeControls": 5,
+        "quoteOptionalPriceDefaultNull": true,
+        "quotePriceGroupCompanyActiveBindings": true,
+        "scopedCompoundFksAndIdempotencyLegacyAndInactiveOwnerUniqueness": true,
+        "syntheticNoLoginNonBypassUsingWithCheckPolicy": true,
+        "missingSelect42501AndBadContext22P02": true,
+        "sequenceSecurityInvoker": true,
+        "sequenceGreatestNonRegressionAndRollback": true,
+        "bigintMaxIncrementAndOverflowRejected22003": true,
+        "multiSessionConcurrencyProven": false,
+        "legacyTextIdsLeadingZeroCodeAndExactDecimalPreserved": true,
+        "originalRowsAndIndexPreservedAfterRollback": true
+      }
     }
   }
 }

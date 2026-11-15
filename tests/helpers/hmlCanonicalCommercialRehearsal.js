@@ -4,6 +4,46 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { loadCanonicalRehearsalSources, canonicalTable } from './hmlCanonicalSourceRehearsal.js';
 
+async function installCanonicalCommercialParents(db,sources,schema) {
+  assert.match(schema,/^[a-z_]+$/);
+  const f=sources['001_foundation.sql'];
+  const timestamp=f.match(/CREATE OR REPLACE FUNCTION set_updated_at\(\)[\s\S]*?\$\$ LANGUAGE plpgsql;/)?.[0];
+  const tenant=sources['004_tenant_integrity.sql'].match(/CREATE OR REPLACE FUNCTION assert_empresa_belongs_to_group\(\)[\s\S]*?\$\$ LANGUAGE plpgsql;/)?.[0];
+  assert.ok(timestamp&&tenant);
+    await db.exec(`BEGIN; CREATE SCHEMA ${schema}; SET LOCAL search_path TO ${schema},pg_catalog;
+      ${timestamp}\n${tenant}\n${['groups','empresas','profiles'].map(n=>canonicalTable(f,n)).join('\n')}`);
+    for(const name of ['003_marcas_pilot.sql','005_cadastros_simples.sql','006_produtos_base.sql','009_clientes_master_data.sql'])await db.exec(sources[name]);
+    // PLpgSQL creation alone did not validate010's column dependencies. Original DDL, no historical UPDATE.
+    const commercial=sources['010_cliente_empresas_comercial.sql'],start=commercial.indexOf('ALTER TABLE cliente_empresas');
+    const end=commercial.indexOf(';',start)+1,checks=commercial.indexOf('DO $$');
+    assert.ok(start>=0&&end>start&&checks>end);
+    const commercialDdl=commercial.slice(start,end)+'\n'+commercial.slice(checks);
+    assert.doesNotMatch(commercialDdl,/^UPDATE\s/m);await db.exec(commercialDdl);
+    for(const name of ['011_cliente_locais.sql','012_obras.sql','013_tabelas_preco.sql','014_condicoes_pagamento.sql','015_condicoes_pagamento_hardening.sql','016_orcamentos_comercial_360.sql','017_pedidos_comercial_360.sql'])await db.exec(sources[name]);
+}
+
+async function seedCanonicalCommercialContexts(db,g1,g2,e1,e2) {
+    const contexts=[];
+    for(const [group,company] of [[g1,e1],[g2,e2]]){
+      const profile=(await db.query("INSERT INTO profiles(group_id,empresa_id,email) VALUES($1,$2,$3) RETURNING id",[group,company,`synthetic-${company}@example.invalid`])).rows[0].id;
+      const client=(await db.query("INSERT INTO clientes(group_id,codigo,tipo,nome) VALUES($1,'000001','Pessoa Jurídica','SYNTHETIC CLIENT') RETURNING id",[group])).rows[0].id;
+      const link=(await db.query('INSERT INTO cliente_empresas(group_id,empresa_id,cliente_id) VALUES($1,$2,$3) RETURNING id',[group,company,client])).rows[0].id;
+      const condition=(await db.query("INSERT INTO condicoes_pagamento(group_id,empresa_id,codigo,nome) VALUES($1,$2,'000001','SYNTHETIC TERMS') RETURNING id",[group,company])).rows[0].id;
+      await db.query('INSERT INTO condicao_pagamento_empresas(group_id,empresa_id,condicao_pagamento_id) VALUES($1,$2,$3)',[group,company,condition]);
+      await db.query('INSERT INTO condicao_pagamento_parcelas(group_id,condicao_pagamento_id,ordem,dias,percentual) VALUES($1,$2,1,0,100)',[group,condition]);
+      const unit=(await db.query("INSERT INTO unidades_medida(group_id,sigla,nome_completo) VALUES($1,'UN','SYNTHETIC UNIT') RETURNING id",[group])).rows[0].id;
+      const product=(await db.query("INSERT INTO produtos(group_id,empresa_id,unidade_medida_id,codigo,descricao) VALUES($1,$2,$3,'SOURCE-CODE','SYNTHETIC PRODUCT') RETURNING id",[group,company,unit])).rows[0].id;
+      const local=(await db.query("INSERT INTO cliente_locais(group_id,cliente_id,nome,cep,logradouro,numero,bairro,cidade,uf) VALUES($1,$2,'SYNTHETIC LOCAL','00000000','SYNTHETIC STREET','1','SYNTHETIC DISTRICT','SYNTHETIC CITY','SP') RETURNING id",[group,client])).rows[0].id;
+      await db.query("INSERT INTO cliente_local_finalidades(group_id,cliente_id,cliente_local_id,finalidade) VALUES($1,$2,$3,'ENTREGA')",[group,client,local]);
+      const work=(await db.query("INSERT INTO obras(group_id,cliente_id,codigo,nome) VALUES($1,$2,'000001','SYNTHETIC WORK') RETURNING id",[group,client])).rows[0].id;
+      await db.query('INSERT INTO obra_empresas(group_id,empresa_id,obra_id) VALUES($1,$2,$3)',[group,company,work]);
+      const price=(await db.query("INSERT INTO tabelas_preco(group_id,empresa_id,codigo,nome,vigencia_inicio) VALUES($1,$2,'000001','SYNTHETIC PRICE','2020-01-01') RETURNING id",[group,company])).rows[0].id;
+      await db.query('INSERT INTO tabela_preco_empresas(group_id,empresa_id,tabela_preco_id) VALUES($1,$2,$3)',[group,company,price]);
+      contexts.push({group,company,profile,client,link,condition,unit,product,local,work,price});
+    }
+  return contexts;
+}
+
 test('produto_empresas: fonte041 inativa, FKs compostas e policy em memoria com rollback', async t => {
   const { matrix, review, sources } = await loadCanonicalRehearsalSources('produto_empresas');
   assert.equal(matrix.canApply, false); assert.equal(review.restoredHmlAttested, false);
@@ -189,10 +229,7 @@ test('pedidos017 e callbacks041: linhas e pais reais, elegibilidade sintetica re
   const {matrix,review,sources}=await loadCanonicalRehearsalSources('pedidos');
   assert.equal(matrix.canApply,false);assert.equal(review.restoredHmlAttested,false);
   const {PGlite}=createRequire(new URL('../../server/package.json',import.meta.url))('@electric-sql/pglite');
-  const db=new PGlite(),f=sources['001_foundation.sql'];
-  const timestamp=f.match(/CREATE OR REPLACE FUNCTION set_updated_at\(\)[\s\S]*?\$\$ LANGUAGE plpgsql;/)?.[0];
-  const tenant=sources['004_tenant_integrity.sql'].match(/CREATE OR REPLACE FUNCTION assert_empresa_belongs_to_group\(\)[\s\S]*?\$\$ LANGUAGE plpgsql;/)?.[0];
-  assert.ok(timestamp&&tenant);
+  const db=new PGlite();
   const g1='11111111-1111-4111-8111-111111111111',g2='22222222-2222-4222-8222-222222222222';
   const e1='33333333-3333-4333-8333-333333333333',e2='44444444-4444-4444-8444-444444444444';
   const rejected=async(sql,values,code)=>{
@@ -206,36 +243,10 @@ test('pedidos017 e callbacks041: linhas e pais reais, elegibilidade sintetica re
   try{
     await db.exec("CREATE TABLE public.keep_order_review(id integer PRIMARY KEY,label text); INSERT INTO public.keep_order_review VALUES(1,'SYNTHETIC_KEEP'); CREATE INDEX keep_order_label ON public.keep_order_review(label)");
     const before=(await db.query('SELECT * FROM public.keep_order_review')).rows;
-    await db.exec(`BEGIN; CREATE SCHEMA order_review_synthetic; SET LOCAL search_path TO order_review_synthetic,pg_catalog;
-      ${timestamp}\n${tenant}\n${['groups','empresas','profiles'].map(n=>canonicalTable(f,n)).join('\n')}`);
-    for(const name of ['003_marcas_pilot.sql','005_cadastros_simples.sql','006_produtos_base.sql','009_clientes_master_data.sql'])await db.exec(sources[name]);
-    // PLpgSQL creation alone did not validate010's column dependencies. Original DDL, no historical UPDATE.
-    const commercial=sources['010_cliente_empresas_comercial.sql'],start=commercial.indexOf('ALTER TABLE cliente_empresas');
-    const end=commercial.indexOf(';',start)+1,checks=commercial.indexOf('DO $$');
-    assert.ok(start>=0&&end>start&&checks>end);
-    const commercialDdl=commercial.slice(start,end)+'\n'+commercial.slice(checks);
-    assert.doesNotMatch(commercialDdl,/^UPDATE\s/m);await db.exec(commercialDdl);
-    for(const name of ['011_cliente_locais.sql','012_obras.sql','013_tabelas_preco.sql','014_condicoes_pagamento.sql','015_condicoes_pagamento_hardening.sql','016_orcamentos_comercial_360.sql','017_pedidos_comercial_360.sql'])await db.exec(sources[name]);
+    await installCanonicalCommercialParents(db,sources,'order_review_synthetic');
     await db.query("INSERT INTO groups(id,nome_do_grupo) VALUES($1,'SYNTHETIC A'),($2,'SYNTHETIC B')",[g1,g2]);
     await db.query("INSERT INTO empresas(id,group_id,razao_social) VALUES($1,$2,'SYNTHETIC A'),($3,$4,'SYNTHETIC B')",[e1,g1,e2,g2]);
-    const contexts=[];
-    for(const [group,company] of [[g1,e1],[g2,e2]]){
-      const profile=(await db.query("INSERT INTO profiles(group_id,empresa_id,email) VALUES($1,$2,$3) RETURNING id",[group,company,`synthetic-${company}@example.invalid`])).rows[0].id;
-      const client=(await db.query("INSERT INTO clientes(group_id,codigo,tipo,nome) VALUES($1,'000001','Pessoa Jurídica','SYNTHETIC CLIENT') RETURNING id",[group])).rows[0].id;
-      const link=(await db.query('INSERT INTO cliente_empresas(group_id,empresa_id,cliente_id) VALUES($1,$2,$3) RETURNING id',[group,company,client])).rows[0].id;
-      const condition=(await db.query("INSERT INTO condicoes_pagamento(group_id,empresa_id,codigo,nome) VALUES($1,$2,'000001','SYNTHETIC TERMS') RETURNING id",[group,company])).rows[0].id;
-      await db.query('INSERT INTO condicao_pagamento_empresas(group_id,empresa_id,condicao_pagamento_id) VALUES($1,$2,$3)',[group,company,condition]);
-      await db.query('INSERT INTO condicao_pagamento_parcelas(group_id,condicao_pagamento_id,ordem,dias,percentual) VALUES($1,$2,1,0,100)',[group,condition]);
-      const unit=(await db.query("INSERT INTO unidades_medida(group_id,sigla,nome_completo) VALUES($1,'UN','SYNTHETIC UNIT') RETURNING id",[group])).rows[0].id;
-      const product=(await db.query("INSERT INTO produtos(group_id,empresa_id,unidade_medida_id,codigo,descricao) VALUES($1,$2,$3,'SOURCE-CODE','SYNTHETIC PRODUCT') RETURNING id",[group,company,unit])).rows[0].id;
-      const local=(await db.query("INSERT INTO cliente_locais(group_id,cliente_id,nome,cep,logradouro,numero,bairro,cidade,uf) VALUES($1,$2,'SYNTHETIC LOCAL','00000000','SYNTHETIC STREET','1','SYNTHETIC DISTRICT','SYNTHETIC CITY','SP') RETURNING id",[group,client])).rows[0].id;
-      await db.query("INSERT INTO cliente_local_finalidades(group_id,cliente_id,cliente_local_id,finalidade) VALUES($1,$2,$3,'ENTREGA')",[group,client,local]);
-      const work=(await db.query("INSERT INTO obras(group_id,cliente_id,codigo,nome) VALUES($1,$2,'000001','SYNTHETIC WORK') RETURNING id",[group,client])).rows[0].id;
-      await db.query('INSERT INTO obra_empresas(group_id,empresa_id,obra_id) VALUES($1,$2,$3)',[group,company,work]);
-      const price=(await db.query("INSERT INTO tabelas_preco(group_id,empresa_id,codigo,nome,vigencia_inicio) VALUES($1,$2,'000001','SYNTHETIC PRICE','2020-01-01') RETURNING id",[group,company])).rows[0].id;
-      await db.query('INSERT INTO tabela_preco_empresas(group_id,empresa_id,tabela_preco_id) VALUES($1,$2,$3)',[group,company,price]);
-      contexts.push({group,company,profile,client,link,condition,unit,product,local,work,price});
-    }
+    const contexts=await seedCanonicalCommercialContexts(db,g1,g2,e1,e2);
     await db.exec('SET CONSTRAINTS ALL IMMEDIATE');
     const a=contexts[0],b=contexts[1];
     const quote=(await db.query("INSERT INTO orcamentos(group_id,empresa_id,numero,cliente_empresa_id,condicao_pagamento_id,validade_em,subtotal,total) VALUES($1,$2,'00000001',$3,$4,'2030-01-01',20,20) RETURNING id",[g1,e1,a.link,a.condition])).rows[0].id;
@@ -310,5 +321,60 @@ test('pedidos017 e callbacks041: linhas e pais reais, elegibilidade sintetica re
     await db.exec('SET CONSTRAINTS ALL IMMEDIATE; ROLLBACK');assert.equal((await db.query("SELECT to_regclass('order_review_synthetic.pedidos') relation")).rows[0].relation,null);
     assert.deepEqual((await db.query('SELECT * FROM public.keep_order_review')).rows,before);assert.equal((await db.query("SELECT count(*)::integer n FROM pg_indexes WHERE schemaname='public' AND indexname='keep_order_label'")).rows[0].n,1);
     t.diagnostic('017 baseline rows plus actual041 replacements with real source parents;5 controls, eligible shared positives rolled back. Not039/044/full040/043, service address/RBAC/actor/state machine, restored target, import or deployment proof.');
+  }finally{await db.close();}
+});
+test('consultas039040: preco escopado e CRM com policy/sequence originais somente memoria', async t=>{
+  const {matrix,review,sources}=await loadCanonicalRehearsalSources('oportunidades');assert.equal(matrix.canApply,false);assert.equal(review.restoredHmlAttested,false);
+  const {PGlite}=createRequire(new URL('../../server/package.json',import.meta.url))('@electric-sql/pglite');const db=new PGlite();
+  const g1='11111111-1111-4111-8111-111111111111',g2='22222222-2222-4222-8222-222222222222';
+  const e1='33333333-3333-4333-8333-333333333333',e2='44444444-4444-4444-8444-444444444444';
+  const rejected=async(operation,code)=>{await db.exec('SAVEPOINT crm_rejected');await assert.rejects(operation(),err=>err.code===code);await db.exec('ROLLBACK TO SAVEPOINT crm_rejected; RELEASE SAVEPOINT crm_rejected');};
+  const scoped=async(sql,values,check)=>{await db.exec('SAVEPOINT crm_change');await db.query(sql,values);await check();await db.exec('ROLLBACK TO SAVEPOINT crm_change; RELEASE SAVEPOINT crm_change');};
+  try{
+    await db.exec("CREATE TABLE public.keep_crm_review(id integer PRIMARY KEY,label text); INSERT INTO public.keep_crm_review VALUES(1,'SYNTHETIC_KEEP'); CREATE INDEX keep_crm_label ON public.keep_crm_review(label)");const before=(await db.query('SELECT * FROM public.keep_crm_review')).rows;
+    await installCanonicalCommercialParents(db,sources,'crm_review_synthetic');
+    await db.query("INSERT INTO groups(id,nome_do_grupo) VALUES($1,'SYNTHETIC A'),($2,'SYNTHETIC B')",[g1,g2]);await db.query("INSERT INTO empresas(id,group_id,razao_social) VALUES($1,$2,'SYNTHETIC A'),($3,$4,'SYNTHETIC B')",[e1,g1,e2,g2]);
+    const [a,b]=await seedCanonicalCommercialContexts(db,g1,g2,e1,e2);await db.exec('SET CONSTRAINTS ALL IMMEDIATE');
+    const quote=(await db.query("INSERT INTO orcamentos(group_id,empresa_id,numero,cliente_empresa_id,condicao_pagamento_id,validade_em,subtotal,total) VALUES($1,$2,'00000001',$3,$4,'2030-01-01',0,0) RETURNING *",[g1,e1,a.link,a.condition])).rows[0];assert.equal(Object.keys(quote).length,17);
+    await db.exec(sources['039_orcamentos_tabela_preco.sql']);
+    const quoteAfter=(await db.query('SELECT * FROM orcamentos WHERE id=$1',[quote.id])).rows[0];assert.deepEqual(quoteAfter,{...quote,tabela_preco_id:null});assert.equal(Object.keys(quoteAfter).length,18);
+    await scoped('UPDATE orcamentos SET tabela_preco_id=$1 WHERE id=$2',[a.price,quote.id],async()=>assert.equal((await db.query('SELECT tabela_preco_id FROM orcamentos WHERE id=$1',[quote.id])).rows[0].tabela_preco_id,a.price));
+    const invalidPrice=()=>rejected(()=>db.query('UPDATE orcamentos SET tabela_preco_id=$1 WHERE id=$2',[b.price,quote.id]),'P0001');await invalidPrice();
+    for(const [table,key] of [['tabelas_preco','id'],['tabela_preco_empresas','tabela_preco_id']])await scoped(`UPDATE ${table} SET ativo=false WHERE ${key}=$1`,[a.price],()=>rejected(()=>db.query('UPDATE orcamentos SET tabela_preco_id=$1 WHERE id=$2',[a.price,quote.id]),'P0001'));
+    await scoped('UPDATE cliente_empresas SET ativo=false,habilitado_operacao=false,situacao_comercial=$1 WHERE id=$2',['INATIVO',a.link],()=>rejected(()=>db.query('UPDATE orcamentos SET tabela_preco_id=$1 WHERE id=$2',[a.price,quote.id]),'P0001'));
+    await scoped('UPDATE condicao_pagamento_empresas SET ativo=false WHERE condicao_pagamento_id=$1',[a.condition],()=>rejected(()=>db.query('UPDATE orcamentos SET tabela_preco_id=$1 WHERE id=$2',[a.price,quote.id]),'P0001'));
+    await db.exec('SAVEPOINT negative039');const old=sources['016_orcamentos_comercial_360.sql'].match(/CREATE OR REPLACE FUNCTION assert_orcamento_same_tenant\(\)[\s\S]*?\$\$ LANGUAGE plpgsql;/)?.[0];assert.ok(old);await db.exec(old);assert.equal((await db.query('UPDATE orcamentos SET tabela_preco_id=$1 WHERE id=$2 RETURNING tabela_preco_id',[b.price,quote.id])).rows[0].tabela_preco_id,b.price);await db.exec('ROLLBACK TO SAVEPOINT negative039; RELEASE SAVEPOINT negative039');await invalidPrice();
+    await db.exec(sources['040_crm_oportunidades.sql']);
+    const e3=(await db.query("INSERT INTO empresas(group_id,razao_social) VALUES($1,'SYNTHETIC SAME GROUP') RETURNING id",[g1])).rows[0].id;const c3=(await db.query('INSERT INTO cliente_empresas(group_id,empresa_id,cliente_id) VALUES($1,$2,$3) RETURNING id',[g1,e3,a.client])).rows[0].id;
+    const sameGroupPrice=(await db.query("INSERT INTO tabelas_preco(group_id,empresa_id,codigo,nome,vigencia_inicio) VALUES($1,$2,'000002','SYNTHETIC OTHER PRICE','2020-01-01') RETURNING id",[g1,e3])).rows[0].id;await db.query('INSERT INTO tabela_preco_empresas(group_id,empresa_id,tabela_preco_id) VALUES($1,$2,$3)',[g1,e3,sameGroupPrice]);await rejected(()=>db.query('UPDATE orcamentos SET tabela_preco_id=$1 WHERE id=$2',[sameGroupPrice,quote.id]),'P0001');
+    const makeRow=(code,extra={})=>({group_id:g1,empresa_id:e1,codigo:code,codigo_oportunidade:`OP-${code}`,legacy_store_id:`legacy/store/${code}`,idempotency_key:`SYNTHETIC-KEY-${code}`,payload_fingerprint:'a'.repeat(64),cliente_empresa_id:a.link,cliente_id:'legacy/client/ABC',cliente_nome:'SYNTHETIC CONTACT',titulo:'SYNTHETIC TITLE',etapa:'SYNTHETIC STAGE',status:'SYNTHETIC STATUS',valor_estimado:'12.123456',probabilidade:50,temperatura:'SYNTHETIC',origem:'ERP',data_abertura:'2030-01-01',created_by:a.profile,updated_by:a.profile,...extra});
+    const insert=async(code,extra={})=>{const row=makeRow(code,extra),keys=Object.keys(row);for(const key of keys)assert.match(key,/^[a-z_]+$/);return db.query(`INSERT INTO oportunidades(${keys.join(',')}) VALUES(${keys.map((_,i)=>`$${i+1}`).join(',')}) RETURNING *`,Object.values(row));};
+    const first=(await insert('000001',{convertido_em:'pedido',convertido_em_id:'legacy/order/A',orcamento_id:'legacy/quote/A',legacy_orcamento_id:'ORIGINAL-QUOTE-A',legacy_pedido_id:'ORIGINAL-ORDER-A'})).rows[0];
+    assert.equal(Object.keys(first).length,44);assert.equal(first.codigo,'000001');assert.equal(first.legacy_store_id,'legacy/store/000001');assert.equal(first.cliente_id,'legacy/client/ABC');assert.equal(first.convertido_em_id,'legacy/order/A');assert.equal(String(first.valor_estimado),'12.123456');assert.equal(first.version,1);assert.deepEqual(first.produtos_interesse,[]);assert.deepEqual(first.historico_mudancas_etapa,[]);
+    const next=async(group=g1)=>String((await db.query("SELECT next_value FROM entity_code_sequences WHERE group_id=$1 AND entity_name='Oportunidade'",[group])).rows[0].next_value);assert.equal(await next(),'2');
+    for(const extra of [{codigo_oportunidade:first.codigo_oportunidade},{idempotency_key:first.idempotency_key},{legacy_store_id:first.legacy_store_id},{convertido_em:'pedido',convertido_em_id:first.convertido_em_id}]){await rejected(()=>insert('000002',extra),'23505');assert.equal(await next(),'2');}
+    await rejected(()=>insert('000001',{codigo_oportunidade:'OTHER',idempotency_key:'OTHER',legacy_store_id:'OTHER'}),'23505');
+    await rejected(()=>insert('000002',{empresa_id:e2}),'23503');await rejected(()=>insert('000002',{cliente_empresa_id:b.link}),'23503');await rejected(()=>insert('000002',{cliente_empresa_id:c3}),'23503');
+    for(const extra of [{produtos_interesse:{}},{historico_mudancas_etapa:{}},{valor_estimado:'NaN'},{valor_estimado:-1},{orcamento_cliente:'NaN'},{probabilidade:101},{version:0},{titulo:''},{payload_fingerprint:'not-hash'},{cliente_empresa_id:null,cliente_nome:null,cliente_email:null}])await rejected(()=>insert('000002',extra),'23514');
+    for(const code of ['9223372036854775807','9999999999999999999']){await rejected(()=>insert(code),'22003');assert.equal(await next(),'2');}
+    await rejected(()=>insert('000001',{empresa_id:e3,cliente_empresa_id:c3,codigo_oportunidade:'OTHER-COMPANY-CODE',idempotency_key:'OTHER-COMPANY-CODE',legacy_store_id:'OTHER-COMPANY-CODE'}),'23505');
+    const sameGroup=(await insert('000002',{empresa_id:e3,cliente_empresa_id:c3,codigo_oportunidade:first.codigo_oportunidade,idempotency_key:first.idempotency_key,legacy_store_id:first.legacy_store_id})).rows[0];assert.equal(await next(),'3');
+    const otherGroup=(await insert('000001',{group_id:g2,empresa_id:e2,cliente_empresa_id:b.link,created_by:b.profile,updated_by:b.profile})).rows[0];assert.equal(await next(g2),'2');
+    await scoped('UPDATE oportunidades SET ativo=false WHERE id=$1',[first.id],async()=>{await rejected(()=>insert('000003',{convertido_em:'pedido',convertido_em_id:first.convertido_em_id}),'23505');await rejected(()=>insert('000001',{codigo_oportunidade:'INACTIVE-OTHER',idempotency_key:'INACTIVE-OTHER',legacy_store_id:'INACTIVE-OTHER'}),'23505');});
+    await db.exec('SAVEPOINT greatest_sequence');const high=(await insert('000010')).rows[0];assert.equal(await next(),'11');await db.query("UPDATE oportunidades SET codigo='000004' WHERE id=$1",[high.id]);assert.equal(await next(),'11');await db.exec('ROLLBACK TO SAVEPOINT greatest_sequence; RELEASE SAVEPOINT greatest_sequence');assert.equal(await next(),'3');
+    assert.equal((await db.query("SELECT prosecdef FROM pg_proc WHERE oid='sync_oportunidade_codigo()'::regprocedure")).rows[0].prosecdef,false);
+    await db.exec('SAVEPOINT negative_sequence; ALTER TABLE oportunidades DISABLE TRIGGER trg_oportunidades_codigo');await insert('000900');assert.equal(await next(),'3');await db.exec('ROLLBACK TO SAVEPOINT negative_sequence; RELEASE SAVEPOINT negative_sequence');
+    await db.exec('SAVEPOINT negative_crm_fk');const fks=(await db.query("SELECT conname FROM pg_constraint WHERE conrelid='oportunidades'::regclass AND contype='f' AND array_length(conkey,1)=3")).rows;assert.equal(fks.length,1);assert.match(fks[0].conname,/^[a-z_]+$/);await db.exec(`ALTER TABLE oportunidades DROP CONSTRAINT ${fks[0].conname}`);assert.equal((await db.query('UPDATE oportunidades SET cliente_empresa_id=$1 WHERE id=$2 RETURNING cliente_empresa_id',[b.link,first.id])).rows[0].cliente_empresa_id,b.link);await db.exec('ROLLBACK TO SAVEPOINT negative_crm_fk; RELEASE SAVEPOINT negative_crm_fk');
+    await db.exec('SAVEPOINT negative_crm_owner; DROP INDEX uq_oportunidades_pedido_canonico');assert.equal((await insert('000003',{convertido_em:'pedido',convertido_em_id:first.convertido_em_id})).rows.length,1);await db.exec('ROLLBACK TO SAVEPOINT negative_crm_owner; RELEASE SAVEPOINT negative_crm_owner');
+    assert.deepEqual((await db.query("SELECT relrowsecurity,relforcerowsecurity FROM pg_class WHERE oid='oportunidades'::regclass")).rows[0],{relrowsecurity:true,relforcerowsecurity:true});
+    await db.exec('CREATE ROLE crm_review_reader NOLOGIN NOSUPERUSER NOBYPASSRLS; GRANT USAGE ON SCHEMA crm_review_synthetic TO crm_review_reader; SAVEPOINT no_crm_select; SET LOCAL ROLE crm_review_reader');await assert.rejects(db.query('SELECT id FROM oportunidades'),err=>err.code==='42501');await db.exec('ROLLBACK TO SAVEPOINT no_crm_select; RELEASE SAVEPOINT no_crm_select; GRANT SELECT ON oportunidades TO crm_review_reader');
+    const visible=async(group,company)=>{await db.query("SELECT set_config('app.group_id',$1,true),set_config('app.empresa_id',$2,true)",[group,company]);await db.exec('SET LOCAL ROLE crm_review_reader');const rows=(await db.query('SELECT id FROM oportunidades ORDER BY id')).rows;await db.exec('RESET ROLE');return rows;};
+    assert.deepEqual(await visible('',''),[]);assert.deepEqual(await visible(g1,''),[]);assert.deepEqual(await visible(g1,e2),[]);assert.deepEqual(await visible(g2,e1),[]);assert.deepEqual(await visible(g1,e1),[{id:first.id}]);assert.deepEqual(await visible(g1,e3),[{id:sameGroup.id}]);assert.deepEqual(await visible(g2,e2),[{id:otherGroup.id}]);
+    await db.exec('SAVEPOINT negative_crm_policy; ALTER POLICY oportunidades_tenant_scope ON oportunidades USING(true)');assert.equal((await visible(g1,e2)).length,3);await db.exec('ROLLBACK TO SAVEPOINT negative_crm_policy; RELEASE SAVEPOINT negative_crm_policy');assert.deepEqual(await visible(g1,e2),[]);
+    await visible(g1,e1);await db.exec('SAVEPOINT crm_with_check; GRANT UPDATE ON oportunidades TO crm_review_reader; SET LOCAL ROLE crm_review_reader');assert.equal((await db.query('UPDATE oportunidades SET version=2 WHERE id=$1 RETURNING version',[first.id])).rows[0].version,2);await rejected(()=>db.query("UPDATE oportunidades SET empresa_id=$1,cliente_empresa_id=NULL,idempotency_key='MOVE-UNIQUE',codigo_oportunidade='MOVE-UNIQUE',legacy_store_id='MOVE-UNIQUE',convertido_em=NULL,convertido_em_id=NULL WHERE id=$2",[e3,first.id]),'42501');await db.exec('RESET ROLE; ROLLBACK TO SAVEPOINT crm_with_check; RELEASE SAVEPOINT crm_with_check');
+    await db.exec('SAVEPOINT invalid_crm_context');await db.query("SELECT set_config('app.group_id','invalid-uuid',true)");await db.exec('SET LOCAL ROLE crm_review_reader');await assert.rejects(db.query('SELECT id FROM oportunidades'),err=>err.code==='22P02');await db.exec('ROLLBACK TO SAVEPOINT invalid_crm_context; RELEASE SAVEPOINT invalid_crm_context');
+    assert.deepEqual((await db.query('SELECT * FROM oportunidades WHERE id=$1',[first.id])).rows[0],first);assert.deepEqual((await db.query('SELECT * FROM orcamentos WHERE id=$1',[quote.id])).rows[0],quoteAfter);assert.equal(await next(),'3');assert.equal(await next(g2),'2');
+    await db.exec('SET CONSTRAINTS ALL IMMEDIATE; ROLLBACK');assert.equal((await db.query("SELECT to_regclass('crm_review_synthetic.oportunidades') relation")).rows[0].relation,null);assert.deepEqual((await db.query('SELECT * FROM public.keep_crm_review')).rows,before);assert.equal((await db.query("SELECT count(*)::integer n FROM pg_indexes WHERE schemaname='public' AND indexname='keep_crm_label'")).rows[0].n,1);
+    t.diagnostic('039/040 original rows/policy/sequence,5 controls/rollback in memory; no042/043/real actor/RBAC/restored target/multi-session concurrency/import/deploy claim.');
   }finally{await db.close();}
 });
