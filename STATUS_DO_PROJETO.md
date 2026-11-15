@@ -1,3 +1,12 @@
+## Central360: resposta antiga descartada apos revogar/restaurar (15/11/2026)
+
+Composicao3b0bb255/CI7175 SUCCESS, seguida de contraprova nova React real:
+GET pendente + negar/restaurar mesma permissao ressuscitava dados. Corrigido
+reutilizando selectionEpoch do Shell; ambos filhos descartam a operacao antiga.
+Teste anterior falhou, depois48focais/18goldens PASS e12cenarios montados PASS,
+fronteiras sinteticas explicitadas no HANDOFF. CI do sucessor na594; nao usar
+3b para empacotar o residuo. HML/DB/arquivo81 inalterados, sem carga/deploy.
+
 ## Central360: revisao real e port coeso na candidata Casa (15/11/2026)
 
 Retomada NATIVA13:07:31Z:26checks ReactREAL Orcamentos+Seletor e10cenarios

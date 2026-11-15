@@ -1,3 +1,31 @@
+## Revogacao/restauracao encerra a selecao antiga (2026-11-15)
+
+A composicao 3b0bb255 passou na CI7175/run43718579713 (frontend, backend/PG e
+composicao), mas a contraprova adicional encontrou um residuo: GET pendente,
+permissao negada e depois restaurada por renders reais, mesmo contexto/ator/
+sessao; a resposta antiga voltava ao Pedido e ao Shell. Recibo privado
+review-composed-permission-roundtrip-before, assert Node falhou como esperado.
+Achado registrado na594/6895004706; nao e o caso sessao A-B-A ja encerrado.
+
+Correcao no Shell existente reutiliza selectionEpoch: o efeito de revogacao
+incrementa a geracao, atualiza ref/estado e limpa selecao/cliente. Restaurar
+permissao nao autoriza callback antigo; nova selecao permanece permitida.
+Sem outra implementacao de sessao, helper/policy paralelo ou alteracao de API.
+Teste existente executa os callbacks/efeito extraidos da fonte: ANTES falhou
+porque restauracao ressuscitava a selecao, DEPOIS passou; nova selecao valida
+tambem aceita. Prova React real composta repetida no checkout aplicado com
+12 cenarios: ambos filhos Pedido/Orcamentos descartam o GET anterior apos negar
+e restaurar. Guardas de contexto/sessao/GET compartilhado/deny carregado mantidas.
+HTTP/Auth/query/folhasUI/estoque sinteticos; nao API/PostgreSQL real.
+
+48 testes focais PASS/0skip incluindo18goldens, lint dos hunks PASS;
+audit/typecheck/build24.47s/diffcheck PASS. As demais
+provas do port e CI7175 continuam historicas validas, sem alegar que cobrem o
+novo SHA. Fechamento completo/CI do sucessor registrados na594. Nao empacotar
+3b com este achado aberto; proximo pacote API+web deve usar o SHA corrigido.
+Nenhum SQL/carga/grant/deploy. Reservas/trava desta retomada permanecem as
+mesmas ate o fechamento; revisao independente global ainda nao obtida.
+
 ## Retomada NATIVA: revisao Orcamentos e composicao coesa Central (2026-11-15)
 
 Heartbeat13:07:31Z retomou Casa76a62a4f/CI7174SUCCESS, local/remotoiguais/limpo,

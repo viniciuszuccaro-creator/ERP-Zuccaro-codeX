@@ -195,6 +195,10 @@ export default function CentralVendas360Shell({
 
   useEffect(() => {
     if (canViewDocument) return;
+    // Revogação encerra a geração, mesmo se a permissão voltar no mesmo contexto.
+    const nextEpoch = selectionEpochRef.current + 1;
+    selectionEpochRef.current = nextEpoch;
+    setSelectionEpoch(nextEpoch);
     setSelected(null);
     setSelectedClienteId(null);
   }, [canViewDocument]);

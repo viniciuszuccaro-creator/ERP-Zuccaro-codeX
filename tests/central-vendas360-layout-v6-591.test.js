@@ -25,6 +25,29 @@ import {
 
 const read = (p) => fs.readFileSync(p, 'utf8').replace(/\r\n/g, '\n');
 
+test('Shell invalida callback antigo apos negar e restaurar permissao no mesmo contexto', () => {
+  const source = read('src/components/comercial/CentralVendas360Shell.jsx');
+  const effect = source.match(/useEffect\(\(\) => \{\n(    if \(canViewDocument\) return;[\s\S]*?)\n  \}, \[canViewDocument\]\);/);
+  const callback = source.match(/const onSelectDocument = useCallback\((\(row, meta = \{\}\) => \{[\s\S]*?\n  \}), \[\]\);/);
+  assert.ok(effect && callback, 'Executa o efeito e callback existentes, sem duplicar regra');
+  let selected = { id: 'old' }, cliente = 'old-client', renderedEpoch = 7;
+  const scope = { selectionEpochRef: { current: 7 }, canViewDocumentRef: { current: true },
+    setSelected: (row) => { selected = row; }, setSelectedClienteId: (id) => { cliente = id; },
+    setSelectionEpoch: (epoch) => { renderedEpoch = epoch; } };
+  const dispatch = runInNewContext(`(${callback[1]})`, scope);
+  const permissionEffect = runInNewContext(`(canViewDocument) => {${effect[1]}}`, scope);
+  scope.canViewDocumentRef.current = false;
+  permissionEffect(false);
+  assert.equal(selected, null); assert.equal(cliente, null);
+  scope.canViewDocumentRef.current = true;
+  permissionEffect(true);
+  dispatch({ id: 'stale', cliente_id: 'stale-client' }, { selectionEpoch: 7 });
+  assert.equal(selected, null, 'restaurar permissão não ressuscita operação da geração revogada');
+  assert.ok(renderedEpoch > 7);
+  dispatch({ id: 'fresh', cliente_id: 'fresh-client' }, { selectionEpoch: renderedEpoch });
+  assert.equal(selected.id, 'fresh'); assert.equal(cliente, 'fresh-client');
+});
+
 test('Shell real oculta selecao carregada sem permissao da entidade ativa', async () => {
   const require = createRequire(import.meta.url);
   const source = read('src/components/comercial/CentralVendas360Shell.jsx');
