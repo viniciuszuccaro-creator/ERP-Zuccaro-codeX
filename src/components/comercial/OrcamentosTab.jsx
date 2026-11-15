@@ -37,6 +37,7 @@ import {
 import { gerarPDFOrcamento } from '@/components/lib/exportacaoPDF';
 import { isCanonicalComercialId } from './centralCliente360Navigation';
 import ValidadorEstoquePedido, { conversionStockOkFromAvailability } from './ValidadorEstoquePedido';
+import SeletorEnderecoEntregaPedido from './SeletorEnderecoEntregaPedido';
 import {
   CENTRAL_VENDAS360_COLUMNS,
   readCentralColumnHiddenKeys,
@@ -85,6 +86,7 @@ export default function OrcamentosTab({
   centralLayout = false,
   centralSituacao = null,
   centralSearch = '',
+  selectionEpoch = 0,
   onCentralSelect = null,
   selectedCentralId = null,
 }) {
@@ -102,6 +104,13 @@ export default function OrcamentosTab({
   const initialOpened = useRef(null);
   const initialCreateOpened = useRef(null);
   const detailRequest = useRef(0);
+  /** Sessão monotônica A→B→A (paridade PedidoCanonico) — ≠ só token igual. */
+  const hydrateEpoch = useRef(0);
+  const hydrateIntentIdRef = useRef(null);
+  const detailInflightRef = useRef(new Map());
+  const canViewLiveRef = useRef(false);
+  const selectionEpochLiveRef = useRef(selectionEpoch);
+  selectionEpochLiveRef.current = selectionEpoch;
   const formScope = useRef(null);
   const cancelScope = useRef(null);
   const conversionScope = useRef(null);
@@ -120,7 +129,8 @@ export default function OrcamentosTab({
   const endAction = (ticket) => { if (actionGate.current.end(ticket)) setSubmitting(false); };
   const [pendingCancel, setPendingCancel] = useState(null);
   const [pendingConversion, setPendingConversion] = useState(null);
-  const [conversion, setConversion] = useState({ tipo_operacao: 'ENTREGA', data_entrega_solicitada: '' });
+  const [conversion, setConversion] = useState({ tipo_operacao: 'ENTREGA', data_entrega_solicitada: '', cliente_local_id: '' });
+  const [conversionEndereco, setConversionEndereco] = useState(null);
   const [conversionStockOk, setConversionStockOk] = useState(true);
   const [filters, setFilters] = useState({ search: '', status: 'TODOS', clienteEmpresaId: 'TODOS', validadeDe: '', validadeAte: '' });
   const [appliedFilters, setAppliedFilters] = useState({ search: '', status: 'TODOS', clienteEmpresaId: 'TODOS', validadeDe: '', validadeAte: '' });
@@ -141,6 +151,14 @@ export default function OrcamentosTab({
   }, [centralLayout, centralSearch]);
   useEffect(() => {
     if (!centralLayout) return undefined;
+    detailRequest.current += 1;
+    hydrateEpoch.current += 1;
+    hydrateIntentIdRef.current = null;
+    detailInflightRef.current.clear();
+    // invalidate() zera pending sem liberar UI — sem setSubmitting(false) Fechar/Salvar ficam sticky.
+    actionGate.current.invalidate();
+    setSubmitting(false);
+    setSelected(null);
     if (centralSituacao === 'VENCIDOS') {
       const today = new Date().toISOString().slice(0, 10);
       setFilters((prev) => ({ ...prev, status: 'EM_ABERTO', validadeAte: today }));
@@ -149,7 +167,12 @@ export default function OrcamentosTab({
       setFilters((prev) => ({ ...prev, status: 'EM_ABERTO', validadeAte: '' }));
       setAppliedFilters((prev) => ({ ...prev, status: 'EM_ABERTO', validadeAte: '' }));
     }
-    return undefined;
+    return () => {
+      detailRequest.current += 1;
+      hydrateEpoch.current += 1;
+      hydrateIntentIdRef.current = null;
+      detailInflightRef.current.clear();
+    };
   }, [centralLayout, centralSituacao]);
   useEffect(() => {
     if (!centralLayout) return undefined;
@@ -173,6 +196,7 @@ export default function OrcamentosTab({
     });
   };
   const canView = canUseOrcamentoAction(hasPermission, 'visualizar');
+  canViewLiveRef.current = canView;
   const canCreate = canUseOrcamentoAction(hasPermission, 'criar');
   const canEdit = (row) => canUseOrcamentoAction(hasPermission, 'editar', row?.status);
   const canCancel = (row) => canUseOrcamentoAction(hasPermission, 'cancelar', row?.status);
@@ -343,7 +367,29 @@ export default function OrcamentosTab({
     [masters.produtos, produtoQuery],
   );
 
-  useEffect(() => { actionGate.current.invalidate(); formScope.current = null; cancelScope.current = null; conversionScope.current = null; setSubmitting(false); setPage(1); setSelected(null); setDetailOpen(false); setFormOpen(false); setPendingCancel(null); setPendingConversion(null); setProposalStage('lista'); setFilters({ search: '', status: 'TODOS', clienteEmpresaId: 'TODOS', validadeDe: '', validadeAte: '' }); setAppliedFilters({ search: '', status: 'TODOS', clienteEmpresaId: 'TODOS', validadeDe: '', validadeAte: '' }); }, [groupId, empresaId, actorId, sessionIdentity, proposalMode]);
+  useEffect(() => {
+    // Geração monotônica: token A→B→A não reabre GET da sessão antiga (paridade PedidoCanonico).
+    // Limpa inflight: senão o 1º clique no novo gen reusa Promise N e recebe null (Bugbot).
+    actionGate.current.invalidate();
+    detailRequest.current += 1;
+    hydrateEpoch.current += 1;
+    hydrateIntentIdRef.current = null;
+    detailInflightRef.current.clear();
+    formScope.current = null;
+    cancelScope.current = null;
+    conversionScope.current = null;
+    setSubmitting(false);
+    setPage(1);
+    setSelected(null);
+    setDetailOpen(false);
+    setFormOpen(false);
+    setPendingCancel(null);
+    setPendingConversion(null);
+    setConversionEndereco(null);
+    setProposalStage('lista');
+    setFilters({ search: '', status: 'TODOS', clienteEmpresaId: 'TODOS', validadeDe: '', validadeAte: '' });
+    setAppliedFilters({ search: '', status: 'TODOS', clienteEmpresaId: 'TODOS', validadeDe: '', validadeAte: '' });
+  }, [groupId, empresaId, actorId, sessionIdentity, proposalMode]);
   useEffect(() => {
     const warn = (event) => { if (dirty) { event.preventDefault(); event.returnValue = ''; } };
     window.addEventListener('beforeunload', warn);
@@ -394,6 +440,66 @@ export default function OrcamentosTab({
     });
     setDirty(false); setDetailOpen(false); setFormOpen(true);
     if (proposalMode) setProposalStage('edicao');
+  };
+  /** GET compartilhado por id; sessão monotônica + epoch/intent/RBAC validam no waiter. */
+  const fetchOrcamentoDetail = async (row, { epochAtClick = null, sessionGenAtClick = null } = {}) => {
+    if (!row?.id) return null;
+    if (!canViewLiveRef.current) return null;
+    const requestId = row.id;
+    let flight = detailInflightRef.current.get(requestId);
+    if (!flight) {
+      const opened = { ...renderedScope.current, token: activeScope()?.token };
+      // Geração no início do flight — A→B→A não reusa resultado (≠ só token igual).
+      const openedGen = hydrateEpoch.current;
+      flight = (async () => {
+        try {
+          const detail = await api.get(requestId);
+          if (hydrateEpoch.current !== openedGen) return null;
+          if (!canViewLiveRef.current) return null;
+          if (!sameOrcamentoScope(opened, renderedScope.current, activeScope())) return null;
+          return detail;
+        } catch (error) {
+          // Mesmo guard do sucesso: sessão monotônica + intenção vigente.
+          if (hydrateEpoch.current !== openedGen) return null;
+          if (!canViewLiveRef.current) return null;
+          if (hydrateIntentIdRef.current === requestId
+            && sameOrcamentoScope(opened, renderedScope.current, activeScope())) {
+            toast.error(errorMessage(error));
+          }
+          return null;
+        } finally {
+          detailInflightRef.current.delete(requestId);
+        }
+      })();
+      detailInflightRef.current.set(requestId, flight);
+    }
+    const detail = await flight;
+    if (!detail) return null;
+    // Waiter: situação, orçamento, sessão monotônica, RBAC — sem nullar o flight compartilhado.
+    if (epochAtClick != null && epochAtClick !== selectionEpochLiveRef.current) return null;
+    if (sessionGenAtClick != null && sessionGenAtClick !== hydrateEpoch.current) return null;
+    if (hydrateIntentIdRef.current !== requestId) return null;
+    if (!canViewLiveRef.current) return null;
+    return detail;
+  };
+  const openEditHydrated = async (row) => {
+    if (proposalMode) { openEdit(row); return; }
+    if (!canViewLiveRef.current || !canEdit(row) || !row?.id) return;
+    // Duplo clique compartilha GET com selectCentralRow — não abortar grades/pagamento-resumo.
+    const epochAtClick = selectionEpochLiveRef.current;
+    const sessionGenAtClick = hydrateEpoch.current;
+    hydrateIntentIdRef.current = row.id;
+    setSelected(row);
+    notifyCentralSelect(row, epochAtClick);
+    const detail = await fetchOrcamentoDetail(row, { epochAtClick, sessionGenAtClick });
+    if (!detail) return;
+    if (epochAtClick !== selectionEpochLiveRef.current) return;
+    if (sessionGenAtClick !== hydrateEpoch.current) return;
+    if (hydrateIntentIdRef.current !== row.id) return;
+    if (!canViewLiveRef.current) return;
+    setSelected(detail);
+    notifyCentralSelect(detail, epochAtClick);
+    openEdit(detail);
   };
   const changeForm = (key, value) => { setForm((current) => ({ ...current, [key]: value })); setDirty(true); };
   const changeItem = (index, key, value) => {
@@ -481,13 +587,44 @@ export default function OrcamentosTab({
     cancelScope.current = renderedScope.current;
     setPendingCancel(row);
   };
+  /** Guardas comuns Fechar (Central + detalhe + confirmar): itens, condição, masters. */
+  const assertOrcamentoProntoParaFechar = (detail) => {
+    if (!detail) return false;
+    if (!Array.isArray(detail.itens) || detail.itens.length === 0) {
+      toast.error('Orçamento sem itens — não é possível fechar.');
+      return false;
+    }
+    if (!detail.condicao_pagamento_id) {
+      toast.error('Orçamento sem condição de pagamento — edite e grave antes de fechar.');
+      return false;
+    }
+    if (mastersQuery.isError) {
+      toast.error(errorMessage(mastersQuery.error) || 'Cadastros auxiliares indisponíveis — não é possível fechar.');
+      return false;
+    }
+    return true;
+  };
+  const openFecharConversao = (detail, scope) => {
+    if (!assertOrcamentoProntoParaFechar(detail)) return;
+    conversionScope.current = scope || renderedScope.current;
+    setConversion({ tipo_operacao: 'ENTREGA', data_entrega_solicitada: '', cliente_local_id: '' });
+    setConversionEndereco(null);
+    setConversionStockOk(true);
+    setPendingConversion(detail);
+    toast.message('Fechamento comercial: confirme operação, data, local (se entrega) e estoque. A conversão só grava após resposta do servidor — Cancelar é ação separada.');
+  };
 const convertToPedido = async () => {
     if (proposalMode) return;
     if (!pendingConversion) return;
     if (!canConvert || !hasPermission('Comercial', 'pedido', 'converter-pedido')) {
       toast.error('Seu perfil não possui permissão para esta ação.'); return;
     }
+    if (!assertOrcamentoProntoParaFechar(pendingConversion)) return;
     if (!conversion.data_entrega_solicitada) { toast.error('Informe a data solicitada pelo cliente.'); return; }
+    if (conversion.tipo_operacao === 'ENTREGA' && !conversion.cliente_local_id) {
+      toast.error('Entrega exige local operacional ativo com identidade canônica. Selecione o endereço antes de fechar.');
+      return;
+    }
     if (!conversionStockOk) {
       toast.error('Estoque insuficiente ou indisponível no contexto. Ajuste quantidades antes de converter.');
       return;
@@ -495,7 +632,14 @@ const convertToPedido = async () => {
     const ticket = beginAction(conversionScope.current);
     if (!ticket) return;
     try {
-      await pedidosApi.convertOrcamento(pendingConversion.id, { tipo_operacao: conversion.tipo_operacao, data_entrega_solicitada: new Date(`${conversion.data_entrega_solicitada}T12:00:00`).toISOString() });
+      const convertPayload = {
+        tipo_operacao: conversion.tipo_operacao,
+        data_entrega_solicitada: new Date(`${conversion.data_entrega_solicitada}T12:00:00`).toISOString(),
+        ...(conversion.tipo_operacao === 'ENTREGA' && conversion.cliente_local_id
+          ? { cliente_local_id: conversion.cliente_local_id }
+          : {}),
+      };
+      await pedidosApi.convertOrcamento(pendingConversion.id, convertPayload);
       if (!actionCurrent(ticket)) return;
       toast.success('Orçamento convertido em pedido.'); setPendingConversion(null); setDetailOpen(false);
       await queryClient.invalidateQueries({ queryKey: ['pedidos-http', groupId, empresaId] });
@@ -675,18 +819,22 @@ const convertToPedido = async () => {
   const loadCentralDetail = async (row, ticket) => {
     if (!actionCurrent(ticket)) return null;
     if (proposalMode) return row;
-    if (Array.isArray(row?.itens) && row.itens.length > 0 && row.numero) return row;
+    const epochAtStart = selectionEpochLiveRef.current;
+    if (Array.isArray(row?.itens) && row.itens.length > 0 && row.numero) {
+      notifyCentralSelect(row, epochAtStart);
+      return row;
+    }
+    const request = ++detailRequest.current;
     try {
       const detail = await api.get(row.id);
       if (!actionCurrent(ticket)) return null;
+      if (request !== detailRequest.current) return null;
+      if (epochAtStart !== selectionEpochLiveRef.current) return null;
       setSelected(detail);
-      if (typeof onCentralSelect === 'function') {
-        const link = masters.clientesEmpresa.find((item) => item.id === detail?.cliente_empresa_id);
-        onCentralSelect(detail, { clienteId: link?.cliente_id || detail?.cliente_id || null });
-      }
+      notifyCentralSelect(detail, epochAtStart);
       return detail;
     } catch (error) {
-      if (actionCurrent(ticket)) toast.error(errorMessage(error));
+      if (actionCurrent(ticket) && request === detailRequest.current) toast.error(errorMessage(error));
       return null;
     }
   };
@@ -730,15 +878,7 @@ const convertToPedido = async () => {
       return;
     }
     await withCentralDetail(row, (detail, ticket) => {
-    if (!Array.isArray(detail.itens) || detail.itens.length === 0) {
-      toast.error('Orçamento sem itens — não é possível fechar.');
-      return;
-    }
-    conversionScope.current = ticket.scope;
-    setConversion({ tipo_operacao: 'ENTREGA', data_entrega_solicitada: '' });
-    setConversionStockOk(true);
-    setPendingConversion(detail);
-    toast.message('Fechamento comercial: confirme operação, data e estoque. A conversão só grava após resposta do servidor — Cancelar é ação separada.');
+      openFecharConversao(detail, ticket.scope);
     });
   };
   const cancelarOrcamentoCentral = () => {
@@ -803,10 +943,47 @@ const convertToPedido = async () => {
     nota: '',
     cobranca: '',
   };
-  const notifyCentralSelect = (row) => {
+  const conversionClienteId = (() => {
+    if (!pendingConversion) return null;
+    const link = masters.clientesEmpresa.find((item) => item.id === pendingConversion.cliente_empresa_id);
+    return link?.cliente_id || pendingConversion.cliente_id || null;
+  })();
+  const notifyCentralSelect = (row, epoch = selectionEpochLiveRef.current) => {
     if (typeof onCentralSelect !== 'function') return;
     const link = masters.clientesEmpresa.find((item) => item.id === row?.cliente_empresa_id);
-    onCentralSelect(row, { clienteId: link?.cliente_id || row?.cliente_id || null });
+    const cond = masters.condicoes.find((item) => item.id === row?.condicao_pagamento_id);
+    const tab = (masters.tabelas || []).find((item) => item.id === row?.tabela_preco_id);
+    const enriched = row
+      ? {
+        ...row,
+        condicao_pagamento_codigo: row.condicao_pagamento_codigo || cond?.codigo || undefined,
+        condicao_pagamento_nome: row.condicao_pagamento_nome || cond?.nome || undefined,
+        condicao_pagamento_label: row.condicao_pagamento_label || (cond ? condicaoLabel(cond.id) : undefined),
+        tabela_preco_codigo: row.tabela_preco_codigo || tab?.codigo || undefined,
+        tabela_preco_nome: row.tabela_preco_nome || tab?.nome || undefined,
+        tabela_preco_label: row.tabela_preco_label || (tab ? tabelaLabel(tab.id) : undefined),
+      }
+      : row;
+    onCentralSelect(enriched, { clienteId: link?.cliente_id || row?.cliente_id || null, selectionEpoch: epoch });
+  };
+  /** Clique simples: seleciona já e sempre GET canônico (lista pode trazer itens stub sem total/parcelas). Sem mutation gate. */
+  const selectCentralRow = async (row) => {
+    if (!row?.id || !canViewLiveRef.current) return;
+    // Congela epoch + gen no clique — notify pós-await não lê refs “vivos” da nova sessão/situação.
+    const epochAtClick = selectionEpochLiveRef.current;
+    const sessionGenAtClick = hydrateEpoch.current;
+    hydrateIntentIdRef.current = row.id;
+    setSelected(row);
+    notifyCentralSelect(row, epochAtClick);
+    if (proposalMode) return;
+    const detail = await fetchOrcamentoDetail(row, { epochAtClick, sessionGenAtClick });
+    if (!detail) return;
+    if (epochAtClick !== selectionEpochLiveRef.current) return;
+    if (sessionGenAtClick !== hydrateEpoch.current) return;
+    if (hydrateIntentIdRef.current !== row.id) return;
+    if (!canViewLiveRef.current) return;
+    setSelected(detail);
+    notifyCentralSelect(detail, epochAtClick);
   };
 
   return <div className={`w-full h-full flex flex-col ${centralLayout ? 'bg-transparent p-0' : `bg-slate-50 ${windowMode ? 'p-3' : 'p-4'}`}`} data-permission="Comercial.orcamento.visualizar" data-proposta-stage={proposalMode ? proposalStage : undefined} data-central-layout={centralLayout ? 'versao6' : undefined}>
@@ -1239,8 +1416,9 @@ const convertToPedido = async () => {
                   key={row.id}
                   data-selected={selectedRow ? 'true' : undefined}
                   className={selectedRow ? 'bg-sky-50' : 'cursor-pointer'}
-                  onClick={() => { setSelected(row); notifyCentralSelect(row); }}
-                  onDoubleClick={() => { if (proposalMode || canEdit(row)) openEdit(row); }}
+                  onClick={() => { void selectCentralRow(row); }}
+                  onDoubleClick={() => { if (proposalMode || canEdit(row)) void openEditHydrated(row); }}
+                  data-action="central360-selecionar-orcamento"
                 >
                   {centralVisibleColumns.map((col) => cells[col.key])}
                 </TableRow>
@@ -1350,8 +1528,13 @@ const convertToPedido = async () => {
       </DialogFooter>
     </DialogContent></Dialog>
 
-    <Dialog open={detailOpen} onOpenChange={setDetailOpen}><DialogContent style={windowMode ? { zIndex:1000000000 } : undefined} overlayStyle={windowMode ? { zIndex:999999999 } : undefined} className="max-w-4xl max-h-[90vh] overflow-auto"><DialogHeader><DialogTitle>Orçamento {selected?.numero}</DialogTitle><DialogDescription>{selected?.status === 'EM_ABERTO' ? 'Em aberto' : 'Cancelado'} · validade {date(selected?.validade_em)}</DialogDescription></DialogHeader>{selected && <div className="space-y-4"><div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm"><div><span className="text-slate-500">Cliente</span><p>{clienteLabel(selected.cliente_empresa_id)}</p></div><div><span className="text-slate-500">Condição</span><p>{condicaoLabel(selected.condicao_pagamento_id)}</p></div><div data-action="orcamento-detalhe-tabela-preco"><span className="text-slate-500">Tabela de preço</span><p>{tabelaLabel(selected.tabela_preco_id)}</p></div><div><span className="text-slate-500">Criado</span><p>{date(selected.created_at)}</p></div><div><span className="text-slate-500">Atualizado</span><p>{date(selected.updated_at)}</p></div></div><p className="text-sm whitespace-pre-wrap">{selected.observacoes || 'Sem observações.'}</p><Table><TableHeader><TableRow><TableHead>Descrição</TableHead><TableHead>Un.</TableHead><TableHead className="text-right">Qtd.</TableHead><TableHead className="text-right">Preço</TableHead><TableHead className="text-right">Desconto</TableHead><TableHead className="text-right">Total</TableHead></TableRow></TableHeader><TableBody>{selected.itens.map((item) => <TableRow key={item.id}><TableCell>{item.descricao}</TableCell><TableCell>{item.unidade_sigla}</TableCell><TableCell className="text-right">{item.quantidade}</TableCell><TableCell className="text-right">{money(item.preco_unitario)}</TableCell><TableCell className="text-right">{money(item.desconto)}</TableCell><TableCell className="text-right">{money(item.total)}</TableCell></TableRow>)}</TableBody></Table><div className="flex justify-end gap-5"><span>Subtotal: <strong>{money(selected.subtotal)}</strong></span><span>Desconto: <strong>{money(selected.desconto)}</strong></span><span>Total: <strong>{money(selected.total)}</strong></span></div></div>}<DialogFooter className="flex flex-wrap gap-2"><Button variant="outline" onClick={() => printOrcamento(selected)}><Printer className="w-4 h-4 mr-2" />Imprimir/PDF</Button><Button variant="outline" title="Preparar texto para WhatsApp" onClick={() => prepareShare(selected, 'WhatsApp')}><MessageCircle className="w-4 h-4 mr-2" />WhatsApp</Button><Button variant="outline" title="Preparar texto para e-mail" onClick={() => prepareShare(selected, 'e-mail')}><Mail className="w-4 h-4 mr-2" />E-mail</Button>{canConvert && selected?.status === 'EM_ABERTO' && <Button data-action="orcamento-detalhe-fechar" onClick={() => { conversionScope.current = renderedScope.current; setConversion({ tipo_operacao: 'ENTREGA', data_entrega_solicitada: '' }); setConversionStockOk(true); setPendingConversion(selected); }}><CheckCircle2 className="w-4 h-4 mr-2" />Fechar → pedido</Button>}{canEdit(selected) && <Button variant="outline" onClick={() => openEdit(selected)}><Pencil className="w-4 h-4 mr-2" />Editar</Button>}{canCancel(selected) && <Button variant="destructive" data-action="orcamento-detalhe-cancelar" onClick={() => cancel(selected)} disabled={submitting}><XCircle className="w-4 h-4 mr-2" />Cancelar orçamento</Button>}</DialogFooter></DialogContent></Dialog>
-    <Dialog open={Boolean(pendingConversion)} onOpenChange={(open) => { if (!open && !submitting) { setPendingConversion(null); setConversionStockOk(true); } }}><DialogContent style={windowMode ? { zIndex:1000000000 } : undefined} overlayStyle={windowMode ? { zIndex:999999999 } : undefined} className="max-w-lg max-h-[90vh] overflow-auto" data-block="central360-fechar-conversao"><DialogHeader><DialogTitle>Fechar orçamento → pedido</DialogTitle><DialogDescription>Fechamento comercial via conversão no servidor (estoque/alçada/auditoria). Orçamento original preservado e vinculado. Cancelar é ação separada.</DialogDescription></DialogHeader><div className="space-y-3"><div><Label>Operação</Label><Select value={conversion.tipo_operacao} onValueChange={(value) => setConversion((current) => ({ ...current, tipo_operacao: value }))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="ENTREGA">Entrega</SelectItem><SelectItem value="RETIRADA">Retirada</SelectItem></SelectContent></Select></div><div><Label>Data solicitada pelo cliente</Label><Input type="date" value={conversion.data_entrega_solicitada} onChange={(event) => setConversion((current) => ({ ...current, data_entrega_solicitada: event.target.value }))} /></div>{pendingConversion && <ValidadorEstoquePedido orcamento={pendingConversion} empresaId={empresaId} onAvailabilityChange={(state) => { setConversionStockOk(conversionStockOkFromAvailability(state)); }} />}</div><DialogFooter><Button variant="outline" onClick={() => { setPendingConversion(null); setConversionStockOk(true); }} disabled={submitting}>Voltar</Button><Button onClick={convertToPedido} disabled={submitting || !conversionStockOk || !conversion.data_entrega_solicitada} data-action="orcamento-converter-pedido" data-permission="Comercial.pedido.converter-pedido">{submitting ? 'Fechando...' : 'Confirmar fechamento'}</Button></DialogFooter></DialogContent></Dialog>    <ConfirmDialog
+    <Dialog open={detailOpen} onOpenChange={setDetailOpen}><DialogContent style={windowMode ? { zIndex:1000000000 } : undefined} overlayStyle={windowMode ? { zIndex:999999999 } : undefined} className="max-w-4xl max-h-[90vh] overflow-auto"><DialogHeader><DialogTitle>Orçamento {selected?.numero}</DialogTitle><DialogDescription>{selected?.status === 'EM_ABERTO' ? 'Em aberto' : 'Cancelado'} · validade {date(selected?.validade_em)}</DialogDescription></DialogHeader>{selected && <div className="space-y-4"><div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm"><div><span className="text-slate-500">Cliente</span><p>{clienteLabel(selected.cliente_empresa_id)}</p></div><div><span className="text-slate-500">Condição</span><p>{condicaoLabel(selected.condicao_pagamento_id)}</p></div><div data-action="orcamento-detalhe-tabela-preco"><span className="text-slate-500">Tabela de preço</span><p>{tabelaLabel(selected.tabela_preco_id)}</p></div><div><span className="text-slate-500">Criado</span><p>{date(selected.created_at)}</p></div><div><span className="text-slate-500">Atualizado</span><p>{date(selected.updated_at)}</p></div></div><p className="text-sm whitespace-pre-wrap">{selected.observacoes || 'Sem observações.'}</p><Table><TableHeader><TableRow><TableHead>Descrição</TableHead><TableHead>Un.</TableHead><TableHead className="text-right">Qtd.</TableHead><TableHead className="text-right">Preço</TableHead><TableHead className="text-right">Desconto</TableHead><TableHead className="text-right">Total</TableHead></TableRow></TableHeader><TableBody>{selected.itens.map((item) => <TableRow key={item.id}><TableCell>{item.descricao}</TableCell><TableCell>{item.unidade_sigla}</TableCell><TableCell className="text-right">{item.quantidade}</TableCell><TableCell className="text-right">{money(item.preco_unitario)}</TableCell><TableCell className="text-right">{money(item.desconto)}</TableCell><TableCell className="text-right">{money(item.total)}</TableCell></TableRow>)}</TableBody></Table><div className="flex justify-end gap-5"><span>Subtotal: <strong>{money(selected.subtotal)}</strong></span><span>Desconto: <strong>{money(selected.desconto)}</strong></span><span>Total: <strong>{money(selected.total)}</strong></span></div></div>}<DialogFooter className="flex flex-wrap gap-2"><Button variant="outline" onClick={() => printOrcamento(selected)}><Printer className="w-4 h-4 mr-2" />Imprimir/PDF</Button><Button variant="outline" title="Preparar texto para WhatsApp" onClick={() => prepareShare(selected, 'WhatsApp')}><MessageCircle className="w-4 h-4 mr-2" />WhatsApp</Button><Button variant="outline" title="Preparar texto para e-mail" onClick={() => prepareShare(selected, 'e-mail')}><Mail className="w-4 h-4 mr-2" />E-mail</Button>{canConvert && selected?.status === 'EM_ABERTO' && <Button data-action="orcamento-detalhe-fechar" onClick={() => openFecharConversao(selected, renderedScope.current)}><CheckCircle2 className="w-4 h-4 mr-2" />Fechar → pedido</Button>}{canEdit(selected) && <Button variant="outline" onClick={() => openEdit(selected)}><Pencil className="w-4 h-4 mr-2" />Editar</Button>}{canCancel(selected) && <Button variant="destructive" data-action="orcamento-detalhe-cancelar" onClick={() => cancel(selected)} disabled={submitting}><XCircle className="w-4 h-4 mr-2" />Cancelar orçamento</Button>}</DialogFooter></DialogContent></Dialog>
+    <Dialog open={Boolean(pendingConversion)} onOpenChange={(open) => { if (!open && !submitting) { setPendingConversion(null); setConversionEndereco(null); setConversionStockOk(true); } }}><DialogContent style={windowMode ? { zIndex:1000000000 } : undefined} overlayStyle={windowMode ? { zIndex:999999999 } : undefined} className="max-w-lg max-h-[90vh] overflow-auto" data-block="central360-fechar-conversao"><DialogHeader><DialogTitle>Fechar orçamento → pedido</DialogTitle><DialogDescription>Fechamento comercial via conversão no servidor (estoque/alçada/auditoria). Orçamento original preservado e vinculado. Cancelar é ação separada.</DialogDescription></DialogHeader><div className="space-y-3"><div><Label>Operação</Label><Select value={conversion.tipo_operacao} onValueChange={(value) => { setConversion((current) => ({ ...current, tipo_operacao: value, cliente_local_id: value === 'ENTREGA' ? current.cliente_local_id : '' })); if (value !== 'ENTREGA') setConversionEndereco(null); }}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="ENTREGA">Entrega</SelectItem><SelectItem value="RETIRADA">Retirada</SelectItem></SelectContent></Select></div><div><Label>Data solicitada pelo cliente</Label><Input type="date" value={conversion.data_entrega_solicitada} onChange={(event) => setConversion((current) => ({ ...current, data_entrega_solicitada: event.target.value }))} /></div>{conversion.tipo_operacao === 'ENTREGA' && pendingConversion && (
+  conversionClienteId
+    ? <div data-block="central360-fechar-local-entrega" className="space-y-1"><Label>Local de entrega *</Label><SeletorEnderecoEntregaPedido cliente={{ id: conversionClienteId }} enderecoSelecionado={conversionEndereco || {}} groupId={groupId} empresaId={empresaId} onSelect={(endereco) => { setConversionEndereco(endereco); setConversion((current) => ({ ...current, cliente_local_id: endereco?.cliente_local_id || endereco?.id || '' })); }} /></div>
+    : <p className="text-xs text-amber-800" role="status" data-block="central360-fechar-local-sem-cliente">Cliente do orçamento sem vínculo canônico — não é possível selecionar local de entrega.</p>
+)}
+{pendingConversion && <ValidadorEstoquePedido orcamento={pendingConversion} empresaId={empresaId} onAvailabilityChange={(state) => { setConversionStockOk(conversionStockOkFromAvailability(state)); }} />}</div><DialogFooter><Button variant="outline" onClick={() => { setPendingConversion(null); setConversionEndereco(null); setConversionStockOk(true); }} disabled={submitting}>Voltar</Button><Button onClick={convertToPedido} disabled={submitting || !conversionStockOk || !conversion.data_entrega_solicitada || (conversion.tipo_operacao === 'ENTREGA' && !conversion.cliente_local_id)} data-action="orcamento-converter-pedido" data-permission="Comercial.pedido.converter-pedido">{submitting ? 'Fechando...' : 'Confirmar fechamento'}</Button></DialogFooter></DialogContent></Dialog>    <ConfirmDialog
       open={Boolean(pendingCancel)}
       onOpenChange={(open) => { if (!open) setPendingCancel(null); }}
       onConfirm={() => { const row = pendingCancel; setPendingCancel(null); void performCancel(row); }}

@@ -55,17 +55,49 @@ import {
   produtoPickerLabel,
 } from './comercialMasterPicker';
 import { isCanonicalPedidoId } from './centralCliente360Navigation';
+import {
+  CENTRAL_VENDAS360_COLUMNS,
+  readCentralColumnHiddenKeys,
+  resolveCentralPrazoLabel,
+  sumCentralPesoKg,
+  writeCentralColumnHiddenKeys,
+} from './centralVendas360Layout';
 
 const emptyItem = () => ({ produto_id:'', unidade_id:'', descricao:'', unidade_sigla:'', quantidade:'1', preco_unitario:'0', desconto:'0', requer_producao:false });
+/** Labels da grade Central em visão pedido (mesmas 12 chaves; Nº ≠ orçamento). */
+const CENTRAL_PEDIDO_COLUMN_LABELS = Object.freeze({ numero: 'Nº Pedido', prazo: 'Prazo entrega' });
 const emptyForm = () => ({ cliente_empresa_id:'', cliente_local_id:'', obra_id:'', tabela_preco_id:'', condicao_pagamento_id:'', tipo_operacao:'ENTREGA', data_entrega_solicitada:'', observacoes:'', itens:[emptyItem()] });
+/**
+ * ENTREGA selecionável: id canônico, completo (endereco_incompleto===false), ativo e finalidade ENTREGA.
+ * Fiscal-only / incompleto / só revisão não entram no seletor do pedido.
+ */
+const isLocalEntregaOperacional = (x) => {
+  if (!x || !x.id || x.endereco_incompleto===false !== true) return false;
+  if (x.ativo === false) return false;
+  if (Array.isArray(x.finalidades)) {
+    return x.finalidades.some((p) => p && p.ativo !== false && p.finalidade === 'ENTREGA');
+  }
+  const fins = Array.isArray(x._finalidades) ? x._finalidades : [];
+  if (fins.length) return fins.includes('ENTREGA');
+  return String(x.tipo_endereco || '').toLowerCase() === 'entrega';
+};
 const money = (value) => new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(Number(value||0));
 const date = (value) => value ? new Intl.DateTimeFormat('pt-BR').format(new Date(value)) : '-';
 const message = (error) => explainPedidoPersistenceError(error)
   || (error?.status===403?'Seu perfil não possui permissão para esta ação.':error?.status===404?'Pedido não encontrado neste contexto.':error?.status===409?'O estado atual não permite esta ação.':error?.body?.error?.message||error?.message||'Não foi possível concluir a operação.');
 
-export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actorEmail, sessionToken=undefined, hasPermission, filterInContext, windowMode=false, empresaAtual=null, initialSelectedId=null, reopenRequestId=null, initialCreateClienteEmpresaId=null, createRequestId=null, centralLayout=false, centralSituacao=null, centralSearch='', onCentralSelect=null, selectedCentralId=null }) {
+export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actorEmail, sessionToken=undefined, hasPermission, filterInContext, windowMode=false, empresaAtual=null, initialSelectedId=null, reopenRequestId=null, initialCreateClienteEmpresaId=null, createRequestId=null, centralLayout=false, centralSituacao=null, centralSearch='', selectionEpoch=0, onCentralSelect=null, selectedCentralId=null }) {
   const queryClient=useQueryClient();
   const detailGate=useRef(createPedidoDetailGate());
+  /** Hidratação: geração monotônica de sessão/contexto (Casa A→B→A) — ≠ igualdade de token. */
+  const hydrateEpoch=useRef(0);
+  /** Id do pedido cuja hidratação ainda manda — GET tardio de outro id não sobrescreve. */
+  const hydrateIntentIdRef=useRef(null);
+  /** GET compartilhado por id — limpar no reset de sessão (Bugbot stale flight). */
+  const hydrateInflightRef=useRef(new Map());
+  const selectionEpochLiveRef=useRef(selectionEpoch);
+  selectionEpochLiveRef.current=selectionEpoch;
+  const canViewLiveRef=useRef(false);
   const initialOpened=useRef(null);
   const initialCreateOpened=useRef(null);
   const mutationGate=useRef(sharedPedidoMutationGate);
@@ -96,7 +128,9 @@ export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actor
   const [applied,setApplied]=useState(filters);
   const [clienteQuery,setClienteQuery]=useState('');
   const [produtoQuery,setProdutoQuery]=useState('');
+  const [centralHiddenColumns,setCentralHiddenColumns]=useState(()=>new Set());
   const canView=canUsePedidoAction(hasPermission,'visualizar');
+  canViewLiveRef.current=canView;
   const canCreate=canUsePedidoAction(hasPermission,'criar');
   const canEdit=(row)=>canUsePedidoAction(hasPermission,'editar',row?.status);
   const canCancel=(row)=>canUsePedidoAction(hasPermission,'cancelar',row?.status);
@@ -208,7 +242,15 @@ export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actor
   const tabelaLabel=(id)=>{if(!id)return 'Não informada';const row=(masters.tabelas||[]).find((item)=>item.id===id);if(!row)return 'Desconhecida';return row.codigo?`${row.codigo} — ${row.nome||''}`:(row.nome||id);};
   const clienteOptions=useMemo(()=>filterClienteEmpresaOptions(masters.clientesEmpresa, clients, clienteQuery,form.cliente_empresa_id),[masters.clientesEmpresa, clients, clienteQuery,form.cliente_empresa_id]);
   const produtoOptions=useMemo(()=>filterProdutoOptions(masters.produtos, produtoQuery),[masters.produtos, produtoQuery]);
-  useEffect(()=>{detailGate.current.invalidate();setPage(1);setSelected(null);setFormOpen(false);setDetailOpen(false);setCreateKey(null);setHistory([]);setHistoryLoading(false);setHistoryError(null);setBusy(mutationGate.current.isPending({groupId,empresaId,actorId}));setPendingCancel(null);setCancelMotivo('');setPendingTransition(null);setStatusMotivo('');setFilters({search:'',status:'TODOS',clienteEmpresaId:'TODOS',tipoOperacao:'TODOS'});setApplied({search:'',status:'TODOS',clienteEmpresaId:'TODOS',tipoOperacao:'TODOS'});},[groupId,empresaId,actorId]);
+  useEffect(()=>{
+    // Geração monotônica: token A→B→A não reabre GET da sessão antiga (Casa P1).
+    // Limpa inflight: senão o 1º clique no novo gen reusa Promise N e recebe null (Bugbot).
+    detailGate.current.invalidate();
+    hydrateEpoch.current += 1;
+    hydrateIntentIdRef.current=null;
+    hydrateInflightRef.current.clear();
+    setPage(1);setSelected(null);setFormOpen(false);setDetailOpen(false);setCreateKey(null);setHistory([]);setHistoryLoading(false);setHistoryError(null);setBusy(mutationGate.current.isPending({groupId,empresaId,actorId}));setPendingCancel(null);setCancelMotivo('');setPendingTransition(null);setStatusMotivo('');setFilters({search:'',status:'TODOS',clienteEmpresaId:'TODOS',tipoOperacao:'TODOS'});setApplied({search:'',status:'TODOS',clienteEmpresaId:'TODOS',tipoOperacao:'TODOS'});
+  },[groupId,empresaId,actorId,sessionIdentity]);
   useEffect(()=>mutationGate.current.subscribe(()=>setBusy(mutationGate.current.isPending({groupId,empresaId,actorId}))),[groupId,empresaId,actorId]);
   useEffect(()=>{const warn=(e)=>{if(dirty){e.preventDefault();e.returnValue='';}};window.addEventListener('beforeunload',warn);return()=>window.removeEventListener('beforeunload',warn);},[dirty]);
   const change=(key,value)=>{setForm(current=>({...current,[key]:value}));setDirty(true);};
@@ -218,7 +260,7 @@ export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actor
   const openCreate=()=>{if(mutationGate.current.isPending(renderedScope.current)){toast.error('Aguarde a confirmação do Pedido pendente neste contexto.');return;}const key=getOrCreatePedidoIntentKey(renderedScope.current,intentStorage(),()=>window.crypto.randomUUID());if(!key){toast.error('Sessão indisponível para criar Pedido com retry seguro.');return;}setCreateKey(key);setEditing(null);setForm(emptyForm());setDirty(false);setFormOpen(true);};
   const openEdit=(row)=>{if(!canEdit(row))return;setEditing(row);setForm(mapPedidoRowToForm(row));setDirty(false);setDetailOpen(false);setFormOpen(true);};
   const refreshConflictScope=async(ticket,scope)=>{if(!canView||!detailGate.current.isCurrent(ticket,renderedScope.current,activeScope()))throw new Error('PEDIDO_CONTEXT_CHANGED');await api.list({limit:1,offset:0});if(!detailGate.current.isCurrent(ticket,renderedScope.current,activeScope()))throw new Error('PEDIDO_CONTEXT_CHANGED');await queryClient.invalidateQueries({queryKey:['pedidos-http',scope.groupId,scope.empresaId,scope.actorId],refetchType:'all'},{throwOnError:true});if(!detailGate.current.isCurrent(ticket,renderedScope.current,activeScope()))throw new Error('PEDIDO_CONTEXT_CHANGED');};
-  const save=async()=>{if(busy)return;if(!mastersReady){toast.error(master.error?.message||auxiliary.error?.message||'Aguarde os cadastros canonicos do cliente antes de salvar.');return;}if(!editing&&!createKey){toast.error('Chave da intenção indisponível. Reabra o formulário antes de criar.');return;}if(form.tipo_operacao==='ENTREGA'){const locaisOk=(masters.locais||[]).filter(x=>x&&x.id&&x.endereco_incompleto===false);if(!form.cliente_local_id||!locaisOk.some(x=>x.id===form.cliente_local_id)){toast.error('Entrega exige local operacional ativo com identidade canônica. Locais incompletos ou só em revisão não são selecionáveis.');return;}}const mutation=mutationGate.current.begin(renderedScope.current);if(!mutation)return;const ticket=detailGate.current.begin(renderedScope.current,renderedScope.current,activeScope());if(!ticket){mutationGate.current.end(mutation);return;}setBusy(true);try{const payload=buildPedidoPayload(form,editing?undefined:createKey);const saved=editing?await api.update(editing.id,payload):await api.create(payload);if(!editing)clearPedidoCreateIntentKey(ticket.scope,intentStorage(),createKey);await queryClient.invalidateQueries({queryKey:['pedidos-http',groupId,empresaId,actorId]});if(!detailGate.current.isCurrent(ticket,renderedScope.current,activeScope())){toast.error('Contexto alterado. O Pedido foi salvo no contexto original; consulte o registro antes de repetir.');return;}if(!editing)setCreateKey(null);toast.success(editing?'Pedido atualizado.':'Pedido criado.');setSelected(saved);setDirty(false);setFormOpen(false);setEditing(null);setDetailOpen(true);if(saved?.id)await loadHistory(saved.id,ticket);}catch(error){if(!editing&&error?.code==='PEDIDO_IDEMPOTENCY_CONFLICT'){let next;try{next=await recoverPedidoCreateIntentAfterConflict(ticket.scope,intentStorage(),createKey,()=>window.crypto.randomUUID(),scope=>refreshConflictScope(ticket,scope));}catch{toast.error('Não foi possível consultar os Pedidos no contexto original. Retorne a ele antes de tentar novamente.');return;}if(detailGate.current.isCurrent(ticket,renderedScope.current,activeScope())){setCreateKey(next);toast.error('Esta chave já pertence a outro Pedido. Consulte a listagem antes de confirmar um novo; o formulário foi preservado.');}else toast.error('Contexto alterado. Consulte o Pedido original antes de repetir.');return;}if(detailGate.current.isCurrent(ticket,renderedScope.current,activeScope()))toast.error(message(error));else toast.error('Contexto alterado. Consulte o Pedido antes de repetir.');}finally{mutationGate.current.end(mutation);setBusy(mutationGate.current.isPending(renderedScope.current));}};
+  const save=async()=>{if(busy)return;if(!mastersReady){toast.error(master.error?.message||auxiliary.error?.message||'Aguarde os cadastros canonicos do cliente antes de salvar.');return;}if(!editing&&!createKey){toast.error('Chave da intenção indisponível. Reabra o formulário antes de criar.');return;}if(form.tipo_operacao==='ENTREGA'){const locaisOk=(masters.locais||[]).filter(isLocalEntregaOperacional);if(!form.cliente_local_id||!locaisOk.some(x=>x.id===form.cliente_local_id)){toast.error('Entrega exige local operacional ativo com finalidade ENTREGA e identidade canônica. Locais fiscais-only, incompletos ou só em revisão não são selecionáveis.');return;}}const mutation=mutationGate.current.begin(renderedScope.current);if(!mutation)return;const ticket=detailGate.current.begin(renderedScope.current,renderedScope.current,activeScope());if(!ticket){mutationGate.current.end(mutation);return;}setBusy(true);try{const payload=buildPedidoPayload(form,editing?undefined:createKey);const saved=editing?await api.update(editing.id,payload):await api.create(payload);if(!editing)clearPedidoCreateIntentKey(ticket.scope,intentStorage(),createKey);await queryClient.invalidateQueries({queryKey:['pedidos-http',groupId,empresaId,actorId]});if(!detailGate.current.isCurrent(ticket,renderedScope.current,activeScope())){toast.error('Contexto alterado. O Pedido foi salvo no contexto original; consulte o registro antes de repetir.');return;}if(!editing)setCreateKey(null);toast.success(editing?'Pedido atualizado.':'Pedido criado.');setSelected(saved);setDirty(false);setFormOpen(false);setEditing(null);setDetailOpen(true);if(saved?.id)await loadHistory(saved.id,ticket);}catch(error){if(!editing&&error?.code==='PEDIDO_IDEMPOTENCY_CONFLICT'){let next;try{next=await recoverPedidoCreateIntentAfterConflict(ticket.scope,intentStorage(),createKey,()=>window.crypto.randomUUID(),scope=>refreshConflictScope(ticket,scope));}catch{toast.error('Não foi possível consultar os Pedidos no contexto original. Retorne a ele antes de tentar novamente.');return;}if(detailGate.current.isCurrent(ticket,renderedScope.current,activeScope())){setCreateKey(next);toast.error('Esta chave já pertence a outro Pedido. Consulte a listagem antes de confirmar um novo; o formulário foi preservado.');}else toast.error('Contexto alterado. Consulte o Pedido original antes de repetir.');return;}if(detailGate.current.isCurrent(ticket,renderedScope.current,activeScope()))toast.error(message(error));else toast.error('Contexto alterado. Consulte o Pedido antes de repetir.');}finally{mutationGate.current.end(mutation);setBusy(mutationGate.current.isPending(renderedScope.current));}};
   const loadHistory=async(pedidoId,openedTicket)=>{const ticket=openedTicket||detailGate.current.begin(renderedScope.current,renderedScope.current,activeScope());if(!ticket)return;setHistoryLoading(true);setHistoryError(null);try{const events=await api.history(pedidoId);if(!detailGate.current.isCurrent(ticket,renderedScope.current,activeScope()))return;setHistory(Array.isArray(events)?events:[]);setHistoryError(null);}catch(error){if(!detailGate.current.isCurrent(ticket,renderedScope.current,activeScope()))return;setHistory([]);setHistoryError(error);toast.error(message(error)||'Falha ao carregar histórico.');}finally{if(detailGate.current.isCurrent(ticket,renderedScope.current,activeScope()))setHistoryLoading(false);}};
   const show=async(row)=>{const ticket=detailGate.current.begin(renderedScope.current,renderedScope.current,activeScope());if(!ticket||!canView)return;try{setHistoryLoading(true);setHistoryError(null);setHistory([]);const detail=await api.get(row.id);if(!detailGate.current.isCurrent(ticket,renderedScope.current,activeScope()))return;setSelected(detail);setDetailOpen(true);await loadHistory(row.id,ticket);}catch(error){if(!detailGate.current.isCurrent(ticket,renderedScope.current,activeScope()))return;setHistoryLoading(false);toast.error(message(error));}};
   const initialToken=activeScope()?.token;
@@ -252,7 +294,7 @@ export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actor
   const pendingStatusGate=evaluatePedidoStatusTransitionUiGate({row:pendingTransition?.row||selected,groupId,empresaId,canTransition});
   const printPdfGate=evaluatePedidoPrintPdfUiGate({row:selected,groupId,empresaId,canPrint});
   const shareGate=evaluatePedidoShareUiGate({row:selected,groupId,empresaId,canShare});
-  const printPedidoPdf=()=>{if(printPdfGate.blockPrint){toast.error(printPdfGate.hint||'Impressão bloqueada (fail-closed).');return;}if(!selected)return;const opened=gerarPDFPedido(selected,{empresa:empresaAtual||{},clienteNome:clientLabel(selected.cliente_empresa_id),statusLabel:PEDIDO_STATUS_LABELS[selected.status]||selected.status});if(!opened)toast.error('Permita a abertura da janela de impressão para gerar o PDF.');};
+  const printPedidoPdf=()=>{if(printPdfGate.blockPrint){toast.error(printPdfGate.hint||'Impressão bloqueada (fail-closed).');return;}if(!selected)return;const printRow={...selected,numero_pedido:selected.numero||selected.numero_pedido,cliente_nome:clientLabel(selected.cliente_empresa_id)||selected.cliente_nome,status:PEDIDO_STATUS_LABELS[selected.status]||selected.status,condicao_pagamento:condicaoLabel(selected.condicao_pagamento_id)||selected.condicao_pagamento||selected.condicao_pagamento_label,data_pedido:selected.data_pedido||selected.created_at||selected.data_entrega_solicitada};const opened=gerarPDFPedido(printRow,empresaAtual||{});if(!opened)toast.error('Permita a abertura da janela de impressão para gerar o PDF.');};
   const preparePedidoShare=async(channel)=>{if(shareGate.blockShare){toast.error(shareGate.hint||'Compartilhamento bloqueado (fail-closed).');return;}try{const text=buildPedidoShareText(selected,{empresaNome:empresaAtual?.nome_fantasia||empresaAtual?.razao_social||'Empresa',clienteNome:clientLabel(selected.cliente_empresa_id),statusLabel:PEDIDO_STATUS_LABELS[selected.status]||selected.status});if(navigator?.clipboard?.writeText){await navigator.clipboard.writeText(text);toast.success(`Texto para ${channel} copiado. Revise antes de enviar.`);}else{window.prompt(`Copie o texto para ${channel}:`, text);}}catch(error){toast.error(error?.message||'Falha ao preparar texto.');}};
   // Situação da Central: aplica filtro de status/operação sem gravar (hooks antes de qualquer return).
   useEffect(()=>{
@@ -265,15 +307,111 @@ export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actor
   useEffect(()=>{
     if(!centralLayout||!centralSituacao)return undefined;
     // Status canônicos do pedidoUiPolicy — sem inventar EM_ENTREGA/ENTREGUE.
+    detailGate.current.invalidate();
+    hydrateEpoch.current += 1;
+    hydrateIntentIdRef.current=null;
+    hydrateInflightRef.current.clear();
+    setSelected(null);
     const map={PRODUCAO:'EM_PRODUCAO',ENTREGA:'PRONTO_ENTREGA',RETIRA:'PRONTO_RETIRADA',ENTREGUES:'FINALIZADO',FINALIZADOS:'FINALIZADO',CANCELADOS:'CANCELADO'};
     const status=map[centralSituacao]||'TODOS';
     const tipoOperacao=centralSituacao==='ENTREGA'||centralSituacao==='ENTREGUES'?'ENTREGA':centralSituacao==='RETIRA'?'RETIRADA':'TODOS';
     setFilters((prev)=>({...prev,status,tipoOperacao}));
     setApplied((prev)=>({...prev,status,tipoOperacao}));
     setPage(1);
-    return undefined;
+    return ()=>{ detailGate.current.invalidate(); hydrateEpoch.current += 1; hydrateIntentIdRef.current=null; hydrateInflightRef.current.clear(); };
   },[centralLayout,centralSituacao]);
-  const notifyCentralSelect=(row)=>{if(typeof onCentralSelect!=='function')return;const link=masters.clientesEmpresa.find(x=>x.id===row?.cliente_empresa_id);onCentralSelect(row,{clienteId:link?.cliente_id||row?.cliente_id||null});};
+  useEffect(()=>{
+    if(!centralLayout)return undefined;
+    const loaded=readCentralColumnHiddenKeys({actorId,groupId,empresaId});
+    setCentralHiddenColumns(new Set(Array.isArray(loaded)?loaded:[]));
+    return undefined;
+  },[centralLayout,actorId,groupId,empresaId]);
+  const centralVisibleColumns=useMemo(
+    ()=>CENTRAL_VENDAS360_COLUMNS.filter((col)=>!centralHiddenColumns.has(col.key)),
+    [centralHiddenColumns],
+  );
+  const notifyCentralSelect=(row,epoch=selectionEpochLiveRef.current)=>{if(typeof onCentralSelect!=='function')return;const link=masters.clientesEmpresa.find(x=>x.id===row?.cliente_empresa_id);const cond=masters.condicoes.find((item)=>item.id===row?.condicao_pagamento_id);const tab=(masters.tabelas||[]).find((item)=>item.id===row?.tabela_preco_id);const enriched=row?{...row,condicao_pagamento_codigo:row.condicao_pagamento_codigo||cond?.codigo||undefined,condicao_pagamento_nome:row.condicao_pagamento_nome||cond?.nome||undefined,condicao_pagamento_label:row.condicao_pagamento_label||(cond?condicaoLabel(cond.id):undefined),tabela_preco_codigo:row.tabela_preco_codigo||tab?.codigo||undefined,tabela_preco_nome:row.tabela_preco_nome||tab?.nome||undefined,tabela_preco_label:row.tabela_preco_label||(tab?tabelaLabel(tab.id):undefined)}:row;onCentralSelect(enriched,{clienteId:link?.cliente_id||row?.cliente_id||null,selectionEpoch:epoch});};
+  /** GET compartilhado por id; sessão monotônica + epoch/intent/RBAC validam no waiter. */
+  const hydratePedidoRow=async(row,{epochAtClick=null,sessionGenAtClick=null}={})=>{
+    if(!row?.id)return null;
+    if(!canViewLiveRef.current)return null;
+    const requestId=row.id;
+    let flight=hydrateInflightRef.current.get(requestId);
+    if(!flight){
+      const session=activeScope();
+      if(!session?.token||!renderedScope.current?.groupId||!renderedScope.current?.empresaId||!renderedScope.current?.actorId){
+        toast.error('Sessão/contexto insuficiente para hidratar o pedido — grades podem ficar sem itens.');
+        return null;
+      }
+      const opened={...renderedScope.current,token:session.token};
+      // Geração no início do flight — A→B→A não reusa resultado (≠ só token igual).
+      const openedGen=hydrateEpoch.current;
+      flight=(async()=>{
+        try{
+          const detail=await api.get(requestId);
+          if(hydrateEpoch.current!==openedGen)return null;
+          if(!canViewLiveRef.current)return null;
+          const live=activeScope();
+          if(!live?.token||live.token!==opened.token)return null;
+          if(opened.groupId!==renderedScope.current.groupId||opened.empresaId!==renderedScope.current.empresaId||opened.actorId!==renderedScope.current.actorId)return null;
+          return detail;
+        }catch(error){
+          // Mesmo guard do sucesso: sessão monotônica + intenção vigente (Casa P2).
+          if(hydrateEpoch.current!==openedGen)return null;
+          if(!canViewLiveRef.current)return null;
+          if(hydrateIntentIdRef.current===requestId)toast.error(message(error));
+          return null;
+        }finally{
+          hydrateInflightRef.current.delete(requestId);
+        }
+      })();
+      hydrateInflightRef.current.set(requestId,flight);
+    }
+    const detail=await flight;
+    if(!detail)return null;
+    // Waiter: situação, pedido, sessão monotônica, RBAC — sem nullar o flight compartilhado.
+    if(epochAtClick!=null&&epochAtClick!==selectionEpochLiveRef.current)return null;
+    if(sessionGenAtClick!=null&&sessionGenAtClick!==hydrateEpoch.current)return null;
+    if(hydrateIntentIdRef.current!==requestId)return null;
+    if(!canViewLiveRef.current)return null;
+    return detail;
+  };
+  const selectCentralRow=async(row)=>{
+    if(!row?.id||!canViewLiveRef.current)return;
+    // Lista pode trazer itens stub sem total/parcelas — sempre GET canônico na Central.
+    const epochAtClick=selectionEpochLiveRef.current;
+    const sessionGenAtClick=hydrateEpoch.current;
+    hydrateIntentIdRef.current=row.id;
+    setSelected(row);
+    notifyCentralSelect(row,epochAtClick);
+    const detail=await hydratePedidoRow(row,{epochAtClick,sessionGenAtClick});
+    if(!detail)return;
+    if(epochAtClick!==selectionEpochLiveRef.current)return;
+    if(sessionGenAtClick!==hydrateEpoch.current)return;
+    if(hydrateIntentIdRef.current!==row.id)return;
+    if(!canViewLiveRef.current)return;
+    setSelected(detail);
+    notifyCentralSelect(detail,epochAtClick);
+  };
+  const openEditHydrated=async(row)=>{
+    if(!canViewLiveRef.current||!canEdit(row)||!row?.id)return;
+    // Edição sempre após GET: evita form incompleto quando a lista já trouxe itens parciais.
+    // Duplo clique compartilha o mesmo GET da seleção — não abortar grades/pagamento-resumo.
+    const epochAtClick=selectionEpochLiveRef.current;
+    const sessionGenAtClick=hydrateEpoch.current;
+    hydrateIntentIdRef.current=row.id;
+    setSelected(row);
+    notifyCentralSelect(row,epochAtClick);
+    const detail=await hydratePedidoRow(row,{epochAtClick,sessionGenAtClick});
+    if(!detail)return;
+    if(epochAtClick!==selectionEpochLiveRef.current)return;
+    if(sessionGenAtClick!==hydrateEpoch.current)return;
+    if(hydrateIntentIdRef.current!==row.id)return;
+    if(!canViewLiveRef.current)return;
+    setSelected(detail);
+    notifyCentralSelect(detail,epochAtClick);
+    openEdit(detail);
+  };
 
   if(!canView)return <div className="w-full h-full flex items-center justify-center p-6"><Alert className="max-w-lg"><AlertCircle className="h-4 w-4"/><AlertDescription>Acesso negado aos Pedidos.</AlertDescription></Alert></div>;
   const rows=list.data?.data||[];const meta=list.data?.meta||{total:0};let totals={subtotal:'0',desconto:'0',total:'0'};try{totals=calculatePedidoTotals(form.itens);}catch{totals={subtotal:'0',desconto:'0',total:'0'};}
@@ -291,9 +429,72 @@ export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actor
       </Alert>
     )}
     <form className="grid grid-cols-1 md:grid-cols-6 gap-2 mb-3" onSubmit={e=>{e.preventDefault();setPage(1);setApplied(filters);}}><div className="md:col-span-2"><Input aria-label="Pesquisar pedido" maxLength={80} placeholder="Número do pedido" value={filters.search} onChange={e=>setFilters({...filters,search:e.target.value})}/></div><Select value={filters.status} onValueChange={v=>setFilters({...filters,status:v})}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent><SelectItem value="TODOS">Todos os status</SelectItem>{Object.entries(PEDIDO_STATUS_LABELS).map(([value,label])=><SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent></Select><Select value={filters.tipoOperacao} onValueChange={v=>setFilters({...filters,tipoOperacao:v})}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent><SelectItem value="TODOS">Entrega e retirada</SelectItem><SelectItem value="ENTREGA">Entrega</SelectItem><SelectItem value="RETIRADA">Retirada</SelectItem></SelectContent></Select><Select value={filters.clienteEmpresaId} onValueChange={v=>setFilters({...filters,clienteEmpresaId:v})}><SelectTrigger><SelectValue placeholder="Clientes"/></SelectTrigger><SelectContent><SelectItem value="TODOS">Todos os clientes</SelectItem>{masters.clientesEmpresa.map(x=><SelectItem key={x.id} value={x.id}>{clientLabel(x.id)}</SelectItem>)}</SelectContent></Select><div className="flex gap-2"><Button type="submit" variant="outline" className="flex-1"><Search className="w-4 h-4 mr-2"/>Filtrar</Button><Button type="button" size="icon" variant="ghost" title="Limpar filtros" onClick={()=>{const clean={search:'',status:'TODOS',clienteEmpresaId:'TODOS',tipoOperacao:'TODOS'};setFilters(clean);setApplied(clean);setPage(1);}}><RefreshCw className="w-4 h-4"/></Button></div></form>
-    {list.isLoading?<div className="flex-1 flex items-center justify-center">Carregando pedidos...</div>:list.isError?<div className="flex-1 flex flex-col items-center justify-center gap-3"><p>{message(list.error)}</p><Button variant="outline" onClick={()=>list.refetch()}>Tentar novamente</Button></div>:rows.length===0?<div className="flex-1 flex flex-col items-center justify-center text-slate-500"><ShoppingCart className="w-10 h-10 mb-2"/><p>Nenhum pedido encontrado nesta empresa.</p></div>:<div className="flex-1 min-h-0 overflow-auto border bg-white rounded-md" data-block={centralLayout?'central360-pedidos-tabela':undefined}><Table><TableHeader><TableRow><TableHead>Número</TableHead><TableHead>Cliente</TableHead><TableHead>Operação</TableHead><TableHead>Entrega solicitada</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Total</TableHead><TableHead className="text-right">Ações</TableHead></TableRow></TableHeader><TableBody>{rows.map(row=><TableRow key={row.id} data-selected={selectedCentralId===row.id?'true':undefined} className={selectedCentralId===row.id?'bg-sky-50':(centralLayout?'cursor-pointer':undefined)} onClick={centralLayout?()=>{setSelected(row);notifyCentralSelect(row);}:undefined} onDoubleClick={centralLayout?()=>{if(canEdit(row))openEdit(row);}:undefined}><TableCell className="font-mono">{row.numero}</TableCell><TableCell>{clientLabel(row.cliente_empresa_id)}</TableCell><TableCell>{row.tipo_operacao==='ENTREGA'?'Entrega':'Retirada'}</TableCell><TableCell>{date(row.data_entrega_solicitada)}</TableCell><TableCell><Badge variant={row.status==='CANCELADO'?'secondary':'default'}>{PEDIDO_STATUS_LABELS[row.status]||row.status}</Badge></TableCell><TableCell className="text-right font-semibold">{money(row.total)}</TableCell><TableCell><div className="flex justify-end gap-1"><Button size="icon" variant="ghost" title="Visualizar" onClick={(e)=>{e.stopPropagation();show(row);}}><Eye className="w-4 h-4"/></Button>{canEdit(row)&&<Button size="icon" variant="ghost" title="Editar" onClick={(e)=>{e.stopPropagation();openEdit(row);}}><Pencil className="w-4 h-4"/></Button>}{canCancel(row)&&<Button size="icon" variant="ghost" title="Cancelar" onClick={(e)=>{e.stopPropagation();requestCancel(row);}}><XCircle className="w-4 h-4"/></Button>}</div></TableCell></TableRow>)}</TableBody></Table></div>}
+    {list.isLoading?<div className="flex-1 flex items-center justify-center">Carregando pedidos...</div>:list.isError?<div className="flex-1 flex flex-col items-center justify-center gap-3"><p>{message(list.error)}</p><Button variant="outline" onClick={()=>list.refetch()}>Tentar novamente</Button></div>:rows.length===0?<div className="flex-1 flex flex-col items-center justify-center text-slate-500"><ShoppingCart className="w-10 h-10 mb-2"/><p>Nenhum pedido encontrado nesta empresa.</p></div>:<div className="flex-1 min-h-0 overflow-auto border bg-white rounded-md" data-block={centralLayout?'central360-pedidos-tabela-12':'central360-pedidos-tabela'}>
+      {centralLayout ? (
+        <div className="w-full overflow-x-auto" data-block="central360-scroll-h-pedidos">
+          <Table data-testid="central360-pedidos-12col">
+            <TableHeader className="sticky top-0 bg-white z-10">
+              <TableRow>
+                {centralVisibleColumns.map((col) => (
+                  <TableHead key={col.key} className={`text-xs whitespace-nowrap ${col.sticky ? 'sticky left-0 bg-white z-[11]' : ''}`}>
+                    {CENTRAL_PEDIDO_COLUMN_LABELS[col.key] || col.label}
+                  </TableHead>
+                ))}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {rows.map((row) => {
+                const link = masters.clientesEmpresa.find((x) => x.id === row.cliente_empresa_id);
+                const cliente = clients.get(link?.cliente_id);
+                const peso = sumCentralPesoKg(row.itens);
+                const prazoRaw = resolveCentralPrazoLabel(row, 'pedido');
+                const selectedRow = selectedCentralId === row.id;
+                const cells = {
+                  numero: <TableCell key="numero" className="font-mono text-xs sticky left-0 bg-inherit">{row.numero || '—'}</TableCell>,
+                  data: <TableCell key="data" className="text-xs whitespace-nowrap">{date(row.created_at || row.data)}</TableCell>,
+                  cod_cliente: <TableCell key="cod_cliente" className="font-mono text-xs">{cliente?.codigo || link?.codigo_cliente || '—'}</TableCell>,
+                  nome_cliente: <TableCell key="nome_cliente" className="text-xs sticky left-0 bg-inherit">{clientLabel(row.cliente_empresa_id)}</TableCell>,
+                  origem: <TableCell key="origem" className="text-xs">{row.origem || row.canal || '—'}</TableCell>,
+                  vendedor: <TableCell key="vendedor" className="text-xs">{row.vendedor_nome || row.nome_vendedor || '—'}</TableCell>,
+                  peso: <TableCell key="peso" className="text-xs">{peso == null ? '—' : `${peso}`}</TableCell>,
+                  valor: <TableCell key="valor" className="text-xs text-right font-semibold whitespace-nowrap">{money(row.total)}</TableCell>,
+                  cidade: <TableCell key="cidade" className="text-xs">{row.cidade || cliente?.cidade || '—'}</TableCell>,
+                  condicao: <TableCell key="condicao" className="text-xs">{condicaoLabel(row.condicao_pagamento_id)}</TableCell>,
+                  situacao: (
+                    <TableCell key="situacao" className="text-xs">
+                      <Badge variant={row.status === 'CANCELADO' ? 'secondary' : 'default'}>
+                        {PEDIDO_STATUS_LABELS[row.status] || row.status}
+                      </Badge>
+                    </TableCell>
+                  ),
+                  prazo: (
+                    <TableCell key="prazo" className="text-xs whitespace-nowrap" title="Prazo de entrega do pedido (≠ validade de orçamento)">
+                      {prazoRaw ? date(prazoRaw) : '—'}
+                    </TableCell>
+                  ),
+                };
+                return (
+                  <TableRow
+                    key={row.id}
+                    data-selected={selectedRow ? 'true' : undefined}
+                    className={selectedRow ? 'bg-sky-50' : 'cursor-pointer'}
+                    onClick={() => { void selectCentralRow(row); }}
+                    onDoubleClick={() => { void openEditHydrated(row); }}
+                    data-action="central360-selecionar-pedido"
+                  >
+                    {centralVisibleColumns.map((col) => cells[col.key])}
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
+      ) : (
+        <Table><TableHeader><TableRow><TableHead>Número</TableHead><TableHead>Cliente</TableHead><TableHead>Operação</TableHead><TableHead>Entrega solicitada</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Total</TableHead><TableHead className="text-right">Ações</TableHead></TableRow></TableHeader><TableBody>{rows.map(row=><TableRow key={row.id}><TableCell className="font-mono">{row.numero}</TableCell><TableCell>{clientLabel(row.cliente_empresa_id)}</TableCell><TableCell>{row.tipo_operacao==='ENTREGA'?'Entrega':'Retirada'}</TableCell><TableCell>{date(row.data_entrega_solicitada)}</TableCell><TableCell><Badge variant={row.status==='CANCELADO'?'secondary':'default'}>{PEDIDO_STATUS_LABELS[row.status]||row.status}</Badge></TableCell><TableCell className="text-right font-semibold">{money(row.total)}</TableCell><TableCell><div className="flex justify-end gap-1"><Button size="icon" variant="ghost" title="Visualizar" onClick={()=>show(row)}><Eye className="w-4 h-4"/></Button>{canEdit(row)&&<Button size="icon" variant="ghost" title="Editar" onClick={()=>openEdit(row)}><Pencil className="w-4 h-4"/></Button>}{canCancel(row)&&<Button size="icon" variant="ghost" title="Cancelar" onClick={()=>requestCancel(row)}><XCircle className="w-4 h-4"/></Button>}</div></TableCell></TableRow>)}</TableBody></Table>
+      )}
+    </div>}
     <PaginationControls currentPage={page} totalItems={meta.total||0} itemsPerPage={pageSize} onPageChange={setPage} onItemsPerPageChange={setPageSize} isLoading={list.isFetching}/>
-    <Dialog open={formOpen} onOpenChange={open=>{if(!open)close();}}><DialogContent style={windowMode ? { zIndex:1000000000 } : undefined} overlayStyle={windowMode ? { zIndex:999999999 } : undefined} className="w-[96vw] max-w-6xl max-h-[92vh] overflow-auto"><DialogHeader><DialogTitle>{editing?`Editar pedido ${editing.numero}`:'Novo pedido'}</DialogTitle><DialogDescription>Valores e referências serão validados novamente pelo servidor. Busque cliente/produto por código.</DialogDescription></DialogHeader><div className="grid grid-cols-1 md:grid-cols-4 gap-3"><div className="md:col-span-2 space-y-2"><Label htmlFor="ped-cliente-busca">Buscar cliente (código ou nome)</Label><Input id="ped-cliente-busca" value={clienteQuery} maxLength={80} placeholder="Digite código ou razão social" onChange={e=>setClienteQuery(e.target.value)} data-action="pedido-busca-cliente"/><Label>Cliente</Label><Select value={form.cliente_empresa_id} onValueChange={v=>change('cliente_empresa_id',v)}><SelectTrigger><SelectValue placeholder="Selecione"/></SelectTrigger><SelectContent>{clienteOptions.map(x=><SelectItem key={x.id} value={x.id}>{clientLabel(x.id)}</SelectItem>)}</SelectContent></Select></div><div><Label>Condição</Label><Select value={form.condicao_pagamento_id} onValueChange={v=>change('condicao_pagamento_id',v)}><SelectTrigger><SelectValue placeholder="Selecione"/></SelectTrigger><SelectContent>{masters.condicoes.map(x=><SelectItem key={x.id} value={x.id}>{x.codigo?`${x.codigo} — `:''}{x.nome||x.codigo}</SelectItem>)}</SelectContent></Select></div><div><Label>Operação</Label><Select value={form.tipo_operacao} onValueChange={v=>change('tipo_operacao',v)}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent><SelectItem value="ENTREGA">Entrega</SelectItem><SelectItem value="RETIRADA">Retirada</SelectItem></SelectContent></Select></div><div><Label>Data solicitada</Label><Input type="date" value={form.data_entrega_solicitada} onChange={e=>change('data_entrega_solicitada',e.target.value)}/></div><div><Label>Local{form.tipo_operacao==='ENTREGA'?' *':''}</Label><Select value={form.cliente_local_id||(form.tipo_operacao==='ENTREGA'?'':'NENHUM')} onValueChange={v=>change('cliente_local_id',v==='NENHUM'?'':v)}><SelectTrigger data-action="pedido-selecionar-cliente-local"><SelectValue placeholder={form.tipo_operacao==='ENTREGA'?'Selecione local operacional…':'Opcional'}/></SelectTrigger><SelectContent>{form.tipo_operacao!=='ENTREGA'&&<SelectItem value="NENHUM">Não informado</SelectItem>}{(masters.locais||[]).filter(x=>x&&x.endereco_incompleto===false).map(x=><SelectItem key={x.id} value={x.id}>{x.nome||x.apelido||x.id}</SelectItem>)}</SelectContent></Select>{form.tipo_operacao==='ENTREGA'&&!(masters.locais||[]).some(x=>x&&x.endereco_incompleto===false)&&<p className="text-xs text-amber-800 mt-1" role="status">Nenhum local operacional ativo disponível — conclua a revisão de entregas no cadastro antes de gravar.</p>}</div><div><Label>Obra</Label><Select value={form.obra_id||'NENHUMA'} onValueChange={v=>change('obra_id',v==='NENHUMA'?'':v)}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent><SelectItem value="NENHUMA">Sem obra</SelectItem>{masters.obras.map(x=><SelectItem key={x.id} value={x.id}>{x.nome||x.codigo}</SelectItem>)}</SelectContent></Select></div><div><Label>Tabela de preço</Label><Select value={form.tabela_preco_id||'NENHUMA'} onValueChange={v=>change('tabela_preco_id',v==='NENHUMA'?'':v)}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent><SelectItem value="NENHUMA">Não informada</SelectItem>{masters.tabelas.map(x=><SelectItem key={x.id} value={x.id}>{x.codigo?`${x.codigo} — `:''}{x.nome||x.codigo}</SelectItem>)}</SelectContent></Select></div><div className="md:col-span-4"><Label>Observações</Label><Textarea value={form.observacoes} onChange={e=>change('observacoes',e.target.value)}/></div></div>
+    <Dialog open={formOpen} onOpenChange={open=>{if(!open)close();}}><DialogContent style={windowMode ? { zIndex:1000000000 } : undefined} overlayStyle={windowMode ? { zIndex:999999999 } : undefined} className="w-[96vw] max-w-6xl max-h-[92vh] overflow-auto"><DialogHeader><DialogTitle>{editing?`Editar pedido ${editing.numero}`:'Novo pedido'}</DialogTitle><DialogDescription>Valores e referências serão validados novamente pelo servidor. Busque cliente/produto por código.</DialogDescription></DialogHeader><div className="grid grid-cols-1 md:grid-cols-4 gap-3"><div className="md:col-span-2 space-y-2"><Label htmlFor="ped-cliente-busca">Buscar cliente (código ou nome)</Label><Input id="ped-cliente-busca" value={clienteQuery} maxLength={80} placeholder="Digite código ou razão social" onChange={e=>setClienteQuery(e.target.value)} data-action="pedido-busca-cliente"/><Label>Cliente</Label><Select value={form.cliente_empresa_id} onValueChange={v=>change('cliente_empresa_id',v)}><SelectTrigger><SelectValue placeholder="Selecione"/></SelectTrigger><SelectContent>{clienteOptions.map(x=><SelectItem key={x.id} value={x.id}>{clientLabel(x.id)}</SelectItem>)}</SelectContent></Select></div><div><Label>Condição</Label><Select value={form.condicao_pagamento_id} onValueChange={v=>change('condicao_pagamento_id',v)}><SelectTrigger><SelectValue placeholder="Selecione"/></SelectTrigger><SelectContent>{masters.condicoes.map(x=><SelectItem key={x.id} value={x.id}>{x.codigo?`${x.codigo} — `:''}{x.nome||x.codigo}</SelectItem>)}</SelectContent></Select></div><div><Label>Operação</Label><Select value={form.tipo_operacao} onValueChange={v=>change('tipo_operacao',v)}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent><SelectItem value="ENTREGA">Entrega</SelectItem><SelectItem value="RETIRADA">Retirada</SelectItem></SelectContent></Select></div><div><Label>Data solicitada</Label><Input type="date" value={form.data_entrega_solicitada} onChange={e=>change('data_entrega_solicitada',e.target.value)}/></div><div><Label>Local{form.tipo_operacao==='ENTREGA'?' *':''}</Label><Select value={form.cliente_local_id||(form.tipo_operacao==='ENTREGA'?undefined:'NENHUM')} onValueChange={v=>change('cliente_local_id',!v||v==='NENHUM'?'':v)}><SelectTrigger data-action="pedido-selecionar-cliente-local"><SelectValue placeholder={form.tipo_operacao==='ENTREGA'?'Selecione local ENTREGA operacional…':'Opcional'}/></SelectTrigger><SelectContent>{form.tipo_operacao!=='ENTREGA'&&<SelectItem value="NENHUM">Não informado</SelectItem>}{(masters.locais||[]).filter(isLocalEntregaOperacional).map(x=><SelectItem key={x.id} value={x.id}>{[x.codigo,x.nome||x.apelido].filter(Boolean).join(' — ')||x.id}</SelectItem>)}</SelectContent></Select>{form.tipo_operacao==='ENTREGA'&&!(masters.locais||[]).some(isLocalEntregaOperacional)&&<p className="text-xs text-amber-800 mt-1" role="status">Nenhum local ENTREGA operacional ativo disponível — conclua a revisão de entregas no cadastro antes de gravar.</p>}</div><div><Label>Obra</Label><Select value={form.obra_id||'NENHUMA'} onValueChange={v=>change('obra_id',v==='NENHUMA'?'':v)}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent><SelectItem value="NENHUMA">Sem obra</SelectItem>{masters.obras.map(x=><SelectItem key={x.id} value={x.id}>{x.nome||x.codigo}</SelectItem>)}</SelectContent></Select></div><div><Label>Tabela de preço</Label><Select value={form.tabela_preco_id||'NENHUMA'} onValueChange={v=>change('tabela_preco_id',v==='NENHUMA'?'':v)}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent><SelectItem value="NENHUMA">Não informada</SelectItem>{masters.tabelas.map(x=><SelectItem key={x.id} value={x.id}>{x.codigo?`${x.codigo} — `:''}{x.nome||x.codigo}</SelectItem>)}</SelectContent></Select></div><div className="md:col-span-4"><Label>Observações</Label><Textarea value={form.observacoes} onChange={e=>change('observacoes',e.target.value)}/></div></div>
     <div className="space-y-2"><div className="flex flex-wrap items-end justify-between gap-2"><h3 className="font-semibold">Itens</h3><div className="flex flex-wrap gap-2 items-end"><Input value={produtoQuery} maxLength={80} placeholder="Filtrar produto por código" onChange={e=>setProdutoQuery(e.target.value)} data-action="pedido-busca-produto" className="w-56" aria-label="Buscar produto"/><Button type="button" variant="outline" size="sm" onClick={()=>change('itens',[...form.itens,emptyItem()])}><Plus className="w-4 h-4 mr-1"/>Item</Button></div></div>{form.itens.map((item,index)=><div key={index} className="grid grid-cols-1 md:grid-cols-12 gap-2 border rounded-md p-2"><div className="md:col-span-3"><Label>Produto</Label><Select value={item.produto_id} onValueChange={v=>selectProduct(index,v)}><SelectTrigger><SelectValue placeholder="Selecione"/></SelectTrigger><SelectContent>{produtoOptions.map(p=><SelectItem key={p.id} value={p.id}>{produtoPickerLabel(p)}</SelectItem>)}</SelectContent></Select></div><div className="md:col-span-3"><Label>Descrição</Label><Input value={item.descricao} onChange={e=>changeItem(index,'descricao',e.target.value)}/></div><div><Label>Un.</Label><Input value={item.unidade_sigla} readOnly/></div><div><Label>Qtd.</Label><Input value={item.quantidade} onChange={e=>changeItem(index,'quantidade',e.target.value)}/></div><div><Label>Preço</Label><Input value={item.preco_unitario} onChange={e=>changeItem(index,'preco_unitario',e.target.value)}/></div><div><Label>Desconto</Label><Input value={item.desconto} onChange={e=>changeItem(index,'desconto',e.target.value)}/></div><div className="flex items-end gap-2"><Checkbox checked={item.requer_producao} onCheckedChange={v=>changeItem(index,'requer_producao',Boolean(v))}/><span className="text-xs">Produção</span></div><div className="flex items-end"><Button type="button" size="icon" variant="ghost" disabled={form.itens.length===1} onClick={()=>change('itens',form.itens.filter((_,i)=>i!==index))}><Trash2 className="w-4 h-4"/></Button></div></div>)}</div><div className="flex justify-end gap-5 text-sm"><span>Subtotal: <strong>{money(totals.subtotal)}</strong></span><span>Desconto: <strong>{money(totals.desconto)}</strong></span><span>Total: <strong>{money(totals.total)}</strong></span></div><DialogFooter><Button variant="outline" onClick={close}>Fechar</Button><Button onClick={save} disabled={busy||master.isLoading}>{busy?'Salvando...':'Salvar pedido'}</Button></DialogFooter></DialogContent></Dialog>
     <Dialog open={detailOpen} onOpenChange={setDetailOpen}><DialogContent style={windowMode ? { zIndex:1000000000 } : undefined} overlayStyle={windowMode ? { zIndex:999999999 } : undefined} className="max-w-5xl max-h-[92vh] overflow-auto"><DialogHeader><DialogTitle>Pedido {selected?.numero}</DialogTitle><DialogDescription>{PEDIDO_STATUS_LABELS[selected?.status]||selected?.status} · {selected?.tipo_operacao==='ENTREGA'?'Entrega':'Retirada'} em {date(selected?.data_entrega_solicitada)}</DialogDescription></DialogHeader>{selected&&<div className="space-y-4"><div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm"><div><span className="text-slate-500">Cliente</span><p>{clientLabel(selected.cliente_empresa_id)}</p></div><div><span className="text-slate-500">Condição</span><p>{condicaoLabel(selected.condicao_pagamento_id)}</p></div><div data-action="pedido-detalhe-tabela-preco"><span className="text-slate-500">Tabela de preço</span><p>{tabelaLabel(selected.tabela_preco_id)}</p></div><div><span className="text-slate-500">Criado</span><p>{date(selected.created_at)}</p></div></div><Table><TableHeader><TableRow><TableHead>Item</TableHead><TableHead>Un.</TableHead><TableHead>Qtd.</TableHead><TableHead>Produção</TableHead><TableHead className="text-right">Total</TableHead></TableRow></TableHeader><TableBody>{(selected.itens||[]).map(item=><TableRow key={item.id}><TableCell>{item.descricao}</TableCell><TableCell>{item.unidade_sigla}</TableCell><TableCell>{item.quantidade}</TableCell><TableCell>{item.requer_producao?'Sim':'Não'}</TableCell><TableCell className="text-right">{money(item.total)}</TableCell></TableRow>)}</TableBody></Table><div className="flex justify-end gap-4"><strong>Total: {money(selected.total)}</strong></div><div data-testid="pedido-history" data-history-mode={pedidoHistoryUi.mode} data-action="Comercial.pedido.historico"><div className="flex flex-wrap items-center justify-between gap-2 mb-2"><h3 className="font-semibold">Histórico</h3>{pedidoHistoryUi.canRetry&&selected&&<Button type="button" size="sm" variant="outline" data-testid="pedido-history-retry" onClick={()=>void loadHistory(selected.id)}><RefreshCw className="w-4 h-4 mr-1"/>Tentar novamente</Button>}</div>{pedidoHistoryUi.mode==='loading'&&<p className="text-sm text-slate-500" data-testid="pedido-history-loading">{pedidoHistoryUi.hint}</p>}{pedidoHistoryUi.mode==='error'&&<Alert variant="destructive" data-testid="pedido-history-error" data-retryable="true"><AlertCircle className="h-4 w-4"/><AlertDescription>{pedidoHistoryUi.hint}</AlertDescription></Alert>}{pedidoHistoryUi.mode==='invalid'&&<Alert variant="destructive" data-testid="pedido-history-invalid"><AlertCircle className="h-4 w-4"/><AlertDescription>{pedidoHistoryUi.hint}</AlertDescription></Alert>}{pedidoHistoryUi.mode==='empty'&&<p className="text-sm text-slate-500" data-testid="pedido-history-empty">{pedidoHistoryUi.hint}</p>}{pedidoHistoryUi.mode==='ready'&&<div className="space-y-1" data-testid="pedido-history-ready">{pedidoHistoryUi.events.map(event=><div key={event.id} className="text-sm border-l-2 pl-3"><strong>{PEDIDO_STATUS_LABELS[event.status_novo]||event.status_novo}</strong> · {date(event.created_at)}{event.motivo?` · ${event.motivo}`:''}</div>)}</div>}</div></div>}<DialogFooter className="flex flex-wrap gap-2"><Button variant="outline" data-action="Comercial.pedido.imprimir-pdf" data-testid="pedido-print-pdf" data-permission="Comercial.pedido.imprimir" data-print-mode={printPdfGate.mode} title={printPdfGate.blockPrint?(printPdfGate.hint||'Impressão bloqueada'):'Imprimir/PDF'} disabled={!selected||printPdfGate.blockPrint} onClick={printPedidoPdf}><Printer className="w-4 h-4 mr-2"/>Imprimir/PDF</Button><Button variant="outline" data-action="Comercial.pedido.compartilhar-whatsapp" data-testid="pedido-share-whatsapp" data-share-mode={shareGate.mode} title={shareGate.blockShare?(shareGate.hint||'Compartilhamento bloqueado'):'Preparar texto para WhatsApp'} disabled={!selected||shareGate.blockShare} onClick={()=>{void preparePedidoShare('WhatsApp');}}><MessageCircle className="w-4 h-4 mr-2"/>WhatsApp</Button><Button variant="outline" data-action="Comercial.pedido.compartilhar-email" data-testid="pedido-share-email" data-share-mode={shareGate.mode} title={shareGate.blockShare?(shareGate.hint||'Compartilhamento bloqueado'):'Preparar texto para e-mail'} disabled={!selected||shareGate.blockShare} onClick={()=>{void preparePedidoShare('e-mail');}}><Mail className="w-4 h-4 mr-2"/>E-mail</Button>{canEdit(selected)&&<Button variant="outline" onClick={()=>openEdit(selected)}><Pencil className="w-4 h-4 mr-2"/>Editar</Button>}{canTransition&&nextPedidoStatus(selected)&&<Button data-testid="pedido-status-advance" data-action="Comercial.pedido.alterar-status" onClick={()=>requestTransition(selected)} disabled={busy||evaluatePedidoStatusTransitionUiGate({row:selected,groupId,empresaId,canTransition}).blockTransition} title={evaluatePedidoStatusTransitionUiGate({row:selected,groupId,empresaId,canTransition}).hint||undefined}>Avançar para {PEDIDO_STATUS_LABELS[nextPedidoStatus(selected)]}</Button>}{canCancel(selected)&&<Button variant="destructive" data-permission="Comercial.pedido.cancelar" onClick={()=>requestCancel(selected)} disabled={!selected||busy}>Cancelar pedido</Button>}</DialogFooter></DialogContent></Dialog>
     <Dialog open={Boolean(pendingCancel)} onOpenChange={(open)=>{if(!open&&!busy){setPendingCancel(null);setCancelMotivo('');}}}><DialogContent style={windowMode ? { zIndex:1000000000 } : undefined} overlayStyle={windowMode ? { zIndex:999999999 } : undefined} className="max-w-md" data-testid="pedido-cancel-dialog" data-action="Comercial.pedido.cancelar"><DialogHeader><DialogTitle>Cancelar pedido {pendingCancel?.numero}?</DialogTitle><DialogDescription>O pedido, itens e histórico serão preservados. Informe o motivo (obrigatório).</DialogDescription></DialogHeader><div className="space-y-2"><div className="flex items-center justify-between gap-2"><Label htmlFor="ped-cancel-motivo">Motivo</Label><span className="text-xs text-slate-500 tabular-nums" data-testid="pedido-cancel-motivo-counter" aria-live="polite">{cancelMotivoUi.counterLabel}</span></div><Textarea id="ped-cancel-motivo" data-testid="pedido-cancel-motivo" maxLength={PEDIDO_CANCEL_MOTIVO_MAX} value={cancelMotivo} onChange={(e)=>setCancelMotivo(clampPedidoCancelMotivo(e.target.value))} aria-invalid={cancelMotivoUi.blockConfirm?'true':undefined} rows={3}/>{cancelMotivoUi.blockConfirm&&cancelMotivo.trim()!==''&&<Alert variant="destructive" data-testid="pedido-cancel-motivo-gate"><AlertCircle className="h-4 w-4"/><AlertDescription>{cancelMotivoUi.hint}</AlertDescription></Alert>}</div><DialogFooter><Button variant="outline" onClick={()=>{setPendingCancel(null);setCancelMotivo('');}} disabled={busy}>Voltar</Button><Button variant="destructive" data-testid="pedido-cancel-confirm" disabled={busy||cancelMotivoUi.blockConfirm} title={cancelMotivoUi.blockConfirm?(cancelMotivoUi.hint||undefined):undefined} onClick={()=>{const row=pendingCancel;const motivo=cancelMotivoUi.motivo;setPendingCancel(null);setCancelMotivo('');void cancel(row,motivo);}}>{busy?'Cancelando...':'Cancelar pedido'}</Button></DialogFooter></DialogContent></Dialog>

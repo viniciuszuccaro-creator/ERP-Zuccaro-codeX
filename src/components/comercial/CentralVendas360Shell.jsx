@@ -61,10 +61,21 @@ const dateLabel = (value) => {
   }
 };
 
-function GradesSimultaneas({ itens }) {
-  const { corte, revenda } = useMemo(() => partitionCentralItens(itens), [itens]);
+function GradesSimultaneas({ itens, hasSelection = false }) {
+  const list = Array.isArray(itens) ? itens : [];
+  const { corte, revenda } = useMemo(() => partitionCentralItens(list), [list]);
+  const semItensCarregados = hasSelection && list.length === 0;
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 min-h-[160px]" data-block="central360-grades-simultaneas">
+      {semItensCarregados ? (
+        <div
+          className="lg:col-span-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900"
+          data-block="central360-grades-sem-itens"
+          role="status"
+        >
+          Itens ainda não disponíveis nesta seleção. Aguarde a consulta ou reabra o documento. Grades vazias não confirmam estoque zerado.
+        </div>
+      ) : null}
       <GradeItens
         title="Corte e Dobra / Montagem"
         rows={corte}
@@ -157,6 +168,9 @@ export default function CentralVendas360Shell({
   const [clientePanelOpen, setClientePanelOpen] = useState(true);
   const [selected, setSelected] = useState(null);
   const [selectedClienteId, setSelectedClienteId] = useState(null);
+  /** Epoch da seleção na Central: troca de situação invalida GET tardio do painel desmontado. */
+  const selectionEpochRef = useRef(0);
+  const [selectionEpoch, setSelectionEpoch] = useState(0);
 
   const situacao = situacaoById(proposalMode ? CENTRAL_VENDAS360_DEFAULT_SITUACAO : situacaoId);
   const canViewDocument = situacao.kind === 'orcamento'
@@ -173,6 +187,8 @@ export default function CentralVendas360Shell({
 
   const onSelectDocument = useCallback((row, meta = {}) => {
     if (!canViewDocumentRef.current) return;
+    // Epoch obrigatório: loadCentralDetail/Fechar sem epoch não pode preencher grades após troca de situação.
+    if (typeof meta.selectionEpoch !== 'number' || meta.selectionEpoch !== selectionEpochRef.current) return;
     setSelected(row || null);
     setSelectedClienteId(meta.clienteId || row?.cliente_id || null);
   }, []);
@@ -182,6 +198,17 @@ export default function CentralVendas360Shell({
     setSelected(null);
     setSelectedClienteId(null);
   }, [canViewDocument]);
+  // Token vivo: Comercial pode não passar sessionToken (Bugbot) — ler sessão canônica.
+  const sessionIdentity = rest.sessionToken || readErpHttpSession()?.token || null;
+
+  // Security: grupo/empresa/ator/sessão — limpar pagamento-resumo e Cliente360 (≠ só situação).
+  useEffect(() => {
+    const nextEpoch = selectionEpochRef.current + 1;
+    selectionEpochRef.current = nextEpoch;
+    setSelectionEpoch(nextEpoch);
+    setSelected(null);
+    setSelectedClienteId(null);
+  }, [groupId, empresaId, actorId, sessionIdentity]);
 
   const openHub = () => {
     void import('@/pages/HubAtendimento').then((mod) => {
@@ -233,7 +260,7 @@ export default function CentralVendas360Shell({
             empresaId={empresaId}
             actorId={actorId}
             actorEmail={actorEmail}
-            sessionToken={rest.sessionToken}
+            sessionToken={sessionIdentity}
             empresaAtual={empresaAtual}
             hasPermission={hasPermission}
             filterInContext={filterInContext}
@@ -242,6 +269,7 @@ export default function CentralVendas360Shell({
             centralLayout
             centralSituacao={situacao.id}
             centralSearch={universalSearch}
+            selectionEpoch={selectionEpoch}
             onCentralSelect={onSelectDocument}
             selectedCentralId={selectionForView?.id || null}
           />
@@ -251,7 +279,7 @@ export default function CentralVendas360Shell({
             empresaId={empresaId}
             actorId={actorId}
             actorEmail={actorEmail}
-            sessionToken={rest.sessionToken}
+            sessionToken={sessionIdentity}
             hasPermission={hasPermission}
             filterInContext={filterInContext}
             empresaAtual={empresaAtual}
@@ -259,17 +287,90 @@ export default function CentralVendas360Shell({
             centralLayout
             centralSituacao={situacao.id}
             centralSearch={universalSearch}
+            selectionEpoch={selectionEpoch}
             onCentralSelect={onSelectDocument}
             selectedCentralId={selectionForView?.id || null}
           />
         )}
       </Suspense>
-      <GradesSimultaneas itens={selectionForView?.itens} />
+      <GradesSimultaneas itens={selectionForView?.itens} hasSelection={Boolean(selectionForView?.id)} />
+      {selectionForView && (
+        <div
+          className="rounded-md border border-sky-100 bg-white px-3 py-2 text-xs text-slate-700 flex flex-wrap gap-x-4 gap-y-1"
+          data-block="central360-pagamento-resumo"
+          role="status"
+        >
+          <span>
+            Condição:{' '}
+            <strong className={selectionForView.condicao_pagamento_id ? 'text-sky-900' : 'text-amber-800'}>
+              {selectionForView.condicao_pagamento_id
+                ? (
+                  selectionForView.condicao_pagamento_codigo
+                  || selectionForView.condicao_pagamento_nome
+                  || selectionForView.condicao_pagamento_label
+                  || 'definida (id canônico)'
+                )
+                : 'pendente — bloqueia Fechar'}
+            </strong>
+          </span>
+          <span>
+            Tabela:{' '}
+            <strong className={selectionForView.tabela_preco_id ? 'text-sky-900' : 'text-slate-500'}>
+              {selectionForView.tabela_preco_id
+                ? (
+                  selectionForView.tabela_preco_codigo
+                  || selectionForView.tabela_preco_nome
+                  || selectionForView.tabela_preco_label
+                  || 'definida (id canônico)'
+                )
+                : 'não informada nesta seleção'}
+            </strong>
+          </span>
+          <span>
+            Operação:{' '}
+            <strong className="text-sky-900">
+              {selectionForView.tipo_operacao === 'ENTREGA'
+                ? 'Entrega'
+                : selectionForView.tipo_operacao === 'RETIRADA'
+                  ? 'Retirada'
+                  : (selectionForView.tipo_operacao || '—')}
+            </strong>
+          </span>
+          <span>
+            Total:{' '}
+            <strong className="font-mono text-sky-900">
+              {selectionForView.total == null && selectionForView.total !== 0 ? '—' : money(selectionForView.total)}
+            </strong>
+            {selectionForView.total == null && selectionForView.total !== 0 ? (
+              <span className="text-amber-800"> · total não hidratado (≠ zero)</span>
+            ) : null}
+          </span>
+          <span>
+            Parcelas:{' '}
+            {Array.isArray(selectionForView.parcelas)
+              ? `${selectionForView.parcelas.length} no documento`
+              : 'não carregadas nesta seleção'}
+          </span>
+          <span data-block="central360-pagamento-itens">
+            Itens:{' '}
+            {Array.isArray(selectionForView.itens)
+              ? (() => {
+                const { corte, revenda } = partitionCentralItens(selectionForView.itens);
+                return `${selectionForView.itens.length} hidratados (corte ${corte.length} · revenda ${revenda.length})`;
+              })()
+              : 'não hidratados nesta seleção'}
+          </span>
+          <span className="text-slate-400 w-full sm:w-auto">
+            Confirme a condição de pagamento e a tabela no documento antes do fechamento.
+            Fechar orçamento, cancelar e fechar a janela são ações diferentes.
+          </span>
+        </div>
+      )}
       {selectionForView && (
         <div className="text-[11px] text-slate-500 px-1 flex flex-wrap gap-3" data-block="central360-selecao-meta" role="status">
           <span>Selecionado: <strong className="font-mono text-sky-900">{selectionForView.numero || selectionForView.id}</strong></span>
           <span>Peso: {pesoSelecionado == null ? '—' : `${pesoSelecionado} kg`}</span>
-          <span className="text-slate-400">Clique simples seleciona · duplo clique edita em janela própria · seleção não grava</span>
+          <span className="text-slate-400">Clique simples seleciona e hidrata itens · duplo clique edita após GET · seleção não grava</span>
         </div>
       )}
     </div>
@@ -369,6 +470,9 @@ export default function CentralVendas360Shell({
               data-action={`central360-situacao-${s.id}`}
               onClick={() => {
                 if (blocked) return;
+                const nextEpoch = selectionEpochRef.current + 1;
+                selectionEpochRef.current = nextEpoch;
+                setSelectionEpoch(nextEpoch);
                 setSituacaoId(s.id);
                 setSelected(null);
                 setSelectedClienteId(null);

@@ -1,3 +1,15 @@
+## Central360: revisao real e port coeso na candidata Casa (15/11/2026)
+
+Retomada NATIVA13:07:31Z:26checks ReactREAL Orcamentos+Seletor e10cenarios
+compostos Shell+Pedido+Orcamentos PASS, fronteirasHTTP/Auth/query/UI/estoque
+sinteticas (naoAPI/PGreal). Resolveu5conflitos explicitamente e aplicouSO3arquivos
+na MESMAbranch/candidataCasa, preservando guardrevogacaof619 eDATAa28; API/server/
+policies/persistenciasemDelta. Cursor1a5 preservado; nenhumaoutracandidata.
+148focaisPASS/0skip,18goldensintactos,audit/lint/typecheck/build/diffcheckPASS.
+RevisaoindependenteglobalNAOobtida; CIporSHA/limites/recibo na594 eHANDOFF.
+Proximo: CIterminal->deltarevisado/novo pacoteAPI+webforaVPS->gatesHMLexistentes;
+nao reutilizararchive81comoestaFonte. HMLd054semalteracao,semSQL/carga/deploy.
+
 ## Central360: referencia privada analisada e fechamento coerente (15/11/2026)
 
 Guia inicial, dossie DOCX, texto, imagem e video fornecidos pelo proprietario

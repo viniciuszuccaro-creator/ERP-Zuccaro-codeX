@@ -70,6 +70,8 @@ test('Shell real oculta selecao carregada sem permissao da entidade ativa', asyn
     const module = { exports: {} };
     runInNewContext(built.outputFiles[0].text, { module, exports: module.exports, require, console,
       __centralFixture: { situacao, row: { id: 'PRIVATE-SELECTION', numero: 'PRIVATE-SELECTION',
+        condicao_pagamento_id: 'PRIVATE-CONDITION-ID', condicao_pagamento_nome: 'PRIVATE-CONDITION',
+        tabela_preco_id: 'PRIVATE-TABLE-ID', tabela_preco_nome: 'PRIVATE-TABLE',
         itens: [{ descricao: 'PRIVATE-ITEM', quantidade: 1, unidade_sigla: 'KG', total: 100 }] } },
     });
     const html = renderToStaticMarkup(React.createElement(module.exports.default, {
@@ -78,6 +80,8 @@ test('Shell real oculta selecao carregada sem permissao da entidade ativa', asyn
     }));
     assert.equal(html.includes('PRIVATE-ITEM'), visible, `${situacao}/${allowedSection}`);
     assert.equal(html.includes('PRIVATE-SELECTION'), visible, `${situacao}/${allowedSection}`);
+    assert.equal(html.includes('PRIVATE-CONDITION'), visible, `${situacao}/${allowedSection}/condition`);
+    assert.equal(html.includes('PRIVATE-TABLE'), visible, `${situacao}/${allowedSection}/table`);
   }
 });
 
@@ -202,7 +206,11 @@ test('Fechar Orçamento ≠ Cancelar: conversão backend, cancel separado', () =
   const fecharFn = src.match(/const fecharOrcamentoCentral = async \(\) => \{[\s\S]*?\n  \};/);
   assert.ok(fecharFn, 'fecharOrcamentoCentral deve existir');
   assert.doesNotMatch(fecharFn[0], /\bcancel\(row\)/);
-  assert.match(fecharFn[0], /setPendingConversion/);
+  assert.match(fecharFn[0], /openFecharConversao\(detail/);
+  const openFechar = src.match(/const openFecharConversao = \(detail, scope\) => \{[\s\S]*?\n  \};/);
+  assert.ok(openFechar, 'Central e detalhe reutilizam o mesmo fechamento validado');
+  assert.match(openFechar[0], /assertOrcamentoProntoParaFechar\(detail\)/);
+  assert.match(openFechar[0], /setPendingConversion\(detail\)/);
   assert.match(fecharFn[0], /canConvert/);
 });
 

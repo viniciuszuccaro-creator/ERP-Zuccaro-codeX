@@ -27,6 +27,9 @@ test('Fechar orçamento: data obrigatória controla botão sem iniciar conversã
   h.render(); h.render();
   await h.find(n => n.props['data-action'] === 'central360-fechar-orcamento').props.onClick();
   await flush(); h.render();
+  // Isola a data: entrega também exige local canônico (cobertura própria do seletor).
+  h.nodes().filter(n => n.type === 'Select' && n.props.value === 'ENTREGA').at(-1).props.onValueChange('RETIRADA');
+  h.render();
   const confirm = () => h.find(n => n.props['data-action'] === 'orcamento-converter-pedido');
   assert.equal(confirm().props.disabled, true);
   await confirm().props.onClick();
@@ -96,6 +99,7 @@ async function mount() {
     }) },
     './comercialProposalFixture':proposalFixture,'./OrcamentoProposalAside':{__esModule:true,default:'OrcamentoProposalAside'},
     './ValidadorEstoquePedido':{__esModule:true,default:'ValidadorEstoquePedido'},
+    './SeletorEnderecoEntregaPedido':{__esModule:true,default:'SeletorEnderecoEntregaPedido'},
     './centralVendas360Layout': await import('../src/components/comercial/centralVendas360Layout.js'),
     './orcamentoUiPolicy': policy, './pedidoUiPolicy': pedidoPolicy, './comercialMasterPicker': picker,
     './centralCliente360Navigation': navigation,
@@ -196,6 +200,7 @@ test('Orcamento real: cancelar/converter bloqueiam clique duplo e callback tardi
     const h = await mount(); h.pending[method] = deferred(); let click;
     if (method === 'cancel') { h.title('Cancelar').props.onClick(); h.render(); click = h.find((n) => typeof n.props.onConfirm === 'function').props.onConfirm; }
     else { await h.title('Visualizar').props.onClick(); h.render(); h.button('Fechar → pedido').props.onClick(); h.render();
+      h.nodes().filter(n => n.type === 'Select' && n.props.value === 'ENTREGA').at(-1).props.onValueChange('RETIRADA'); h.render();
       h.nodes().filter((n) => n.type === 'Input' && n.props.type === 'date').at(-1).props.onChange({ target: { value: '2027-02-01' } });
       h.render(); click = h.button('Confirmar fechamento').props.onClick; }
     const result = click(); click(); assert.equal(h.calls.filter((c) => c.method === method).length, 1);
@@ -271,6 +276,7 @@ for (const method of ['update', 'cancel', 'convert']) {
     if (method === 'cancel') { h.title('Cancelar').props.onClick(); h.render(); click = h.find(n => typeof n.props.onConfirm === 'function').props.onConfirm; }
     if (method === 'convert') {
       await h.title('Visualizar').props.onClick(); h.render(); h.button('Fechar → pedido').props.onClick(); h.render();
+      h.nodes().filter(n => n.type === 'Select' && n.props.value === 'ENTREGA').at(-1).props.onValueChange('RETIRADA'); h.render();
       h.nodes().filter(n => n.type === 'Input' && n.props.type === 'date').at(-1).props.onChange({ target: { value: '2027-02-01' } });
       h.render(); click = h.button('Confirmar fechamento').props.onClick;
     }

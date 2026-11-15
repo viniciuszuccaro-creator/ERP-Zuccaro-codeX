@@ -1,3 +1,50 @@
+## Retomada NATIVA: revisao Orcamentos e composicao coesa Central (2026-11-15)
+
+Heartbeat13:07:31Z retomou Casa76a62a4f/CI7174SUCCESS, local/remotoiguais/limpo,
+semwritercheckout/travaantesassumir. Reservas594/6894838618 e6894869334; trava
+CreateNew propria. Cursor1a5bc05e preservado, nenhumwholebranchcopy. AGENTSsemDelta.
+
+RevisaoEXECUTADA OrcamentosTab+SeletorEnderecoEntregaPedido REAIS montadosChrome,
+fonte1a5 (incluid43), policies/mapperreais:26checksPASS. GETunico select+edit,
+A/Bforaordem,grupo/empresa/ator,sessaoA-B-A,deny/erroantigo,localcanonicovinculado,
+inativo/incompleto/fiscal-onlynegados,permissaoanteslookup/revogacaolocal,retirada,
+confirmarduplo1mutacao e422preservaconversao. Auth/HTTP/query/permissoes/folhasUI/
+estoque sinteticos; NAO servidor/PGreal nemaceiteglobalindependente.
+
+Conflitos do mapaexistente resolvidos EXPLICITAMENTE: Shell conserva AMBOSguards
+permissaoVIVA+selectionEpoch, AMBOSefeitosdeny+sessao e usa selectionForView em
+TODOnovoresumo/grades/metadata. Pedido preservaCodigoCasa/mutation/idempotencia/
+history/RBAC/persistencia; conflito delta restringe finalidadeENTREGA no filtro
+oficial com UIcoerente, sem copiarbackend. Orcamentos preserva guardDATAa28,
+compartilhaGET/epoch/guardsFechar/seletorcanonico. NaoportarShellsozinho.
+
+ComposicaoREAL dosTREScomponentes proposta passou10cenarios incluindo callbacks
+dosDOISfilhos aceitosnopai,GETunico/A-B/situacao/contexto/sessao/deny eprivados
+ocultosaposrevogacao. Mesmasfronteirassinteticas, instrumentacaosomentedeobservacao.
+SOENTAO os3arquivosforamaplicados naMESMAcandidataCasa. Fontes originais epropostas
+preservadas foraGit; API/server/policies/storesemDelta. Semnovacandidata.
+Prova10cenarios repetida noWORKTREErealaplicado PASS (naosopropostaprivada).
+Mensagens novas aooperador usam linguagem comercial, sem GET/nomesdecomponentes
+ou chavesinternas nas explicacoes de itens/pagamento; semalterarregras.
+
+87focais(layout/orcamentos/estoque/publication)+61relacionados(Pedido/seletor/
+policies/sessao)=148PASS/0skip.18goldensintactos. Testesexistentes evoluidos:
+mockfolhaSeletornotestedeterminista (seletorREALcobertoemChrome); casosdatasesessao
+usamRETIRADAparaisolarguardsemfalsopositivoporlocalfaltante; delegacaoFechar
+verificaguardcompartilhado; finalidadeUI/savefiscal/incompleto negada; SSR5matrizes
+negaTAMBEMcondicao/tabelanonovoresumoprivado. Semnormalizador/baselinerelaxado.
+Audit/lint0erros(2avisospreexistentes)/typecheck/buildFINAL22.24s/diffcheckPASS.
+GlobalWindowsnaorepetidopelosimpedimentosPOSIX/getuid/hanginalterados; CILinux
+completadoSHApublicado e resultado terminal sao registrados na594.
+
+Plano81 privado atualizado preserva artefatoimutavel/canApplyfalse/gates. Fonte
+compostaNAOesta noarchive81 eNAOestaHMLd054. PROXIMO: aposCIterminal revisar delta
+final/novo pacoteAPI+webmesmoSHAforaVPS; prepararidentidade/config/schema/overlay
+restaurado/menorprivilegio/backupFRESCO+restoreisolado/ack/reversao/janela antes
+publicacaoHMLautorizada. Enquanto gateaguarda, retomar proximodeltaDashboard/
+Bloco2/Cadastros EXISTENTEforareserva secomprovadopendente. SemSQL/grants/carga/
+deploy/efeitosprovedores/dadosreais nesta retomada. IndependenteaprovacaoNAOobtida.
+
 ## Referencias privadas Central360 e disponibilidade do fechamento (2026-11-15)
 
 Casa leu primeiro o guia do pacote privado fornecido pelo proprietario, depois
