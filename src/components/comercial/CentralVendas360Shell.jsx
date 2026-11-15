@@ -1,4 +1,4 @@
-import React, { Suspense, useCallback, useMemo, useState } from 'react';
+import React, { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   AlertCircle,
   Bot,
@@ -28,6 +28,8 @@ import {
 import { useWindow } from '@/components/lib/useWindow';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import { readErpHttpSession } from '@/api/erpHttpSession';
+import { canUsePedidoAction } from './pedidoUiPolicy';
+import { canUseOrcamentoAction } from './orcamentoUiPolicy';
 import {
   CENTRAL_VENDAS360_COLUMNS,
   CENTRAL_VENDAS360_DEFAULT_SITUACAO,
@@ -157,15 +159,29 @@ export default function CentralVendas360Shell({
   const [selectedClienteId, setSelectedClienteId] = useState(null);
 
   const situacao = situacaoById(proposalMode ? CENTRAL_VENDAS360_DEFAULT_SITUACAO : situacaoId);
+  const canViewDocument = situacao.kind === 'orcamento'
+    ? canUseOrcamentoAction(hasPermission, 'visualizar')
+    : canUsePedidoAction(hasPermission, 'visualizar');
+  const canViewDocumentRef = useRef(canViewDocument);
+  canViewDocumentRef.current = canViewDocument;
+  const selectionForView = canViewDocument ? selected : null;
+  const clienteForView = canViewDocument ? selectedClienteId : null;
   const contextoLabel = empresaAtual?.nome_fantasia
     || empresaAtual?.razao_social
     || grupoAtual?.nome
     || (contexto === 'grupo' ? 'Grupo' : 'Empresa');
 
   const onSelectDocument = useCallback((row, meta = {}) => {
+    if (!canViewDocumentRef.current) return;
     setSelected(row || null);
     setSelectedClienteId(meta.clienteId || row?.cliente_id || null);
   }, []);
+
+  useEffect(() => {
+    if (canViewDocument) return;
+    setSelected(null);
+    setSelectedClienteId(null);
+  }, [canViewDocument]);
 
   const openHub = () => {
     void import('@/pages/HubAtendimento').then((mod) => {
@@ -207,7 +223,7 @@ export default function CentralVendas360Shell({
     });
   };
 
-  const pesoSelecionado = sumCentralPesoKg(selected?.itens);
+  const pesoSelecionado = sumCentralPesoKg(selectionForView?.itens);
   const mainPanel = (
     <div className="w-full h-full min-h-0 flex flex-col gap-2 overflow-hidden">
       <Suspense fallback={<div className="flex-1 flex items-center justify-center text-sm text-slate-500">Carregando superfície…</div>}>
@@ -227,7 +243,7 @@ export default function CentralVendas360Shell({
             centralSituacao={situacao.id}
             centralSearch={universalSearch}
             onCentralSelect={onSelectDocument}
-            selectedCentralId={selected?.id || null}
+            selectedCentralId={selectionForView?.id || null}
           />
         ) : (
           <PedidoCanonicoPanel
@@ -244,14 +260,14 @@ export default function CentralVendas360Shell({
             centralSituacao={situacao.id}
             centralSearch={universalSearch}
             onCentralSelect={onSelectDocument}
-            selectedCentralId={selected?.id || null}
+            selectedCentralId={selectionForView?.id || null}
           />
         )}
       </Suspense>
-      <GradesSimultaneas itens={selected?.itens} />
-      {selected && (
+      <GradesSimultaneas itens={selectionForView?.itens} />
+      {selectionForView && (
         <div className="text-[11px] text-slate-500 px-1 flex flex-wrap gap-3" data-block="central360-selecao-meta" role="status">
-          <span>Selecionado: <strong className="font-mono text-sky-900">{selected.numero || selected.id}</strong></span>
+          <span>Selecionado: <strong className="font-mono text-sky-900">{selectionForView.numero || selectionForView.id}</strong></span>
           <span>Peso: {pesoSelecionado == null ? '—' : `${pesoSelecionado} kg`}</span>
           <span className="text-slate-400">Clique simples seleciona · duplo clique edita em janela própria · seleção não grava</span>
         </div>
@@ -383,14 +399,14 @@ export default function CentralVendas360Shell({
                     <h3 className="text-sm font-semibold text-sky-950">Cliente 360°</h3>
                     <ChevronRight className="w-4 h-4 text-sky-600" aria-hidden />
                   </div>
-                  {!selectedClienteId ? (
+                  {!clienteForView ? (
                     <p className="text-xs text-slate-500 p-3">
                       Selecione um orçamento/pedido para carregar o Cliente360 contextual (RBAC do módulo dono).
                     </p>
                   ) : (
                     <Suspense fallback={<p className="p-3 text-xs text-slate-500">Carregando Cliente360…</p>}>
                       <CentralCliente360Panel
-                        clienteId={selectedClienteId}
+                        clienteId={clienteForView}
                         groupId={groupId}
                         empresaId={empresaId}
                         actorId={actorId}

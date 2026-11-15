@@ -1,3 +1,68 @@
+## Codex assume frentes Cursor e protege selecao da Central (2026-11-15)
+
+DiretrizEXPLICITAproprietario: Cursorsemcredito; Codexativo assumeUI/Cadastros/
+Dashboard/Base44/Central, alembackend/legado/banco/HML. NaoaguardarCursor.
+Casa/Empresa mesmaautonomia, umwriterporcheckout/import/deploy. CodigoCursor
+1a5bc05eaeee84c68aba3dd7ff6181a873f8cf4c PRESERVADO; d43ae30bOrcamentos identificado
+comodeltaposterior. Semforce/editarbranchCursor/wholebranchcopy. Semwriterlocal;
+WIPremotonãopublicado naoobservavel, preservado seminferirquefoipublicado.
+AutomacaoEXISTENTE ACTIVE15min conferida efilaatualizada; nenhumaoutracriada.
+ExecutaCasa/CPA mesmo checkoutcodex/casa-fechamento-hml-20261114, dependedePC/app/
+rede/ferramentas/creditos. Naochamar atualturnomanual de novaprovaheartbeat; retomadas
+nativas anteriorescomprovadas. PararempainelAutomations ERP—fila coordenada HML e dados.
+
+Base38767640/CI7171SUCCESS, reserva594/6894259316/travaCreateNewpropria. Tarefa1
+PROVA COMPOSTA Shell+Pedido REAIS montadosChromeisolado concluida nafonte1a5.
+Fronteirashttp/query/Auth/UI externas sinteticas; setters/refs/efeitos/handlers e
+policiesdoiscomponentes reais, onCentralSelect efetivo dopai (nãostub).7positivos
+preservados:1GETselect+edit eparentrecebedetail,foraordemA/B,situacaoepoch,Grupo,
+tokenA->renderB->renderA,revogacaoenquantopendente,erroantigo. Oitavocaso NOVO:
+aposdetailcarregado,revogacao mostraAcessonegado noPedido,masShellmantem itemprivado
+nasgrades. Nao reabriu3casosPedidojaencerrados. Reciboprivado review-composed-1a5-
+mounted-v2; naoAPI/PGreal/globalhomologacao.
+
+CORRECAOCASA noShellEXISTENTE, semtransportarbranchCursor: policiescanUsePedidoAction/
+canUseOrcamentoAction jaexistentes delimitam entidade ativa; callbackrevalidapermissao
+viarefviva; grades,resumo,selectedCentralId,Cliente360 epesoocultamsincronamente a
+selecao negada. Efeitolimpaestado para naoressuscitarquandoacessovolta. NenhumAPI,
+permissaonova/sessao/storeparalelo/persistencia/grant. Fluxoautorizadopreservado.
+TesteEXISTENTE central-vendas360-layout-v6-591 ampliadocomShellREALSSR/policiesreais,
+seeddeestadocarregado e5matrizes pedido/orcamento/negado/entidadeerrada:
+ANTESFALHOU true!=false(gradeprivadaexposta), DEPOIS47focaisPASS/0skipincl18goldens.
+ReactREALmontado6checks:autorizadovisivel,revogadosemdado,selecao/clientezerados,
+callbacktardionegadobloqueado,permissãorestauradanaressuscita,novaselecaofunciona.
+Recibo review-shell-revoke-own e WORKTREEShellbase387; naoalegarfixednoSHA4d.
+FolhasfilhossinteticasnessaprovaFIX,nãocomposicaofinalourcandidatecomAPI/PG.
+
+Audit/lint(0erros/2warningspreexistentes)/typecheck/build26.54s/diffcheckPASS.
+SuiteglobalWindows nao repetida porprerequisitos aindaNAOresolvidos:Python9009/
+process.getuidWindows/hangGitBash documentados nolote387, semskip/timeoutajuste.
+CILinuxcompletadoSHAfinal registradaGitHub; naodeclararverdeantesfim.
+Revisaode387eestafix somenteAUTORREVISAO+provas/CI disponiveis nesteexecutor;
+naoalegarrevisorindependente ou Cursoraprovou semparecer.
+
+MAPAPORT:4deps pedidoUiPolicy/comercialMasterPicker/centralVendasLayout/navigation
+SEMdelta entreCasa387 eCursor1a5. Shell113/7,Pedido209/8,Orcamentos208/25.
+Revisados:metadata/labels802,guardsPedido4d,Shellscope4d econtraprovascompostas1a5.
+DependenciaACOPLADA: ShellselectionEpochestrito requerAMBOSfilhosPedido/Orcamentos;
+portSOshellignorariaselecaoOrcamento eproibido. OrcamentosincluiseletorClienteLocal/
+conversionEndereco/guardsFechar e d43sessao; revisarjornadaantesport. Fora desteport:
+Bloco2/Dashboard/Base44/dados/migrations. ConflitoexplicitopreservarFIXCASArevogacao
+novanaconciliacao doShell (naosobrescrevercomblobalheio). Nenhumportexecutadoainda.
+PROXIMO ITEM EXECUTAVEL CodexCasa: provaOrcamentosd43/conversaoenderecosegura e
+mapadepatchcoeso3arquivos, revisarhunksposteriores/deps, incorporarSOrevisados na
+MESMAcandidataCasa eCIpropria. NaoesperarCursorcredito/repetirsessaoWinSCP.
+
+Transporte81d1e8494MB/verificacao/tamanhoSHAiguais CONCLUIDO, nao repetir; HMLREAL
+segue d054e2b3. FonteVPScentralizacao-legado-20261023presente/root0700,semreinventario.
+Plano81v10canApplyfalse/backup/overlay/schema12relacoes/propostasINCOMPLETASseguem
+gates; buildsforaVPS, semSQL/carga/grants/deploy/operacional. Aposcomposicao revisada:
+pacoteNOVO/manifesto/deps->schema+overlayrestaurado+privilégios->backupFRESCO/restore/
+ackexterno/reversao/janela/autorizacaoHML->provaAPI+web/GrupoCPA/persistencia e
+operacionalsaudavel. Soaposgateslotescampo/vinculos medidos/idempotentes/reconciliados,
+semreimportar100clientes/reativarensaios/inventarcampos/saldos; financeirohistorico
+naogeraobrigacoes. CodigosservidorsemMAX+1/renumerar. EfeitosexternosOFF/sandbox.
+
 ### Checks desta alteracao
 AuditEXIT0; lintEXIT0(0erros/2warningspreexistentes); typecheckEXIT0;
 buildEXIT0(1m23s,avisotamanhopreexistente); diffcheckPASS. Foco41PASS/0skip.

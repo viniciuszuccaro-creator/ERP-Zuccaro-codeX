@@ -5,6 +5,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import { createRequire } from 'node:module';
+import { runInNewContext } from 'node:vm';
+import { build } from 'esbuild';
+import React from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
 import {
   CENTRAL_VENDAS360_COLUMNS,
   CENTRAL_VENDAS360_DEFAULT_SITUACAO,
@@ -19,6 +24,62 @@ import {
 } from '../src/components/comercial/centralVendas360Layout.js';
 
 const read = (p) => fs.readFileSync(p, 'utf8').replace(/\r\n/g, '\n');
+
+test('Shell real oculta selecao carregada sem permissao da entidade ativa', async () => {
+  const require = createRequire(import.meta.url);
+  const source = read('src/components/comercial/CentralVendas360Shell.jsx');
+  const marker = 'const [selected, setSelected] = useState(null);';
+  assert.ok(source.includes(marker));
+  // Seed somente do estado previamente carregado; render e policies continuam reais.
+  const seeded = source.replace(marker, 'const [selected, setSelected] = useState(globalThis.__centralFixture.row);')
+    .replace('useState(CENTRAL_VENDAS360_DEFAULT_SITUACAO)', 'useState(globalThis.__centralFixture.situacao)');
+  const uiNames = [...new Set([...source.matchAll(/import\s*\{([^}]+)\}\s*from\s*'@\/components\/ui\/[^']+'/g)]
+    .flatMap((m) => m[1].split(',').map((s) => s.trim()).filter(Boolean)))];
+  const icons = [...source.matchAll(/import\s*\{([^}]+)\}\s*from\s*'lucide-react'/g)]
+    .flatMap((m) => m[1].split(',').map((s) => s.trim()).filter(Boolean));
+  const mocks = {
+    ui: `import React from 'react';const leaf=({children})=>React.createElement('div',null,children);${uiNames.map((n) => `export const ${n}=leaf;`).join('')}`,
+    icons: icons.map((n) => `export const ${n}=()=>null;`).join(''),
+    context: "export const useContextoVisual=()=>({grupoAtual:{id:'synthetic-group'},contexto:'empresa'});",
+    window: "export const useWindow=()=>({openWindow:()=>{throw Error('Unexpected external action')}});",
+    session: "export const readErpHttpSession=()=>({token:'synthetic-token'});",
+    leaf: 'export default()=>null;',
+  };
+  const built = await build({
+    stdin: { contents: seeded, loader: 'jsx', resolveDir: `${process.cwd()}/src/components/comercial` },
+    bundle: true, write: false, platform: 'node', format: 'cjs', logLevel: 'silent',
+    plugins: [{ name: 'real-shell-synthetic-leaves', setup(b) {
+      b.onResolve({ filter: /^react$/ }, () => ({ path: require.resolve('react'), external: true }));
+      b.onResolve({ filter: /^lucide-react$/ }, () => ({ path: 'icons', namespace: 'fixture' }));
+      b.onResolve({ filter: /^\.\/(OrcamentosTab|PedidoCanonicoPanel|CentralCliente360Panel|CentralAprovacoesManager|PedidosEntregaTab)$/ }, () => ({ path: 'leaf', namespace: 'fixture' }));
+      b.onResolve({ filter: /^@\// }, (a) => ({
+        path: a.path.includes('/ui/') ? 'ui' : a.path.includes('useContextoVisual') ? 'context'
+          : a.path.includes('useWindow') ? 'window' : a.path.includes('erpHttpSession') ? 'session' : 'leaf',
+        namespace: 'fixture',
+      }));
+      b.onLoad({ filter: /.*/, namespace: 'fixture' }, (a) => ({ contents: mocks[a.path], loader: 'jsx', resolveDir: process.cwd() }));
+    } }],
+  });
+  for (const [situacao, allowedSection, visible] of [
+    [CENTRAL_VENDAS360_DEFAULT_SITUACAO, null, false],
+    [CENTRAL_VENDAS360_DEFAULT_SITUACAO, 'orcamento', true],
+    [CENTRAL_VENDAS360_DEFAULT_SITUACAO, 'pedido', false],
+    ['PRODUCAO', 'pedido', true],
+    ['PRODUCAO', 'orcamento', false],
+  ]) {
+    const module = { exports: {} };
+    runInNewContext(built.outputFiles[0].text, { module, exports: module.exports, require, console,
+      __centralFixture: { situacao, row: { id: 'PRIVATE-SELECTION', numero: 'PRIVATE-SELECTION',
+        itens: [{ descricao: 'PRIVATE-ITEM', quantidade: 1, unidade_sigla: 'KG', total: 100 }] } },
+    });
+    const html = renderToStaticMarkup(React.createElement(module.exports.default, {
+      groupId: 'synthetic-group', empresaId: 'synthetic-company', actorId: 'synthetic-actor',
+      hasPermission: (_module, section, action) => section === allowedSection && action === 'visualizar',
+    }));
+    assert.equal(html.includes('PRIVATE-ITEM'), visible, `${situacao}/${allowedSection}`);
+    assert.equal(html.includes('PRIVATE-SELECTION'), visible, `${situacao}/${allowedSection}`);
+  }
+});
 
 test('contrato visual v6: 12 colunas na ordem aprovada', () => {
   assert.equal(CENTRAL_VENDAS360_COLUMNS.length, 12);
