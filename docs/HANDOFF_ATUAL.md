@@ -1,9 +1,16 @@
+## Cursor — PR596 coordenação Casa 15/11 (2026-11-15 America/Sao_Paulo)
+
+Casa: transporte 4MB WinSCP **CONCLUÍDO** (tam/SHA iguais; ≠ deploy).
+Casa revisão SÓ LEITURA Pedido @ `4d6b0478` (3 resíduos); Completo = **RESERVA CASA**.
+Cursor tip **`d43ae30b1`**: Pedido blob inalterado vs 4d6b; OrcamentosTab sessão monotônica.
+Sem Completo/merge/deploy/DDL. tip ≠ HML `d054e2b3`.
+
 ## Cursor — PR596 OrcamentosTab sessão monotônica (2026-11-15 America/Sao_Paulo)
 
 Executor: **Cursor**. PedidoCanonico residual Casa fechado no tip; OrcamentosTab
-paridade hydrateEpoch/canViewLive/inflight. Sem Completo/SFTP/deploy.
+paridade hydrateEpoch/canViewLive/inflight. Sem Completo/deploy.
 tip ≠ HML `d054e2b3`. Freeze `0ffff5100` / port `81d1e849`.
-Casa: Completo + pacote privado ~4MB + preflight 81.
+Casa: Completo ownership-in-load + preflight 81.
 
 ## Cursor — PR596 tip 5cf08bb77 CI SUCCESS (2026-11-14 America/Sao_Paulo)
 
