@@ -1,3 +1,63 @@
+### Checks desta alteracao
+AuditEXIT0; lintEXIT0(0erros/2warningspreexistentes); typecheckEXIT0;
+buildEXIT0(1m23s,avisotamanhopreexistente); diffcheckPASS. Foco41PASS/0skip.
+Suiteglobal Windows NAOverde:3testesPython falham9009 (aliasStoresemPython),
+review-workflow falha process.getuidinexistenteWindows; mesmosarquivosinalterados.
+Runparado nofilho vps-gate-precheck/go-nogo-def.sh semterminar; SOMENTEarvore
+15160/run-tests iniciadapornestatarefa foi encerradaaposconfirmarparentes/commands.
+Naoaumentadotimeout/nemexcluido/relaxadoteste. CI Linux doSHApublicado devevalidar
+fechamentocompleto; naodeclararsucessoantesresultadoterminal. Isto nao e defeito
+reproduzidodohunkUI, nemensaio/dado privado. Logsdiagnosticos privadosforaGit.
+## Retomada coordenada do proprietario e catalogo pendente (2026-11-15)
+
+Casa/CPA executando no mesmo checkout/branch codex/casa-fechamento-hml-20261114;
+base8b2ba0fd limpo/localremotoiguais/semwriter, reserva594/6893846579/travaCreateNew.
+59476dc3832/595b5862fc5 preservados; Cursor5964d6b0478d4a20e8e7cc09ee25321868741a1fe38.
+Diretriz15/11 incorporada: GitHub codigo/sanitizados; VPS fontecompartilhada privada
+legado/HML; HD originalbackup preservado. Casa/Empresa mesmaautonomia, umresponsavel
+porrecurso; Cursor demaisUI/Central/Dashboard, CadastroCompleto reservadoCasa.
+Continuar pacotes completos e itens independentes, nunca inferir gates operacionais.
+
+TRANSPORTE CONCLUIDO, nao repetir: pacote runtime81d1e849-native-transport.tar.gz
+4021749bytes enviado pela sessaoWinSCPautorizada, destinoexistenteprivadoHML,
+semoverwrite/permchange. SHA256origem/destinoiguais
+1fcdf8501502256d797190752ba23a570073fb2fcfb20be58b14d3e4d53af8d3.
+ReciboPRIVATE winscp-transfer-81d1e849-20261115.receipt.private.json foraGit.
+Arquivo novo0644defaultservidor sob ancestraisprivados preservados, nao0600alegado.
+Naoextraido/executado; semSQL/carga/grant/deploy. Pacote81imutavel/HMLd054intactos.
+
+Pedido4d6b0478: contraprovas3anteriores FECHADAS e positivos preservados em7cenarios
+ReactREALmontadoChrome/policiesreais, query/http/Auth/UI sinteticos: A->B->A nao
+aplicaGEToriginal; aposrevogacao semdetail/callbackfinal; erroantigosemtoast.
+Compartilha1GETselect+edit,foraordemA/B,situacaoepoch eGrupo mantidos. Parecer596/6893864929.
+SemAPI/PGreal/globalaceite, nemportdoCursorinteiro; reciboprivado review-pedido-4d-mounted.
+
+CompletoCASA: contraprova ANTES falhou loaded!=loading emtesteextraido do consumidor;
+Reactmontado confirmou rascunho nonempty+catalogo pendente exibia loaded, enquanto
+apply rejeitava/ownedfalse. CorrecaoMINIMA remove rascunho como comprovanteHTTP:
+view/baseline materializados determinamloaded; pendingmostraloading; failedpermanece;
+create[]confirmado/fluxolegado preservados. Rascunhousuario naoapagado; chegada
+catalogonaosobrescreve; clear-all explicitoaposcarga mantemownedtrue/[] original.
+41testesfocaisPASS/0skip,18goldens/fontesbrutas preservados comnormalizacaoEXATA
+hunkautorizado. Nenhumbackend/RBAC/persistencia/ativacao/schema alterado. Fechamento
+completoaudit/test/lint/typecheck/build e CI doSHAfinal registrados noGitHub.
+
+FilaFINITA: fecharCI/revisaoindependentehunkCompleto -> revisarShell/Bloco2 novos
+contratos de seguranca noCursor4d6b0478 -> portCONTROLADO dos hunksaceitos naMESMA
+candidataCasa (semcopiarbranchinteira) -> buildforaVPS/manifesto novo -> compativel
+schema/menorprivilegio eoverlayrestaurado -> backupfresco/restauracao/ack/reversao/
+janela -> publicacaoHML somenteescopoautorizado e aceite; operacao real separada.
+Plano81v9canApplyfalse NAOautoriza101clausulaspropostas/12relacoesfaltantes; nao
+aplicar34migrationsporjournalvazio. EnderecosClienteLocal fiscal/entregaseparados,
+classificacao/validacao/ativacaoautorizada/selecaoPedido, jamaispais/numero/finalidade
+inventados. Importacaoescalavel soaposfonte/escopo/gates/reconciliacaoconteudovinculos,
+semreimportar100originais/reativar1500ensaios/apagarhistoricos. Cadastros/Base44 nao
+provarecuperacaodados, sequenciasnoservidor semrenumerar. Semcustosnovos.
+Mesmaautomacao15min retomavelcomexecutor/trava/checkpoint/itensconcretos; dependede
+PC/app/rede/ferramentas/creditos. Parar/pausar aoesgotaritens oudecisaonecessaria,
+semPRpollingvazio/duplicacao/workerpermanente. Proximaitem: revisaoShell/Bloco2
+antesport e propostaHMLfinal; nenhuma transferencia novamente.
+
 ## Revisao Pedido e fechamento dos novos dashboards (2026-11-14,22:23UTC)
 
 Heartbeatnativo22:23:17.265Z, Casa/CPA, base351d1cd1 local/remotoiguais,

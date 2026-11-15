@@ -1176,7 +1176,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     ? formData.locais_entrega
     : (Array.isArray(locaisHttpView) ? locaisHttpView : (Array.isArray(formData.locais_entrega) ? formData.locais_entrega : []));
 
-  /** Operacional: create sem id = loaded ([]); draft assumido / HTTP ok = loaded. */
+  /** Operacional: create sem id = loaded ([]); rascunho não confirma catálogo HTTP. */
   const locaisOperacionalLoadStatus = (() => {
     if (!isHttpBackendMode) {
       return Array.isArray(formData.locais_entrega) ? 'loaded' : 'unknown';
@@ -1186,7 +1186,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
       return Array.isArray(locaisHttpBaselineRef.current) ? 'loaded' : 'unknown';
     }
     if (locaisHttpBaselineRef.current === null) return 'failed';
-    if (locaisDraftAssumed || Array.isArray(locaisHttpView) || Array.isArray(locaisHttpBaselineRef.current)) {
+    if (Array.isArray(locaisHttpView) || Array.isArray(locaisHttpBaselineRef.current)) {
       return 'loaded';
     }
     return 'loading';

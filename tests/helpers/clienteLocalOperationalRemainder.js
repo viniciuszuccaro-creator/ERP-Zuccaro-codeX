@@ -682,7 +682,7 @@ export function clienteLocalOperationalRemainder(file, text) {
       + '    ? formData.locais_entrega\n'
       + '    : (Array.isArray(locaisHttpView) ? locaisHttpView : (Array.isArray(formData.locais_entrega) ? formData.locais_entrega : []));\n'
       + '\n'
-      + '  /** Operacional: create sem id = loaded ([]); draft assumido / HTTP ok = loaded. */\n'
+      + '  /** Operacional: create sem id = loaded ([]); rascunho não confirma catálogo HTTP. */\n'
       + '  const locaisOperacionalLoadStatus = (() => {\n'
       + '    if (!isHttpBackendMode) {\n'
       + "      return Array.isArray(formData.locais_entrega) ? 'loaded' : 'unknown';\n"
@@ -692,7 +692,7 @@ export function clienteLocalOperationalRemainder(file, text) {
       + '      return Array.isArray(locaisHttpBaselineRef.current) ? \'loaded\' : \'unknown\';\n'
       + '    }\n'
       + "    if (locaisHttpBaselineRef.current === null) return 'failed';\n"
-      + '    if (locaisDraftAssumed || Array.isArray(locaisHttpView) || Array.isArray(locaisHttpBaselineRef.current)) {\n'
+      + '    if (Array.isArray(locaisHttpView) || Array.isArray(locaisHttpBaselineRef.current)) {\n'
       + "      return 'loaded';\n"
       + '    }\n'
       + "    return 'loading';\n"

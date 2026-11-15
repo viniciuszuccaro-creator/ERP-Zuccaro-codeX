@@ -17,6 +17,26 @@ const gerenciar = readFileSync('src/components/cadastros/GerenciarEnderecosClien
 const revisao = readFileSync('src/components/cadastros/ClienteLocaisRevisao.jsx', 'utf8');
 const seletor = readFileSync('src/components/comercial/SeletorEnderecoEntregaPedido.jsx', 'utf8');
 
+test('Completo: rascunho nao confirma catalogo HTTP ainda pendente', () => {
+  const start = completo.indexOf('  const locaisOperacionalLoadStatus = (() => {');
+  assert.ok(start > 0);
+  const end = completo.indexOf('  })();', start);
+  assert.ok(end > start);
+  const expression = completo.slice(start, end + '  })();'.length)
+    .replace('  const locaisOperacionalLoadStatus = ', '');
+  const status = (overrides = {}) => runInNewContext(expression, {
+    isHttpBackendMode: true, clienteBoundId: 'synthetic-A', cliente: null,
+    formData: { locais_entrega: [{ id: 'synthetic-draft' }] },
+    locaisDraftAssumed: true, locaisHttpView: undefined,
+    locaisHttpBaselineRef: { current: undefined }, ...overrides,
+  });
+  assert.equal(status(), 'loading');
+  assert.equal(status({ locaisHttpBaselineRef: { current: null } }), 'failed');
+  assert.equal(status({ locaisHttpBaselineRef: { current: [] } }), 'loaded');
+  assert.equal(status({ clienteBoundId: null, locaisHttpBaselineRef: { current: [] } }), 'loaded');
+  assert.equal(status({ isHttpBackendMode: false }), 'loaded');
+});
+
 test('mensagens: não usa "Nenhum endereço cadastrado" ambíguo no Gerenciar', () => {
   assert.equal(gerenciar.includes('Nenhum endereço cadastrado'), false);
   assert.match(gerenciar, /Nenhum endereço operacional disponível/);
