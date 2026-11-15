@@ -190,7 +190,19 @@ test('OrcamentosTab: conversão usa conversionStockOkFromAvailability (insufici�
   assert.match(src, /conversionStockOkFromAvailability/);
   assert.match(src, /conversionStockOk/);
   assert.match(src, /Estoque insuficiente ou indisponível/);
-  assert.match(src, /disabled=\{submitting \|\| !conversionStockOk\}/);
+  const disabled = src.match(/disabled=\{([^{}]+)\} data-action="orcamento-converter-pedido"/);
+  assert.ok(disabled, 'Localiza disabled do botão de conversão real, sem aceitar outro controle');
+  for (const submitting of [false, true]) {
+    for (const conversionStockOk of [false, true]) {
+      for (const data_entrega_solicitada of ['', '2027-01-31']) {
+        const actual = vm.runInNewContext(disabled[1], {
+          submitting, conversionStockOk, conversion: { data_entrega_solicitada },
+        });
+        assert.equal(actual, submitting || !conversionStockOk || !data_entrega_solicitada,
+          `envio=${submitting}, estoque=${conversionStockOk}, data=${Boolean(data_entrega_solicitada)}`);
+      }
+    }
+  }
   assert.doesNotMatch(src, /fontePronta === false \? true/);
 });
 

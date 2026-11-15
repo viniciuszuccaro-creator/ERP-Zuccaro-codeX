@@ -26,6 +26,12 @@ manifesto/normalizador. Audit/lint(0erros/2warnings existentes)/typecheck/build
 repetida: impedimentos POSIX/getuid/hang documentados ainda nao resolvidos;
 Python embarcado localizado, mas isso sozinho nao resolve os demais. CI Linux
 completa do SHA deve fechar o lote; resultado terminal registrado no GitHub.
+CI7173/a28a2840 encontrou UNICOfrontendFAIL (2999PASS/0skip): teste estoque
+exigia literal disabled antigo sem data. Corrigido no MESMOteste por matriz
+das8combinacoes envio/estoque/data extraida do botao real; nenhumguardestoque
+removido, semeditar18goldens. Causa lida no log dojob132818108810, semreruncego.
+Build/typecheck/lint globais do codigo inalterado jaPASS; novo foco e lint do
+teste executados e resultado/CI do SHA sucessor no reciboGitHub.
 
 PROXIMO: continuar revisao Orcamentosd43/endereco e conciliar os TRES componentes
 no mapa privado existente, preservando a nova condicao de data E a fix f619 de
