@@ -38,18 +38,28 @@ Corpo startHml byte-equivalente ao HEADanterior; API/UI/migrations/SQLcandidatos
 inalterados. FerramentaoperadoraMUDOU:kitfuturo precisa pins/revisao proprios;
 KITe920IMUTAVEL NAOrebuild/relabel/transfer/deploy, HMLd054 permanece.
 
-Proximo gate concreto preparado no plano privado: helperHML EXISTENTE --backup
-com configprivada pinada; validaidentidade/isolamento/espaco/lease+flock, geradump,
-restaura emSEU bancoefemero, comparaIDs/conteudo,verificaroles,removeSEUclone e
-aplicaRETENCAOexistente(apenasbackupsantigoscomackexterno). NAOEXECUTADO por esta
-retomada; exige autorizacaoespecifica desse alcance. Nao restaurarsobreHMLatual/
-operacional;nenhumgrant/DDLoverlay/deploy/importincluido. Copiaexterna/hash/ack
-continua gate,naopedirackdearquivoaindainexistente. Segredos/dadosforadoGit.
+Fechamento corrigido0e40d2c0/CI7188SUCCESSterminal(frontend/backendPG/composicao).
+Nao pedir novamente permissao de rotina backup JAEXISTENTE sem conferir seu
+alcance: historico14/11 documenta backupmanual+servico/timer/retencao7VPS/30externo.
+Leitura atual SOMENTEmetadados/helper --list comprovou3geracoes11110400bytes cada,
+restoreVerifiedtrue/16tabelas;2antigas comarquivosack,ultima15/11 ainda semack.
+Isso prova recibos existentes,naofrescorparaescritasfuturas nemoverlayaplicado.
+Nenhum novo backup/restore ou dumptransferido nesta retomada;naobaixardados/logarsegredos.
 
-Offlinepreparo concluiu com canApplyfalse/targetAttestedfalse,0linhasnegocio/DDL/
-backup/restore/grants/deploy. Se nao existir outroitemindependenteliberado,
-pausar MESMAautomacao e apresentar apenas essa decisao concreta;naorepetircatalogos,
-124ensaios/Markdown ou aguardarPRvazio. Reativaraposdependenciaautorizada.
+Gate exato Casa: secureRoot CANONICO recusou pasta privada de trabalho atual;
+diagnostico isolou PRIVATE_DIRECTORY_ACL(real allowforaallowlist),naofalhaautoload.
+Nao relaxar guard nemalterarACLexistente/VPS. Diretorioexterno aprovado daEmpresa
+naoexisteaqui. Proposta CONCRETA: nova pasta Casa de backup foraGit/build, ACL
+protegida somente proprietario/SYSTEM/Administrators, validar secureRoot ANTES
+download de APENASultimoarquivo+manifest, compararbytes/SHA eackpareadodepois.
+Criacao dessa pasta/ACL nova exige decisao especifica; alternativa e usar canal
+externo Empresa existente. Caminhos/recibos/comandos no planoprivado EXISTENTE v27.
+
+Preparooffline concluiu canApplyfalse/targetAttestedfalse,0linhasnegocio/DDL/grants/
+backupnovo/restore/deploy. Pausar MESMAautomacao nesta decisao de destinoprivado,
+naopedir autorizacaogenericabackup/IDs/login/proximo,nao124ensaios/PRpolling.
+Reviewindependente/schema/overlayrestaurado/lease/ack/reversao/janela/publicacao
+continuam separados. E920imutavel eHMLd054preservados;codigo0e40/CI7188verde.
 
 ## Catalogo de privilegios HML reconciliado sem grants (2026-11-15)
 
