@@ -22724,6 +22724,11 @@ Proximo: aceite UI atual, depois componentes pendentes de enderecos e bindings;
 1500 continuam INATIVOS. Completude integral e pacoteVPS NAO declarados prontos.
 ## 2026-11-16 - Grupo e Codigo: duas causas reproduzidas e corrigidas
 
+Codigo final798c2d6b/CI7209SUCCESS (frontend/backend/composicaoPostgreSQL),
+sem mudanca de hashes ancestrais. Fonte exata centralVPS,nao deployment:
+incoming/empresa-798c2d6b/runtime-source.tar.gz. HML ainda fba;001/002 nao
+atribuidos. CodespaceShutdown/retencao14dez conferidos,sem novo start.
+
 Complemento rastreado apos4a: adaptador local recompunha filtro sem identidade
 do mestre e anulava caller. Corrigido no expansor REAL para GrupoATUAL apenas;
 43focadosPASS, ID e group_id adulterados rejeitados para mestre semgroup_id.

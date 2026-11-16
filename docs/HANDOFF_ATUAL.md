@@ -1,5 +1,14 @@
 ## Correcao Grupo/coluna Codigo preparada, sem alterar mestres (2026-11-16)
 
+FECHADO codigo798c2d6b6133724abe7072aa3d106bb195b6a0fa/CI7209SUCCESS,
+frontend/backend/composicaoPostgreSQL. CI7208falha historica NAO e HEADatual.
+Fonte EXATA sucessora central incoming/empresa-798c2d6b/runtime-source.tar.gz,
+9200558bytes/SHA c38a33fcc4e3e09d6aaae1a25e1fbc2a7e8a28292bc3256bd7c4dbda2fc3d2a2.
+Pacote fonte,semimagensconstruidas/deploy; bfc antigo preservado,nao relabelado.
+HML continua fba; atualizar requer gate proprio/backupfresh/buildpins/reversao.
+RetencaoCodespace conferida pelaAPI:Shutdown,contafaturada existente, expira
+2026-12-14T07:54:23-03:00. Nao deletar/recriar;sem novastentativas departida.
+
 Complemento apos4a8347b3: expandLocalContextFilter recompunha uma segunda
 restricao sem idgrupo, anulando filtro do caller (badge E listagem locais).
 Contraprova pelo matcher/expansor REAIS falhou antes; corrigida mesma opcao
