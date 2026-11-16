@@ -1,3 +1,27 @@
+## Empresa: backup HML atual verificado, revisao Casa concluida no alcance IA (2026-11-16)
+
+Retomada cloneinterno limpo branch EXISTENTE codex/casa-fechamento-hml-20261114
+@77dcd365; antiga594/76dc preservada. CI7190/7191/7192SUCCESS e marcador fisico
+FornecedorHTTP/PostgreSQL7191 reconferidos. Reserva594/6913015623.
+Backup externoEmpresa16/11 03:30:42Brasilia11110400bytes/SHA
+3cf6e072d6b63152ddbe01748f2992000b6f51f90f75f6d14c784a03c90e88d5.
+4copias/bytes/SHA/ACL/acks verificados;16/16tabelas iguais aHML atual em snapshot
+READ ONLY/ROLLBACK, sem copiaCasa/novo backup/restore ou limpeza.1600mestres,
+217locais/217finalidades/6613auditorias preservados. Backup HML nao e o legado.
+
+e920/f2/32 revisados por analise propria e adicional IA, sem novo achado
+reproduzivel.13focaisCentral+19FornecedorPASS; nao humano/Browser/Auth real;
+revogacao do teste e intratransacao, nao concorrencia externa commitada.
+Overlayoffline canonico18fontes/225objetos/101emitidos/124acoes, canApplyfalse,
+DDL0. Plano privado v27 e kit e920 nao disponiveis nos caminhos documentados
+Empresa; transferencia privada exata solicitada, sem .env/segredos/backups.
+Nenhum SQL improvisado ou publicacao de pacote antigo como substituto.
+HML servida d054e2b3, mesmos containers,27,30GiBlivres (>20GiB); operacional
+intocado.0registros importados/reativados. Receber artefatos/pins para fechar
+decisao especifica do ensaio/restaurado, depois composicao/publicacao HML.
+BackupWindows enabled/Ready/result0;344 consultada sem reativar/duplicar,
+sem presumir agendamentoCasa naEmpresa. Detalhes e limites no HANDOFF.
+
 ## Continuidade Casa: prova HTTP PostgreSQL de Fornecedor (2026-11-15)
 
 Correcao funcional publicada em f2b1f69325f860ad43915bdc86949fcc3158c934, CI7190/run43746120007 SUCCESS. Contraprova anterior reproduziu replay aceito apos revogacao de criar; 19 testes focados passaram depois da revalidacao. Backup externo continua exclusivo da Empresa.

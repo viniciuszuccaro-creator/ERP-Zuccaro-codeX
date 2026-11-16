@@ -1,3 +1,72 @@
+## Retomada Empresa: backup atual comprovado e revisao Casa (2026-11-16)
+
+Executor DELL-VINI/Empresa, clone INTERNO comparacao-20261017, origem canonica.
+Branch antiga594/76dc3832 limpa preservada. Fetch e checkout da branch remota
+JA EXISTENTE codex/casa-fechamento-hml-20261114 @77dcd365, sem reset/stash,
+WIP descartado ou nova candidata. Casa7190/f2b1f693,7191/32e193c4 e7192/77dcd365
+SUCCESS reconferidos;7191 contem FORNECEDOR_HTTP_PG_REPLAY_REVOCATION_VERIFIED.
+Reserva594/6913015623 somente docs/revisao, sem escritor em banco/deploy.
+
+BACKUP HML EXTERNO CONFIRMADO na Empresa16/11, geracao16/11 06:30:42UTC
+(03:30:42Brasilia),11110400bytes/SHA256
+3cf6e072d6b63152ddbe01748f2992000b6f51f90f75f6d14c784a03c90e88d5.
+Pasta privada existente hml-backup-external sob ERP-Integracao-Privada emC:,
+externa aVPS; NAO confundir com HD/removivel nem backup completo do legado.
+secureRoot/ACL/path e quatro pares manifesto/arquivo verificados pelo helper
+canonico; sync existente confirmou4copias/acks. Nenhum arquivo faltava, nenhuma
+copia foi criada emCasa, nenhuma geracao removida, nenhum backup/restore novo.
+Manifesto restoreVerified16tabelas conferido dentro do tar; nao somente nome.
+
+Comparacao ADICIONAL atual contra fontePGHML:16/16tabelas iguais por valores
+integrais/contagens via helper existente pinado e snapshot REPEATABLE READ
+READ ONLY/ROLLBACK. Sem imprimir linhas/config/credenciais. Quatro geracoes
+14/15/16 tambem iguais nessas16tabelas; preservados1600mestres,217locais,
+217finalidades,6613auditorias/1Grupo/2empresas. Prova cobre campos atuais do
+banco, nao completude da origem ou overlay NAO aplicado. Principal usado e
+administrativo de manutencao, NAO prova RBAC/isolamento da aplicacao.
+Helper remoto rawa803c07d..., LF758c0203... igual ao codigoGit; divergencia
+de hash raw era CRLF287linhas, conferida antes de importar, nao pin relaxado.
+Recibo detalhado privado empresa-hml-external-20261116.receipt.private.json.
+
+REVISÃO PROPRIA Empresa dos deltas e920/f2/32 e consumidores: Central preserva
+epoca capturada nos callbacks e consumidores Orcamentos/Pedido; Fornecedor
+revalida importar+criar depois da auditoria na MESMA transacao/executor.
+13focais Central e19Fornecedor reexecutados PASS/0FAIL/0SKIP. Revisao adicional
+IA somente leitura por outro agente analisou hunks/caminhos sem achado novo;
+nao rotular revisao humana nem independencia so por outra sessao. Teste
+revoga permissao DENTRO da transacao e a reverte: nao prova revogacao concorrente
+commitada em outra conexao. Auth sintetico/AST/SSR/PGfixture nao equivalem a
+navegador real/Auth real/HML. Provas estaveis completas nao repetidas.
+
+ENSAIO: CLI canonico --review-overlay executado offline no77dcd365:18fontes,
+225objetos/101emitidos,124acoes classificadas;26definicao,38prerequisitos,
+14metadata,36preservacao/diff,8escritas historicas com gate separado,2guards.
+canApply=false/targetAttested=false/ddlExecuted=false mantidos. Nao aplicar SQL
+guardado nem reconstruir sequencia de SQL a partir dessa classificacao.
+Plano privado v27 promotion-81d1e849.plan.private.json e kit imutavel
+runtime-e92045a0-candidate NAO presentes nos caminhos documentados daEmpresa
+nem nos destinos EXATOS consultadosVPS. Isso nao e prova de ausencia global.
+ArquivoCasa documentado C:/Users/cpaba/.codex/erp-review-20261114/ inacessivel
+nessePC. Proprietario recebeu pedido UNICO de transferencia privada SOMENTE
+plano/kit/manifestos/recibos para hml-recovery-20261114 existenteEmpresa, sem
+.env/credenciais/backups. Nao substituir por38/81, reconstruir/relabel e920,
+nem pedir autorizacao generica deDDL antes de receber plano e conferir pins.
+
+HML HTTPS segue API/webd054e2b3; mesmos3containers/imagens/rede preservados,
+29316583424bytes livres (>20GiB). Nenhum deploy/carga/ativacao/DDL/grant ou
+modificacao no ERP real. Consultas de catalogo/overlay nao sao migracao.
+Proxima acao exata: receber os artefatos, verificar hashes/versao v27/revisoes,
+atestar copia restaurada e apresentar UMA decisao do ensaio com objetos/pins/
+principal/impacto/reversao; so executar no alcance autorizado. Kit fonte e920
+nao e automaticamente pacote do backend posteriorf2: preservar ambos e decidir
+composicao por diff/flags antes de qualquer nova embalagem/publicacao.
+
+AUTOMACAO: tarefaWindows ERP-HML-Backup-External enabled/Ready, ultima16/11
+06:23:18Brasilia/result0, proxima09:15; depende PC ligado/logado/rede. Mesma344
+consultada via ferramenta nativa, sem reativar ou duplicar; estado PAUSED e o
+ultimo informado pelo proprietario/recibo, nao inferir executorCasa nestePC.
+Sem worker permanente novo; reserva local deste pacote liberada no fechamento.
+
 ## Continuidade Casa: prova HTTP PostgreSQL de Fornecedor (2026-11-15)
 
 Correcao funcional publicada em f2b1f69325f860ad43915bdc86949fcc3158c934, CI7190/run43746120007 SUCCESS. Contraprova anterior reproduziu replay aceito apos revogacao de criar; 19 testes focados passaram depois da revalidacao. Backup externo continua exclusivo da Empresa.
