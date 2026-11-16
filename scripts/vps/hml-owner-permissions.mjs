@@ -1,0 +1,85 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+
+// Generalizes the existing private HML local-read CAS template. No endpoint,
+// connection, role change or automatic execution; profiles/audit_logs stay canonical.
+const catalog = JSON.parse(readFileSync(new URL('./owner-admin-permissoes.json', import.meta.url), 'utf8'));
+const digest = value => createHash('sha256').update(JSON.stringify(value)).digest('hex');
+const uuid = value => typeof value === 'string' && /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(value);
+const literal = value => "'" + String(value).replaceAll("'", "''") + "'";
+const json = value => literal(JSON.stringify(value)) + '::jsonb';
+function validateTree(value) {
+  assert.ok(value && typeof value === 'object', 'PERMISSION_TREE_REQUIRED');
+  if (Array.isArray(value)) {
+    assert.ok(value.every(action => typeof action === 'string' && action.length > 0 && action !== '*'), 'ACTION_INVALID');
+  } else for (const [key, child] of Object.entries(value)) {
+    assert.ok(key !== '*' && key.length > 0, 'WILDCARD_DENIED');
+    validateTree(child);
+  }
+}
+function isSubset(before, after) {
+  if (Array.isArray(before)) return Array.isArray(after) && before.every(action => after.includes(action));
+  return after && !Array.isArray(after) && Object.entries(before).every(([key, child]) =>
+    Object.hasOwn(after, key) && isSubset(child, after[key]));
+}
+
+export function prepareHmlOwnerPermissions({ before, expected, requestId, approvalRef,
+  direction = 'grant', restorePermissions, originalRequestId }) {
+  assert.ok(expected && /^hml[a-z0-9_]+$/.test(expected.database)
+    && /^hml[a-z0-9_]+$/.test(expected.schema) && /^\d+$/.test(expected.schemaOid)
+    && /^\d+$/.test(expected.clusterIdentifier), 'HML_TARGET_REQUIRED');
+  for (const key of ['profileId', 'authUserId', 'groupId']) assert.ok(uuid(expected[key]), 'IDENTITY_REQUIRED');
+  assert.ok(before?.id === expected.profileId && before.auth_user_id === expected.authUserId
+    && before.group_id === expected.groupId && before.empresa_id === null
+    && before.role === 'user' && before.ativo === true, 'PROFILE_BINDING_REQUIRED');
+  assert.match(requestId, /^HML-owner-(grant|reverse)-[a-zA-Z0-9-]{8,100}$/);
+  assert.match(approvalRef, /^OWNER_AUTHORIZED_HML_FULL_[A-Z0-9_-]{8,100}$/);
+  assert.ok(['grant', 'reverse'].includes(direction) && requestId.startsWith(`HML-owner-${direction}-`));
+  validateTree(before.permissoes); validateTree(catalog);
+  const next = direction === 'grant' ? structuredClone(catalog) : structuredClone(restorePermissions);
+  validateTree(next);
+  if (direction === 'grant') assert.ok(isSubset(before.permissoes, next), 'EXISTING_CAPABILITY_WOULD_BE_LOST');
+  else assert.match(originalRequestId, /^HML-owner-grant-[a-zA-Z0-9-]{8,100}$/);
+  const schema = `"${expected.schema}"`;
+  const tag = '$hml_owner_' + digest({ before, next, requestId }).slice(0, 24) + '$';
+  assert.ok(!JSON.stringify({ before, next, requestId, approvalRef }).includes(tag));
+  const reverseGuard = direction === 'reverse' ? `
+  IF NOT EXISTS(SELECT 1 FROM ${schema}.audit_logs WHERE entity='Profile' AND entity_id=p.id::text
+    AND group_id=p.group_id AND actor_id=p.id AND request_id=${literal(originalRequestId)}
+    AND after_data->'profile'=${json(before)} AND before_data->'profile'->'permissoes'=${json(next)})
+    THEN RAISE EXCEPTION 'HML_ORIGINAL_PERMISSION_RECEIPT_REQUIRED'; END IF;` : '';
+  const sql = `SET LOCAL standard_conforming_strings=on;
+SET LOCAL search_path TO pg_catalog,${schema},pg_temp;
+DO ${tag}
+DECLARE p ${schema}.profiles%ROWTYPE; changed ${schema}.profiles%ROWTYPE;
+BEGIN
+  IF pg_catalog.current_database()<>${literal(expected.database)} OR pg_catalog.current_schema()<>'pg_catalog'
+    OR (SELECT oid::text FROM pg_catalog.pg_namespace WHERE nspname=${literal(expected.schema)}) IS DISTINCT FROM ${literal(expected.schemaOid)}
+    OR (SELECT system_identifier::text FROM pg_catalog.pg_control_system())<>${literal(expected.clusterIdentifier)}
+    THEN RAISE EXCEPTION 'HML_PHYSICAL_TARGET_MISMATCH'; END IF;
+  SELECT * INTO STRICT p FROM ${schema}.profiles WHERE id=${literal(before.id)}::uuid FOR UPDATE;
+  IF p.auth_user_id IS DISTINCT FROM ${literal(expected.authUserId)}::uuid OR p.group_id IS DISTINCT FROM ${literal(expected.groupId)}::uuid
+    OR p.empresa_id IS NOT NULL OR p.role IS DISTINCT FROM 'user' OR p.ativo IS DISTINCT FROM true
+    THEN RAISE EXCEPTION 'HML_PROFILE_BINDING_CHANGED'; END IF;
+  IF p.permissoes=${json(next)} AND EXISTS(SELECT 1 FROM ${schema}.audit_logs
+    WHERE entity='Profile' AND entity_id=p.id::text AND group_id=p.group_id AND actor_id=p.id
+      AND request_id=${literal(requestId)} AND action='update'
+      AND before_data->'profile'=${json(before)} AND after_data->'profile'=pg_catalog.to_jsonb(p)
+      AND after_data->>'approval'=${literal(approvalRef)}) THEN RETURN; END IF;
+  IF pg_catalog.to_jsonb(p)<>${json(before)} THEN RAISE EXCEPTION 'HML_PROFILE_CAS_CONFLICT'; END IF;
+  IF EXISTS(SELECT 1 FROM ${schema}.audit_logs WHERE request_id=${literal(requestId)})
+    THEN RAISE EXCEPTION 'HML_PROFILE_REPLAY_CONFLICT'; END IF;
+  ${reverseGuard}
+  UPDATE ${schema}.profiles SET permissoes=${json(next)} WHERE id=p.id AND group_id=p.group_id RETURNING * INTO STRICT changed;
+  INSERT INTO ${schema}.audit_logs(group_id,empresa_id,actor_id,entity,entity_id,action,before_data,after_data,request_id)
+  VALUES(p.group_id,NULL,p.id,'Profile',p.id::text,'update',pg_catalog.jsonb_build_object('profile',pg_catalog.to_jsonb(p)),
+    pg_catalog.jsonb_build_object('profile',pg_catalog.to_jsonb(changed),'approval',${literal(approvalRef)},
+      'reason','OWNER_AUTHORIZED_HML_FULL_EXPLICIT_CATALOG','direction',${literal(direction)},
+      'database_executor',current_user,'execution_origin','EXISTING_HML_ADMIN_CHANNEL'),${literal(requestId)});
+END ${tag};`;
+  return { kind: 'HML_OWNER_PERMISSION_PLAN_NOT_EXECUTED', beforeSha256: digest(before),
+    catalogSha256: digest(catalog), nextPermissions: next, sql, sqlSha256: digest(sql),
+    direction, requestId, approvalRef, target: structuredClone(expected),
+    changesRole: false, changesSqlGrants: false, operationalAuthorized: false };
+}

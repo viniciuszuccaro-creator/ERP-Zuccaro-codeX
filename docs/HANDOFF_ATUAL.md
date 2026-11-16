@@ -1,3 +1,59 @@
+## Lote atual: acesso autorizado e selecao5000 central (2026-11-16)
+
+Nova autorizacao explicita do dono: acesso completo de seu perfil existenteHML,
+GrupoCPA/empresas autorizadas; revoga restricao antiga somenteleitura APENAS
+nesseperfilHML. Nao alteraPGroles/grants/superuser/BYPASSRLS/operacional.
+Email confirmado pelo dono comparado privadamente ao perfil user ativo,
+empresaNULL, mesmoAuthID/Grupo/config atual. Nao usado rotuloProprietario como
+identidade. Referencia: owner-profile-scale-preflight-20261116.private.json.
+
+Helper scripts/vps/hml-owner-permissions.mjs generaliza CAS privado existente
+local-read (que nao aceita outros direitos), usa EXATAMENTE catalogo publico
+owner-admin-permissoes.json; nao executar provision-owner-admin-profile.sh
+noHML (mudaria role/alcance). Sem novoendpoint/servico/conexao automatica.
+Guards db/schemaOID/cluster/ator/AuthID/Grupo/roleuser/ativo/empresaNULL,
+snapshot integral FORUPDATE, auditoria na mesmaTX, replay e reverse comprovado
+por recibo original. Tabelas qualificadas/catalog-first/funcoespg_catalog.
+3unidadesPASS; IAindependente encerrouP1shadowaposcorrecao. PGreal restaurado:
+16tabelas comparadas; concessao rollback, atorinativo, CAS, alvoerrado, audit
+falha, funcaoshadow, commit/replay, reverse errado/rollback/commit/replay PASS.
+Fonte/profile/audits/roles intactos; base hml_owner_trial_4508d143a0ff encerrada.
+Recibos privados shared-artifacts/incoming/owner-access-20261116/ (naoGitHub).
+AplicacaoHML autorizada mas AINDA NAO EXECUTADA: fecharCI, backupfresh/ack,
+gerarplanolive com perfil fresco e CAS; conceder apenasJSONpermissoes, roleuser.
+
+Escala: sourceCSV original JA naVPS centralizacao-legado-20261023/recovered/
+staging/03_EXPORT_STAGING/CLIENTES/CLIENTES-LEGACY-TID-001/clientes-candidatos.csv,
+SHA85a1ce008a9b53252601aa137f8d42b2257505cfda31e4659873f2f9faf2a94b.
+Nao precisa do sourceJSON antigo ausente: NOVAderivacao identificada por hash,
+CSVparsecanonico -> rows.cliente -> prepararPersistenciaClientesLegado existente;
+conferirDerivacao verifica osbytes originais, nao relabela sourceJSON anterior.
+17471elegiveis/987inativosfonte dentre18458;4437foraexport continuam sem causa
+comprovada, nao presumidosinativos.5000selecionados em5transacoes propostas1000,
+1600existentes excluidos incluindo1500ensaiosinativos.0conflitoscodigo/documento
+no snapshot READONLY/ROLLBACK doGrupo, nao prova conflitos emoutrosdestinos.
+Planejamento3.23seg/530968576RSS, NAO taxa de clientescompletos/importacao.
+
+Plano/recibo privados IMUTAVEIS centralizados em shared-artifacts/incoming/
+scale-5000-20261116/plan5000.private.json.gz e plan5000.receipt.private.json.
+Comprimido1543448bytes/SHA c43a9d23bed9929d248b85ece0e8dba3f4d30fe7f8b05da1e03d93e04a18e9c8;
+conteudo47690674bytes verificado. Manifesto dc9d954784ec7ee19a418be6b51895fec9a71660348f1fcf97747424b2084cde.
+5000PARCIAIS preparados,0completos confirmados,0cargas/reativacoes/aplicacoes.
+245emails aceitos; telefonia naoexportada noCSV NAO e ausencia naorigem.
+Fiscal componentes5000presentes, numero/pais ausentes NOEXPORT, nao inferir.
+Vinculos vendedor/tabela/regiao/condicao preservados como referencias pendentes,
+nao vinculados por nome/zero. Plano applicable=false exige auxiliares nativos,
+reconciliacao integral, indiceidentidade e liberacao exata antes de carga.
+
+Recibo bruto5auxiliares inclui48568ClientesTelefones/34campos, nao so1500!
+Mas bytes nao localizados no caminho original espelhado aux-reader/netbind-attempt
+nem por nomes exatos nos2roots recuperados staging/sql-work consultados.
+Isso NAO prova ausencia global. Reutilizar manifestos/pins para recuperar SOMENTE
+exports ja extraidos; nao reiniciar leitor/inventario/HD nem tratar recibo como
+arquivo final. Bindings1500existentes sao subset, nao prova cobertura5000.
+Proximo: aplicar permissao aposCI/backup e conferir jornada de edicao; resolver
+canal dos5raw e fazer cobertura5000 antes de apresentar carga como completa.
+
 ## HML vigente fba27eeb: somente rotulo do Grupo (2026-11-16)
 
 Autorizacao especifica recebida/executada. API/webfba27eeb5d5aa5f7133738f7863e357bb3007f69,

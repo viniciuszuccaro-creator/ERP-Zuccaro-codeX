@@ -1,3 +1,36 @@
+## AcessoHML e preparacao5000 sem nova carga (2026-11-16)
+
+Nova instrucao do dono AUTORIZA perfil completo SOMENTE HML; substitui antigo
+somenteleitura, nao autoriza roles/grantsSQL/operacional. Email confirmado pelo
+dono comparado privadamente ao perfil/AuthID/Grupo da config atual: MATCH.
+HMLreal1600mestres=100ativos+1500ensaiosinativos;4200contatos/217locais preservados.
+
+Reutilizado catalogo owner-admin-permissoes.json e fluxo profiles/audit_logs.
+Novo auxiliar hml-owner-permissions.mjs necessario: template privado anterior
+era fixo SOMENTE local-read e script owner-admin existente mudaria role/DEV;
+nenhum equivalente viavel permitia esta alteracao mantendo roleuser e escopoHML.
+Nao e outroIAM/endpoint; apenas gera SQL administrativo CAS/replay/reverse.
+3unidadesPASS; revisao independenteIA achou shadowfuncao, corrigido antes de
+qualquer escrita fonte (catalog-first e funcoes qualificadas). Revisor encerrou.
+PG real em copia restaurada16tabelas: concessao/replay/rollback/CAS/atorrevogado/
+alvoerrado/falhaaudit/shadowfuncao/reversao/reciboincorreto passaram; roles e
+fonte intactas, copia encerrada. Aplicacao REAL fica aposCI/backupfresh/ack.
+
+CSVcentral existente conferido,18458linhas:17471elegiveis pelo contrato e987
+INATIVOS dafonte segregados (nao sao987invalidos). Preparados5lotes de1000,
+excluindo1600existentes,0conflitoscodigo/documento no snapshotCPA.5000PARCIAIS,
+0completos comprovados/0APLICADOS.245emails canonicos;telefone/celular nao
+exportados noCSV, nao declarar ausentes no original.5000logradouros/bairros/
+cidades/UF/CEP disponiveis, numero/pais nao exportados; nao inferir valores.
+Artefato privado47MB/comprimido1543448bytes centralizado e hashconferido em
+shared-artifacts/incoming/scale-5000-20261116; nao depende daEmpresa/Casa.
+Planoapplicable=false: falta cobertura nativa deauxiliares/vinculos e gate do
+indiceidentidadeHML (0duplicados no recorte atual, mas indice ainda ausente).
+Raw5tabelas ja extraidas tem recibos; bytes nao encontrados nos caminhos
+documentadosVPS consultados. Nao substituidos por recibos nem reextraidos.
+Proximo: fecharCI do auxiliar e aplicar permissao autorizada com auditoria,
+entao testar edicao existente e completar cobertura do lote antes de carga.
+
 ## Rotulo corrigido e PUBLICADO na HML (2026-11-16)
 
 Autorizacao especifica do dono recebida parafba27eeb. API=webfba27eeb/CI7201SUCCESS
