@@ -1,4 +1,25 @@
-## Edicao organizacional aplicada e ensaiada na HML; delta de busca (2026-11-16)
+## Edicao organizacional HMLcf3: API/web e CI fechadas (2026-11-16)
+
+cf3ec50278f9c343ec560490d98258190f10771d/CI7219SUCCESS aplicado API/webHML
+em19:27UTC; HTTPS/marcadores/assetSHA/anonimo401 conferidos.16fingerprints
+identicos, PG/ERPDEV mesmosIDs/saudaveis. Backup posensaio191600Z-145bafd0
+comrestore+externoACK. c966 conservado parado; nenhum novoSQL/grant/carga.
+Checks delta: audit/lint/typecheck/build raiz ebuildbackendPASS,4HTTP+6PGlite
+PASS, fechamento completoUbuntu peloSHA acima. Reutilizado ensaio3mestres/
+6writes c966, pois escrita/get/CAS/audit nao mudaram. Nao chamar isso React
+montado nem navegadorBearer completo. Recibo privado promotion-cf3ec502-20261116-r1.
+
+Dono confirmou Grupo abre preenchido e botao Atualizar Grupo aparece. Logs
+agregados recentes incluem PATCHGrupo200,GETGrupo/Empresas200; reabertura
+visual e empresas vinculadas noformulario ainda nao comprovadas. HML possui
+so nome doGrupo preenchido (razao/CNPJ/observacoes vazios naorigem atual),
+nao preencher por suposicao. Codigo sequencial/vincular empresas/status/delete
+nao foram habilitados pelo gate deUPDATEcolunas cadastrais. Ausencia deempresa
+noformulario precisa reproducao especifica; DTO preserva IDs/vinculos. Nao
+declarar todosbotoes liberados. ProximaacaoUI: blocoempresas/reabertura;pacote
+codigo/vinculos separado pelo contratocanonico. Operacional e dados preservados.
+
+## Edicao organizacional aplicada e ensaiada na HML; historico (2026-11-16)
 
 c966fb02c9fda47a10d64856f38cd50855bc75c8/CI7218SUCCESS aplicado SOMENTE API/web
 HML em19:06UTC/16:06Brasilia. HTTPS/assetSHA/anonimo401 e16fingerprints iguais

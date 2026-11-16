@@ -1,4 +1,32 @@
-## Organizacional HMLc966 aplicado; fechar apenas delta busca (2026-11-16)
+## Organizacional HMLcf3 aplicado; retorno do proprietario (2026-11-16)
+
+API/web cf3ec50278f9c343ec560490d98258190f10771d / CI7219 SUCCESS servidos
+em19:27UTC/16:27Brasilia na mesma HML. HTTPS, marcador API/web e assetSHA
+conferidos; anonimo401,16fingerprints iguais, PG/ERPDEV mesmosIDs e saudaveis.
+Backup POS-ENSAIO hml-20261116T191600Z-145bafd0 restaurado e externoACK.
+Recibo promotion-cf3ec502-20261116-r1/promotion.receipt.private.json. Config
+backup atualizado; c966 preservado parado para reversao. Sem novoSQL/carga.
+Kit2220arquivos/17918138bytes; TAR3979333bytes SHA
+79bf0d2580dfbc074f801e59e12d3910efe36c171432accb1b77c3ea89a23abc.
+Fonte central incoming/empresa-cf3ec502. Nao repetir prova6writes c966:
+get/update/audit/CAS nao mudaram no delta busca/sort/list semN+1.
+
+Dono abriu Grupo preenchido e esclareceu que salvar aparece Atualizar Grupo;
+nao declarou que esse botao esta negado. Logs agregados da sessao recente:
+GET Empresas12x200, Grupo27x200, PATCH Grupo1x200. Nao inferir valor alterado
+ou reabertura visual dessas contagens. Ensaio dominio/PG3mestres/6writes
+permanece prova separada, valores originais restaurados e auditorias retidas.
+Leitura agregadaHML:1Grupo,1nome,0razao/0CNPJ/0observacoes preenchidos;
+somente nome na tela NAO demonstra perda pela API. Nao inventar conteudo.
+Codigo sequencial NAO atribuido; vinculos existentes consultaveis pelo DTO,
+mas mutacao de vinculos/status/exclusao nao integra este contrato autorizado.
+Relato de empresas nao exibidas no formulario segue pendencia visual especifica:
+nao confundir GET200/empresas_ids com componente montado ou vinculo editavel.
+Proximaacao: conferir reabertura pelo dono e bloco de empresas no formulario,
+reproduzir lacuna UI antes de alterar contrato; preparar codigo/vinculos pelo
+processo canonico, sem novosgrants/DDL/operacional por inferencia.
+
+## Organizacional HMLc966 aplicado; historico do delta busca (2026-11-16)
 
 CI7218SUCCESS/c966fb02c9fda47a10d64856f38cd50855bc75c8 aplicado API/webHML
 em19:06UTC/16:06Brasilia. https://hml-erp.cpaferroeaco.com.br/cadastros .
