@@ -1,3 +1,14 @@
+## Rotulo do Grupo sem prefixo duplicado (2026-11-16)
+
+Relato do dono: Grupo . Grupo CPA e somente100clientes. Causa do rotulo era
+prefixo literal em EmpresaSwitcher no valor atual e opcao. Removido somente
+prefixo; nome/ID persistidos, contexto, permissoes, seletor e empresas intactos.
+22focaisPASS incluindo renderReactSSR real com fronteiras sinteticas; nomes
+GrupoCPA e outroGrupo preservados sem hardcode/renomeacao. Nao e prova montada
+de troca de contexto nem browser. Checks locais/CI porSHA antes da entrega.
+HML5e NAO recebe essa correcao automaticamente.100clientes continuam100ativos:
+nenhuma nova carga ou ativacao autorizada por esta correcao de texto.
+
 ## HML5e publicada: Cadastros, semDDL/carga/novas permissoes (2026-11-16)
 
 Autorizacao ESPECIFICA do dono recebida e executada. API/web5e0d11c3/CI7197GREEN

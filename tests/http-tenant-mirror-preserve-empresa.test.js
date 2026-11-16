@@ -108,11 +108,53 @@ test('Input: onChange/onBlur/ref vêm depois do spread (RHF não perde digitaç�
 test('EmpresaSwitcher distingue Grupo vs Empresa operacional', async () => {
   const { readFile } = await import('node:fs/promises');
   const source = await readFile(new URL('../src/components/EmpresaSwitcher.jsx', import.meta.url), 'utf8');
-  assert.match(source, /Grupo · \$\{/);
+  assert.doesNotMatch(source, /Grupo ·/);
+  assert.match(source, /Grupo Corporativo/);
+  assert.match(source, /Grupos Corporativos/);
   assert.match(source, /Empresa · \{/);
   assert.match(source, /data-scope=["']grupo["']/);
   assert.match(source, /data-scope=["']empresa["']/);
   assert.match(source, /Empresa operacional/);
+});
+
+test('EmpresaSwitcher renderiza o nome do Grupo sem prefixo e preserva IDs', async () => {
+  const { build } = await import('esbuild');
+  const { createRequire } = await import('node:module');
+  const require = createRequire(import.meta.url);
+  const React = require('react');
+  const { renderToStaticMarkup } = require('react-dom/server');
+  const result = await build({
+    entryPoints: ['src/components/EmpresaSwitcher.jsx'], bundle: true, write: false,
+    format: 'cjs', platform: 'node', external: ['react'],
+    plugins: [{ name: 'switcher-render-boundaries', setup(b) {
+      b.onResolve({ filter: /^@\/|^@tanstack\/|^lucide-react$/ }, a => ({ path: a.path, namespace: 'fixture' }));
+      b.onLoad({ filter: /.*/, namespace: 'fixture' }, a => {
+        let contents;
+        if (a.path.endsWith('useContextoGrupoEmpresa')) contents = 'export default()=>globalThis.__switcherRender;';
+        else if (a.path === '@tanstack/react-query') contents = "export const useQuery=({queryKey})=>({data:queryKey[0]==='grupos-usuario'?[globalThis.__switcherRender.grupoAtual]:[]});";
+        else if (a.path.endsWith('base44Client')) contents = 'export const base44={},isHttpBackendMode=true;';
+        else if (a.path.endsWith('erpHttpSession')) contents = 'export const readErpHttpSession=()=>null;';
+        else contents = `import React from 'react'; const Box=({children,...p})=>React.createElement('div',{'data-scope':p['data-scope'],'data-group-id':p['data-group-id'],'data-value':p.value},children);
+          export {Box as Select,Box as SelectContent,Box as SelectGroup,Box as SelectItem,Box as SelectLabel,Box as SelectTrigger,Box as SelectValue,Box as Badge,Box as Input,Box as Building2,Box as Users,Box as ChevronDown};`;
+        return { contents, loader: 'js' };
+      });
+    } }],
+  });
+  const module = { exports: {} };
+  new Function('require', 'module', 'exports', result.outputFiles[0].text)(require, module, module.exports);
+  try {
+    for (const name of ['Grupo CPA', 'Consorcio Teste']) {
+      globalThis.__switcherRender = { user: { id: 'actor' }, contexto: 'grupo',
+        grupoAtual: { id: 'same-group-id', nome_do_grupo: name }, empresasDoGrupo: [],
+        podeOperarEmGrupo: true, isLoading: false };
+      const html = renderToStaticMarkup(React.createElement(module.exports.default));
+      assert.equal(html.split(name).length - 1, 2, 'nome original no seletor e na opcao');
+      assert.doesNotMatch(html, /Grupo ·/);
+      assert.match(html, /data-group-id="same-group-id"/);
+      assert.match(html, /data-value="grupo:same-group-id"/);
+      assert.match(html, /Grupo Corporativo/);
+    }
+  } finally { delete globalThis.__switcherRender; }
 });
 
 test('Empresas view expõe origem do CNPJ', async () => {

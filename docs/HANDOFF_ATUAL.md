@@ -1,3 +1,15 @@
+## Correcao de rotulo nao equivale a carga ampliada (2026-11-16)
+
+Dono informa mesma tela/100clientes e Grupo . GrupoCPA. EmpresaSwitcher tinha
+prefixo literal Grupo em cima do nome existente: removido no trigger e opcao,
+sem alterar dados/IDs/rotas/permissoes.22focaisPASS, incluindo SSRdo componente
+com nomes distintos e IDs originais. Preservada categoria GrupoCorporativo e
+Empresaoperacional; testeAST atualizado para exigir ausencia de prefixo sem
+remover guardas de escopo. Nao confundir SSR com efeitosReact/HTTP/browser.
+Publicar e fechar CI do novoSHA; disponibilidade HML continua5e ate promocao
+especifica. Correcoes de rotulo nao importam novos clientes. A carga ampliada
+continua separada; nao anunciar mais de100ativos nem reativar1500ensaios.
+
 ## HML atualizada para5e com autorizacao especifica (2026-11-16)
 
 ESTADO VIGENTE: API=web5e0d11c3f3a8956477656cda359acf6bc895c906, CI7197SUCCESS.

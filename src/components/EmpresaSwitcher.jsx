@@ -163,7 +163,7 @@ export default function EmpresaSwitcher() {
                 {contexto === 'grupo' ? 'Grupo Corporativo' : 'Empresa operacional'}
               </span>
               <span className="text-sm font-medium text-slate-900 truncate w-full">
-                {contexto === 'grupo' ? `Grupo · ${nomeAtual || '—'}` : (nomeAtual || '—')}
+                {nomeAtual || '—'}
               </span>
             </div>
             <ChevronDown className="w-4 h-4 text-slate-400" />
@@ -198,7 +198,7 @@ export default function EmpresaSwitcher() {
                     <div className="flex flex-col gap-0.5">
                       <div className="flex items-center gap-2">
                         <Users className="w-4 h-4 text-blue-600" />
-                        <span className="font-medium">Grupo · {grupo.nome_do_grupo}</span>
+                        <span className="font-medium">{grupo.nome_do_grupo}</span>
                       </div>
                       <span className="text-[10px] text-slate-400 font-mono ml-6 truncate max-w-[200px]" title={grupo.id}>
                         id {String(grupo.id || '').slice(0, 8)}…
