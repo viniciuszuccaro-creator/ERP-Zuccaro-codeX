@@ -1,3 +1,16 @@
+## Empresa continua independente: Central360 montada (2026-11-16)
+
+Transporte v27/e920 e pendencia especifica de Casa sem acesso agora; nao e
+parada geral. HANDOFF contem instrucao ao CodexCasa para envio unico diretoVPS
+quando aberto/acessivel, somente originais e manifestos/recibos, sem SQL/carga/
+deploy. Nenhum artefato indispensavel pode permanecer exclusivo de computador.
+Empresa ampliou harness montado EXISTENTE: Shell Central360 com React/efeitos
+reais e paineis/Auth/contexto sinteticos.14focaisPASS/0FAIL/0SKIP: negar/restaurar,
+sessao/ator/Grupo/Empresa/ABA, superficies Orçamento/Pedido e selecao antiga.
+Inversao do hunk e920 reproduz falha; codigo atual PASS, runtime nao alterado.
+Nao e prova de banco, persistencia dos paineis filhos ou homologacaoHML.
+Fechamento/CI porSHA a confirmar; preservados gates/dados/backups e HMLd054.
+
 ## Fonte central privada na VPS estabelecida (2026-11-16)
 
 Diretriz corrigida em OPERACAO_DEV_VPS: planos/kits/recibos indispensaveis na

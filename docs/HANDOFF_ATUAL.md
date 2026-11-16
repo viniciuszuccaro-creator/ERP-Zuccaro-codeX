@@ -1,3 +1,47 @@
+## Retomada especifica Codex Casa e tarefa independente Empresa (2026-11-16)
+
+Proprietario esta naEmpresa e NAO tem acessoCasa agora. Nao aguardar essa
+dependencia nem pedir novamente que copie arquivos paraEmpresa. Pendencia
+ESPECIFICA, sem bloquear testes/codigo independentes: quando CodexCasa for aberto
+com acesso aos originais e ao canal privado JA autorizado, enviar SOMENTE
+promotion-81d1e849.plan.private.json v27, runtime-e92045a0-candidate e seus
+manifestos/recibos para
+/root/erp-private/hml-recovery-20261114/shared-artifacts/incoming/casa-v27-e92045a0/.
+Antes, conferir indice/recibos centrais para nao duplicar transporte. Conferir
+tamanho/SHA origem/destino, cada arquivo do kit e marcadores; preservar original
+imutavel, confirmar recebimento integro e registrar localizacao/pins no indice
+privado central. Sem .env/credenciais/backups/arquivos adicionais; NENHUM SQL,
+carga/importacao/deploy nessa retomada. Nunca marcar recebido antes da prova.
+Depois, nenhum artefato indispensavel pode continuar exclusivo de um computador.
+Mesma instrucao tambem persistida naVPS em shared-artifacts/receipts/
+codex-casa-resume-20261116.private.json, sem alterar indice/recibos anteriores.
+
+Empresa continua AGORA a lacuna identificada na revisao de e920: contraprova
+React montado do Shell Central360 em negar/restaurar permissao e resposta antiga
+apos troca ator/sessao/Grupo/Empresa/A->B->A. Reutilizar harness montado existente;
+AST/SSR anteriores preservados, nao declarados como efeitosReact completos.
+Somente testes focados/dados sinteticos; corrigir runtime apenas se falha
+reproduzida, sem dependencia de v27/kit, banco real ou deploy.
+
+Executado: harness Chrome/React ja existente ampliado, sem criar outro. Shell
+Central360 REAL montado e hooks/efeitos/policies reais; paineis de documento,
+Auth/contexto e dados sao fronteiras sinteticas. Nao prova HTTP/banco/browser
+integrado, persistencia de rascunho dos paineis filhos nem nova funcionalidadeHML.
+Negar/restaurar permissao rejeita callback anterior e aceita novo; ator/sessao/
+Grupo/Empresa/A->B->A e troca Orçamentos->Pedido testados. Pedido sem permissao
+nao apaga selecao de Orçamento autorizado. Inverter SOMENTE as4linhas de epoca
+do e920 na memoria reproduz falha especifica; codigo atual PASS. Baselines de
+fiscal/Seletor anteriores mantidas, sem reduzir assercoes/deadlines.
+14focaisPASS/0FAIL/0SKIP; sem defeito atual reproduzido, runtime NAO modificado.
+Falhas iniciais eram do driver: import dinamico irrelevante e ABA sem troca
+real por reutilizar a mesmaempresa. Corrigidos no teste, nao no produto.
+Checks completos/CI deste lote devem fechar porSHA; WindowsPOSIX conhecido
+nao repetido ou relaxado. Nenhum SQL/carga/deploy/backup/privilegio alterado.
+Audit/lint global(0erros/2warnings existentes),typecheck/build/diffcheck locais
+PASS; npmtest global sera fechado pela CI Linux, conforme excecao vigente.
+Promessas sinteticas criadas ANTES das trocas resolvem DEPOIS dos efeitos;
+nao e apenas renderizacaoSSR ou callback extraido. Driver verifica troca ABAreal.
+
 ## Fonte central VPS: transporte organizado, v27/e920 ainda pendentes (2026-11-16)
 
 Diretriz do proprietario substitui o pedido anterior de copiar paraEmpresa:

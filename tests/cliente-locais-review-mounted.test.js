@@ -8,7 +8,7 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 
-test('React montado: revisao somente leitura, paginacao, negativas e respostas obsoletas', { timeout: 60000 }, async () => {
+test('React montado: revisao, Pedido e Central360 rejeitam operacoes obsoletas', { timeout: 60000 }, async () => {
   const cache = path.join(os.homedir(), '.cache', 'ms-playwright');
   const installed = existsSync(cache) ? readdirSync(cache).filter(name => /^chromium-\d+$/.test(name))
     .flatMap(name => ['chrome-linux/chrome', 'chrome-linux64/chrome'].map(file => path.join(cache, name, file))) : [];
@@ -19,6 +19,7 @@ test('React montado: revisao somente leitura, paginacao, negativas e respostas o
 import React, { act } from 'react'; import { createRoot } from 'react-dom/client'; import { flushSync } from 'react-dom';
 import Review from './src/components/cadastros/ClienteLocaisRevisao.jsx';
 import Logistica from './src/components/comercial/LogisticaEntregaTab.jsx';
+import Central from './src/components/comercial/CentralVendas360Shell.jsx';
 const host=document.getElementById('root'), root=createRoot(host), pending=[], checks=[], reportFetch=window.fetch.bind(window);
 window.IS_REACT_ACT_ENVIRONMENT=true;
 window.__allowed=true; window.__session={token:'synthetic-token',actorId:'actor',groupId:'group',empresaId:'company'};
@@ -117,15 +118,75 @@ async function run(){
  const denied=window.selectHandler;window.__allowed=false;renderPedido();await pause();
  await act(async()=>{denied(idA);});check('pedido_permission_revoked_no_selection',!latest.endereco_entrega_principal?.id&&pending.length===0);
  check('pedido_draft_only_no_database_write',pending.every(request=>!request.init.method||request.init.method==='GET'));
+ await act(async()=>{root.render(null);});pending.splice(0);window.__allowed=true;window.__centralAllowed=true;
+ window.__session={token:'central-session',actorId:'central-actor',groupId:'central-group',empresaId:'central-company'};
+ let centralProps={groupId:'central-group',empresaId:'central-company',actorId:'central-actor',
+  hasPermission:(_module,section,action)=>window.__centralAllowed&&action==='visualizar'
+    && String(section).toLowerCase()!==window.__blockedCentralSection};
+ const renderCentral=async()=>{await act(async()=>{root.render(<Central {...centralProps}/>);});await pause();};
+ const selection=label=>({id:label,numero:label,cliente_id:'synthetic-client',total:10,
+  condicao_pagamento_id:'synthetic-terms',condicao_pagamento_nome:label+'-TERMS',
+  itens:[{descricao:label+'-ITEM',quantidade:2,unidade_sigla:'KG',total:10}]});
+ const complete=(props,row)=>act(async()=>{props.onCentralSelect(row,{selectionEpoch:props.selectionEpoch});});
+ const pendingSelection=(props,row)=>{let resolve;const response=new Promise(done=>{resolve=done;});
+  const applied=response.then(()=>props.onCentralSelect(row,{selectionEpoch:props.selectionEpoch}));
+  return()=>act(async()=>{resolve();await applied;});};
+ await renderCentral();check('central_real_shell_mounted',Boolean(host.querySelector('[data-block="central-vendas-360"]'))&&Boolean(window.__centralDoc));
+ await complete(window.__centralDoc,selection('CENTRAL-CURRENT'));check('central_current_selection_visible',host.textContent.includes('CENTRAL-CURRENT-ITEM'));
+ const oldPermission=window.__centralDoc;
+ const finishOldPermission=pendingSelection(oldPermission,selection('OLD-PERMISSION'));
+ window.__centralAllowed=false;await renderCentral();check('central_revocation_hides_selection',!host.textContent.includes('CENTRAL-CURRENT'));
+ await complete(oldPermission,selection('DENIED'));check('central_denied_callback_no_selection',!host.textContent.includes('DENIED-ITEM'));
+ window.__centralAllowed=true;await renderCentral();await finishOldPermission();
+ check('central_permission_restore_rejects_old_callback',!host.textContent.includes('OLD-PERMISSION-ITEM'));
+ await complete(window.__centralDoc,selection('FRESH-PERMISSION'));check('central_permission_restore_accepts_fresh',host.textContent.includes('FRESH-PERMISSION-ITEM'));
+ for(const kind of ['actor','session','group','company','ABA']){
+  const old=window.__centralDoc,original={...centralProps},session={...window.__session};
+  const finishOld=pendingSelection(old,selection('OLD-'+kind));
+  if(kind==='actor'){centralProps={...centralProps,actorId:'changed-actor'};window.__session={...session,actorId:'changed-actor'};}
+  if(kind==='session')window.__session={...session,token:'renewed-session'};
+  if(kind==='group'){centralProps={...centralProps,groupId:'changed-group'};window.__session={...session,groupId:'changed-group'};}
+  if(kind==='company'||kind==='ABA'){const nextCompany=kind==='ABA'?'different-company-for-ABA':'changed-company';centralProps={...centralProps,empresaId:nextCompany};window.__session={...session,empresaId:nextCompany};}
+  if(kind==='ABA')check('central_ABA_driver_actually_changes_company',centralProps.empresaId!==original.empresaId);
+  await renderCentral();
+  if(kind==='ABA'){centralProps=original;window.__session=session;await renderCentral();}
+  await finishOld();check('central_old_callback_rejected_'+kind,!host.textContent.includes('OLD-'+kind+'-ITEM'));
+  await complete(window.__centralDoc,selection('FRESH-'+kind));check('central_fresh_callback_accepted_'+kind,host.textContent.includes('FRESH-'+kind+'-ITEM'));
+ }
+ window.__blockedCentralSection='pedido';await renderCentral();
+ check('central_pedido_denied_does_not_hide_authorized_orcamento',host.textContent.includes('FRESH-ABA-ITEM'));
+ window.__blockedCentralSection=undefined;
+ const oldOrcamento=window.__centralDoc;
+ const finishOldOrcamento=pendingSelection(oldOrcamento,selection('OLD-ORCAMENTO'));
+ await act(async()=>{host.querySelector('[data-action="central360-situacao-PRODUCAO"]').click();});await pause();
+ check('central_pedido_surface_mounted',window.__centralDoc.centralSituacao==='PRODUCAO');
+ await finishOldOrcamento();check('central_old_orcamento_no_pedido_selection',!host.textContent.includes('OLD-ORCAMENTO-ITEM'));
+ await complete(window.__centralDoc,selection('CURRENT-PEDIDO'));check('central_current_pedido_selection_visible',host.textContent.includes('CURRENT-PEDIDO-ITEM'));
+ const oldPedido=window.__centralDoc;
+ const finishOldPedido=pendingSelection(oldPedido,selection('OLD-PEDIDO'));
+ window.__blockedCentralSection='pedido';await renderCentral();check('central_pedido_revocation_hides_selection',!host.textContent.includes('CURRENT-PEDIDO'));
+ window.__blockedCentralSection=undefined;await renderCentral();await finishOldPedido();
+ check('central_pedido_restoration_rejects_old_callback',!host.textContent.includes('OLD-PEDIDO-ITEM'));
+ await complete(window.__centralDoc,selection('NEW-PEDIDO'));check('central_pedido_fresh_after_restoration',host.textContent.includes('NEW-PEDIDO-ITEM'));
+ check('central_selection_no_transport_or_write',pending.length===0);
  root.unmount();return{checks:checks.length,passed:true,scope:'React/DOM + cliente HTTP real; transporte e identidade sinteticos; nao HML/PG/E2E'};
 }
 run().then(result=>reportFetch('/result',{method:'POST',body:JSON.stringify(result)})).catch(error=>reportFetch('/result',{method:'POST',body:JSON.stringify({error:String(error),checks})}));`;
-  for (const reverseCallbackFix of [true, false]) {
+  for (const [reverseCallbackFix, reverseCentralFix] of [[true, false], [false, true], [false, false]]) {
   const plugin = { name: 'synthetic-boundaries', setup(builder) {
     if (reverseCallbackFix) builder.onLoad({ filter: /SeletorEnderecoEntregaPedido\.jsx$/ }, args => {
       const source = readFileSync(args.path, 'utf8');
       assert.equal(source.split('const snapshot = renderedSnapshot;').length, 2);
       return { contents: source.replace('const snapshot = renderedSnapshot;', 'const snapshot = listSnapshotRef.current;'), loader: 'jsx', resolveDir: path.dirname(args.path) };
+    });
+    if (reverseCentralFix) builder.onLoad({ filter: /CentralVendas360Shell\.jsx$/ }, args => {
+      const source = readFileSync(args.path, 'utf8').replace(/\r\n/g, '\n');
+      const hunk = '    // Revogação encerra a geração, mesmo se a permissão voltar no mesmo contexto.\n'
+        + '    const nextEpoch = selectionEpochRef.current + 1;\n'
+        + '    selectionEpochRef.current = nextEpoch;\n'
+        + '    setSelectionEpoch(nextEpoch);\n';
+      assert.equal(source.split(hunk).length, 2);
+      return { contents: source.replace(hunk, ''), loader: 'jsx', resolveDir: path.dirname(args.path) };
     });
     builder.onResolve({ filter: /^@\/api\/erpHttpSession$/ }, () => ({ path: 'session', namespace: 'synthetic' }));
     builder.onResolve({ filter: /^@\/components\/lib\/usePermissions$/ }, () => ({ path: 'permission', namespace: 'synthetic' }));
@@ -134,6 +195,11 @@ run().then(result=>reportFetch('/result',{method:'POST',body:JSON.stringify(resu
     builder.onResolve({ filter: /^@\/api\/base44Client$/ }, () => ({ path: 'httpmode', namespace: 'synthetic' }));
     builder.onResolve({ filter: /^@\/components\/ui\/select$/ }, () => ({ path: 'select', namespace: 'synthetic' }));
     builder.onResolve({ filter: /^\.\/(BuscaCEP|CriarEtapaEntregaModal)$/ }, () => ({ path: 'empty', namespace: 'synthetic' }));
+    builder.onResolve({ filter: /^\.\/(OrcamentosTab|PedidoCanonicoPanel)$/ }, () => ({ path: 'central-document', namespace: 'synthetic' }));
+    builder.onResolve({ filter: /^\.\/(CentralCliente360Panel|CentralAprovacoesManager|PedidosEntregaTab)$/ }, () => ({ path: 'empty', namespace: 'synthetic' }));
+    builder.onResolve({ filter: /^@\/components\/lib\/useContextoVisual$/ }, () => ({ path: 'context', namespace: 'synthetic' }));
+    builder.onResolve({ filter: /^@\/components\/lib\/useWindow$/ }, () => ({ path: 'windows', namespace: 'synthetic' }));
+    builder.onResolve({ filter: /^@\/pages\/(HubAtendimento|ChatbotAtendimento)$/ }, () => ({ path: 'empty', namespace: 'synthetic' }));
     builder.onLoad({ filter: /.*/, namespace: 'synthetic' }, args => ({ contents: args.path === 'session'
       ? `export const HTTP_CONTEXT_CHANGED='erp-http-context-changed';export const readErpHttpSession=()=>window.__session ? {...window.__session} : null;`
       : args.path === 'httpmode'
@@ -141,6 +207,9 @@ run().then(result=>reportFetch('/result',{method:'POST',body:JSON.stringify(resu
       : args.path === 'contexto'
         ? `export const useContextoVisual=()=>({empresaAtual:{id:window.__session?.empresaId||'company',group_id:window.__session?.groupId||'group'},grupoAtual:{id:window.__session?.groupId||'group'}});`
       : args.path === 'empty' ? `export default()=>null;`
+      : args.path === 'central-document' ? `import React from 'react';export default function DocumentBoundary(props){window.__centralDoc=props;return React.createElement('div',{'data-central-document-boundary':true});}`
+      : args.path === 'context' ? `export const useContextoVisual=()=>({grupoAtual:{id:window.__session?.groupId},contexto:'empresa'});`
+      : args.path === 'windows' ? `export const useWindow=()=>({openWindow:()=>{throw Error('Unexpected external window');}});`
       : args.path === 'select' ? `import React from 'react';export function Select(p){window.selectHandler=p.onValueChange;return React.createElement('div',null,p.children);}const Part=p=>React.createElement('div',null,p.children);export {Part as SelectContent,Part as SelectItem,Part as SelectTrigger,Part as SelectValue};`
       : `export default()=>({hasPermission:()=>window.__allowed});`, loader: 'js', resolveDir: process.cwd() }));
   } };
@@ -163,7 +232,10 @@ run().then(result=>reportFetch('/result',{method:'POST',body:JSON.stringify(resu
     if (reverseCallbackFix) {
       assert.equal(report.error, 'Error: pedido_ABA_old_handler_no_write', JSON.stringify(report));
       assert.ok(report.checks.includes('fiscal_canonical_same_id'));
-    } else { assert.equal(report.error, undefined, JSON.stringify(report)); assert.equal(report.passed, true); assert.ok(report.checks >= 40); }
+    } else if (reverseCentralFix) {
+      assert.equal(report.error, 'Error: central_permission_restore_rejects_old_callback', JSON.stringify(report));
+      assert.ok(report.checks.includes('central_current_selection_visible'));
+    } else { assert.equal(report.error, undefined, JSON.stringify(report)); assert.equal(report.passed, true); assert.ok(report.checks >= 55); }
   }
   finally {
     clearTimeout(timer); child.kill();
