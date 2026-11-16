@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 
 /** Approved integration/optional-contract hunks; every other V24 statement stays under the original invariant. */
 export const clienteDocumentDisplayHunks = [
+  ["  // Codigo e identidade de negocio, nunca um rotulo substituido pelo nome.\n  if (/^codigo(?:_|$)/i.test(String(col.field || ''))) return v;\n", ''],
   ["  // Only the unified column may use either document; CPF and CNPJ are not interchangeable.\n  if (/^(cpf_cnpj|documento)$/i.test(String(field || ''))) {",
     "  // HTTP MASTER Cliente: documento unificado ↔ colunas cpf/cnpj da grade.\n  if (/^(cpf|cnpj|cpf_cnpj|documento)$/i.test(String(field || ''))) {"],
   ['      status: "Status",\n      cidade: "Município",\n      uf: "UF",', '      status: "Status",'],

@@ -9,6 +9,19 @@ import {clienteNavigationRemainder,clienteDocumentDisplayHunks} from './helpers/
 
 const read = (p) => fs.readFileSync(p, 'utf8').replace(/\r\n/g, '\n');
 
+test('V24: codigo ausente nunca vira nome, sem perder codigo zero ou zeros a esquerda', () => {
+  const src = read('src/components/cadastros/VisualizadorUniversalEntidadeV24.jsx');
+  const start = src.indexOf('const LABEL_FALLBACKS =');
+  const end = src.indexOf('// ─── helpers', start);
+  const display = Function(src.slice(start, end) + ';return getDisplayValue;')();
+  for (const codigo of [null, undefined, '']) {
+    assert.equal(display({ codigo, razao_social: 'Empresa exemplo' }, { field: 'codigo' }, true), codigo);
+  }
+  assert.equal(display({ codigo: '001' }, { field: 'codigo' }, true), '001');
+  assert.equal(display({ codigo: 0 }, { field: 'codigo' }, true), 0);
+  assert.equal(display({ descricao: 'Rotulo existente' }, { field: 'nome' }, true), 'Rotulo existente');
+});
+
 test('Grade: peel exato preserva guarda ancestral e rejeita adulteracao',()=>{
   const source=read('src/components/cadastros/VisualizadorUniversalEntidadeV24.jsx');
   const original=clienteNavigationRemainder(source);

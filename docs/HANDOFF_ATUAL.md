@@ -1,3 +1,38 @@
+## Correcao Grupo/coluna Codigo preparada, sem alterar mestres (2026-11-16)
+
+Prints16/11 do dono: Empresas usa nome em Codigo; badgeGrupo0 apesar de seletor.
+ReproducaoANTES:2contraprovas falham em funcoes reais. Causas: countFilter nao
+inclui id=groupId do mestreGrupo sem group_id, diferentemente do Visualizador;
+getDisplayValue trata primeira colunaCodigo como rotulo e substitui por nome.
+Correcao minima reutiliza extraGroupOr do filtro canonico e impede fallback de
+codigo para rotulo, preservando zero/zeros iniciais e fallbacks de nomes.
+Nao criaGrupo/endpoint/cadastro/seed nem remove tenant/RBAC. V24grande mantido:
+extracao ampla insegura diante dos contratos ancestrais;2linhas focadas apenas.
+Peel exato acrescenta SOMENTE hunk aprovado, mantem invariantes ancestrais e
+negativos contra omissao/repeticao/adulteracao.37testes focadosPASS aposcorrecao.
+
+Audit/lint/typecheck/buildPASS,lint2warnings preexistentes. RootWindows tentou
+suite completa: Reacttimeout60s sobcarga; gate-d-f-precheck.sh permaneceu preso
+em vps-gate-precheck.test.js. Encerrada somente arvore propria runnerPID3504;
+taskkill informou um descendente nao finalizavel. Nao e PASSintegral. Retry
+isolado do mesmo ReactmontadoPASS em5.12s sem alterar timeout/expectativas.
+Fechamento Linux pela CIUbuntu da excecao draft vigente;nao homologado/deploy.
+As2contraprovas novas sao funcoes/matcher reais, nao navegador autenticadoHML.
+
+Preflight FRESCO READONLY/ROLLBACK pelo principalapp:1Grupo esperado existente,
+2empresas; NENHUMA coluna codigo em empresas/groups nesse namespace. Registro
+Grupo nao desapareceu. Seletor usa sessaoAuth -> espelho tenant local; badge
+le esseespelho com filtro incorreto; nao provar recuperacao por corrigir badge.
+APIempresa mapRow/sessao tambem nao transportam codigo.001/002 NAOatribuidos:
+exigem delta canonicobackend/schema/reserva/concorrencia e gate auditado; nao
+fixar pelo nome/ordem, nem trocar UUIDs. Metadata201ms inclui docker/psql;
+NAO e medicao de lentidao da UI/API. RuntimeHML ainda fba27eeb, nao WIPnovo.
+Recibo central receipts/hml-master-codes-preflight-20261116.private.json.
+
+Dono abriu Billing,mas cua continua kernelassets/oserror3 antes de lerChrome;
+nao acesso restaurado por abaaberta. Sem novo start/cobranca/scopes/orcamento.
+Cincoexports ainda pendentes;2295Obras/5000 ja classificados no recibo anterior.
+
 ## Billing conferido pelos canais existentes; preparacao continua (2026-11-16)
 
 Autorizacao atual: recuperar artefatos indispensaveis exclusivos do MESMO

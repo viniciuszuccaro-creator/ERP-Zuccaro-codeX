@@ -50,5 +50,6 @@ export function buildContextFilter(entityName, empresaId, groupId, empresasDoGru
       ? empresasDoGrupo.map((e) => e.id).filter(Boolean)
       : [],
     rest: {},
+    extraGroupOr: entityName === 'GrupoEmpresarial' && groupId ? [{ id: groupId }] : [],
   });
 }

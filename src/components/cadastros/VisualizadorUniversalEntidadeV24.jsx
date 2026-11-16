@@ -184,6 +184,8 @@ function buildFieldVariants(field) {
 function getDisplayValue(item, col, isFirstCol) {
   var v = item[col.field];
   if (v !== null && v !== undefined && v !== '') return v;
+  // Codigo e identidade de negocio, nunca um rotulo substituido pelo nome.
+  if (/^codigo(?:_|$)/i.test(String(col.field || ''))) return v;
   // Coluna de rótulo vazia (1ª coluna ou campo "nome"): reutiliza fallbacks
   // (descricao / nome_grupo / nome_do_grupo…) sem recriar cadastros auxiliares.
   var isLabelCol = isFirstCol || /^(nome|titulo|label)$/i.test(String(col.field || ''));

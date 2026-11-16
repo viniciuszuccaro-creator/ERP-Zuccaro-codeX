@@ -22722,6 +22722,23 @@ Browser autenticado/sessao/aceite visual desta versao ainda pendentes; controle
 local/nativo kernelassets/oserror3. Janela ate12:10Z/09:10Brasilia, nao permanente.
 Proximo: aceite UI atual, depois componentes pendentes de enderecos e bindings;
 1500 continuam INATIVOS. Completude integral e pacoteVPS NAO declarados prontos.
+## 2026-11-16 - Grupo e Codigo: duas causas reproduzidas e corrigidas
+
+ContraprovasANTES2FAIL: badgeGrupo nao encontra mestre sem group_id; coluna
+Codigo substitui valor ausente pelo nome. Corrigido countFilter para incluir
+mesmo idgrupo do Visualizador;Codigo ausente permanece desconhecido. Mantidos
+zero/zeros a esquerda, isolamento e fallback legitimo dos rotulos.37focosPASS;
+peel exato protege ancestral sem alterarbaseline. Audit/lint/typecheck/buildPASS.
+Windowsfull interrompido porPOSIXprecheck preso,Reacttimeout inicial; retry
+isoladoReactmontadoPASS1/1 sem relaxar testes. CIUbuntu pelo fluxo draft vigente.
+
+HML READONLY/ROLLBACK:1Grupo esperado/2empresas persistidos, colunaCodigo ausente
+emempresas/groups.001/002 ainda NAOatribuidos; exige persistencia/reserva/gate,
+nao numeracao porordem/tela.0cargas/DDL/grants/ativacoes/deploy/alteracoesERP.
+HML continua fba27eeb;correcoes novas NAOservidas ate pacote/gate proprios.
+Prints naoGitHub, recibo fisico privado naVPS. Nao medido ganhoUI/API.
+Billingaberto pelo dono,controleainda kernelassets/os3;nenhuma tentativa start.
+
 ## 2026-11-16 - Billing sem canal de leitura; lotes/endereco preparados
 
 Pedidoatual inclui recuperacao dirigida de TODOS artefatos indispensaveis
