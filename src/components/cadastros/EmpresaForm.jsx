@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { useRef } from 'react';
 import { isHttpBackendMode } from '@/api/base44Client';
 import useCadastroRecordState from './useCadastroRecordState';
+import CadastroCodigoRegistroField from './CadastroCodigoRegistroField';
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -219,12 +220,7 @@ export default function EmpresaForm({
           </AlertDescription>
         </Alert>
       )}
-      {dadosIniciais?.id && (
-        <div className="rounded border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
-          <span className="font-medium">ID do cadastro (somente leitura): </span>
-          <code className="break-all select-text">{dadosIniciais.id}</code>
-        </div>
-      )}
+      <CadastroCodigoRegistroField value={dadosIniciais?.codigo} hasId={Boolean(dadosIniciais?.id)} entityId={dadosIniciais?.id} action="codigo-registro-empresa" />
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label>Razao Social *</Label>

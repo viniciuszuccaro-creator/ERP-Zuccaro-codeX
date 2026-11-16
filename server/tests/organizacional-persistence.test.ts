@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { PGlite } from '@electric-sql/pglite';
 import type { DbClient, DbQueryExecutor } from '../src/db/client.ts';
 import { PostgresAuditRepository } from '../src/audit/auditRepository.ts';
@@ -20,6 +21,10 @@ test('organizacional: real persistence, CAS, audit atomicity and tenant/RBAC neg
       CREATE TABLE audit_logs(group_id uuid,empresa_id uuid,actor_id uuid,actor_email text,entity text,entity_id uuid,action text,before_data jsonb,after_data jsonb,request_id text,ip_address text);
       INSERT INTO groups(id,nome_do_grupo,status) VALUES('${G}','Synthetic Group','Ativo');
       INSERT INTO empresas(id,group_id,razao_social,nome_fantasia,cnpj,status) VALUES('${A}','${G}','Synthetic A','A','11222333000181','Ativa'),('${B}','${G}','Synthetic B','B',NULL,'Ativa');`);
+    await pg.exec('ALTER TABLE groups ADD COLUMN codigo text; ALTER TABLE empresas ADD COLUMN codigo text; CREATE UNIQUE INDEX org_group_code ON groups(codigo); CREATE UNIQUE INDEX org_company_code ON empresas(group_id,codigo);');
+    const migration = readFileSync(new URL('../migrations/009_clientes_master_data.sql', import.meta.url), 'utf8');
+    const sequence = migration.match(/CREATE TABLE IF NOT EXISTS entity_code_sequences[\s\S]*?REVOKE ALL ON FUNCTION reserve_entity_codigo\(UUID, TEXT, INT\) FROM PUBLIC;/)?.[0];
+    assert.ok(sequence); await pg.exec(sequence);
     const db: DbClient = { pool: null, query: (s, p) => pg.query(s, p as never) as never,
       withTransaction: f => pg.transaction(q => f({ query: (s, p) => q.query(s, p as never) as never } as DbQueryExecutor)),
       checkConnection: async () => true, end: async () => {} };
@@ -74,6 +79,45 @@ test('organizacional: real persistence, CAS, audit atomicity and tenant/RBAC neg
       const fail = new OrganizacionalService(db, { append: async () => { throw new Error('AUDIT_FAILED'); }, listByEntity: async () => [] }, rbac, tenants);
       await assert.rejects(fail.update(ctx, 'Empresa', A, { expected_version: before.version, nome_fantasia: 'Never' }), /AUDIT_FAILED/);
       assert.deepEqual(await service.get(ctx, 'Empresa', A), before);
+    });
+    await t.test('codes reserve on server, preserve identities and survive save/reopen/replay', async () => {
+      const group = await service.get(ctx, 'GrupoEmpresarial', G);
+      const coded = await service.assignMissingCodigo(ctx, 'GrupoEmpresarial', G, String(group.version));
+      assert.equal(coded.codigo, '001');
+      const a = await service.get(ctx, 'Empresa', A), b = await service.get(ctx, 'Empresa', B);
+      const fail = new OrganizacionalService(db, { append: async () => { throw new Error('AUDIT_FAILED'); }, listByEntity: async () => [] }, rbac, tenants);
+      await assert.rejects(fail.assignMissingCodigo(ctx, 'Empresa', A, String(a.version)), /AUDIT_FAILED/);
+      assert.deepEqual(await service.get(ctx, 'Empresa', A), a);
+      await assert.rejects(service.assignMissingCodigo(ctx, 'Empresa', A, 'a'.repeat(64)), { code: 'VERSION_CONFLICT' });
+      const first = await service.assignMissingCodigo(ctx, 'Empresa', A, String(a.version));
+      const second = await service.assignMissingCodigo(ctx, 'Empresa', B, String(b.version));
+      assert.equal(first.codigo, '001'); assert.equal(second.codigo, '002');
+      const n = (await audits()).length;
+      assert.deepEqual(await service.assignMissingCodigo(ctx, 'Empresa', A, String(a.version)), first);
+      assert.equal((await audits()).length, n);
+      const reopened = await service.get(ctx, 'Empresa', A);
+      assert.equal(reopened.codigo, '001'); assert.equal(reopened.id, A);
+      const saved = await service.update(ctx, 'Empresa', A, { expected_version: reopened.version, nome_fantasia: 'Code preserved' });
+      assert.equal(saved.codigo, '001');
+      await assert.rejects(service.reverseAssignedCodigo(ctx, 'Empresa', A, String(first.version), '001'), { code: 'VERSION_CONFLICT' });
+      await assert.rejects(service.reverseAssignedCodigo(ctx, 'Empresa', B, String(second.version), '999'), { code: 'VERSION_CONFLICT' });
+      const reversed = await service.reverseAssignedCodigo(ctx, 'Empresa', B, String(second.version), '002');
+      assert.equal(reversed.codigo, null); assert.equal(reversed.id, B); assert.equal(reversed.razao_social, second.razao_social);
+      const reassigned = await service.assignMissingCodigo(ctx, 'Empresa', B, String(reversed.version));
+      assert.equal(reassigned.codigo, '003');
+      await assert.rejects(service.update(ctx, 'Empresa', A, { expected_version: saved.version, codigo: '999' }), { code: 'VALIDATION_ERROR' });
+      await assert.rejects(service.assignMissingCodigo({ ...ctx, actorId: B }, 'Empresa', A, String(saved.version)), { code: 'PERMISSION_DENIED' });
+      await assert.rejects(service.assignMissingCodigo({ ...ctx, empresaId: A }, 'Empresa', B, String(second.version)), { code: 'COMPANY_SCOPE_DENIED' });
+      assert.deepEqual(coded.empresas_ids, [A, B]);
+      const reopen = await service.get(ctx, 'GrupoEmpresarial', G);
+      assert.equal(reopen.codigo, '001');
+      await pg.exec(`INSERT INTO groups(id,nome_do_grupo,status) VALUES('${B}','Second synthetic group','Ativo')`);
+      rbac.link({ actorId: U, groupId: B, permissions });
+      const otherCtx = { ...ctx, groupId: B };
+      const other = await service.get(otherCtx, 'GrupoEmpresarial', B);
+      const otherCoded = await service.assignMissingCodigo(otherCtx, 'GrupoEmpresarial', B, String(other.version));
+      assert.equal(otherCoded.codigo, '002');
+      rbac.link({ actorId: U, groupId: G, permissions });
     });
     assert.equal((await service.list(ctx, 'Empresa')).length, 2);
     assert.equal((await service.list({ ...ctx, empresaId: A }, 'Empresa')).length, 1);

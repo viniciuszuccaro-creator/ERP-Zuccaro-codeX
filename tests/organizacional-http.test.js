@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { buildOrganizacionalPatch, hydrateOrganizacional, createOrganizacionalHttp } from '../src/api/organizacionalHttp.js';
-import { prepareHmlOrganizacionalSqlPermissions } from '../scripts/vps/hml-owner-permissions.mjs';
+import { prepareHmlOrganizacionalSqlPermissions, prepareHmlOrganizacionalCodeSchema } from '../scripts/vps/hml-owner-permissions.mjs';
 
 test('HML SQL plan is physically bound and grants only named columns/policies, with reversal', () => {
   const ids = ['11111111-1111-4111-8111-111111111111', '22222222-2222-4222-8222-222222222222'];
@@ -18,6 +18,11 @@ test('HML SQL plan is physically bound and grants only named columns/policies, w
     assert.throws(() => prepareHmlOrganizacionalSqlPermissions({ ...e, ...patch }, ids));
   }
   assert.throws(() => prepareHmlOrganizacionalSqlPermissions(e, [ids[0]]));
+  const code = prepareHmlOrganizacionalCodeSchema(e, ids);
+  assert.match(code.sql, /ADD COLUMN codigo text NULL/);
+  assert.match(code.sql, /empresas\(group_id,codigo\)/);
+  assert.doesNotMatch(code.sql, /GRANT|UPDATE |DEFAULT|INSERT|CREATE ROLE|DROP /);
+  assert.match(code.reverseSql, /CODES_REQUIRE_AUDITED_CAS_REVERSAL_FIRST/);
 });
 
 test('organizacional adapter preserves omission, exact identity, null and version', async () => {

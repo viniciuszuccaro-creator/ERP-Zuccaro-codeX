@@ -1,5 +1,6 @@
 import useCadastroRecordState from './useCadastroRecordState';
-import React, { useMemo, useState, useRef } from "react";
+import React, { useMemo, useState, useRef, useEffect } from "react";
+import { HTTP_CONTEXT_CHANGED } from '@/api/erpHttpSession';
 import { isHttpBackendMode } from '@/api/base44Client';
 import { hasCadastroEntityPermission } from './cadastroEditLoadPolicy';
 import { Input } from "@/components/ui/input";
@@ -33,7 +34,7 @@ export default function GrupoEmpresarialForm({ grupo, item, data, initialData, d
   };
 
   const dadosIniciais = normalize(item || data || initialData || defaultValues || grupo);
-  const { canCreate, canEdit, canDelete, hasPermission, isLoading: permissionsLoading } = usePermissions();
+  const { canCreate, canEdit, canDelete, hasPermission, user, isLoading: permissionsLoading } = usePermissions();
   const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || dadosIniciais?.id || null;
   const contextoValido = Boolean(groupId || dadosIniciais?.id);
@@ -43,6 +44,12 @@ export default function GrupoEmpresarialForm({ grupo, item, data, initialData, d
   const podeExcluir = !isHttpBackendMode && hasCadastroEntityPermission('GrupoEmpresarial', 'excluir', checkers);
   const podeSalvar = !loadIncomplete && !isLoadingRecord && (dadosIniciais?.id ? podeEditar : podeCriar);
   const busy = useRef(false);
+  const [sessionEpoch, setSessionEpoch] = useState(0);
+  useEffect(() => {
+    const invalidate = () => setSessionEpoch(value => value + 1);
+    window.addEventListener(HTTP_CONTEXT_CHANGED, invalidate);
+    return () => window.removeEventListener(HTTP_CONTEXT_CHANGED, invalidate);
+  }, []);
 
   const [formData, setFormData] = useCadastroRecordState(dadosIniciais || {
     nome: "",
@@ -57,8 +64,8 @@ export default function GrupoEmpresarialForm({ grupo, item, data, initialData, d
 
   // Escopo multiempresa: Empresa via filterInContext (group_id). Sem list unscoped.
   // enabled exige contexto; erro ≠ zero KPI fabricado.
-  const { data: empresas = [], isError: isErrorEmpresas } = useQuery({
-    queryKey: ["empresas", groupId || "sem-grupo"],
+  const { data: empresas = [], isError: isErrorEmpresas, isPending: empresasLoading } = useQuery({
+    queryKey: ["grupo-empresas-vinculadas", user?.id, user?.perfil_acesso_id, groupId, empresaAtual?.id, dadosIniciais?.version, sessionEpoch],
     queryFn: () => filterInContext('Empresa', groupId ? { group_id: groupId } : {}, 'razao_social', 500),
     enabled: contextoValido,
   });
@@ -146,10 +153,10 @@ export default function GrupoEmpresarialForm({ grupo, item, data, initialData, d
   const formContent = (
     <form onSubmit={handleSubmit} className="space-y-4">
       <CadastroCodigoRegistroField
-        idOnly
+        value={dadosIniciais?.codigo}
         hasId={Boolean(dadosIniciais?.id)}
         entityId={dadosIniciais?.id}
-        action="id-tecnico-grupo-empresarial"
+        action="codigo-registro-grupo-empresarial"
       />
       <div>
         <Label>Nome do Grupo *</Label>
@@ -192,9 +199,9 @@ export default function GrupoEmpresarialForm({ grupo, item, data, initialData, d
               </div>
             ))}
 
-            {empresasDoGrupo.length === 0 && (
+            {(empresasLoading || isErrorEmpresas || empresasDoGrupo.length === 0) && (
               <p className="text-sm text-slate-500 text-center py-4">
-                {isErrorEmpresas
+                {empresasLoading ? 'Carregando empresas vinculadas...' : isErrorEmpresas
                   ? 'Contagem de empresas indisponível (erro de carga ≠ zero).'
                   : 'Nenhuma empresa cadastrada'}
               </p>

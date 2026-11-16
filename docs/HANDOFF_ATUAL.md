@@ -1,3 +1,39 @@
+## Codigo organizacional e empresas no formulario: pacote em validacao (2026-11-16)
+
+Pedido atual: codigo sequencial e exibicao dos vinculos,semoperacional ou
+ampliarpermissoes. WIP proprio sobre a7bbf6c1,mesmabranchPR594;Cursor semcreditos,
+nenhum outro escritor observado. Codespace adiado por decisao do dono:nao
+reiniciar ou alterarBilling. HMLservida cf3ec502/CI7219 atepromocao propria.
+
+Leitura fisicaHML confirmou entity_code_sequences/reserve_entity_codigo,mas
+groups.codigo/empresas.codigo AUSENTES. Gate especifico solicitado:2colunas
+nullable+2indicesunicidade e atribuicao auditada aos3mestres existentes,sem
+novosgrants/roles/cargas. Aguardar resposta especifica antesDDL/atribuicao.
+Gerador reusa hml-owner-permissions;reversaSchema so aceita todoscodigosNULL,
+apos reversao auditada/CAS dosvalores. Nao aplicar migrationgeral.
+
+ServicoOrganizacional reusa reserveEntityCodigo e funcaocanonica:Grupo usa
+highwaterglobal+lockglobal;Empresa reserva porGrupo,largura3;preserva existente,
+lock/versao/auditoria/rollback,replaysemnovoefeito. Metodos INTERNOS semrotaHTTP
+para atribuicao/reversao:execucao administrativa somente aposgate;perfilAPP
+nao recebeuUPDATEcodigo. Reversao exige fingerprint integral e codigo exato,
+nao recua highwater. GETprojeta codigo nullable,compatibilidade preDDL.
+
+FormularioGrupo tinha mesmaqueryKey doFilialForm. TesteReact REAL montado
+comReactQuery/browserheadless efronteiras sinteticas reproduziu falha com
+cacheFilial;depois exibe2empresas checked/readonly,loading/erro,naozero,
+preserva IDs/vinculos/rejeicao e descarta cacheaposator/renovacaosessao.
+Nao equivale navegadorAuth/API/PG. CampoCodigo reusa componente existente nos
+doisformularios;nenhumcodigo inventado. Codigonaoeditavel peloPATCH.
+
+Checks locais audit/lint(2warns antigos)/typecheck/build raiz ebackendPASS;
+24focadosraiz/7PGlitePASS,antesfixcacheFAIL. Helpergolden apenasrecalculou
+hunks EXATOS dos2formularios;hashesancestrais inalterados,teste atual sempeel.
+FechamentoLinuxCI SHAexato obrigatorio pelaexcecaoWindows jaautorizada.
+Proximasacoes:CI/review,gateDDL seautorizado combackuprestore/rehearsal;
+promoverAPIwebHML pelo controlador,conferir salvar/reabrir e codigo/vinculos.
+Nao repetir clientes/contatos/enderecos nemensaio antigo semdelta.
+
 ## Organizacional HMLcf3 aplicado; retorno do proprietario (2026-11-16)
 
 API/web cf3ec50278f9c343ec560490d98258190f10771d / CI7219 SUCCESS servidos

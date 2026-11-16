@@ -7,6 +7,7 @@ import type { RbacGuard } from '../db/rbacGuard.js';
 import type { TenantGuard } from '../db/tenantGuard.js';
 import { PostgresEmpresaRepository } from '../repositories/postgresEmpresaRepository.js';
 import { isValidCnpj } from '../db/documentoValidators.js';
+import { reserveEntityCodigo } from '../repositories/reserveEntityCodigo.js';
 
 type Kind = 'GrupoEmpresarial' | 'Empresa';
 const uuid = z.string().uuid();
@@ -46,7 +47,7 @@ export class OrganizacionalService {
       if (ctx.empresaId && ctx.empresaId !== id) throw new AppError(403, 'COMPANY_SCOPE_DENIED', 'Company outside active context');
       row = await this.empresas.getById({ groupId: ctx.groupId }, id, q, lock) as Record<string, unknown> | undefined;
     } else {
-      const result = await q.query(`SELECT id,nome_do_grupo,razao_social_grupo,cnpj_grupo,status,observacoes,created_at,updated_at
+      const result = await q.query(`SELECT id,(to_jsonb(groups)->>'codigo') AS codigo,nome_do_grupo,razao_social_grupo,cnpj_grupo,status,observacoes,created_at,updated_at
         FROM groups WHERE id=$1 AND id=$2${lock ? ' FOR UPDATE' : ''}`, [ctx.groupId, id]);
       if (result.rows[0]) {
         row = { ...result.rows[0], created_at: new Date(result.rows[0].created_at).toISOString(), updated_at: new Date(result.rows[0].updated_at).toISOString() };
@@ -84,6 +85,51 @@ export class OrganizacionalService {
       for (const row of records) rows.push(await this.dto(kind, row, ctx, q));
       await this.authorize(ctx, kind, 'visualizar', q);
       return rows;
+    });
+  }
+
+  /** Maintenance only, no HTTP route: gated assignment to existing masters, never renumber. */
+  async assignMissingCodigo(ctx: RequestContext, kind: Kind, id: string, expectedVersion: string) {
+    ctx = Object.freeze({ ...ctx });
+    return this.db.withTransaction(async q => {
+      await this.authorize(ctx, kind, 'editar', q);
+      const before = await this.read(ctx, kind, id, q, true);
+      if (before.codigo) return this.dto(kind, before, ctx, q);
+      if (version(before) !== expectedVersion) throw new AppError(409, 'VERSION_CONFLICT', 'Reopen master before assigning code');
+      const codigo = await reserveEntityCodigo({ db: q, groupId: ctx.groupId, entityName: kind,
+        table: tables[kind], width: 3 });
+      const constraint = kind === 'GrupoEmpresarial' ? 'id' : 'group_id';
+      const saved = await q.query(`UPDATE ${tables[kind]} SET codigo=$1,updated_at=clock_timestamp()
+        WHERE id=$2 AND ${constraint}=$3 AND codigo IS NULL RETURNING id`, [codigo, id, ctx.groupId]);
+      if (saved.rows.length !== 1) throw new AppError(409, 'VERSION_CONFLICT', 'Code assignment rejected');
+      const after = await this.read(ctx, kind, id, q);
+      await this.audit.append({ groupId: ctx.groupId, empresaId: kind === 'Empresa' ? id : null,
+        actorId: ctx.actorId, entity: kind, entityId: id, action: 'update', beforeData: before,
+        afterData: after, requestId: ctx.requestId }, q);
+      await this.authorize(ctx, kind, 'editar', q);
+      return this.dto(kind, after, ctx, q);
+    });
+  }
+
+  /** Internal gated reversal: only the exact assignment postimage, never a later manual edit. */
+  async reverseAssignedCodigo(ctx: RequestContext, kind: Kind, id: string, expectedVersion: string, expectedCodigo: string) {
+    ctx = Object.freeze({ ...ctx });
+    return this.db.withTransaction(async q => {
+      await this.authorize(ctx, kind, 'editar', q);
+      const before = await this.read(ctx, kind, id, q, true);
+      if (!expectedCodigo || before.codigo !== expectedCodigo || version(before) !== expectedVersion) {
+        throw new AppError(409, 'VERSION_CONFLICT', 'Code reversal postimage changed');
+      }
+      const constraint = kind === 'GrupoEmpresarial' ? 'id' : 'group_id';
+      const result = await q.query(`UPDATE ${tables[kind]} SET codigo=NULL,updated_at=clock_timestamp()
+        WHERE id=$1 AND ${constraint}=$2 AND codigo=$3 RETURNING id`, [id, ctx.groupId, expectedCodigo]);
+      if (result.rows.length !== 1) throw new AppError(409, 'VERSION_CONFLICT', 'Code reversal rejected');
+      const after = await this.read(ctx, kind, id, q);
+      await this.audit.append({ groupId: ctx.groupId, empresaId: kind === 'Empresa' ? id : null,
+        actorId: ctx.actorId, entity: kind, entityId: id, action: 'update', beforeData: before,
+        afterData: after, requestId: ctx.requestId }, q);
+      await this.authorize(ctx, kind, 'editar', q);
+      return this.dto(kind, after, ctx, q);
     });
   }
 

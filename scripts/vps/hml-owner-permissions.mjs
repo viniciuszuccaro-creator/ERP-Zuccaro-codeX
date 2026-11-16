@@ -44,10 +44,33 @@ CREATE POLICY hml_org_edit ON ${schema}.${table} FOR UPDATE TO ${role}
  USING (${predicate[table]}) WITH CHECK (${predicate[table]});`).join('\n');
   const reverse = Object.entries(columns).map(([table, cols]) => `DROP POLICY hml_org_edit ON ${schema}.${table};
 REVOKE UPDATE (${cols.join(',')}) ON ${schema}.${table} FROM ${role};`).join('\n');
-  return { kind: 'HML_ORGANIZACIONAL_SQL_PLAN_NOT_EXECUTED', sql: guard + '\n' + changes,
+  return { kind: 'HML_ORGANIZACIONAL_SQL_PLAN_NOT_EXECUTED', guardSql: guard, sql: guard + '\n' + changes,
     reverseSql: guard + '\n' + reverse, columns, empresaIds: [...empresaIds], target: { ...expected },
     sqlSha256: digest(guard + '\n' + changes), changesRole: false, operationalAuthorized: false,
     requiresBackupRestoreReviewAndAbsentColumnPrivileges: true, requiresPostimageCasBeforeReversal: true };
+}
+
+/** Schema preparation only: assignment stays in OrganizacionalService, never in application startup. */
+export function prepareHmlOrganizacionalCodeSchema(expected, empresaIds) {
+  const { guardSql } = prepareHmlOrganizacionalSqlPermissions(expected, empresaIds);
+  const schema = `"${expected.schema}"`;
+  const sql = `${guardSql}
+ALTER TABLE ${schema}.groups ADD COLUMN codigo text NULL;
+ALTER TABLE ${schema}.empresas ADD COLUMN codigo text NULL;
+CREATE UNIQUE INDEX groups_codigo_unique ON ${schema}.groups(codigo);
+CREATE UNIQUE INDEX empresas_group_codigo_unique ON ${schema}.empresas(group_id,codigo);`;
+  const reverseSql = `${guardSql}
+DO $hml_code_reverse$ BEGIN
+ IF EXISTS(SELECT 1 FROM ${schema}.groups WHERE codigo IS NOT NULL)
+ OR EXISTS(SELECT 1 FROM ${schema}.empresas WHERE codigo IS NOT NULL)
+ THEN RAISE EXCEPTION 'CODES_REQUIRE_AUDITED_CAS_REVERSAL_FIRST'; END IF;
+END $hml_code_reverse$;
+ALTER TABLE ${schema}.empresas DROP COLUMN codigo;
+ALTER TABLE ${schema}.groups DROP COLUMN codigo;`;
+  return { kind: 'HML_ORGANIZACIONAL_CODE_SCHEMA_NOT_EXECUTED', sql, reverseSql,
+    sqlSha256: digest(sql), target: { ...expected }, empresaIds: [...empresaIds],
+    changesGrants: false, automaticBackfill: false, operationalAuthorized: false,
+    requiresAbsentColumnsBackupRestoreReview: true };
 }
 function validateTree(value) {
   assert.ok(value && typeof value === 'object', 'PERMISSION_TREE_REQUIRED');

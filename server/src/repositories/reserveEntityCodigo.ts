@@ -15,12 +15,16 @@ export async function reserveEntityCodigo(options: {
 }): Promise<string> {
   const width = options.width ?? 6;
   const incoming = typeof options.incomingCodigo === 'string' ? options.incomingCodigo.trim() : '';
+  const groupMaster = options.table === 'groups';
+  if (groupMaster) {
+    await options.db.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', ['master:groups:codigo']);
+  }
 
   await options.db.query(
     `WITH high_water AS (
        SELECT COALESCE(MAX(CASE WHEN codigo ~ '^[0-9]+$' THEN codigo::bigint END), 0) + 1 AS next_value
        FROM ${options.table}
-       WHERE group_id = $1
+       WHERE ${groupMaster ? '$1::uuid IS NOT NULL' : 'group_id = $1'}
      )
      INSERT INTO entity_code_sequences(group_id, entity_name, next_value)
      SELECT $1, $2, high_water.next_value FROM high_water

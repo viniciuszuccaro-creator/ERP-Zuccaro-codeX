@@ -1,3 +1,20 @@
+## Codigo de Grupo/Empresa e vinculos: implementacao em validacao (2026-11-16)
+
+MesmoPR594/branch,semnovoambiente. Reusa sequenciacanonica,servicoOrg e
+CodigoRegistroField. Reserva deGrupo highwaterglobal/lock,Empresa porGrupo,
+codigos imutaveis,IDpreservado,replay,CAS,auditoria atomica/reversa restrita.
+Semrotanova,grants ouatribuicao nofrontend. SchemaHML atual nao tem as2colunas;
+geradorDDLminimo+reversa preparados,gateespecifico perguntado NAOexecutado.
+
+DefeitoqueryKey compartilhada comFilial reproduzidoemReactmontado;corrigido
+cacheporform/ator/Grupo/Empresa/versao/geracaosessao,loading/errodistintos.
+Doisvinculos checkedreadonly,sem habilitar mutacao.24focadosraiz e7PGlitePASS;
+checks locaisaudit/lint/typecheck/buildPASS,2warningslintpreexistentes. Hashes
+goldenancestrais preservados;hunksform estendidos para deltaexato autorizado.
+SuiteLinuxCI propria aindaobrigatoria. NAOhomologado/aplicadoHML porisso.
+ProximaacaoCI/review e gatesbackup/rehearsal/DDL antescodigos;UI pode usar
+codigoNULLpreDDL sem inventar. Dadosreais0importados,operacionalintacto.
+
 ## Edicao organizacional HMLcf3: API/web e CI fechadas (2026-11-16)
 
 cf3ec50278f9c343ec560490d98258190f10771d/CI7219SUCCESS aplicado API/webHML

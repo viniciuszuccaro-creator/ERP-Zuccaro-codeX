@@ -5,6 +5,7 @@ import type { Empresa, EmpresaCreateInput, EmpresaRepository } from './empresaTy
 function mapRow(row: Record<string, unknown>): Empresa {
   return {
     id: String(row.id),
+    codigo: row.codigo == null ? null : String(row.codigo),
     group_id: String(row.group_id),
     razao_social: String(row.razao_social),
     nome_fantasia: row.nome_fantasia == null ? null : String(row.nome_fantasia),
