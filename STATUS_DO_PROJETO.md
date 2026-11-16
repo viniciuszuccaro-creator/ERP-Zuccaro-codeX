@@ -22729,6 +22729,13 @@ do mestre e anulava caller. Corrigido no expansor REAL para GrupoATUAL apenas;
 43focadosPASS, ID e group_id adulterados rejeitados para mestre semgroup_id.
 CI do sucessor deve fechar o conjunto;4a sozinho nao entrega o percurso.
 
+7207/4aSUCCESS;7208/bfc4freezes ancestrais falharam no delta aprovadoadaptador.
+Reconciliação exata em helperexistente, hashesancestrais preservados;42focos
+PASS com omissao/duplicacao/adulteracao e negativescope. Runtimebfc inalterado;
+audit/lint/typecheck/build anteriores reutilizados,CI sucessora obrigatoria.
+Fontebfc centralVPS verificada,nao deploy. PrintsBilling: franquiaOUorcamento,
+historico sempagamento; teto/consumo e liquidacao/preautorizacao desconhecidos.
+
 ContraprovasANTES2FAIL: badgeGrupo nao encontra mestre sem group_id; coluna
 Codigo substitui valor ausente pelo nome. Corrigido countFilter para incluir
 mesmo idgrupo do Visualizador;Codigo ausente permanece desconhecido. Mantidos

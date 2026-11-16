@@ -7,7 +7,7 @@ import ts from 'typescript';
 import React from 'react';
 import {renderToStaticMarkup} from 'react-dom/server';
 import {nativeDomEdits,nativeDomAttributeRemainder} from './helpers/nativeDomAttributeRemainder.js';
-import {mirrorInputAfter,httpMirrorAnnotationRemainder} from './helpers/httpMirrorAnnotationRemainder.js';
+import {mirrorInputAfter,httpMirrorAnnotationRemainder,httpGroupScopeRemainder,httpGroupScopeHunks} from './helpers/httpMirrorAnnotationRemainder.js';
 import {iaResponseValidationRemainder} from './helpers/iaResponseValidationRemainder.js';
 
 const hashes = [
@@ -26,7 +26,8 @@ const hashes = [
 const read=file=>fs.readFileSync(file,'utf8').replace(/\r\n/g,'\n');
 const emit=source=>ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext,jsx:ts.JsxEmit.React,removeComments:true}}).outputText;
 for(const [file,beforeHash] of hashes)test(`${file}: stage45 runtime retained outside exact numeric DOM attributes`,()=>{
-  const source=nativeDomAttributeRemainder(file,iaResponseValidationRemainder(file,read(file)));
+  const current = file === 'src/api/localBase44Client.js' ? httpGroupScopeRemainder(read(file)) : read(file);
+  const source=nativeDomAttributeRemainder(file,iaResponseValidationRemainder(file,current));
   assert.equal(crypto.createHash('sha256').update(emit(source)).digest('hex'),beforeHash);
 });
 
@@ -57,6 +58,16 @@ test('mirror annotation exception rejects missing or duplicate changes and canno
   assert.throws(()=>httpMirrorAnnotationRemainder(source.replace(mirrorInputAfter,'')));
   assert.throws(()=>httpMirrorAnnotationRemainder(source+'\n'+mirrorInputAfter));
   assert.match(httpMirrorAnnotationRemainder(source.replace('if (!groupId) return','if (groupId) return')),/if \(groupId\) return/);
+});
+
+test('self-group exact peel rejects missing duplicate or forged scope and preserves outside changes', () => {
+  const source = read('src/api/localBase44Client.js');
+  for (const [current] of httpGroupScopeHunks) {
+    for (const replacement of ['', current + current, current.replace('Group', 'ForeignGroup')]) {
+      assert.throws(() => httpGroupScopeRemainder(source.replace(current, replacement)));
+    }
+  }
+  assert.notEqual(httpGroupScopeRemainder(source + '\n// OUTSIDE_SCOPE\n'), httpGroupScopeRemainder(source));
 });
 
 test('actual mirror input contract accepts the complete producer projection and rejects invalid fields',()=>{

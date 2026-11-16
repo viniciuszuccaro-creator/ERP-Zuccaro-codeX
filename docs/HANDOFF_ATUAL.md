@@ -9,6 +9,22 @@ Codigo4a sozinho NAOfecha esse percurso; exigir CI do sucessor com adaptador.
 Sem alteracao do espelhoAuth, sessao, RBAC ou backend. Espelho nao e uma API
 de edicao organizacional persistente; nao declarar CRUDGrupo remoto completo.
 
+CI7207/4aSUCCESS. CI7208/bfc detectou4freezes ancestrais do adaptador (nao falha
+das novas contraprovas). Corrigida reconciliacao em helper de teste EXISTENTE:
+httpGroupScopeRemainder isola APENAS2hunks exatos (annot+extraGroupOr atual),
+sem mudar nenhum SHAancestral; recusa omissao/duplicacao/adulteracao e preserva
+deltaexterno.42testes das4suites afetadas+negativos PASS. Runtime nao mudou
+aposbfc; audit/lint/typecheck/build reutilizados por bytes/deps inalterados.
+Exigir CI do sucessor TESTES/docs, nao atribuir7207 ao bfc. Fontepublica bfc
+ja centralizada em incoming/empresa-bfc9fe4e/runtime-source.tar.gz com recibo,
+9198972bytes/SHAf9c222f1a41c074deafcea33ff4db56fa11f1bd44e33c08c5845b19a8618bc8f.
+Somente fonteGit,sem.git/creds/deps/dados;nao imagens prontas oudeploy.
+
+PrintsBilling recebidos: aviso mensal gratuito expirou OU orcamento excedido;
+historico nao registra pagamentos. NAOmostram teto/consumo Codespaces nem
+comprovam que lancamento do cartao foi liquidado oupreautorizacao. Falta linha
+Orcamentos e alertas/Codespaces,sem editar. Sem novo start ou aumento teto.
+
 Prints16/11 do dono: Empresas usa nome em Codigo; badgeGrupo0 apesar de seletor.
 ReproducaoANTES:2contraprovas falham em funcoes reais. Causas: countFilter nao
 inclui id=groupId do mestreGrupo sem group_id, diferentemente do Visualizador;
