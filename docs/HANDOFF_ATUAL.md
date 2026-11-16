@@ -1,3 +1,50 @@
+## Fonte central VPS: transporte organizado, v27/e920 ainda pendentes (2026-11-16)
+
+Diretriz do proprietario substitui o pedido anterior de copiar paraEmpresa:
+fonte primaria compartilhada de planos/kits/manifestos/recibos e a VPS.
+Area criada e conferida /root/erp-private/hml-recovery-20261114/shared-artifacts,
+indice inventory.private.json, verified/ e receipts/; destino unico preparado
+incoming/casa-v27-e92045a0/. Casa/Empresa consultam ESSE indice; copias locais
+nao podem ser unica fonte/requisito permanente. Procedimento no OPERACAO_DEV_VPS.
+
+Busca dirigida somente nomes pertinentes nos caminhos privados ate5niveis,
+excluindo volumesPG/backups/node_modules/acervo legado: nao localizou plano
+promotion-81d1e849.plan.private.json nem nomes e920. Nao prova ausencia global.
+Registros existentes indicam plano v27 e runtime-e92045a0-candidate apenasCasa,
+cujo filesystem/canal nao e acessivel daqui; nao declarar fonteCasa revalidada.
+81d1e849 JA estavaVPS,4021749bytes/SHA
+1fcdf8501502256d797190752ba23a570073fb2fcfb20be58b14d3e4d53af8d3 conferidos.
+Nao retransferido nem apresentado como e920. Originais/fontes preservados.
+
+Centralizado UNICAMENTE recibo indispensavel da verificacao externaEmpresa,
+2381bytes/SHA24a258b65f3107227d901c90b529521068c747da597517568afbd6daa59f97d9;
+origem/destino iguais, JSON conferido contra campos/valores de credenciais.
+Sem backup/.env/chave/token/config provider, dados de clientes ou outros
+arquivos. Indice central SHA
+3bb73b858e1740d12e1dc65799dbe3cceae5d76e32d8bf85a86b7d7714b3b841.
+14recibos de metadata/catalogo JA existentesVPS apenas referenciados por hash,
+sem duplicar ou tratar observacoes historicas como frescas. Registro privado
+receipts/dependency-references-20261116.private.json,5544bytes/SHA
+43667f036126b7f7c0a408cc4ca900b47ed0a6d7f23ae7d06f6620af9c1d6788.
+Demais contratos/recibos somenteCasa: enumeracao exata depende do plano v27,
+nao copiar .codex ou criar manifestos substitutos. Kit38obsoleto nao transferido.
+
+Somente novos diretorios0700/arquivos0600 root no ancestral privado comprovado;
+nenhum chmod/chown/ACL existente ampliado. Escrita exclusiva no transporte e
+verificacao SHA independente posterior, trava propria liberada. Primeira chamada
+teve erro de sintaxe Python ANTES de executar; corrigida sem efeito parcial.
+Nao confundir essa preparacao com recebimento v27/e920: indice marca false.
+Pedido UNICO vigente: tornar executorCasa/fonte acessivel para envio diretoVPS
+pelo canal autorizado; sem nova autorizacao generica, transferencia duplicada
+ou etapa permanente naEmpresa. Hash v27 desconhecido permanece desconhecido;
+kit esperado2216arquivos/17887136bytes/filesSha077bb96a16d80278d68ab3083eec003085326e6710a525161dd3b6690f9d4269.
+
+Nenhum SQL/consultaDB, seed, carga, importacao, deploy, novo usuario/chave/porta,
+servico ou custo. Backups externos/retencao mantidos; centralizacao nao e offsite.
+Proximo: fonteCasa acessivel->unico transporte selecionado->verificar todos
+hashes/manifestos/marcadores->registrar recibo central->retomar gate do ensaio.
+Revisao/overlay/DDL/ativacao/publicacao mantem gates separados.
+
 ## Retomada Empresa: backup atual comprovado e revisao Casa (2026-11-16)
 
 Executor DELL-VINI/Empresa, clone INTERNO comparacao-20261017, origem canonica.

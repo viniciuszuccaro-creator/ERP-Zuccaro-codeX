@@ -1,3 +1,22 @@
+## Fonte central privada na VPS estabelecida (2026-11-16)
+
+Diretriz corrigida em OPERACAO_DEV_VPS: planos/kits/recibos indispensaveis na
+VPS compartilhada, nao copia exclusiva Casa/Empresa. Area confirmada
+/root/erp-private/hml-recovery-20261114/shared-artifacts, indice inventory.private.json,
+recepcao incoming/casa-v27-e92045a0. Originais imutaveis/sem overwrite.
+81d1e849 JA naVPS,4021749bytes/SHA1fcdf850...conferidos, nao retransferido.
+v27/e920 NAO localizados nos caminhos consultados; ultimosregistrosCasa,
+acessoCasa nao comprovado. Plano/kit continuam pendentes, nao recebidos.
+Pedido anterior de copiar paraEmpresa substituido por transferencia DIRETAVPS
+assim que executor/fonteCasa estejam acessiveis; transporte ja autorizado.
+Recibo indispensavelEmpresa2381bytes/SHA24a258b6...centralizado e verificado;
+14recibosmetadata existentes referenciados por SHA sem duplicar. Sem .env,
+credenciais, backups ou dados copiados. Novos caminhos privados0700/0600;
+nenhuma permissao existente ampliada, nenhuma consultaSQL/carga/deploy.
+BackupexternoEmpresa/retencao preservados. Restantes dependencias locais serao
+enumeradas pelo plano original, sem varrer/copy .codex. Proximo: verificar
+recebimento/hash central dos originais e retomar decisao especifica do ensaio.
+
 ## Empresa: backup HML atual verificado, revisao Casa concluida no alcance IA (2026-11-16)
 
 Retomada cloneinterno limpo branch EXISTENTE codex/casa-fechamento-hml-20261114

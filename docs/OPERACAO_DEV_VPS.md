@@ -1,5 +1,53 @@
 # Operação DEV: GitHub, Codex, Cursor e VPS
 
+## Fonte central privada compartilhada - Casa e Empresa (2026-11-16)
+
+Diretriz vigente do proprietario: GitHub continua fonte oficial do codigo,
+testes e configuracao reproduzivel sanitizada. Planos privados, kits imutaveis,
+manifestos e recibos indispensaveis a continuidade devem ter fonte persistente
+compartilhada na VPS, nao depender exclusivamente de Casa ou Empresa.
+Nao copiar a pasta .codex, checkout/historico Git ou diretorios inteiros sem
+selecao. Credenciais/.env/configuracoes sensiveis ficam no mecanismo privado
+existente, fora dos pacotes. Isso nao autoriza SQL, carga, DDL ou deploy.
+
+Area central confirmada:
+`/root/erp-private/hml-recovery-20261114/shared-artifacts/`.
+Indice privado `inventory.private.json`; comprovantes em `receipts/`;
+arquivos conferidos em `verified/`; recepcao unica em
+`incoming/casa-v27-e92045a0/`. Diretorios novos root0700/arquivos novos0600,
+sem modificar permissoes existentes ou criar usuarios/chaves/portas/publicacao.
+Usar apenas canais existentes autorizados e disponiveis no executor; acesso
+Empresa nao comprova acesso Casa. Nao copiar credenciais entre computadores.
+
+Antes de solicitar transporte, consultar indice/recibos centrais e os caminhos
+documentados. Se bytes/SHA/fonte/versao ja conferidos, reutilizar a copia: nao
+transferir novamente. Receber somente selecao nomeada, sem overwrite ou links;
+conferir tamanho/SHA na origem e destino, cada arquivo do manifesto e marcadores
+API/web. Kit imutavel nao pode ser reconstruido/relabelado como o original.
+Arquivo parcial ou sem recibo nao vira recebido/validado; manter em incoming.
+Versao/hash desconhecidos continuam pendentes. Nunca substituir e920 pelo81.
+Transportes usam trava exclusiva propria, liberada ao concluir; recibos
+imutaveis novos, sem reescrever historicos. Nao executar conteudo recebido.
+
+Situacao16/11:81d1e849 JA centralizado/conferido no caminho original, nenhuma
+retransferencia. v27 e e920 ainda NAO recebidos: os registros indicam origem
+Casa e nenhum exemplar foi localizado nos caminhos privados consultadosVPS.
+Pedido anterior de copia paraEmpresa foi substituido por transporte DIRETO
+Casa->VPS, ja autorizado neste escopo, quando fonte/canal forem acessiveis.
+Hash/versao do plano devem vir da origem; nao inventar hashv27. Indice central
+conserva pins conhecidos do kit e faltas. Dependencias adicionais devem ser
+enumeradas SOMENTE pelos caminhos do plano recebido, nunca busca por segredos.
+
+14recibos de catalogo/metadata ja existentesVPS referenciados por bytes/SHA em
+`receipts/dependency-references-20261116.private.json`, sem copiar novamente.
+Recibo da verificacao externaEmpresa tambem centralizado em verified/, nao o
+backup. Copias locais podem ser temporarias; nunca a unica fonte permanente.
+Centralizacao NAO substitui backup externoEmpresa nem modifica sua retencao.
+
+Proximo: receber/conferir originais v27/kit e920 e seus recibos, registrar
+localizacao/digests centrais e so entao retomar decisao especifica do ensaio.
+Organizacao/transporte/verificacao nao aprovam overlay, importacao ou deploy.
+
 ## Backup automatico e recuperacao da HML
 
 Pacote de manutencao fdaed341, CI6990/6991SUCCESS; nao muda o runtime API/web
