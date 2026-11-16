@@ -1,3 +1,22 @@
+## Ensaio restaurado5e concluido e escopo de publicacao separado (2026-11-16)
+
+CI7198SUCCESS confirmado. Usado o kit5e ja centralizado, sem transferir/refazer.
+Catalogo atual viahelperHML/READONLY/ROLLBACK: contatos e constraint200 compativeis,
+semDDL045; indice identidade legado ausente entre9indices;11policies proprias
+preservadas. App sem superuser/BYPASSRLS/createdb/createrole. Coluna existente
+endereco_incompleto atende UPDATE do delta; permissaoSQL nao substitui RBAC.
+Revisao independenteIA estatica dos recortes fiscal/entrega:0novos bloqueadores.
+Preflight5e real passou e depois repetido JUSTIFICADAMENTE no destino restaurado:
+mesmo backup verificado16/11,16tabelas/provas por valores iguais, poolAPI=Auth,
+perfil/Grupo/DB/schemaOID/cluster/login conferidos e ROLLBACK. Globals/roles
+intactos, base temporaria encerrada; zero carga naHML atual/operacional.
+Nao e navegador/AuthHTTP nem igualdade backup->fonte atual. Recibos privados
+centrais e classificacao recuperavel/Casa/obsoleto/nova revisao no HANDOFF.
+Casa nao bloqueia preparacao sucessora para Cadastros; Comercial completo ainda
+exige delta12relacoes/privilégios/ensaio. Publicacao restrita5e semDDL/grants
+preparada para decisao especifica, com backupfresh/ack/reversao d054 na janela.
+HML permanece d054e2b3, nao publicado5e; zero importacoes/ativacoes reais.
+
 ## Runtime aprovado centralizado para ensaio HML (2026-11-16)
 
 5e0d11c3/CI7197SUCCESS confirmado. v27/e920 ainda nao recebidos no indice e

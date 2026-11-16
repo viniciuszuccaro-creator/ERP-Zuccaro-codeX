@@ -1,3 +1,58 @@
+## Ensaio5e executado em copia restaurada, sem dependencia de Casa (2026-11-16)
+
+CI7198 SUCCESS confirmado para85e88151; runtime5e0d11c3/CI7197 intacto.
+Nenhuma transferencia/reconstrucao do kit repetida. Leitor do catalogo usou o
+helperHML existente, config privada e atestacao container/imagem/rede/mount/
+cluster/DB; transacoes READ ONLY/ROLLBACK, sem consultas a dados de clientes.
+
+Contratos atuais: contatosJSONB nullable/defaultNULL e constraint validada200
+MATCHES_CANONICAL_DEFINITION pelo reviewHmlClienteContracts existente. Nao ha
+DDL de coluna/constraint justificada045. Indice legacy_identity ausente, sem
+equivalente entre os9indicesCliente:043 permanece gate de reconciliacao antes
+de criar indice/importar; nao bloqueia por si leitura/revisaoClienteLocal.
+Onze policiesHML proprias preservadas:042 NAO deve substitui-las por inteiro.
+Principal app conferido sem superuser/BYPASSRLS/createdb/createrole. Metadata
+atesta coluna endereco_incompleto boolean NOTNULL e UPDATE ja concedido ao
+principalSQL; isso NAO concede editar/restaurar ao perfilRBAC.
+
+Revisao independente deIA, somente leitura: recortes ClienteLocalService,
+ClienteLocaisRevisao e opt-inENTREGA d054..5e, sem novos achados bloqueadores;
+limite estatico, nao review humano nem prova navegador/Auth/banco integrado.
+Repositorio REAL postgresClienteLocalRepository muda mapeamentoNULL/pais e
+UPDATE endereco_incompleto existente, nao novas colunas. Recibo sucessor-r2
+corrige nome de caminho usado inicialmente; anterior preservado, nao usar a
+afirmacao anterior de SQL inalterado.
+
+Ensaio concreto: backup existente hml-20261116T063042Z-7dd7ecdb reutilizado,
+sem novo dump/carga daHML. Restore em base temporaria hml_trial_5e0_50ce100777de
+no PG privado pinado;16tabelas comparadas por valores/provas do backup.
+Preflight do bootstrap DO KIT5e executado com imagemNode existente, sem rede/
+portas/servidor, read-only/192MiB/0.10CPU, poolAPI=Auth, perfil/Grupo/schemaOID/
+cluster/login conferidos, ROLLBACK forcado. Roles invariantes; globals.sql NAO
+aplicado. Base temporaria/config copiada removidas depois do sucesso; origem,
+100clientes,1500inativos,4200contatos e217locais nao reimportados/ativados.
+Isso prova copia do backup, NAO igualdade atual da fonte nem browser/AuthHTTP.
+
+Recibos centrais em shared-artifacts/receipts/: schema-current-5e0-20261116,
+schema-policy-index-5e0-20261116, preflight-5e0-20261116,
+successor-preparation-5e0-20261116-r2 e restored-preflight-5e0-20261116
+(todos .private.json). Restore receipt SHA30198bc78ae1b30af52d78b5405ff6c8639ecf3b64f86b5fd0492d9e153ea6f0.
+
+Classificacao do planoCasa: codigo/pins/config/identidade/catalogo/backup e
+procedimento sao recuperaveis pelas fontes centrais; bytes/hash/lista exata de
+refs e conclusoes historicasv27 ainda dependem dos originais; kit e920 sozinho
+e obsoleto para deltas5e. Preparacao sucessora identificada, nao v27 inventado.
+Para Cadastros/revisao inativa, Casa deixa de ser bloqueio tecnico universal.
+Para Comercial completo faltam12relacoes, delta minimo em copia e privilegios
+exatos;044 nao e autorizacao para aplicar migrations/journal por inteiro.
+
+Proxima decisao especifica preparada: atualizar API+webHML para5e SOMENTE com
+aceite do escopoCadastros existente, semDDL/grants/carga/ativacao, backup fresco
+pareado/ack e reversao parad054 na janela. Preflight/CI nao autorizam publicar.
+Depois da autorizacao: specs/pins/backupfresh, troca pareada, login/contexto,
+fiscal/entrega em leitura e saudeoperacional; sem declarar Comercial completo.
+HML segue d054e2b3; nenhum deploy, grant ou escrita de negocio executado.
+
 ## Preparacao central do runtime aprovado, sem esperar Casa (2026-11-16)
 
 CI7197 SUCCESS no SHA5e0d11c3f3a8956477656cda359acf6bc895c906:
