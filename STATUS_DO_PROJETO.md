@@ -1,4 +1,21 @@
-## Codigo de Grupo/Empresa e vinculos: implementacao em validacao (2026-11-16)
+## HMLfb1: vinculos e salvar/reabrir validados; codigos condicionados (2026-11-16)
+
+fb1d512c/CI7223SUCCESS aplicadoAPI/webHML em20:01UTC. HTTPS/marcadores/
+assetSHA/anonimo401PASS;16tabelas identicas,PG/ERPDEVmesmosIDs/saudaveis.
+Backup194609Z-28e5a9a6 restaurado+externoACK;cf3 preservado parado.
+TesteHMLAPP dominio/PG:3savessemalteracoes+reabrirporpoolnovo,2vinculos,
+negativasCodigo422/crossEmpresa403/editarGrupoemEmpresa403PASS.16fingerprints
+inalterados. SemnovoDDL/grants/codigos/importacao/ativacao/operacional.
+ProvaReactmontada ePGnativo CI tambemPASS;nao declararBrowserBearerE2E.
+Aceitevisual novo solicitado;codigos aguardam gate2colunas+indices/3mestres.
+
+Sucessor backendinterno:reversaCodigo exige recibo exato da atribuicao original,
+NULLanterior/postimagecompleta/requestId;nega lotealheio oucodigoexterno sem
+auditoria.7PGlite/typecheck/buildPASS;CIpropriaantesuso. NAOaplicadoHML e
+semendpointHTTP;usar sucessor ao executar futuramente os codigos autorizados.
+Dadosreais importados0;100ativos/1500inativos/4200contatos/217locais preservados.
+
+## Codigo de Grupo/Empresa e vinculos: historico de validacao (2026-11-16)
 
 Cachevinculos inclui instanciaeditor(useId)+gcTime0: reabertura aposrenovacao
 exige nova consulta,semtokenemquerykey. ContraprovaReactmontadoPASS. Backup

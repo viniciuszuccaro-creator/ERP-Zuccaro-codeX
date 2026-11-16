@@ -1,4 +1,37 @@
-## Codigo organizacional e empresas no formulario: pacote em validacao (2026-11-16)
+## HMLfb1 aplicada: vinculos testados; codigo aguarda gate (2026-11-16)
+
+API/web fb1d512c5598390a7df0f62da97b41f7e798cc4c/CI7223SUCCESS servidos
+em20:01UTC/17:01Brasilia. URL https://hml-erp.cpaferroeaco.com.br/cadastros .
+Backup194609Z-28e5a9a6 restaurado/externoACK;16fingerprints iguais,PG/ERPDEV
+mesmosIDs/saudaveis. Recibo promotion-fb1d512c-20261116-r1. cf3 preservado
+parado para reversao;configbackup apontaapi-published-fb1d512c-config.private.json.
+Kit2220arquivos/17922947bytes,TAR3980521bytes/SHA
+90e6bbfd5dccf2466e0d235564111943b1658cdb744453f795c229be0050b330.
+
+Prova na HML PRINCIPAL APP real+RBAC/tenant/preflight:3savesSEMALTERACOES,
+reabertura porpoolindependente,2vinculos preservados;PATCHcodigo422,empresa
+alheia403,editarGrupo emEmpresa403.16fingerprints permaneceramidenticos,
+semnovaauditoria indevida. Recibo privado incoming/empresa-fb1d512c/
+noop.receipt.private.json. NAO e prova Bearer/browser. TesteReactmontado
+comfronteirassinteticasPASS eCIinclui PGnativo concorrente/replay/reversa.
+Aceite visual do blocoempresas/reabertura pedido ao dono,pendente.
+
+NAOexecutar codigo pelo meroCIverde:DDL2colunas+indices e atribuicao3mestres
+aguardam gate especifico solicitado. SQLplano em incoming/empresa-ba90e041/
+codes-schema.plan.private.json. Sequenciacanonicadisponivel/nenhumcontador
+Org preexistente;SELECTtabelaAPPherdavel confirmado,nenhumUPDATEcodigo dado.
+Sem novascolunas/grants/codigos/carga/enderecoativado/operacional nestaetapa.
+
+Revisao adicional do backend preparado: reversa passa a exigir REQUEST_ID
+da atribuicao original+before.codigoNULL+after integral EXATO no audit_logs,
+alem codigo/fingerprint. Negativas lotealheio e codigoexterno semreciboPASS;
+7PGlite/typecheck/buildPASS. Este delta INTERNO semrotaHTTP e sucessor dofb1,
+nao aplicadoHML;exigirCI propria. Nao usar reversaantiga na atribuicao futura.
+Proximaacao liberada:fecharCIreview sucessor;aposgate,backupfresh/rehearsal,
+DDLminimo+versoesrecalculadas+atribuir/auditar/replay/reversa restrita3mestres,
+sem novosgrants;kitdoSUCESSOR antes executar. Nao repetir importacao100.
+
+## Codigo organizacional e empresas no formulario: historico de validacao (2026-11-16)
 
 Ultimocontraponto de sessao: geracao local sozinha reiniciava em0 ao reabrir.
 Querykeyagora inclui useId por instancia e gcTime0,semguardar token emcache.

@@ -49,10 +49,15 @@ test('native PostgreSQL: concurrent organizational codes, rollback, replay and p
     assert.equal((await db.query('SELECT count(*)::int AS n FROM audit_logs')).rows[0].n, 2);
     assert.deepEqual(await service.get(ctx, 'Empresa', a), assigned[0]);
     const changed = await service.update(ctx, 'Empresa', a, { expected_version: assigned[0].version, nome_fantasia: 'Manual synthetic edit' });
-    await assert.rejects(service.reverseAssignedCodigo(ctx, 'Empresa', a, String(assigned[0].version), String(assigned[0].codigo)), { code: 'VERSION_CONFLICT' });
+    await assert.rejects(service.reverseAssignedCodigo(ctx, 'Empresa', a, String(assigned[0].version), String(assigned[0].codigo), ctx.requestId), { code: 'VERSION_CONFLICT' });
     assert.deepEqual(await service.get(ctx, 'Empresa', a), changed);
-    const reversed = await service.reverseAssignedCodigo(ctx, 'Empresa', b, String(assigned[1].version), String(assigned[1].codigo));
+    await assert.rejects(service.reverseAssignedCodigo(ctx, 'Empresa', b, String(assigned[1].version), String(assigned[1].codigo), 'wrong-run'), { code: 'ASSIGNMENT_RECEIPT_REQUIRED' });
+    const reversed = await service.reverseAssignedCodigo(ctx, 'Empresa', b, String(assigned[1].version), String(assigned[1].codigo), ctx.requestId);
     assert.equal(reversed.codigo, null); assert.equal(reversed.id, b);
+    await db.query('UPDATE empresas SET codigo=$1 WHERE id=$2', ['900', b]);
+    const external = await service.get(ctx, 'Empresa', b);
+    await assert.rejects(service.reverseAssignedCodigo(ctx, 'Empresa', b, String(external.version), '900', ctx.requestId), { code: 'ASSIGNMENT_RECEIPT_REQUIRED' });
+    assert.deepEqual(await service.get(ctx, 'Empresa', b), external);
   } finally {
     await db.end();
     if (created) { assert.match(schema, /^org_[a-f0-9]{32}$/); await admin.query(`DROP SCHEMA ${schema} CASCADE`); }

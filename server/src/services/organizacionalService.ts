@@ -112,7 +112,7 @@ export class OrganizacionalService {
   }
 
   /** Internal gated reversal: only the exact assignment postimage, never a later manual edit. */
-  async reverseAssignedCodigo(ctx: RequestContext, kind: Kind, id: string, expectedVersion: string, expectedCodigo: string) {
+  async reverseAssignedCodigo(ctx: RequestContext, kind: Kind, id: string, expectedVersion: string, expectedCodigo: string, assignmentRequestId: string) {
     ctx = Object.freeze({ ...ctx });
     return this.db.withTransaction(async q => {
       await this.authorize(ctx, kind, 'editar', q);
@@ -120,6 +120,10 @@ export class OrganizacionalService {
       if (!expectedCodigo || before.codigo !== expectedCodigo || version(before) !== expectedVersion) {
         throw new AppError(409, 'VERSION_CONFLICT', 'Code reversal postimage changed');
       }
+      const receipt = await q.query(`SELECT entity_id FROM audit_logs WHERE group_id=$1 AND entity=$2
+        AND entity_id=$3 AND request_id=$4 AND action='update' AND before_data->'codigo'='null'::jsonb
+        AND after_data=$5::jsonb`, [ctx.groupId, kind, id, assignmentRequestId, JSON.stringify(before)]);
+      if (receipt.rows.length !== 1) throw new AppError(409, 'ASSIGNMENT_RECEIPT_REQUIRED', 'Exact original code assignment receipt required');
       const constraint = kind === 'GrupoEmpresarial' ? 'id' : 'group_id';
       const result = await q.query(`UPDATE ${tables[kind]} SET codigo=NULL,updated_at=clock_timestamp()
         WHERE id=$1 AND ${constraint}=$2 AND codigo=$3 RETURNING id`, [id, ctx.groupId, expectedCodigo]);
