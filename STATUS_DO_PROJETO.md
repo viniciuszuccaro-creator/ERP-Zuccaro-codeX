@@ -22722,6 +22722,37 @@ Browser autenticado/sessao/aceite visual desta versao ainda pendentes; controle
 local/nativo kernelassets/oserror3. Janela ate12:10Z/09:10Brasilia, nao permanente.
 Proximo: aceite UI atual, depois componentes pendentes de enderecos e bindings;
 1500 continuam INATIVOS. Completude integral e pacoteVPS NAO declarados prontos.
+## 2026-11-16 - HML atualizada para2f apos autorizacao especifica
+
+API/web2f1e1875/CI7210SUCCESS servidos em hml-erp.cpaferroeaco.com.br, marcadores
+e assetSHA conferidos porHTTPS,Cliente anonimo401.16fingerprints detabelas
+inalterados,PG/ERPoperacional IDsiguais/saudaveis. Backupfresh164547Z-9adead7a
+restaurado/verificado/externoEmpresa+ack.0cargas/ativacoes/DDL/grants/codigos.
+fba anterior parado/conservado para reversao;configbackup acompanha2f.
+Primeira tentativa reverteu poraliaserp-api nao preservado no driver;R2corrige
+aliasEXATO e provaDNS antes doweb. Falha/rollback e sucesso preservados privados.
+Aceite visual Grupo/Empresa solicitado,pendente. Codigo001/002 exige contrato
+persistente/reserva/projecao/fonte/gate separado;nao inventado na interface.
+HTTP/VPSantes70/119/7ms,apos28/54/7ms:amostrasunicas,nao provam ganho noPC.
+Proximo:aceite real e CodigoEmpresa/auxiliares;matriz48 distingue HTTP/local.
+
+## 2026-11-16 - Kit compilado2f central e disponibilidade real conferida
+
+2f1e1875/CI7210SUCCESS empacotado pelo script existente em checkout limpo:
+2216arquivos/17899408bytes verificados integralmente por tamanho/SHA naVPS;
+TAR3973751bytes/SHA d4d3c914e1713051ba7aca64e2bf7bbb484a94ea9759b1b37cc20c239b1a4b1f.
+shared-artifacts/incoming/empresa-2f1e1875/runtime-candidate.tar.gz+recibo.
+Sem dados/.env/carga/DDL/deploy. Gate especifico API/webHML2f solicitado;
+reversao fba,backupfresh e recuperacao condicionam aplicacao.Nao repetir ports.
+API eweb atuais fba confirmados separadamente porHTTPS;Cliente anonimo401.
+
+Matriz48entidades:5pilotoHTTP/3espelhosAuth/40compatibilidadelocal;nao prova
+contagem real HML nem recuperacao. CodigoEmpresa ainda semschema/projecao;
+001/002 nao simulados. MedicaoHTTPSnaVPS:HTML70ms/JS119ms/marcador7ms,JSgzip
+1066685bytes;nao medicaoPC/browser/APIautenticada nem ganhoantes/depois.
+Originais100/ensaios1500inativos/4200contatos/217locais preservados;nenhuma
+reativacao ou importacao. Proximo: gate/atualizacao2f,aceite e contratoCodigo.
+
 ## 2026-11-16 - Grupo e Codigo: duas causas reproduzidas e corrigidas
 
 Codigo final798c2d6b/CI7209SUCCESS (frontend/backend/composicaoPostgreSQL),

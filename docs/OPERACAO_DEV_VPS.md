@@ -1,5 +1,18 @@
 # Operação DEV: GitHub, Codex, Cursor e VPS
 
+## HML2f aplicada em16/11, sem alterar dados
+
+API/web2f1e1875/CI7210SUCCESS, mesmaURLHTTPS/porta privada/banco/Auth. Recibo
+promotion-2f1e1875-20261116-r2 no rootprivado existente. Dados16tabelas iguais,
+backupfresh+restauracao+externoEmpresa antes. Configbackup aponta2f;fba guardado
+parado para reversao. Nenhum DDL/grant/carga/ativacao/codigo atribuido.
+Ao reproduzir promocao preservar TAMBEM NetworkSettings.Networks.Aliases do
+inspect: Nginxexistente usa erp-api. Primeira tentativa omitiu alias e reverteu;
+R2 conserva aliases e exigeDNSdoalias apontandoAPI nova antes de subiro web.
+Nao substituir por nome do container, editarproxy ou alterar rede para ocultar
+falha. Preservar CapAddWEB e demais limites conforme alcance do gate anterior.
+Aceite navegador e CodigoEmpresa continuam etapas distintas, nao inferidos deCI.
+
 ## Perfil do dono HML com catalogo explicito (2026-11-16)
 
 Autorizacao de16/11 substitui limite de leitura APENAS no perfilHML existente:

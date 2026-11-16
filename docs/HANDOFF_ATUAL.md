@@ -1,3 +1,78 @@
+## API/web HML2f aplicados; dados preservados (2026-11-16)
+
+AUTORIZACAO SIM recebida e executada em16:55UTC/13:55Brasilia. HML serve
+2f1e18752f9a201f4fba178b904f4c9fb483ae09/CI7210SUCCESS, API/web separados
+conferidos porHTTPS, assetprincipal porSHA e Cliente anonimo401. Fingerprints
+integrais16tabelas iguais antes/depois; PG/ERPoperacional mesmosIDs/saudaveis.
+0cargas/0enderecosativados/0DDL/grants. Originais100/1500inativos/4200contatos/
+217locais preservados. Codigo001/002 NAOatribuido, nenhuma empresa/grupo criado.
+
+Backupfresh hml-20261116T164547Z-9adead7a/restauracao16tabelas/copiaexternaEmpresa
+e ack conferidos. API/webfba conservados parados com sufixo
+before-2f1e1875-20261116-r2. Configbackup aponta api-published-2f1e1875-config.
+private.json (mesmaAuth/banco/namespace/perfil;soSHAalterado no confignovo).
+Recibo central promotion-2f1e1875-20261116-r2/promotion.receipt.private.json.
+Indice privado atualizado currentHml/previousHml, sem reescrever recibos.
+
+Primeira tentativa FALHOU web: driver nao preservou aliasERP-api existente
+`erp-api`, usado no nginx.conf. API novaREADY masNginx upstreamnaoresolvia.
+Rollback automatico confirmado HTTP200/fba, IDsoriginais restaurados. Logs/
+scripts/recebidos preservados em promotion-2f1e1875-20261116 e incoming2f.
+R2 preserva aliasesEXATOS doinspect e provaDNS apontandoAPI nova antes doweb;
+mesmasCapabilities/limites/mounts/rede/porta. Nao mudouNginx/Caddy/DNS/publicacao
+deporta. Primeiro material/backup reutilizados somente apos novo CAS integral;
+nao reimportou, nao refezpack nem alterou fonte para mascararfalha.
+
+Aceite navegador solicitado ao dono: recarregarCadastros, abrirGrupo/Empresas,
+conferirGrupoCPA eCodigoausente como traco,naonome. Nao editarGrupo/Empresa ou
+ativarenderecos nesta conferência; CRUDorganizacional remoto nao comprovado.
+Sem controlevisual,nao declarar browserautenticado aprovado porHTTP/CI.
+Depoismesmo3GETs/VPS:HTML28ms,JS54ms/marcador7ms,JSgzip1066769bytes/cache604800.
+Antes70/119/7ms. Amostrasunicas/condicoesHTTP,nao ganhoUI/APIautenticada provado.
+
+Historico da preparacao abaixo; gate descrito como pendente ja foi concluido
+SOMENTE no escopo API/web2f. ContratosCodigo/DDL/dados continuam separados.
+
+HEAD2f1e18752f9a201f4fba178b904f4c9fb483ae09/CI7210SUCCESS, runtime igual ao
+codigo798/CI7209. Checkout limpo/sem outro escritor observado; nenhuma branch
+ou candidata nova. Reutilizado scripts/vps/package-hml-runtime.mjs,sem.env local,
+sem Codespace/build naVPS compartilhada. API compilada+web+dependencias exatas,
+marcador API/web2f PUBLISHED_CLEAN.2216arquivos/17899408bytes, manifesto SHA
+76c0b1fb6d36e2c50aa974a06e7ef7bfd9ba20165be10dd6e3ce4e017cb5a60b.
+Kit central shared-artifacts/incoming/empresa-2f1e1875/runtime-candidate.tar.gz,
+3973751bytes/SHA d4d3c914e1713051ba7aca64e2bf7bbb484a94ea9759b1b37cc20c239b1a4b1f.
+Todos arquivos conferidos no TAR por tamanho/SHA e conjunto exato do manifesto;
+sem links/traversal/segredos/dados. runtime.receipt.private.json central.
+
+Gate especifico (historico da preparacao): atualizar APENAS API/webHML2f, apos backupfresh,
+revisao/recuperacao/reversao fba,semDDL/grants/carga/ativacao/operacional. Nao
+executado enquanto aguarda. API/web fba confirmados INDEPENDENTEMENTE por
+HTTPS /health e /.well-known/erp-version.json;Cliente anonimo401. HML/ERPDEV
+containers running no preflight;29.17GBdisponiveis/12276960inodes livres. Nao
+e capacidade historica ou autorizacao para outro banco/servico.
+
+Nova matriz derivada SOMENTE de contratos existentes:48entidades dos6blocos;
+5pilotoHTTP,2espelhos tenantAuth,1espelho perfilAuth,40compatibilidadelocal.
+Fonte: runtimeBackend/base44Client/cadastrosAllCountsCore; JSONprivado central
+cadastros-transport-readiness.private.json SHA
+e00001f4d8b34c2c55fa6da37e987e3aa2be979fe77f9f193fe91a7649516714.
+NAO e inventario de registros reais/tabelas nem prova de migracao. Zero local
+nao prova ausencia HML;Produto possui capacidadesHTTP separadas mas grid/count
+nao estao no piloto. Nao ligar flags/grants ou importar seeds por inferencia.
+
+Medicao inicial3GETsHTTPS daVPS,nao navegador: HTML200/gzip1030bytes/70ms;
+JSprincipal200/gzip1066685bytes/119ms/cache604800s;marcador200/226bytes/7ms.
+Compressao/cache existentes,nenhum ajuste efetuado. Sem medida de render/API
+autenticada,antes/depois ou ganho noPCdono. Receipts/hml-http-startup-baseline-
+20261116.private.json preserva condicoes;nao teste de carga.
+
+Fila finita:gateAPI/web2f -> aceite Grupo/Codigo semfallback -> contrato
+persistente Empresa.codigo/geracao/reserva/projecao e001/002 poridentidade
+aposfonte/conflitos/gateDDL -> auxiliaresHTTP ausentes/permissaoMarca ->
+fonteaux/lotescompletos. Codigo de negocio nao foi atribuido;217locais/100ativos/
+1500inativos/4200contatos intactos.2295Obras antigas nao cobrem novos5000.
+Billing continua bloqueio separado,sem nova partida/reinstalacao/cobranca.
+
 ## Correcao Grupo/coluna Codigo preparada, sem alterar mestres (2026-11-16)
 
 FECHADO codigo798c2d6b6133724abe7072aa3d106bb195b6a0fa/CI7209SUCCESS,
