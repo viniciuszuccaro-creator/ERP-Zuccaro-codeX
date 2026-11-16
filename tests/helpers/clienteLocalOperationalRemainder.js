@@ -710,7 +710,7 @@ export function clienteLocalOperationalRemainder(file, text) {
       '',
     ],
     [
-      'finalidade="ENTREGA" onOpenDraft={openLocalDraftFromReview} onReviewMeta={({ total, error }) => setRevisaoEntregaTotal(error ? null : total)} />',
+      'finalidade="ENTREGA" allowReviewEdit onOpenDraft={openLocalDraftFromReview} onReviewMeta={({ total, error }) => setRevisaoEntregaTotal(error ? null : total)} />',
       'finalidade="ENTREGA" />',
     ],
     ['finalidade="FISCAL" allowReviewEdit />', 'finalidade="FISCAL" />'],

@@ -7,7 +7,7 @@ import { PostgresClienteLocalRepository } from '../src/repositories/postgresClie
 import { PostgresClienteRepository } from '../src/repositories/postgresClienteRepository.ts';
 import { PostgresAuditRepository } from '../src/audit/auditRepository.ts';
 import { ClienteLocalService } from '../src/services/clienteLocalService.ts';
-import { InMemoryRbacGuard } from '../src/db/rbacGuard.ts';
+import { InMemoryRbacGuard, PostgresRbacGuard } from '../src/db/rbacGuard.ts';
 import { InMemoryTenantGuard } from '../src/db/tenantGuard.ts';
 import { SEED_IDS as ID } from '../scripts/seedDevIds.ts';
 
@@ -219,6 +219,44 @@ test('canonical local batch: CAS, rollback, replay rejection, permissions and fi
       assert.equal(await countAudit(), audits + 1);
       const fiscal = (await service.list(ctx, ID.clientePjA, { ativo: false })).data.find(x => x.id === local.id);
       assert.equal(fiscal?.ativo, false); assert.equal(fiscal?.finalidades[0].finalidade, 'FISCAL');
+    });
+    await t.test('delivery review rejects SQL permission revocation during audit and rolls back all state', async () => {
+      rbac.link({ actorId: ctx.actorId, groupId: ctx.groupId, permissions: { Cadastros: {
+        cliente: ['importar'], cliente_local: ['visualizar', 'criar', 'editar', 'restaurar'],
+      } } });
+      const local = await service.createMigrationPending(ctx, ID.clientePjA, {
+        nome: '', cep: '01310100', logradouro: 'Rua entrega sintetica', numero: '', bairro: 'Centro',
+        cidade: 'Cidade', uf: 'SP', pais: '', origem: 'MIGRACAO', legacy_id: 'delivery-permission-recheck',
+        source_system: 'SYNTHETIC_NATIVE', migration_batch: 'delivery-review-recheck', imported_at: '2026-11-12T00:00:00Z',
+        endereco_incompleto: true, ativo: false, finalidades: [{ finalidade: 'ENTREGA', principal: false }],
+      });
+      const permissions = { Cadastros: { cliente_local: ['visualizar', 'editar', 'restaurar'] } };
+      await pg.query('UPDATE profiles SET empresa_id=NULL,permissoes=$2::jsonb WHERE id=$1', [ctx.actorId, JSON.stringify(permissions)]);
+      const sqlService = new ClienteLocalService(new PostgresClienteLocalRepository(db), new PostgresClienteRepository(db),
+        new PostgresAuditRepository(db), new InMemoryTenantGuard(), new PostgresRbacGuard(db));
+      const state = async () => (await pg.query(`SELECT
+        (SELECT jsonb_agg(to_jsonb(p) ORDER BY id) FROM profiles p) AS profiles,
+        (SELECT jsonb_agg(to_jsonb(l) ORDER BY id) FROM cliente_locais l) AS locais,
+        (SELECT jsonb_agg(to_jsonb(f) ORDER BY id) FROM cliente_local_finalidades f) AS finalidades,
+        (SELECT jsonb_agg(to_jsonb(a) ORDER BY id) FROM audit_logs a) AS audits`)).rows[0];
+      const before = await state(), snapshot = await sqlService.snapshot(ctx, ID.clientePjA, true);
+      await pg.exec(`CREATE FUNCTION revoke_delivery_review_edit() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN
+        UPDATE profiles SET permissoes=jsonb_set(permissoes,'{Cadastros,cliente_local}',
+          (permissoes #> '{Cadastros,cliente_local}') - 'editar') WHERE id=NEW.actor_id;
+        RETURN NEW; END $$;
+        CREATE TRIGGER revoke_delivery_review_edit AFTER INSERT ON audit_logs FOR EACH ROW
+        WHEN (NEW.entity='ClienteLocal' AND NEW.action='update') EXECUTE FUNCTION revoke_delivery_review_edit();`);
+      const payload = { version: snapshot.version, review_version: snapshot.reviewVersion,
+        operations: [{ op: 'review', id: local.id, data: { nome: 'Entrega comprovada', numero: '42', pais: 'BRASIL' }, activate: false }] };
+      try {
+        await assert.rejects(sqlService.sync(ctx, ID.clientePjA, payload), { code: 'PERMISSION_DENIED' });
+        assert.deepEqual(await state(), before);
+      } finally { await pg.exec('DROP TRIGGER revoke_delivery_review_edit ON audit_logs; DROP FUNCTION revoke_delivery_review_edit()'); }
+      const done = await sqlService.sync(ctx, ID.clientePjA, payload);
+      assert.equal(done.data[0].id, local.id); assert.equal(done.data[0].ativo, false);
+      assert.equal(done.data[0].endereco_incompleto, false);
+      assert.equal(done.data[0].legacy_id, local.legacy_id);
+      assert.equal(done.data[0].finalidades[0].finalidade, 'ENTREGA');
     });
     await t.test('context mutation during authorization cannot retarget batch', async () => {
       const before = await snapshot();

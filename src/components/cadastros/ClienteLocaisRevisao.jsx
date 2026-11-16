@@ -12,16 +12,17 @@ const fields = [
   ['referencia', 'Referencia'],
 ];
 
-// Consulta separada do rascunho operacional: nenhum callback de escrita ou selecao.
+// Revisao canonica separada do MASTER; completar nao ativa nem define principal.
 export default function ClienteLocaisRevisao({
   clienteId, groupId, empresaId, finalidade, allowReviewEdit = false,
   onOpenDraft = null, onReviewMeta = null,
 }) {
   const { hasPermission, isLoading: permissionsLoading } = usePermissions();
   const allowed = hasPermission('Cadastros', 'cliente_local', 'visualizar') === true;
-  const canEdit = allowReviewEdit && finalidade === 'FISCAL'
+  const canEdit = !permissionsLoading && allowReviewEdit && (finalidade === 'FISCAL' || finalidade === 'ENTREGA')
     && hasPermission('Cadastros', 'cliente_local', 'editar') === true;
-  // ENTREGA: rascunho no formulário canônico (não grava/ativa). FISCAL usa allowReviewEdit in-place.
+  const reviewLabel = finalidade === 'FISCAL' ? 'fiscal' : 'entrega';
+  // Revisao in-place exige opt-in; o rascunho de entrega permanece disponivel sem ativacao.
   const canDraft = !permissionsLoading && !canEdit && finalidade === 'ENTREGA'
     && (hasPermission('Cadastros', 'cliente_local', 'editar') === true
       || hasPermission('Cadastros', 'cliente_local', 'criar') === true);
@@ -174,7 +175,7 @@ export default function ClienteLocaisRevisao({
   return <section className="mt-6 border-t pt-4" aria-label={finalidade === 'FISCAL' ? 'Fiscal em revisao' : 'Entrega em revisao'}>
     <h3 className="text-sm font-semibold">{finalidade === 'FISCAL' ? 'Endereco fiscal recuperado - em revisao' : 'Enderecos de entrega recuperados - em revisao'}</h3>
     <p className="text-xs text-gray-600">{finalidade === 'FISCAL' ? 'Finalidade fiscal registrada no local. A ordem da lista nao define o principal.' : 'Somente locais com finalidade de entrega registrada. Endereco unico ou igual ao fiscal nao e classificacao automatica.'} {canEdit ? 'Revisao preserva o local inativo; nao define principal nem libera operacao.' : (typeof onOpenDraft === 'function' ? 'Inativos na lista; abrir rascunho de entrega nao grava nem ativa.' : 'Inativos e somente leitura; nao alteram os campos operacionais.')}</p>
-    {visibleEditor && <div className="border p-3" role="group" aria-label="Revisar fiscal inativo">
+    {visibleEditor && <div className="border p-3" role="group" aria-label={`Revisar ${reviewLabel} inativo`}>
       {['nome', ...fields.map(([key]) => key)].map(key => <label key={key} className="block text-sm">
         {key === 'nome' ? 'Nome do local' : fields.find(([field]) => field === key)?.[1]}
         <input className="block w-full rounded border px-2 py-1 mb-2" aria-label={`Revisao ${key}`} value={editor.draft[key] ?? ''} disabled={saving}
@@ -183,7 +184,7 @@ export default function ClienteLocaisRevisao({
             ? { ...previous, draft: { ...previous.draft, [key]: value } } : previous); }} />
       </label>)}
       {saveError && <p role="alert">{saveError}</p>}
-      <button type="button" disabled={saving} onClick={saveReview}>Salvar revisao fiscal sem ativar</button>
+      <button type="button" disabled={saving} onClick={saveReview}>Salvar revisao {reviewLabel} sem ativar</button>
       <button type="button" disabled={saving} onClick={() => { if (isBound(editor.binding)) { setEditor(null); setSaveError(''); setState(null); setRevision(n => n + 1); } }}>Cancelar revisao</button>
     </div>}
     {!valid ? <p role="alert">Leitura indisponivel neste contexto ou sem permissao.</p>
@@ -200,7 +201,7 @@ export default function ClienteLocaisRevisao({
               {fields.map(([key, label]) => <div key={key}><dt className="inline font-medium">{label}: </dt><dd className="inline">{row[key] === null || row[key] === undefined || row[key] === '' ? 'Nao informado / pendente' : String(row[key])}</dd></div>)}
             </dl>
             <p className="text-xs">Origem: {row.origem || 'Nao informada'}; sistema: {row.source_system || 'Nao informado'}; ID legado: {row.legacy_id || 'Nao informado'}; lote: {row.migration_batch || 'Nao informado'}. Valores invalidos permanecem na evidencia privada.</p>
-            {canEdit && !visibleEditor && row.origem === 'MIGRACAO' && <button type="button" onClick={() => openEditor(row)}>Revisar fiscal</button>}
+            {canEdit && !visibleEditor && row.origem === 'MIGRACAO' && <button type="button" onClick={() => openEditor(row)}>Revisar {reviewLabel}</button>}
             {typeof onOpenDraft === 'function' && finalidade === 'ENTREGA' && (
               <button
                 type="button"

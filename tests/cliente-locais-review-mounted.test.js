@@ -97,6 +97,23 @@ async function run(){
  pending.shift().resolve(new Response(JSON.stringify({version:'c'.repeat(64),reviewVersion:'d'.repeat(64),batchAtomic:true,data:[{...fiscal,endereco_incompleto:false}]}),{status:200}));await pause();
  check('fiscal_success_refreshes_without_master',!host.querySelector('[aria-label="Revisar fiscal inativo"]')&&pending.length===1&&pending[0].url.includes('/locais/snapshot'));
  await act(async()=>{root.render(null);});pending.splice(0);
+ props={clienteId:'client',groupId:'group',empresaId:'company',finalidade:'ENTREGA',allowReviewEdit:true};
+ const delivery={...fiscal,finalidades:[{finalidade:'ENTREGA',ativo:true}],nome:'Obra comprovada'};
+ render();await pause();pending.shift().resolve(new Response(JSON.stringify(tokens()),{status:200}));await pause();reply(pending.shift(),[delivery]);await pause();
+ button('Revisar entrega').click();await pause();
+ check('delivery_real_editor_mounted',Boolean(host.querySelector('[aria-label="Revisar entrega inativo"]')));
+ const deliveryInput=host.querySelector('[aria-label="Revisao numero"]');
+ await act(async()=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(deliveryInput,'44');deliveryInput.dispatchEvent(new Event('input',{bubbles:true}));});
+ const deliverySave=button('Salvar revisao entrega sem ativar');deliverySave.click();deliverySave.click();await pause();
+ check('delivery_double_click_single_request',pending.length===1);
+ const deliveryRequest=pending.shift(),deliveryBody=JSON.parse(deliveryRequest.init.body),operation=deliveryBody.operations[0];
+ check('delivery_same_id_changed_fields_only',operation.id===delivery.id&&operation.op==='review'&&operation.activate===false&&JSON.stringify(operation.data)===JSON.stringify({numero:'44'}));
+ deliveryRequest.resolve(new Response(JSON.stringify({error:{code:'PERMISSION_DENIED'}}),{status:403}));await pause();
+ check('delivery_rejection_preserves_draft',host.querySelector('[aria-label="Revisao numero"]').value==='44');
+ button('Salvar revisao entrega sem ativar').click();await pause();
+ pending.shift().resolve(new Response(JSON.stringify({version:'c'.repeat(64),reviewVersion:'d'.repeat(64),batchAtomic:true,data:[{...delivery,numero:'44',endereco_incompleto:false}]}),{status:200}));await pause();
+ check('delivery_success_refreshes_without_activation',!host.querySelector('[aria-label="Revisar entrega inativo"]')&&pending.length===1&&pending[0].url.includes('/locais/snapshot'));
+ await act(async()=>{root.render(null);});pending.splice(0);
  const clients=[{id:'client'},{id:'client-B'}];let latest;
  function PedidoDraft(){const [draft,setDraft]=React.useState({cliente_id:'client',itens_revenda:[]});latest=draft;window.setDraft=setDraft;return <Logistica formData={draft} setFormData={setDraft} clientes={clients}/>;}
  const renderPedido=()=>act(()=>flushSync(()=>root.render(<PedidoDraft/>)));

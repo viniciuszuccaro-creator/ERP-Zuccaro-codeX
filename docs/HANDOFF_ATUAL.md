@@ -1,3 +1,18 @@
+## Entrega: completar revisao sem ativar (2026-11-16)
+
+Empresa implementou opt-in ENTREGA no editor canonico ja usado pelo fiscal.
+Mesmo ID/origem, CAS snapshot/sync, activate=false, so campos alterados; nao
+substitui endereco principal nem transforma rascunho em persistencia automatica.
+Corrigida revogacao durante auditoria: completeReviewInBatch revalida permissoes
+apos audit/restore dentro da transacao. Contraprova antes falhou; depois13 testes
+PGlite passaram e23 focais montados/preservacao passaram, sem skips. Chrome com
+React real, fronteiras Auth/HTTP sinteticas: nao e homologacao integrada.
+Audit/lint/typecheck raiz/backend/build locais passaram; fechar CI porSHA.
+HML nao atualizada, continua d054e2b3;217locais inativos preservados, zero cargas.
+Perfil HML visualizar nao autoriza editar/ativar. Nenhum grant/DDL/deploy feito.
+Proxima acao: conferir CI e revisao do commit, preparar disponibilizacao somente
+no gate especifico; Casa v27/e920 continua pendencia separada abaixo.
+
 ## Retomada especifica Codex Casa e tarefa independente Empresa (2026-11-16)
 
 Proprietario esta naEmpresa e NAO tem acessoCasa agora. Nao aguardar essa

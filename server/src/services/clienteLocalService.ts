@@ -297,14 +297,18 @@ export class ClienteLocalService {
     if (!before.endereco_incompleto && Object.entries(data).every(([key, value]) =>
       value === (before as unknown as Record<string, unknown>)[key])) {
       await check();
-      return activate ? this.restore(fixed, clienteId, localId) : publicLocal(before);
+      const result = activate ? await this.restore(fixed, clienteId, localId) : publicLocal(before);
+      await check();
+      return result;
     }
     const after = await this.repo.update(this.scope(fixed, clienteId), localId,
       { ...data, endereco_incompleto: false }, fixed.actorId, executor);
     if (!after) this.notFound();
     await check();
     await this.appendAudit(fixed, 'update', before, after, executor);
-    return activate ? this.restore(fixed, clienteId, localId) : publicLocal(after);
+    const result = activate ? await this.restore(fixed, clienteId, localId) : publicLocal(after);
+    await check();
+    return result;
   }
 
   async setFinalidades(

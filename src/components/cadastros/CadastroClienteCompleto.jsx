@@ -2077,7 +2077,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                 loadStatus={locaisOperacionalLoadStatus}
                 reviewPendingHint={revisaoEntregaTotal}
               />
-              {isHttpBackendMode && <ClienteLocaisRevisao clienteId={clienteBoundId || cliente?.id} groupId={groupId} empresaId={empresaAtual?.id} finalidade="ENTREGA" onOpenDraft={openLocalDraftFromReview} onReviewMeta={({ total, error }) => setRevisaoEntregaTotal(error ? null : total)} />}
+              {isHttpBackendMode && <ClienteLocaisRevisao clienteId={clienteBoundId || cliente?.id} groupId={groupId} empresaId={empresaAtual?.id} finalidade="ENTREGA" allowReviewEdit onOpenDraft={openLocalDraftFromReview} onReviewMeta={({ total, error }) => setRevisaoEntregaTotal(error ? null : total)} />}
             </TabsContent>
 
             <TabsContent value="financeiro" className="space-y-6 m-0 mt-4">

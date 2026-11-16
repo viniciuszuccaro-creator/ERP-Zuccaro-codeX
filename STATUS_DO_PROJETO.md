@@ -1,3 +1,20 @@
+## Revisao de entrega inativa e revogacao transacional (2026-11-16)
+
+Lacuna funcional: ENTREGA apenas abria rascunho; agora CadastroClienteCompleto
+habilita o editor EXISTENTE de ClienteLocaisRevisao para completar o mesmo ID,
+via snapshot/sync CAS e op review, activate=false. Nao grava MASTER nem ativa
+local; somente campos alterados seguem no payload, erro conserva rascunho.
+Backend revalida editar/restaurar depois da auditoria e do eventual restore.
+Contraprova SQL revoga editar no audit: antes aceitava, agora rejeita e desfaz
+local/finalidades/perfil/auditoria na mesma transacao. PGlite13PASS/0SKIP;
+React Chrome real montado + preservacao23PASS/0SKIP (Auth/dados sinteticos).
+Audit, lint(0erros/2warnings anteriores), typecheck raiz/backend, build PASS.
+Suite completa Linux/PG fica vinculada ao SHA publicado pela CI existente;
+nao confundir os focais com PG fisico ou navegador/API/HML integrados.
+Nenhuma carga real, DDL, permissao, ativacao ou deploy. HML segue d054e2b3.
+Proximo: fechar CI do lote; revisar permissao de escrita/ativacao separadamente
+antes de disponibilizar essa capacidade na HML. Pendencia Casa v27/e920 intacta.
+
 ## Empresa continua independente: Central360 montada (2026-11-16)
 
 Transporte v27/e920 e pendencia especifica de Casa sem acesso agora; nao e
