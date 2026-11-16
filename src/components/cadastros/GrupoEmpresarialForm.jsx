@@ -1,5 +1,5 @@
 import useCadastroRecordState from './useCadastroRecordState';
-import React, { useMemo, useState, useRef, useEffect } from "react";
+import React, { useMemo, useState, useRef, useEffect, useId } from "react";
 import { HTTP_CONTEXT_CHANGED } from '@/api/erpHttpSession';
 import { isHttpBackendMode } from '@/api/base44Client';
 import { hasCadastroEntityPermission } from './cadastroEditLoadPolicy';
@@ -45,6 +45,7 @@ export default function GrupoEmpresarialForm({ grupo, item, data, initialData, d
   const podeSalvar = !loadIncomplete && !isLoadingRecord && (dadosIniciais?.id ? podeEditar : podeCriar);
   const busy = useRef(false);
   const [sessionEpoch, setSessionEpoch] = useState(0);
+  const editorInstance = useId();
   useEffect(() => {
     const invalidate = () => setSessionEpoch(value => value + 1);
     window.addEventListener(HTTP_CONTEXT_CHANGED, invalidate);
@@ -65,7 +66,8 @@ export default function GrupoEmpresarialForm({ grupo, item, data, initialData, d
   // Escopo multiempresa: Empresa via filterInContext (group_id). Sem list unscoped.
   // enabled exige contexto; erro ≠ zero KPI fabricado.
   const { data: empresas = [], isError: isErrorEmpresas, isPending: empresasLoading } = useQuery({
-    queryKey: ["grupo-empresas-vinculadas", user?.id, user?.perfil_acesso_id, groupId, empresaAtual?.id, dadosIniciais?.version, sessionEpoch],
+    queryKey: ["grupo-empresas-vinculadas", user?.id, user?.perfil_acesso_id, groupId, empresaAtual?.id, dadosIniciais?.version, sessionEpoch, editorInstance],
+    gcTime: 0,
     queryFn: () => filterInContext('Empresa', groupId ? { group_id: groupId } : {}, 'razao_social', 500),
     enabled: contextoValido,
   });

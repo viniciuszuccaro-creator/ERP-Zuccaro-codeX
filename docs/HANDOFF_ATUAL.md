@@ -1,5 +1,13 @@
 ## Codigo organizacional e empresas no formulario: pacote em validacao (2026-11-16)
 
+Ultimocontraponto de sessao: geracao local sozinha reiniciava em0 ao reabrir.
+Querykeyagora inclui useId por instancia e gcTime0,semguardar token emcache.
+Reactmontado cobre fechar→renovarsessao→reabrir comleitura nova eIDs separados.
+Backupfresh194609Z-28e5a9a6 restaurado/externoACK;planDDLprivado em
+incoming/empresa-ba90e041/codes-schema.plan.private.json,NAOexecutado.
+Kit a53d5f4b/CI7222 emvalidacao foi conferido centralmente,mas a novaUI precisa
+SHA/kit/CI proprios antespromocao;nao atribuir ensaio deSHAanterior aoatual.
+
 ba90e041/CI7221: backend/composicaoPASS;frontend falhou SOMENTE2assertsAST
 do markupIDantigo deEmpresaForm. Componente compartilhado continuaexibindo
 ID distinto docodigo;asserts atualizadas para bindingCodigo+entityId eReact

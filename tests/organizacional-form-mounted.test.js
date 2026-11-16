@@ -41,6 +41,9 @@ async function run(){
  check('rejection_preserves_form',calls===1&&Array.from(host.querySelectorAll('input')).some(i=>i.value==='Synthetic group'));
  check('payload_keeps_ids_and_links',payload.id==='g'&&payload.empresas_ids.join(',')==='a,b');
  fail=false;await act(async()=>host.querySelector('form').requestSubmit());await pause();check('retry_after_rejection',calls===2);
+ await act(async()=>root.render(null));window.dispatchEvent(new Event('erp-http-context-changed'));await render();await pause();
+ check('reopened_form_requires_fresh_authorized_links',window.__pending.length===1&&!host.textContent.includes('Synthetic A'));
+ await act(async()=>window.__pending.shift()(companies));await pause();
  window.__actor='actorB';window.dispatchEvent(new Event('erp-http-context-changed'));await render();await pause();
  check('new_actor_no_old_companies',!host.textContent.includes('Synthetic A')&&window.__pending.length===1);
  await act(async()=>window.__pending.shift()(Promise.reject(Error('synthetic read failure'))));await pause();

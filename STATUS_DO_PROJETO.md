@@ -1,5 +1,10 @@
 ## Codigo de Grupo/Empresa e vinculos: implementacao em validacao (2026-11-16)
 
+Cachevinculos inclui instanciaeditor(useId)+gcTime0: reabertura aposrenovacao
+exige nova consulta,semtokenemquerykey. ContraprovaReactmontadoPASS. Backup
+HML194609Z-28e5a9a6 restaurado/copiaprivadaexternaACK,planDDLcentralNAOaplicado.
+GateDDLcodigos aguardandoresposta;promover somenteSHA/CI/kitfinal destaUI.
+
 CI7221ba90:backend/composicaoPASS,frontend2asserts markupIDlegado falharam.
 Reconciliados comCodigoRegistroField compartilhado+entityId,semretirarRBAC/
 fiscal;Reactmontado confereID eCodigo separados.34focadosPASS. SuitePGnativa
