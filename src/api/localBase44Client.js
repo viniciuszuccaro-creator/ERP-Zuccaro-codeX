@@ -1209,12 +1209,13 @@ const expandLocalContextFilter = (entityName, filter = {}) => {
   const ctxField = LOCAL_ENTITY_CONTEXT_FIELD[entityName] || 'empresa_id';
   const shared = entityName === 'Cliente' || LOCAL_SHARED_ENTITIES.has(entityName);
   // Sempre compoe escopo (inclusive quando caller traz $or/$and)
-  return (/** @type {(options: { groupId?: unknown, empresaId?: unknown, ctxField?: string, shared?: boolean, rest?: LocalRecord }) => LocalRecord} */ (buildMultiempresaReadFilter))({
+  return (/** @type {(options: { groupId?: unknown, empresaId?: unknown, ctxField?: string, shared?: boolean, rest?: LocalRecord, extraGroupOr?: LocalRecord[] }) => LocalRecord} */ (buildMultiempresaReadFilter))({
     groupId,
     empresaId,
     ctxField,
     shared,
     rest,
+    extraGroupOr: entityName === 'GrupoEmpresarial' && groupId && groupId === ctxGroupId ? [{ id: groupId }] : [],
   });
 };
 

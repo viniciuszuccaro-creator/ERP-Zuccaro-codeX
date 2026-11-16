@@ -22724,6 +22724,11 @@ Proximo: aceite UI atual, depois componentes pendentes de enderecos e bindings;
 1500 continuam INATIVOS. Completude integral e pacoteVPS NAO declarados prontos.
 ## 2026-11-16 - Grupo e Codigo: duas causas reproduzidas e corrigidas
 
+Complemento rastreado apos4a: adaptador local recompunha filtro sem identidade
+do mestre e anulava caller. Corrigido no expansor REAL para GrupoATUAL apenas;
+43focadosPASS, ID e group_id adulterados rejeitados para mestre semgroup_id.
+CI do sucessor deve fechar o conjunto;4a sozinho nao entrega o percurso.
+
 ContraprovasANTES2FAIL: badgeGrupo nao encontra mestre sem group_id; coluna
 Codigo substitui valor ausente pelo nome. Corrigido countFilter para incluir
 mesmo idgrupo do Visualizador;Codigo ausente permanece desconhecido. Mantidos

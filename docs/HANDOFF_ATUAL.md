@@ -1,5 +1,14 @@
 ## Correcao Grupo/coluna Codigo preparada, sem alterar mestres (2026-11-16)
 
+Complemento apos4a8347b3: expandLocalContextFilter recompunha uma segunda
+restricao sem idgrupo, anulando filtro do caller (badge E listagem locais).
+Contraprova pelo matcher/expansor REAIS falhou antes; corrigida mesma opcao
+extraGroupOr somente para id doGrupoATUAL, nunca Empresa ou grupo adulterado.
+43focadosPASS, negativos id/group_id alheios e contextoEmpresaA/B inclusos.
+Codigo4a sozinho NAOfecha esse percurso; exigir CI do sucessor com adaptador.
+Sem alteracao do espelhoAuth, sessao, RBAC ou backend. Espelho nao e uma API
+de edicao organizacional persistente; nao declarar CRUDGrupo remoto completo.
+
 Prints16/11 do dono: Empresas usa nome em Codigo; badgeGrupo0 apesar de seletor.
 ReproducaoANTES:2contraprovas falham em funcoes reais. Causas: countFilter nao
 inclui id=groupId do mestreGrupo sem group_id, diferentemente do Visualizador;

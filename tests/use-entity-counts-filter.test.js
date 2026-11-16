@@ -13,10 +13,21 @@ test('Grupo: contador inclui identidade do mestre como a listagem, sem outro gru
     value => Boolean(value && typeof value === 'object' && !Array.isArray(value)),
     (row, field) => row[field],
   );
+  const expandStart = source.indexOf('const expandLocalContextFilter =');
+  const expandEnd = source.indexOf('const normalizePermissionText =', expandStart);
+  const expand = Function('isPlainObject', 'getCurrentContext', 'LOCAL_ENTITY_CONTEXT_FIELD', 'LOCAL_SHARED_ENTITIES',
+    'buildMultiempresaReadFilter', source.slice(expandStart, expandEnd) + ';return expandLocalContextFilter;')(
+    value => Boolean(value && typeof value === 'object' && !Array.isArray(value)),
+    () => ({ contexto: 'empresa', groupId: 'grp-1', empresaId: 'emp-a' }), {}, new Set(), buildMultiempresaReadFilter,
+  );
   for (const empresa of [null, 'emp-a', 'emp-b']) {
     const filter = fromCanonical('GrupoEmpresarial', empresa, 'grp-1', []);
     assert.equal(matches({ id: 'grp-1', nome: 'Grupo autorizado' }, filter), true);
     assert.equal(matches({ id: 'grp-2', nome: 'Outro grupo' }, filter), false);
+    assert.equal(matches({ id: 'grp-1' }, expand('GrupoEmpresarial', filter)), true);
+    assert.equal(matches({ id: 'grp-2' }, expand('GrupoEmpresarial', filter)), false);
+    assert.equal(matches({ id: 'grp-2' }, expand('GrupoEmpresarial', { id: 'grp-2' })), false);
+    assert.equal(matches({ id: 'grp-2' }, expand('GrupoEmpresarial', { group_id: 'grp-2' })), false);
     assert.deepEqual(filter, buildMultiempresaReadFilter({ groupId: 'grp-1', extraGroupOr: [{ id: 'grp-1' }] }));
     assert.equal(matches({ id: 'grp-1' }, fromCanonical('Empresa', empresa, 'grp-1', [])), false);
   }
