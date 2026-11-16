@@ -1,5 +1,20 @@
 # Operação DEV: GitHub, Codex, Cursor e VPS
 
+## HML vigente5e e reversao restrita (2026-11-16)
+
+API/web5e0d11c3/CI7197 publicada por autorizacao especifica apos backup fresco,
+restore/ack externoEmpresa e ensaio. URL https://hml-erp.cpaferroeaco.com.br/cadastros.
+Escopo Cadastros/fiscal/entregas com permissoes existentes; Comercial completo
+e ativacao/escrita de locais nao liberados. SemDDL/grants/carga operacional.
+Recibo privado promotion-5e0-20261116-r2/promotion.receipt.private.json no root
+privadoHML existente. AntigosAPI/webd054 parados/conservados, PG intocado.
+Para rollback seguir pins/specs/procedimento do HANDOFF, sem restoreDB.
+Ao clonar Nginx preservar CapAddEXATO do original, alem de CapDropALL/tmpfs/
+read-only; omissao de CapAdd falhou e ja teve rollback comprovado.
+Configbackup aponta api-published-5e0-config.private.json; versao anterior
+preservada para reversao, nao sobrescrever mudancas posteriores. Servicos/
+timer/rede/limites/proxy/HTTPS continuam existentes. Browser real pendente.
+
 ## Fonte central privada compartilhada - Casa e Empresa (2026-11-16)
 
 Diretriz vigente do proprietario: GitHub continua fonte oficial do codigo,

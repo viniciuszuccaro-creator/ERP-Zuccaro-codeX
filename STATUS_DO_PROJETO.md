@@ -1,3 +1,21 @@
+## HML5e publicada: Cadastros, semDDL/carga/novas permissoes (2026-11-16)
+
+Autorizacao ESPECIFICA do dono recebida e executada. API/web5e0d11c3/CI7197GREEN
+em https://hml-erp.cpaferroeaco.com.br/cadastros; CI7198/7199tambemSUCCESS.
+Backupfresh12:40UTC/restore/externoEmpresa/ack passaram antes da troca.
+Primeira tentativa revertida: cloneNginx perdeu CapAddbaseline; logs conferidos,
+segunda tentativa preservou as mesmas4capabilities anteriores e passou.
+Ready200+versao5e/marcadorAPI=web/clientes401 porHTTPS e localhost. PGHML e
+containers operacionais mesmosIDs, saudeoperacional200. SemDDL/grants/cargas/
+ativacao;217locais continuam inativos e perfilvisualizar nao ganha editar.
+ContainersAPI/webd054 parados preservados para reversao; backupconfig acompanha
+novo runtime, indice/recibos centrais atualizados. Detalhes noHANDOFF.
+Nao e Comercial completo nem prova de browser autenticado. Controlevisual
+falhou no kernelantesChrome; solicitada conferencia do dono na mesmaURL.
+Zero dados reais importados nesta rodada; completos/parciais nao recontados.
+Proximo: aceite login/GrupoCPA/fiscal/entregas e corrigir eventual defeito;
+schemaComercial/crosswalks/importacao continuam separados, nao esperandoCasa.
+
 ## Ensaio restaurado5e concluido e escopo de publicacao separado (2026-11-16)
 
 CI7198SUCCESS confirmado. Usado o kit5e ja centralizado, sem transferir/refazer.

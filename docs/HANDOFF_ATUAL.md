@@ -1,3 +1,54 @@
+## HML atualizada para5e com autorizacao especifica (2026-11-16)
+
+ESTADO VIGENTE: API=web5e0d11c3f3a8956477656cda359acf6bc895c906, CI7197SUCCESS.
+CI7198/7199 documentais SUCCESS. Proprietario autorizou explicitamente somente
+API/webHML, depois backup/recuperacao/ack/reversao; semDDL/grants/carga/ativacao.
+Publicado12:46UTC em https://hml-erp.cpaferroeaco.com.br/cadastros.
+Local/HTTPS: /ready200 na versao5e, marcadorAPI=web5e, /clientes401 semsessao.
+PG privado e containers operacionais mantiveram os MESMOS IDs; ERP/APIoperacional
+HTTP200 depois. Nenhuma migration, carga de negocio ou ativacao de local.
+
+Backup FRESCO da janela pelo servicoHML existente:
+hml-20261116T124031Z-92255aea, restore verificado e copia externaEmpresa/ack
+pareados pelo sincronizador canonico (5geracoes verificadas). Nao confundir com
+backup06:30 usado no ensaio anterior. Configbackup passou a apontar ao arquivo
+privadoAPI5e; original preservado no recibo da promocao. Sem nova chave/role.
+
+Primeira troca revertida automaticamente: erro de driver ao clonar Nginx
+omitiu CapAdd preexistente; nao foi falha de runtime/API, que chegouREADY5e.
+Antes de tentar novamente: logs e specs conferidos; segunda troca preservou
+EXATAMENTE CAP_CHOWN/NET_BIND_SERVICE/SETGID/SETUID do Nginx anterior e CapDropALL,
+read-only/no-new-privileges/limites/tmpfs/mounts/rede/proxy anteriores.
+Nao ampliou capacidades alem da baseline nem permissoesSQL/RBAC.
+Falha/logs/recibos conservados; nenhum restoreDB usado para desfazer runtime.
+
+Recibo PRIVADO: /root/erp-private/hml-recovery-20261114/
+promotion-5e0-20261116-r2/promotion.receipt.private.json e before-specs privado.
+Reversao pronta: containers erp-hml-api-before-5e0-20261116-r2 e
+erp-hml-web-before-5e0-20261116-r2 PARADOS/conservados, versao d054e2b3;
+config/runtime anteriores intactos. Antes de reverter conferir IDs/specs e
+ausencia de alteracao posterior; parar SOMENTE substitutosHML, preservar com
+outro nome, devolver nomes originais aos anteriores, iniciarAPI depoisweb,
+provar ready/marcador/401/saude operacional. Nao tocarPG ou restaurarDB.
+Backupconfig exige comparacao com backup-config-before.private.json antes de
+retorno, nunca sobrescrever alteracoes posteriores por copia cega.
+
+Indice privado central atualizado currentHml/preparedCandidate.deployed=true;
+originaisCasa v27/e920 continuam false, nao foram substituidos ou relabelados.
+HML nao depende mais de esperaCasa para ESTE aceite restrito de Cadastros.
+Comercial completo continua pendente das relacoes/delta minimo ja registrado.
+UI de completar entrega esta publicada, mas perfilHML visualizar NAO ganha
+editar/restaurar; enderecos permanecem inativos. Nao anunciar escrita liberada.
+
+Browser: controle CUA e sky falharam antes de acessarChrome com
+failed to write kernel assets (os error3). Nao reconfigurar/reinstalar por
+tentativa nem extrair tokens. Solicitado ao dono: atualizar mesmaURL, login com
+conta existente se necessario, conferir GrupoCPA/clientes/fiscal/entregas sem
+salvar/ativar. ACEITE REAL AUTENTICADO PENDENTE, nao inferir por /ready200.
+Proxima acao: receber essa conferencia e tratar defeito reproduzido; continuar
+deltaComercial/importacao em escopo separado sem novos grants/carga implicita.
+Automacao nao reativada; servicos/backup existentes preservados.
+
 ## Ensaio5e executado em copia restaurada, sem dependencia de Casa (2026-11-16)
 
 CI7198 SUCCESS confirmado para85e88151; runtime5e0d11c3/CI7197 intacto.
