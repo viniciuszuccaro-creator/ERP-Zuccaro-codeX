@@ -1,4 +1,23 @@
-## Troca Grupo/Empresa: correcao em validacao, nao aplicada na HML (2026-11-16)
+## HML atualizada para troca Grupo/Empresa; aceite da sessao pendente (2026-11-16)
+
+be67c103caec62a9c2ac53c1ef43e988c384afcd/CI7212SUCCESS publicado e aplicado
+APENAS API/webHML em17:52UTC/14:52Brasilia, apos autorizacao especifica do dono.
+HTTPS API/web e asset principal porSHA conferidos; Cliente anonimo401.
+Fingerprint integral16tabelas igual antes/depois, PG e operacional mesmosIDs.
+Backupfresh hml-20261116T175109Z-dde0efb5 restaurado/conferido e copiaexterna
+Empresa/ack validada antes. Versao2f preservada parada para reversao.
+0cargas/ativacoes/DDL/grants/perfis alterados. Dados100/1500inativos/4200contatos/
+217locais preservados. Nao significa liberar CRUD ausente ou promover a admin.
+
+Kit privado central incoming/empresa-be67c103/runtime-complete.tar.gz:
+3974213bytes/SHA a0fbbe159e2fd0aebbe0c80f211bf57387a2f6f449f945a4432afd5fc694ea63;
+2216arquivos/17900524bytes porarquivo conferidos. runtime-candidate.tar.gz
+foi copia parcial REJEITADA porhash, jamais usada. Recibo imutavel em
+promotion-be67c103-20261116-r1/promotion.receipt.private.json.
+Aceite navegador solicitado: selecionar CPA FERRO E ACO e3Z no seletor.
+Sem resposta ainda, nao declarar resolvido o incidente concreto da sessao.
+
+## Diagnostico e testes do delta Grupo/Empresa (2026-11-16)
 
 Dono confirmou lista/contagem Grupo e Codigo sem nome na HML2f, mas relata
 "Empresa nao autorizada para este perfil" ao trocar contexto. Leitura privada
@@ -14,9 +33,8 @@ render SSR do seletor; NAO navegador autenticado). Audit/lint/typecheck/build
 PASS, lint com dois avisos preexistentes. Suite completa fica na CI Ubuntu
 pela excecao draft ja autorizada para bloqueio POSIX Windows, sem mudar testes.
 
-Sem alteracao de perfil, grants, dados, schema ou operacional. HML continua2f.
-Proxima acao: CI do SHA publicado e pacote revisado; atualizacao HML depende
-do gate proprio. Diagnostico da sessao concreta continua pendente do navegador.
+Sem alteracao de perfil, grants, dados, schema ou operacional. Gate API/web
+concluido acima. Diagnostico da sessao concreta continua pendente do navegador.
 WIP distinto do formulario Grupo preservado e conferido por SHA no canal
 central incoming/organizacional-wip-20261116/preserved-code.tar.gz, fora Git.
 CRUD organizacional remoto continua separado; nao liberar salvamento local

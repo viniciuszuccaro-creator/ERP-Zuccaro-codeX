@@ -1,4 +1,20 @@
-## Prioridade vigente: troca Grupo/Empresa (2026-11-16)
+## HMLbe67 aplicada; confirmar troca de empresa no navegador (2026-11-16)
+
+API/webbe67c103caec62a9c2ac53c1ef43e988c384afcd/CI7212SUCCESS aplicados
+em17:52UTC/14:52Brasilia, apos gate especifico autorizado nesta conversa.
+URL https://hml-erp.cpaferroeaco.com.br/cadastros . HTTPS/API/web/assetSHA
+conferidos,anonimoCliente401;16tabelas com fingerprints identicos e PG/ERPDEV
+mesmosIDs. Backupfresh hml-20261116T175109Z-dde0efb5 com restore eexterno/ack.
+Reversao2f preservada parada before-be67c103-20261116-r1,mesmosmounts/aliases/
+capabilities/limites. Configbackup aponta api-published-be67c103-config.private.json.
+Recibo promotion-be67c103-20261116-r1/promotion.receipt.private.json.
+Kit central incoming/empresa-be67c103/runtime-complete.tar.gz,3974213bytes,
+SHA a0fbbe159e2fd0aebbe0c80f211bf57387a2f6f449f945a4432afd5fc694ea63,
+2216arquivos conferidos. Copia parcial runtime-candidate REJEITADA,nao usar.
+Nenhum DDL/grant/carga/ativacao/perfil/operacional alterado. Dono solicitado
+a testar seletor CPA/3Z; aceite da sessao concreta ainda PENDENTE.
+
+## Diagnostico que motivou o delta Grupo/Empresa (2026-11-16)
 
 Aceite visual do dono para lista Grupo/Codigo2f recebido. Relata negativa ao
 trocar para Empresa, nao pedido de criar perfil admin. Perfil/duas empresas
@@ -6,8 +22,9 @@ conferidos privadamente; logs Auth200 sem payload nao provam sessao navegador.
 Delta atual corrige conflacao refresh-null/permissao e fallback de empresa
 revogada, rejeita contexto alterado durante await. Testes focados59PASS,
 audit/lint/typecheck/build PASS; suite Ubuntu via excecao draft vigente.
-Nao implantado: API/web permanecem2f, sem novo grant/perfil/carga/DDL.
-Proxima acao CI terminal do novo SHA, revisao e gate especifico API/web HML.
+Implantacao concluida acima. Sem novo grant/perfil/carga/DDL.
+Proxima acao: conferir resposta do dono para troca CPA/3Z e diagnosticar a
+mensagem exata se persistir, sem declarar concessao de admin como solucao.
 WIP anterior GrupoForm/V24/policy estacionado em arquivo privado central
 incoming/organizacional-wip-20261116/preserved-code.tar.gz (26416bytes,
 SHA e8d647eb626058a3250c5fe4e5ccc4001ef5f0fa8b85bc91fa823c30fa993c91).
