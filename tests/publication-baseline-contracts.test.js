@@ -1,3 +1,5 @@
+import { organizacionalSourceForPath } from './helpers/organizacionalRemainder.js';
+const readOrganizacionalSource = (file, ...args) => organizacionalSourceForPath(file, fs.readFileSync(file, ...args));
 import { clienteConferenciaRemainder } from './helpers/consolidation81Remainder.js';
 import {
   PUBLICATION_BASE,
@@ -17,7 +19,7 @@ import fs from 'node:fs';
 import crypto from 'node:crypto';
 import {execFileSync} from 'node:child_process';
 
-const manifest=JSON.parse(fs.readFileSync(new URL('./helpers/publicationBaselineManifest.json',import.meta.url),'utf8'));
+const manifest=JSON.parse(readOrganizacionalSource(new URL('./helpers/publicationBaselineManifest.json',import.meta.url),'utf8'));
 const base=PUBLICATION_BASE;
 test('publication baseline is the verified composition commit and is available in Git history',()=>{
  assert.equal(manifest.base,base);
@@ -131,7 +133,7 @@ function restoreApprovedCatalogoWebCallbackDelta(source) {
  return source.replace(approvedCatalogoWebGraduationTest,'\n').replace(approvedCatalogoWebNames,previousCatalogoWebNames);
 }
 test('bulk lifecycle evolution retains the original hash and rejects changed or repeated delegation assertions',()=>{
- const source=fs.readFileSync('server/tests/bulk-consolidacao.test.ts','utf8').replace(/\r\n/g,'\n');
+ const source=readOrganizacionalSource('server/tests/bulk-consolidacao.test.ts','utf8').replace(/\r\n/g,'\n');
  const restored=restoreApprovedBulkDelta(source);
  assert.equal(restored.includes(approvedBulkDelta),false);
  assert.throws(()=>restoreApprovedBulkDelta(source.replace('rbac: this.rbacGuard','rbac: this.otherGuard')));
@@ -140,7 +142,7 @@ test('bulk lifecycle evolution retains the original hash and rejects changed or 
    crypto.createHash('sha256').update(restored).digest('hex'));
 });
 test('ContatoB2B callback graduation retains beforeSha and rejects omission, repetition or out-of-scope edit',()=>{
- const source=fs.readFileSync('tests/cursor-callback-record-state.test.js','utf8').replace(/\r\n/g,'\n');
+ const source=readOrganizacionalSource('tests/cursor-callback-record-state.test.js','utf8').replace(/\r\n/g,'\n');
  const afterCat=restoreApprovedCatalogoWebCallbackDelta(source);
  const afterRota=restoreApprovedRotaPadraoCallbackDelta(afterCat);
  const afterJob=restoreApprovedJobAgendadoCallbackDelta(afterRota);
@@ -179,7 +181,7 @@ test('ContatoB2B callback graduation retains beforeSha and rejects omission, rep
  assert.throws(()=>restoreApprovedContatoB2BCallbackDelta(mid.replace("CadastroFiscal',\n","CadastroFiscal', 'Webhook',\n")));
 });
 test('Servico/TipoFrete callback graduation rejects omission, repetition or out-of-scope edit',()=>{
- const source=fs.readFileSync('tests/cursor-callback-record-state.test.js','utf8').replace(/\r\n/g,'\n');
+ const source=readOrganizacionalSource('tests/cursor-callback-record-state.test.js','utf8').replace(/\r\n/g,'\n');
  const afterCat=restoreApprovedCatalogoWebCallbackDelta(source);
  const afterRota=restoreApprovedRotaPadraoCallbackDelta(afterCat);
  const afterJob=restoreApprovedJobAgendadoCallbackDelta(afterRota);
@@ -193,7 +195,7 @@ test('Servico/TipoFrete callback graduation rejects omission, repetition or out-
  assert.throws(()=>restoreApprovedServicoTipoFreteCallbackDelta(afterSeg.replace("TabelaPreco',","TabelaPreco', 'Webhook',")));
 });
 test('SegmentoCliente callback graduation rejects omission, repetition or out-of-scope edit',()=>{
- const source=fs.readFileSync('tests/cursor-callback-record-state.test.js','utf8').replace(/\r\n/g,'\n');
+ const source=readOrganizacionalSource('tests/cursor-callback-record-state.test.js','utf8').replace(/\r\n/g,'\n');
  const afterCat=restoreApprovedCatalogoWebCallbackDelta(source);
  const afterRota=restoreApprovedRotaPadraoCallbackDelta(afterCat);
  const afterJob=restoreApprovedJobAgendadoCallbackDelta(afterRota);
@@ -206,7 +208,7 @@ test('SegmentoCliente callback graduation rejects omission, repetition or out-of
  assert.throws(()=>restoreApprovedSegmentoClienteCallbackDelta(afterKit.replace("TabelaPreco',","TabelaPreco', 'Webhook',")));
 });
 test('KitProduto callback graduation rejects omission, repetition or out-of-scope edit',()=>{
- const source=fs.readFileSync('tests/cursor-callback-record-state.test.js','utf8').replace(/\r\n/g,'\n');
+ const source=readOrganizacionalSource('tests/cursor-callback-record-state.test.js','utf8').replace(/\r\n/g,'\n');
  const afterCat=restoreApprovedCatalogoWebCallbackDelta(source);
  const afterRota=restoreApprovedRotaPadraoCallbackDelta(afterCat);
  const afterJob=restoreApprovedJobAgendadoCallbackDelta(afterRota);
@@ -218,7 +220,7 @@ test('KitProduto callback graduation rejects omission, repetition or out-of-scop
  assert.throws(()=>restoreApprovedKitProdutoCallbackDelta(afterFil.replace("JobAgendado',","JobAgendado', 'Webhook',")));
 });
 test('Filial callback graduation rejects omission, repetition or out-of-scope edit',()=>{
- const source=fs.readFileSync('tests/cursor-callback-record-state.test.js','utf8').replace(/\r\n/g,'\n');
+ const source=readOrganizacionalSource('tests/cursor-callback-record-state.test.js','utf8').replace(/\r\n/g,'\n');
  const afterCat=restoreApprovedCatalogoWebCallbackDelta(source);
  const afterRota=restoreApprovedRotaPadraoCallbackDelta(afterCat);
  const afterJob=restoreApprovedJobAgendadoCallbackDelta(afterRota);
@@ -229,7 +231,7 @@ test('Filial callback graduation rejects omission, repetition or out-of-scope ed
  assert.throws(()=>restoreApprovedFilialCallbackDelta(afterCr.replace("EventoNotificacao',","EventoNotificacao', 'Webhook',")));
 });
 test('CentroResultado callback graduation rejects omission, repetition or out-of-scope edit',()=>{
- const source=fs.readFileSync('tests/cursor-callback-record-state.test.js','utf8').replace(/\r\n/g,'\n');
+ const source=readOrganizacionalSource('tests/cursor-callback-record-state.test.js','utf8').replace(/\r\n/g,'\n');
  const afterCat=restoreApprovedCatalogoWebCallbackDelta(source);
  const afterRota=restoreApprovedRotaPadraoCallbackDelta(afterCat);
  const afterJob=restoreApprovedJobAgendadoCallbackDelta(afterRota);
@@ -239,7 +241,7 @@ test('CentroResultado callback graduation rejects omission, repetition or out-of
  assert.throws(()=>restoreApprovedCentroResultadoCallbackDelta(afterJob.replace("CatalogoWeb',","CatalogoWeb', 'Webhook',")));
 });
 test('JobAgendado callback graduation rejects omission, repetition or out-of-scope edit',()=>{
- const source=fs.readFileSync('tests/cursor-callback-record-state.test.js','utf8').replace(/\r\n/g,'\n');
+ const source=readOrganizacionalSource('tests/cursor-callback-record-state.test.js','utf8').replace(/\r\n/g,'\n');
  const afterCat=restoreApprovedCatalogoWebCallbackDelta(source);
  const afterRota=restoreApprovedRotaPadraoCallbackDelta(afterCat);
  const restored=restoreApprovedJobAgendadoCallbackDelta(afterRota);
@@ -248,7 +250,7 @@ test('JobAgendado callback graduation rejects omission, repetition or out-of-sco
  assert.throws(()=>restoreApprovedJobAgendadoCallbackDelta(afterRota.replace("GatewayPagamento',","GatewayPagamento', 'Webhook',")));
 });
 test('RotaPadrao callback graduation rejects omission, repetition or out-of-scope edit',()=>{
- const source=fs.readFileSync('tests/cursor-callback-record-state.test.js','utf8').replace(/\r\n/g,'\n');
+ const source=readOrganizacionalSource('tests/cursor-callback-record-state.test.js','utf8').replace(/\r\n/g,'\n');
  const afterCat=restoreApprovedCatalogoWebCallbackDelta(source);
  const restored=restoreApprovedRotaPadraoCallbackDelta(afterCat);
  assert.equal(restored.includes(approvedRotaPadraoGraduationTest),false);
@@ -256,7 +258,7 @@ test('RotaPadrao callback graduation rejects omission, repetition or out-of-scop
  assert.throws(()=>restoreApprovedRotaPadraoCallbackDelta(afterCat.replace("ParametroRoteirizacao',","ParametroRoteirizacao', 'Webhook',")));
 });
 test('CatalogoWeb callback graduation rejects omission, repetition or out-of-scope edit',()=>{
- const source=fs.readFileSync('tests/cursor-callback-record-state.test.js','utf8').replace(/\r\n/g,'\n');
+ const source=readOrganizacionalSource('tests/cursor-callback-record-state.test.js','utf8').replace(/\r\n/g,'\n');
  const restored=restoreApprovedCatalogoWebCallbackDelta(source);
  assert.equal(restored.includes(approvedCatalogoWebGraduationTest),false);
  assert.match(restored,/ApiExterna', 'CatalogoWeb'/);
@@ -272,7 +274,7 @@ function restoreApprovedLocalEstoqueResidualDelta(source) {
  return source.replace(approvedLocalEstoqueGraduationTest,'\n').replace(approvedResidualNames,previousResidualNames);
 }
 test('LocalEstoque residual graduation retains beforeSha and rejects omission, repetition or out-of-scope edit',()=>{
- const source=fs.readFileSync('tests/cursor-residual-independent.test.js','utf8').replace(/\r\n/g,'\n');
+ const source=readOrganizacionalSource('tests/cursor-residual-independent.test.js','utf8').replace(/\r\n/g,'\n');
  const restored=restoreApprovedLocalEstoqueResidualDelta(source);
  assert.equal(restored.includes(approvedLocalEstoqueGraduationTest),false);
  assert.match(restored,/CentroOperacao', 'LocalEstoque'/);
@@ -281,7 +283,7 @@ test('LocalEstoque residual graduation retains beforeSha and rejects omission, r
  assert.throws(()=>restoreApprovedLocalEstoqueResidualDelta(source.replace("CentroOperacao',","CentroOperacao', 'Webhook',")));
 });
 for(const entry of manifest.cases)test(entry.path+': publication fixes only Git reference, preserving every prior assertion',()=>{
- const source=fs.readFileSync(entry.path,'utf8').replace(/\r\n/g,'\n');
+ const source=readOrganizacionalSource(entry.path,'utf8').replace(/\r\n/g,'\n');
  assert.equal(source.includes('HEAD:'),false);
  assert.equal(source.includes("'HEAD'"),false);
  assert.equal((source.match(new RegExp(base,'g'))||[]).length,entry.references);
@@ -309,7 +311,7 @@ for(const entry of manifest.cases)test(entry.path+': publication fixes only Git 
  assert.equal(crypto.createHash('sha256').update(restored).digest('hex'),entry.beforeSha256);
 });
 test('CI retains historical source for proofs and checks frontend types before build',()=>{
- const source=fs.readFileSync('.github/workflows/erp-runtime-ci.yml','utf8');
+ const source=readOrganizacionalSource('.github/workflows/erp-runtime-ci.yml','utf8');
  const frontend=source.slice(source.indexOf('  frontend:'),source.indexOf('  backend:'));
  assert.match(frontend,/fetch-depth: 0/);
  assert.ok(frontend.indexOf('npm run typecheck')>frontend.indexOf('npm ci'));
@@ -327,7 +329,7 @@ test('CANAL publication tip does not rewrite manifest; P1 reopen delta is the ex
   const parentPub=execFileSync('git',['show','79d002a3a6b0d0e5a2e6ea4f2372930737ca4656:tests/helpers/publicationBaselineManifest.json'],{encoding:'utf8'});
   assert.equal(tipPub,parentPub);
   const historical=JSON.parse(execFileSync('git',['show','90f0a315eb3d2b59e0c2bfcab7077abc27bc3613:tests/helpers/publicationBaselineManifest.json'],{encoding:'utf8'}));
-  const current=JSON.parse(fs.readFileSync('tests/helpers/publicationBaselineManifest.json','utf8'));
+  const current=JSON.parse(readOrganizacionalSource('tests/helpers/publicationBaselineManifest.json','utf8'));
   assert.equal(current.cases.length,18);
   assert.equal(historical.cases.length,18);
   assert.equal(current.base,historical.base);
@@ -348,7 +350,7 @@ test('CANAL publication tip does not rewrite manifest; P1 reopen delta is the ex
 });
 
 test('P1 reopen guards reject assertion removal after beforeSha recalculation (Codex contraprova)',()=>{
-  const authorized=normalizePublicationSource(fs.readFileSync(REOPEN_CONSOLIDACAO_PATH,'utf8'));
+  const authorized=normalizePublicationSource(readOrganizacionalSource(REOPEN_CONSOLIDACAO_PATH,'utf8'));
   assert.equal(publicationRestoredHash(authorized), REOPEN_AUTHORIZED_CURRENT_SHA);
   assert.equal(restoreAuthorizedReopenConsolidacao(authorized), loadHistoricalReopenConsolidacao());
 
@@ -380,7 +382,7 @@ test('P1 reopen guards reject assertion removal after beforeSha recalculation (C
 });
 
 test('P1 reopen guards reject internal mutation, omission, repetition and baseline tampering',()=>{
-  const authorized=normalizePublicationSource(fs.readFileSync(REOPEN_CONSOLIDACAO_PATH,'utf8'));
+  const authorized=normalizePublicationSource(readOrganizacionalSource(REOPEN_CONSOLIDACAO_PATH,'utf8'));
 
   // Mutação interna (trocar outcome keep→apply).
   const internal=authorized.replace("}), 'keep');", "}), 'apply');");

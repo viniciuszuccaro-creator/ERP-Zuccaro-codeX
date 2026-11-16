@@ -42,3 +42,21 @@ test('organizacional adapter preserves omission, exact identity, null and versio
   const partial = createOrganizacionalHttp('Empresa', async () => ({ data: [], meta: { total: 1 } }));
   await assert.rejects(partial.list(), /parcial/);
 });
+
+test('organizacional read/update discards late actor/session/company results, including ABA event', async () => {
+  const row = { id: 'e', group_id: 'g', version: 'a'.repeat(64), supported_fields: ['nome_fantasia'] };
+  const beforeWindow = globalThis.window;
+  try {
+    for (const key of ['token', 'actorId', 'groupId', 'empresaId', 'event']) {
+      let release; const listeners = new Set();
+      const scope = { token: 'synthetic', actorId: 'a', groupId: 'g', empresaId: 'e' };
+      globalThis.window = { addEventListener: (_, f) => listeners.add(f), removeEventListener: (_, f) => listeners.delete(f) };
+      const api = createOrganizacionalHttp('Empresa', async () => new Promise(r => { release = r; }), () => scope);
+      const pending = api.get('e');
+      if (key === 'event') listeners.forEach(f => f()); else scope[key] = 'changed';
+      release(row);
+      await assert.rejects(pending, { code: 'CONTEXT_CHANGED' });
+      assert.equal(listeners.size, 0);
+    }
+  } finally { globalThis.window = beforeWindow; }
+});

@@ -1042,7 +1042,7 @@ SeparacaoConferencia: {
   };
   /** @type {Record<string, ReturnType<typeof createCrudEntity>>} */
   const entities = {};
-  for (const name of ['GrupoEmpresarial', 'Empresa']) entities[name] = createOrganizacionalHttp(name, request);
+  for (const name of ['GrupoEmpresarial', 'Empresa']) entities[name] = createOrganizacionalHttp(name, request, getScope);
   for (const name of ["Entrega","Romaneio","SeparacaoConferencia"]) entities[name]=entityRoutes[name];
   for (const name of HTTP_PILOT_ENTITIES) {
     entities[name] = entityRoutes[name] || entityRoutes.Marca;

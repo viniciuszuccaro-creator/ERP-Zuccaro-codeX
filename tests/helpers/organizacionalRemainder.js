@@ -1,117 +1,464 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 
-// Exact organizational delta only; historical golden pins stay unchanged.
-const hunks = {
-  "server/src/app.ts": [
-    {
-      "before": "import { MarcaService } from './services/marcaService.js';\nimport { ProdutoService } from './services/produtoService.js';\nimport { TenantCrudService } from './services/tenantCrudService.js';\nimport { createApiRouter } from './api/router.js';\nimport { InMemoryTabelaPrecoRepository } from './repositories/inMemoryTabelaPrecoRepository.js';\nimport { PostgresTabelaPrecoRepository } from './repositories/postgresTabelaPrecoRepository.js';\n",
-      "after": "import { MarcaService } from './services/marcaService.js';\nimport { ProdutoService } from './services/produtoService.js';\nimport { TenantCrudService } from './services/tenantCrudService.js';\nimport { OrganizacionalService } from './services/organizacionalService.js';\nimport { createApiRouter } from './api/router.js';\nimport { InMemoryTabelaPrecoRepository } from './repositories/inMemoryTabelaPrecoRepository.js';\nimport { PostgresTabelaPrecoRepository } from './repositories/postgresTabelaPrecoRepository.js';\n"
-    },
-    {
-      "before": "    });\n  }\n  app.use(createApiRouter({\n    fornecedorService,\n    config,\n    db,\n",
-      "after": "    });\n  }\n  app.use(createApiRouter({\n    organizacionalService: useMemory ? undefined : new OrganizacionalService(db, auditRepo, rbacGuard, tenantGuard),\n    fornecedorService,\n    config,\n    db,\n"
-    }
-  ],
-  "server/src/api/router.ts": [
-    {
-      "before": "import { Router, type Request } from 'express';\nimport { z } from 'zod';\nimport { AppError } from './errors.js';\nimport type { AppConfig } from '../config/env.js';\n",
-      "after": "import { Router, type Request } from 'express';\nimport { mountOrganizacionalRoutes } from './organizacionalRoutes.js';\nimport type { OrganizacionalService } from '../services/organizacionalService.js';\nimport { z } from 'zod';\nimport { AppError } from './errors.js';\nimport type { AppConfig } from '../config/env.js';\n"
-    },
-    {
-      "before": "};\n\nexport type ApiDeps = {\n  config: AppConfig;\n  db: DbClient;\n  authDb?: AuthDbClient;\n",
-      "after": "};\n\nexport type ApiDeps = {\n  organizacionalService?: OrganizacionalService;\n  config: AppConfig;\n  db: DbClient;\n  authDb?: AuthDbClient;\n"
-    },
-    {
-      "before": "}\nexport function createApiRouter(deps: ApiDeps) {\n  const router = Router();\n\n  router.get('/health', (_req, res) => {\n    res.json({\n",
-      "after": "}\nexport function createApiRouter(deps: ApiDeps) {\n  const router = Router();\n  if (deps.organizacionalService) mountOrganizacionalRoutes(router, deps.organizacionalService);\n\n  router.get('/health', (_req, res) => {\n    res.json({\n"
-    }
-  ],
-  "src/api/httpApiClient.js": [
-    {
-      "before": "import { createFinancialMovementApi } from './financialMovementHttp.js';\nimport { MAX_BANK_STATEMENT_BYTES } from './bankStatementContract.js';\nimport { createClienteLocalBatchHttpApi } from './clienteLocalBatchHttp.js';\n\n/**\n * Cliente HTTP compativel com a superficie parcial de base44.entities.*\n",
-      "after": "import { createFinancialMovementApi } from './financialMovementHttp.js';\nimport { MAX_BANK_STATEMENT_BYTES } from './bankStatementContract.js';\nimport { createClienteLocalBatchHttpApi } from './clienteLocalBatchHttp.js';\nimport { createOrganizacionalHttp } from './organizacionalHttp.js';\n\n/**\n * Cliente HTTP compativel com a superficie parcial de base44.entities.*\n"
-    },
-    {
-      "before": "  };\n  /** @type {Record<string, ReturnType<typeof createCrudEntity>>} */\n  const entities = {};\n  for (const name of [\"Entrega\",\"Romaneio\",\"SeparacaoConferencia\"]) entities[name]=entityRoutes[name];\n  for (const name of HTTP_PILOT_ENTITIES) {\n    entities[name] = entityRoutes[name] || entityRoutes.Marca;\n",
-      "after": "  };\n  /** @type {Record<string, ReturnType<typeof createCrudEntity>>} */\n  const entities = {};\n  for (const name of ['GrupoEmpresarial', 'Empresa']) entities[name] = createOrganizacionalHttp(name, request);\n  for (const name of [\"Entrega\",\"Romaneio\",\"SeparacaoConferencia\"]) entities[name]=entityRoutes[name];\n  for (const name of HTTP_PILOT_ENTITIES) {\n    entities[name] = entityRoutes[name] || entityRoutes.Marca;\n"
-    }
-  ],
-  "src/components/cadastros/GrupoEmpresarialForm.jsx": [
-    {
-      "before": "import useCadastroRecordState from './useCadastroRecordState';\nimport React, { useMemo, useState } from \"react\";\nimport { Input } from \"@/components/ui/input\";\nimport { Label } from \"@/components/ui/label\";\nimport { Button } from \"@/components/ui/button\";\n",
-      "after": "import useCadastroRecordState from './useCadastroRecordState';\nimport React, { useMemo, useState, useRef } from \"react\";\nimport { isHttpBackendMode } from '@/api/base44Client';\nimport { hasCadastroEntityPermission } from './cadastroEditLoadPolicy';\nimport { Input } from \"@/components/ui/input\";\nimport { Label } from \"@/components/ui/label\";\nimport { Button } from \"@/components/ui/button\";\n"
-    },
-    {
-      "before": "/**\n * V21.1.2 - WINDOW MODE READY\n */\nexport default function GrupoEmpresarialForm({ grupo, item, data, initialData, defaultValues, onSubmit, isSubmitting, windowMode = false }) {\n  const normalize = (registro) => {\n    if (!registro) return null;\n    return {\n",
-      "after": "/**\n * V21.1.2 - WINDOW MODE READY\n */\nexport default function GrupoEmpresarialForm({ grupo, item, data, initialData, defaultValues, onSubmit, isSubmitting, windowMode = false, loadIncomplete = false, isLoadingRecord = false }) {\n  const normalize = (registro) => {\n    if (!registro) return null;\n    return {\n"
-    },
-    {
-      "before": "  };\n\n  const dadosIniciais = normalize(item || data || initialData || defaultValues || grupo);\n  const { canCreate, canEdit, canDelete } = usePermissions();\n  const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();\n  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || dadosIniciais?.id || null;\n  const contextoValido = Boolean(groupId || dadosIniciais?.id);\n  const podeCriar = canCreate(\"Cadastros\", \"GrupoEmpresarial\") || canCreate(\"Sistema\", \"Grupos\") || canCreate(\"Cadastros\", null);\n  const podeEditar = canEdit(\"Cadastros\", \"GrupoEmpresarial\") || canEdit(\"Sistema\", \"Grupos\") || canEdit(\"Cadastros\", null);\n  const podeExcluir = canDelete(\"Cadastros\", \"GrupoEmpresarial\") || canDelete(\"Sistema\", \"Grupos\") || canDelete(\"Cadastros\", null);\n  const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;\n\n  const [formData, setFormData] = useCadastroRecordState(dadosIniciais || {\n    nome: \"\",\n",
-      "after": "  };\n\n  const dadosIniciais = normalize(item || data || initialData || defaultValues || grupo);\n  const { canCreate, canEdit, canDelete, hasPermission, isLoading: permissionsLoading } = usePermissions();\n  const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();\n  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || dadosIniciais?.id || null;\n  const contextoValido = Boolean(groupId || dadosIniciais?.id);\n  const checkers = { canCreate, canEdit, canDelete, hasPermission };\n  const podeCriar = !permissionsLoading && !isHttpBackendMode && hasCadastroEntityPermission('GrupoEmpresarial', 'criar', checkers);\n  const podeEditar = !permissionsLoading && hasCadastroEntityPermission('GrupoEmpresarial', 'editar', checkers);\n  const podeExcluir = !isHttpBackendMode && hasCadastroEntityPermission('GrupoEmpresarial', 'excluir', checkers);\n  const podeSalvar = !loadIncomplete && !isLoadingRecord && (dadosIniciais?.id ? podeEditar : podeCriar);\n  const busy = useRef(false);\n\n  const [formData, setFormData] = useCadastroRecordState(dadosIniciais || {\n    nome: \"\",\n"
-    },
-    {
-      "before": "    };\n  };\n\n  const handleSubmit = (e) => {\n    e.preventDefault();\n    if (!podeSalvar) {\n      alert(dadosIniciais?.id ? \"Sem permissao para editar grupo empresarial.\" : \"Sem permissao para criar grupo empresarial.\");\n      return;\n",
-      "after": "    };\n  };\n\n  const handleSubmit = async (e) => {\n    e.preventDefault();\n    if (busy.current) return;\n    if (!podeSalvar) {\n      alert(dadosIniciais?.id ? \"Sem permissao para editar grupo empresarial.\" : \"Sem permissao para criar grupo empresarial.\");\n      return;\n"
-    },
-    {
-      "before": "      alert(\"Preencha o nome do grupo\");\n      return;\n    }\n    onSubmit(payload);\n  };\n\n  const handleExcluir = () => {\n",
-      "after": "      alert(\"Preencha o nome do grupo\");\n      return;\n    }\n    busy.current = true;\n    try { await onSubmit(payload); }\n    catch (error) { console.error('Falha ao salvar grupo', error); }\n    finally { busy.current = false; }\n  };\n\n  const handleExcluir = () => {\n"
-    },
-    {
-      "before": "  };\n\n  const handleAlternarStatus = () => {\n    if (!podeEditar) {\n      alert(\"Sem permissao para alterar status do grupo empresarial.\");\n      return;\n",
-      "after": "  };\n\n  const handleAlternarStatus = () => {\n    if (isHttpBackendMode) return;\n    if (!podeEditar) {\n      alert(\"Sem permissao para alterar status do grupo empresarial.\");\n      return;\n"
-    },
-    {
-      "before": "  };\n\n  const toggleEmpresa = (empresaId) => {\n    if (!podeSalvar) return;\n    const ids = formData.empresas_ids || [];\n    if (ids.includes(empresaId)) {\n",
-      "after": "  };\n\n  const toggleEmpresa = (empresaId) => {\n    if (isHttpBackendMode) return;\n    if (!podeSalvar) return;\n    const ids = formData.empresas_ids || [];\n    if (ids.includes(empresaId)) {\n"
-    },
-    {
-      "before": "      />\n      <div>\n        <Label>Nome do Grupo *</Label>\n        <Input value={formData.nome} onChange={(e) => setFormData({ ...formData, nome: e.target.value })} placeholder=\"Ex: Grupo CPA\" disabled={!podeSalvar} data-permission=\"Cadastros.GrupoEmpresarial.editar\" data-action=\"editar-nome-grupo\" data-sensitive />\n      </div>\n\n      <div>\n        <Label>Descricao</Label>\n        <Textarea value={formData.descricao || \"\"} onChange={(e) => setFormData({ ...formData, descricao: e.target.value })} placeholder=\"Descricao do grupo empresarial...\" rows={2} disabled={!podeSalvar} data-permission=\"Cadastros.GrupoEmpresarial.editar\" data-action=\"editar-descricao-grupo\" data-sensitive />\n      </div>\n\n      <div className=\"grid grid-cols-2 gap-4\">\n        <div>\n          <Label>CNPJ do Grupo</Label>\n          <Input value={formData.cnpj || \"\"} onChange={(e) => setFormData({ ...formData, cnpj: e.target.value })} placeholder=\"00.000.000/0001-00\" disabled={!podeSalvar} data-permission=\"Cadastros.GrupoEmpresarial.editar\" data-action=\"editar-cnpj-grupo\" data-sensitive />\n        </div>\n\n        <div>\n          <Label>Inscricao Estadual</Label>\n          <Input value={formData.inscricao_estadual} onChange={(e) => setFormData({ ...formData, inscricao_estadual: e.target.value })} disabled={!podeSalvar} data-permission=\"Cadastros.GrupoEmpresarial.editar\" data-action=\"editar-inscricao-grupo\" data-sensitive />\n        </div>\n      </div>\n\n",
-      "after": "      />\n      <div>\n        <Label>Nome do Grupo *</Label>\n        <Input value={formData.nome} onChange={(e) => setFormData({ ...formData, nome: e.target.value })} placeholder=\"Ex: Grupo CPA\" disabled={!podeSalvar} data-permission=\"Cadastros.Organizacional.editar\" data-action=\"editar-nome-grupo\" data-sensitive />\n      </div>\n\n      <div>\n        <Label>Descricao</Label>\n        <Textarea value={formData.descricao || \"\"} onChange={(e) => setFormData({ ...formData, descricao: e.target.value })} placeholder=\"Descricao do grupo empresarial...\" rows={2} disabled={!podeSalvar} data-permission=\"Cadastros.Organizacional.editar\" data-action=\"editar-descricao-grupo\" data-sensitive />\n      </div>\n\n      <div className=\"grid grid-cols-2 gap-4\">\n        <div>\n          <Label>CNPJ do Grupo</Label>\n          <Input value={formData.cnpj || \"\"} onChange={(e) => setFormData({ ...formData, cnpj: e.target.value })} placeholder=\"00.000.000/0001-00\" disabled={!podeSalvar} data-permission=\"Cadastros.Organizacional.editar\" data-action=\"editar-cnpj-grupo\" data-sensitive />\n        </div>\n\n        <div>\n          <Label>Inscricao Estadual</Label>\n          <Input value={formData.inscricao_estadual} onChange={(e) => setFormData({ ...formData, inscricao_estadual: e.target.value })} disabled={!podeSalvar || isHttpBackendMode} data-permission=\"Cadastros.Organizacional.editar\" data-action=\"editar-inscricao-grupo\" data-sensitive />\n        </div>\n      </div>\n\n"
-    },
-    {
-      "before": "            {empresasDoGrupo.map((empresa) => (\n              <div key={empresa.id} className=\"flex items-center justify-between p-2 hover:bg-slate-50 rounded\">\n                <div className=\"flex items-center gap-2\">\n                  <input type=\"checkbox\" checked={(formData.empresas_ids || []).includes(empresa.id)} onChange={() => toggleEmpresa(empresa.id)} disabled={!podeSalvar} className=\"w-4 h-4\" data-permission=\"Cadastros.GrupoEmpresarial.vincularEmpresa\" data-action=\"vincular-empresa-grupo\" data-sensitive />\n                  <div>\n                    <p className=\"text-sm font-medium\">{empresa.razao_social}</p>\n                    <p className=\"text-xs text-slate-500\">{empresa.cnpj}</p>\n",
-      "after": "            {empresasDoGrupo.map((empresa) => (\n              <div key={empresa.id} className=\"flex items-center justify-between p-2 hover:bg-slate-50 rounded\">\n                <div className=\"flex items-center gap-2\">\n                  <input type=\"checkbox\" checked={(formData.empresas_ids || []).includes(empresa.id)} onChange={() => toggleEmpresa(empresa.id)} disabled={!podeSalvar || isHttpBackendMode} className=\"w-4 h-4\" data-permission=\"Cadastros.GrupoEmpresarial.vincularEmpresa\" data-action=\"vincular-empresa-grupo\" data-sensitive />\n                  <div>\n                    <p className=\"text-sm font-medium\">{empresa.razao_social}</p>\n                    <p className=\"text-xs text-slate-500\">{empresa.cnpj}</p>\n"
-    },
-    {
-      "before": "          <Label>Governanca Consolidada</Label>\n          <p className=\"text-xs text-slate-500\">Sincroniza Plano de Contas entre empresas</p>\n        </div>\n        <Switch checked={formData.governanca_consolidada} onCheckedChange={(v) => setFormData({ ...formData, governanca_consolidada: v })} disabled={!podeSalvar} data-permission=\"Cadastros.GrupoEmpresarial.governanca\" data-action=\"alternar-governanca-grupo\" data-sensitive />\n      </div>\n\n      <Badge className=\"bg-blue-100 text-blue-700\">\n        <Network className=\"w-3 h-3 mr-1\" />\n        Score Integracao ERP: {formData.score_integracao_erp}% (calculado por IA)\n      </Badge>\n\n      <div className=\"flex justify-end gap-3 pt-4 border-t\">\n        {dadosIniciais && (\n          <>\n            <Button type=\"button\" variant=\"outline\" onClick={handleAlternarStatus} disabled={!podeEditar} data-permission=\"Cadastros.GrupoEmpresarial.alterarStatus\" data-sensitive className={formData.status === \"Ativo\" ? \"border-orange-300 text-orange-700\" : \"border-green-300 text-green-700\"}>\n              {formData.status === \"Ativo\" ? (\n                <><PowerOff className=\"w-4 h-4 mr-2\" />Inativar</>\n              ) : (\n",
-      "after": "          <Label>Governanca Consolidada</Label>\n          <p className=\"text-xs text-slate-500\">Sincroniza Plano de Contas entre empresas</p>\n        </div>\n        <Switch checked={formData.governanca_consolidada} onCheckedChange={(v) => setFormData({ ...formData, governanca_consolidada: v })} disabled={!podeSalvar || isHttpBackendMode} data-permission=\"Cadastros.GrupoEmpresarial.governanca\" data-action=\"alternar-governanca-grupo\" data-sensitive />\n      </div>\n\n      {!isHttpBackendMode && <Badge className=\"bg-blue-100 text-blue-700\">\n        <Network className=\"w-3 h-3 mr-1\" />\n        Score Integracao ERP: {formData.score_integracao_erp}% (calculado por IA)\n      </Badge>}\n\n      <div className=\"flex justify-end gap-3 pt-4 border-t\">\n        {dadosIniciais && (\n          <>\n            <Button type=\"button\" variant=\"outline\" onClick={handleAlternarStatus} disabled={!podeEditar || isHttpBackendMode} data-permission=\"Cadastros.GrupoEmpresarial.alterarStatus\" data-sensitive className={formData.status === \"Ativo\" ? \"border-orange-300 text-orange-700\" : \"border-green-300 text-green-700\"}>\n              {formData.status === \"Ativo\" ? (\n                <><PowerOff className=\"w-4 h-4 mr-2\" />Inativar</>\n              ) : (\n"
-    },
-    {
-      "before": "            </Button>\n          </>\n        )}\n        <Button type=\"submit\" disabled={isSubmitting || !podeSalvar} data-permission=\"Cadastros.GrupoEmpresarial.salvar\" data-action=\"salvar-grupo-empresarial\" data-sensitive>\n          {isSubmitting && <Loader2 className=\"w-4 h-4 mr-2 animate-spin\" />}\n          {dadosIniciais ? \"Atualizar Grupo\" : \"Criar Grupo\"}\n        </Button>\n",
-      "after": "            </Button>\n          </>\n        )}\n        <Button type=\"submit\" disabled={isSubmitting || !podeSalvar} data-permission=\"Cadastros.Organizacional.editar\" data-action=\"salvar-grupo-empresarial\" data-sensitive>\n          {isSubmitting && <Loader2 className=\"w-4 h-4 mr-2 animate-spin\" />}\n          {dadosIniciais ? \"Atualizar Grupo\" : \"Criar Grupo\"}\n        </Button>\n"
-    }
-  ],
-  "src/components/cadastros/VisualizadorUniversalEntidadeV24.jsx": [
-    {
-      "before": " * - Erros mantêm cache visível com banner discreto\n */\nimport React, { useState, useEffect, useCallback, useMemo, useRef } from \"react\";\nimport { useQuery, useQueryClient } from \"@tanstack/react-query\";\nimport {\n  base44,\n",
-      "after": " * - Erros mantêm cache visível com banner discreto\n */\nimport React, { useState, useEffect, useCallback, useMemo, useRef } from \"react\";\nimport { buildOrganizacionalPatch } from '@/api/organizacionalHttp';\nimport { readErpHttpSession, HTTP_CONTEXT_CHANGED } from '@/api/erpHttpSession';\nimport { useQuery, useQueryClient } from \"@tanstack/react-query\";\nimport {\n  base44,\n"
-    },
-    {
-      "before": "  const editRequestRef = useRef(0);\n  const scopeKey = ENTITY + \":\" + (groupId || \"\") + \":\" + (empresaId || \"\");\n  const formScopeRef = useRef(scopeKey);\n  const activeScopeRef = useRef(scopeKey);\n  const previousScopeRef = useRef(scopeKey);\n  activeScopeRef.current = scopeKey;\n",
-      "after": "  const editRequestRef = useRef(0);\n  const scopeKey = ENTITY + \":\" + (groupId || \"\") + \":\" + (empresaId || \"\");\n  const formScopeRef = useRef(scopeKey);\n  const organizacionalBusy = useRef(false);\n  const activeScopeRef = useRef(scopeKey);\n  const previousScopeRef = useRef(scopeKey);\n  activeScopeRef.current = scopeKey;\n"
-    },
-    {
-      "before": "      });\n      throw error;\n    }\n    if (formData._action === \"delete\") {\n      if (!canDeleteCadastro) {\n        await auditCadastroEvent(\"Bloqueio\", \"Tentativa de excluir cadastro pelo formulario sem permissao\", { registro_id: formData.id || null, permissao: cadastroPerm('excluir'), sucesso: false });\n",
-      "after": "      });\n      throw error;\n    }\n    if (isHttpBackendMode && isTenantMasterEntity(ENTITY)) {\n      if (organizacionalBusy.current) return;\n      if (!editItem?.id || isLoadingEdit || editLoadBlocked || !canEditCadastro || formData._action) {\n        throw new Error('Edicao organizacional indisponivel para este registro/acao.');\n      }\n      const opened = readErpHttpSession();\n      const generation = editRequestRef.current;\n      let changed = false;\n      const invalidate = () => { changed = true; };\n      const current = () => {\n        const active = readErpHttpSession();\n        return !changed && generation === editRequestRef.current && active && opened\n          && ['token', 'actorId', 'groupId', 'empresaId', 'scopeType'].every(k => active[k] === opened[k]);\n      };\n      if (!opened || opened.groupId !== groupId || (opened.empresaId || null) !== (empresaId || null)) throw new Error('Sessao/contexto alterado. Reabra o cadastro.');\n      organizacionalBusy.current = true;\n      window.addEventListener(HTTP_CONTEXT_CHANGED, invalidate);\n      setIsSaving(true);\n      try {\n        const payload = buildOrganizacionalPatch(ENTITY, editItem, formData);\n        if (!current()) throw new Error('Contexto alterado.');\n        await base44.entities[ENTITY].update(editItem.id, payload);\n        // Backend owns the transaction and audit. Never stamp a tenant-master company locally.\n        if (current()) handleCloseForm(true);\n      } catch (error) {\n        if (current()) alert('Erro ao salvar: ' + error.message);\n        throw error;\n      } finally {\n        window.removeEventListener(HTTP_CONTEXT_CHANGED, invalidate);\n        organizacionalBusy.current = false;\n        if (current()) setIsSaving(false);\n      }\n      return;\n    }\n    if (formData._action === \"delete\") {\n      if (!canDeleteCadastro) {\n        await auditCadastroEvent(\"Bloqueio\", \"Tentativa de excluir cadastro pelo formulario sem permissao\", { registro_id: formData.id || null, permissao: cadastroPerm('excluir'), sucesso: false });\n"
-    }
-  ],
-  "tests/cursor-identidade-consolidacao.test.js": [
-    {
-      "before": "import { clienteNavigationRemainder } from './helpers/clienteNavigationRemainder.js';\nimport { perfilPolicyRemainder, perfilViewerRemainder } from './helpers/perfilGateRemainder.js';\nimport { scopeListCacheRemainder } from './helpers/scopeListCacheRemainder.js';\n\n// Coorte ID-only restante (golden e36231b3). Operador/Condicao/MoedaIndice/ContatoB2B\n// graduaram para useCadastroReopenOnIdentity — cobertos no teste seguinte.\n",
-      "after": "import { clienteNavigationRemainder } from './helpers/clienteNavigationRemainder.js';\nimport { perfilPolicyRemainder, perfilViewerRemainder } from './helpers/perfilGateRemainder.js';\nimport { scopeListCacheRemainder } from './helpers/scopeListCacheRemainder.js';\nimport { organizacionalRemainder } from './helpers/organizacionalRemainder.js';\n\n// Coorte ID-only restante (golden e36231b3). Operador/Condicao/MoedaIndice/ContatoB2B\n// graduaram para useCadastroReopenOnIdentity — cobertos no teste seguinte.\n"
-    },
-    {
-      "before": "  MoedaIndice: 'moedaBoundId',\n  ContatoB2B: 'contatoBoundId',\n};\nconst read = path => readFileSync(path, 'utf8').replace(/\\r\\n/g, '\\n');\nconst head = path => execFileSync('git', ['show', `e36231b3a7e546aa9fd2529abb8d5edb61d8189c:${path}`], { encoding: 'utf8' }).replace(/\\r\\n/g, '\\n');\nconst tree = (path, source) => ts.createSourceFile(path, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.JSX);\nconst emit = source => ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ESNext, jsx: ts.JsxEmit.React, module: ts.ModuleKind.ESNext, removeComments: true } }).outputText;\n",
-      "after": "  MoedaIndice: 'moedaBoundId',\n  ContatoB2B: 'contatoBoundId',\n};\nconst read = path => {\n  const source = readFileSync(path, 'utf8').replace(/\\r\\n/g, '\\n');\n  return path.endsWith('/GrupoEmpresarialForm.jsx') ? organizacionalRemainder(path, source) : source;\n};\nconst head = path => execFileSync('git', ['show', `e36231b3a7e546aa9fd2529abb8d5edb61d8189c:${path}`], { encoding: 'utf8' }).replace(/\\r\\n/g, '\\n');\nconst tree = (path, source) => ts.createSourceFile(path, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.JSX);\nconst emit = source => ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ESNext, jsx: ts.JsxEmit.React, module: ts.ModuleKind.ESNext, removeComments: true } }).outputText;\n"
-    }
-  ]
+// Exact authorized organizational delta; all historical assertion hashes stay unchanged.
+// Only historical comparisons use this projection; current behavior has separate tests.
+const entries = {
+  "server/src/app.ts": {
+    "baseline": "696acc2f603c866168e904ee68c327874be84ddf973de488b0635666faa57fd2",
+    "hunks": [
+      {
+        "before": "import { ProdutoService } from './services/produtoService.js';\nimport { TenantCrudService } from './services/tenantCrudService.js';\nimport { createApiRouter } from './api/router.js';\nimport { InMemoryTabelaPrecoRepository } from './repositories/inMemoryTabelaPrecoRepository.js';\n",
+        "after": "import { ProdutoService } from './services/produtoService.js';\nimport { TenantCrudService } from './services/tenantCrudService.js';\nimport { OrganizacionalService } from './services/organizacionalService.js';\nimport { createApiRouter } from './api/router.js';\nimport { InMemoryTabelaPrecoRepository } from './repositories/inMemoryTabelaPrecoRepository.js';\n"
+      },
+      {
+        "before": "  }\n  app.use(createApiRouter({\n    fornecedorService,\n    config,\n",
+        "after": "  }\n  app.use(createApiRouter({\n    organizacionalService: useMemory ? undefined : new OrganizacionalService(db, auditRepo, rbacGuard, tenantGuard),\n    fornecedorService,\n    config,\n"
+      }
+    ]
+  },
+  "server/src/api/router.ts": {
+    "baseline": "217c6df91ec330e11987f0b90a571ef3870e922059a9af57b9f478a06cdbd2f5",
+    "hunks": [
+      {
+        "before": "import { Router, type Request } from 'express';\nimport { z } from 'zod';\nimport { AppError } from './errors.js';\n",
+        "after": "import { Router, type Request } from 'express';\nimport { mountOrganizacionalRoutes } from './organizacionalRoutes.js';\nimport type { OrganizacionalService } from '../services/organizacionalService.js';\nimport { z } from 'zod';\nimport { AppError } from './errors.js';\n"
+      },
+      {
+        "before": "\nexport type ApiDeps = {\n  config: AppConfig;\n  db: DbClient;\n",
+        "after": "\nexport type ApiDeps = {\n  organizacionalService?: OrganizacionalService;\n  config: AppConfig;\n  db: DbClient;\n"
+      },
+      {
+        "before": "export function createApiRouter(deps: ApiDeps) {\n  const router = Router();\n\n  router.get('/health', (_req, res) => {\n",
+        "after": "export function createApiRouter(deps: ApiDeps) {\n  const router = Router();\n  if (deps.organizacionalService) mountOrganizacionalRoutes(router, deps.organizacionalService);\n\n  router.get('/health', (_req, res) => {\n"
+      }
+    ]
+  },
+  "src/api/httpApiClient.js": {
+    "baseline": "2d01bd57ba79ce0a0bbdfbcc527429fecc930c4b78450b51d67534239f9a62eb",
+    "hunks": [
+      {
+        "before": "import { MAX_BANK_STATEMENT_BYTES } from './bankStatementContract.js';\nimport { createClienteLocalBatchHttpApi } from './clienteLocalBatchHttp.js';\n\n/**\n",
+        "after": "import { MAX_BANK_STATEMENT_BYTES } from './bankStatementContract.js';\nimport { createClienteLocalBatchHttpApi } from './clienteLocalBatchHttp.js';\nimport { createOrganizacionalHttp } from './organizacionalHttp.js';\n\n/**\n"
+      },
+      {
+        "before": "  /** @type {Record<string, ReturnType<typeof createCrudEntity>>} */\n  const entities = {};\n  for (const name of [\"Entrega\",\"Romaneio\",\"SeparacaoConferencia\"]) entities[name]=entityRoutes[name];\n  for (const name of HTTP_PILOT_ENTITIES) {\n",
+        "after": "  /** @type {Record<string, ReturnType<typeof createCrudEntity>>} */\n  const entities = {};\n  for (const name of ['GrupoEmpresarial', 'Empresa']) entities[name] = createOrganizacionalHttp(name, request, getScope);\n  for (const name of [\"Entrega\",\"Romaneio\",\"SeparacaoConferencia\"]) entities[name]=entityRoutes[name];\n  for (const name of HTTP_PILOT_ENTITIES) {\n"
+      }
+    ]
+  },
+  "src/components/cadastros/GrupoEmpresarialForm.jsx": {
+    "baseline": "73e2d8cf1de1a71cb888c703519e55a4c9db332f19e8f1c357b6de68e8f744d7",
+    "hunks": [
+      {
+        "before": "import useCadastroRecordState from './useCadastroRecordState';\nimport React, { useMemo, useState } from \"react\";\nimport { Input } from \"@/components/ui/input\";\nimport { Label } from \"@/components/ui/label\";\n",
+        "after": "import useCadastroRecordState from './useCadastroRecordState';\nimport React, { useMemo, useState, useRef } from \"react\";\nimport { isHttpBackendMode } from '@/api/base44Client';\nimport { hasCadastroEntityPermission } from './cadastroEditLoadPolicy';\nimport { Input } from \"@/components/ui/input\";\nimport { Label } from \"@/components/ui/label\";\n"
+      },
+      {
+        "before": " * V21.1.2 - WINDOW MODE READY\n */\nexport default function GrupoEmpresarialForm({ grupo, item, data, initialData, defaultValues, onSubmit, isSubmitting, windowMode = false }) {\n  const normalize = (registro) => {\n    if (!registro) return null;\n",
+        "after": " * V21.1.2 - WINDOW MODE READY\n */\nexport default function GrupoEmpresarialForm({ grupo, item, data, initialData, defaultValues, onSubmit, isSubmitting, windowMode = false, loadIncomplete = false, isLoadingRecord = false }) {\n  const normalize = (registro) => {\n    if (!registro) return null;\n"
+      },
+      {
+        "before": "\n  const dadosIniciais = normalize(item || data || initialData || defaultValues || grupo);\n  const { canCreate, canEdit, canDelete } = usePermissions();\n  const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();\n  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || dadosIniciais?.id || null;\n  const contextoValido = Boolean(groupId || dadosIniciais?.id);\n  const podeCriar = canCreate(\"Cadastros\", \"GrupoEmpresarial\") || canCreate(\"Sistema\", \"Grupos\") || canCreate(\"Cadastros\", null);\n  const podeEditar = canEdit(\"Cadastros\", \"GrupoEmpresarial\") || canEdit(\"Sistema\", \"Grupos\") || canEdit(\"Cadastros\", null);\n  const podeExcluir = canDelete(\"Cadastros\", \"GrupoEmpresarial\") || canDelete(\"Sistema\", \"Grupos\") || canDelete(\"Cadastros\", null);\n  const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;\n\n  const [formData, setFormData] = useCadastroRecordState(dadosIniciais || {\n",
+        "after": "\n  const dadosIniciais = normalize(item || data || initialData || defaultValues || grupo);\n  const { canCreate, canEdit, canDelete, hasPermission, isLoading: permissionsLoading } = usePermissions();\n  const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();\n  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || dadosIniciais?.id || null;\n  const contextoValido = Boolean(groupId || dadosIniciais?.id);\n  const checkers = { canCreate, canEdit, canDelete, hasPermission };\n  const podeCriar = !permissionsLoading && !isHttpBackendMode && hasCadastroEntityPermission('GrupoEmpresarial', 'criar', checkers);\n  const podeEditar = !permissionsLoading && hasCadastroEntityPermission('GrupoEmpresarial', 'editar', checkers);\n  const podeExcluir = !isHttpBackendMode && hasCadastroEntityPermission('GrupoEmpresarial', 'excluir', checkers);\n  const podeSalvar = !loadIncomplete && !isLoadingRecord && (dadosIniciais?.id ? podeEditar : podeCriar);\n  const busy = useRef(false);\n\n  const [formData, setFormData] = useCadastroRecordState(dadosIniciais || {\n"
+      },
+      {
+        "before": "  };\n\n  const handleSubmit = (e) => {\n    e.preventDefault();\n    if (!podeSalvar) {\n      alert(dadosIniciais?.id ? \"Sem permissao para editar grupo empresarial.\" : \"Sem permissao para criar grupo empresarial.\");\n",
+        "after": "  };\n\n  const handleSubmit = async (e) => {\n    e.preventDefault();\n    if (busy.current) return;\n    if (!podeSalvar) {\n      alert(dadosIniciais?.id ? \"Sem permissao para editar grupo empresarial.\" : \"Sem permissao para criar grupo empresarial.\");\n"
+      },
+      {
+        "before": "      return;\n    }\n    onSubmit(payload);\n  };\n\n",
+        "after": "      return;\n    }\n    busy.current = true;\n    try { await onSubmit(payload); }\n    catch (error) { console.error('Falha ao salvar grupo', error); }\n    finally { busy.current = false; }\n  };\n\n"
+      },
+      {
+        "before": "\n  const handleAlternarStatus = () => {\n    if (!podeEditar) {\n      alert(\"Sem permissao para alterar status do grupo empresarial.\");\n",
+        "after": "\n  const handleAlternarStatus = () => {\n    if (isHttpBackendMode) return;\n    if (!podeEditar) {\n      alert(\"Sem permissao para alterar status do grupo empresarial.\");\n"
+      },
+      {
+        "before": "\n  const toggleEmpresa = (empresaId) => {\n    if (!podeSalvar) return;\n    const ids = formData.empresas_ids || [];\n",
+        "after": "\n  const toggleEmpresa = (empresaId) => {\n    if (isHttpBackendMode) return;\n    if (!podeSalvar) return;\n    const ids = formData.empresas_ids || [];\n"
+      },
+      {
+        "before": "      <div>\n        <Label>Nome do Grupo *</Label>\n        <Input value={formData.nome} onChange={(e) => setFormData({ ...formData, nome: e.target.value })} placeholder=\"Ex: Grupo CPA\" disabled={!podeSalvar} data-permission=\"Cadastros.GrupoEmpresarial.editar\" data-action=\"editar-nome-grupo\" data-sensitive />\n      </div>\n\n      <div>\n        <Label>Descricao</Label>\n        <Textarea value={formData.descricao || \"\"} onChange={(e) => setFormData({ ...formData, descricao: e.target.value })} placeholder=\"Descricao do grupo empresarial...\" rows={2} disabled={!podeSalvar} data-permission=\"Cadastros.GrupoEmpresarial.editar\" data-action=\"editar-descricao-grupo\" data-sensitive />\n      </div>\n\n",
+        "after": "      <div>\n        <Label>Nome do Grupo *</Label>\n        <Input value={formData.nome} onChange={(e) => setFormData({ ...formData, nome: e.target.value })} placeholder=\"Ex: Grupo CPA\" disabled={!podeSalvar} data-permission=\"Cadastros.Organizacional.editar\" data-action=\"editar-nome-grupo\" data-sensitive />\n      </div>\n\n      <div>\n        <Label>Descricao</Label>\n        <Textarea value={formData.descricao || \"\"} onChange={(e) => setFormData({ ...formData, descricao: e.target.value })} placeholder=\"Descricao do grupo empresarial...\" rows={2} disabled={!podeSalvar} data-permission=\"Cadastros.Organizacional.editar\" data-action=\"editar-descricao-grupo\" data-sensitive />\n      </div>\n\n"
+      },
+      {
+        "before": "        <div>\n          <Label>CNPJ do Grupo</Label>\n          <Input value={formData.cnpj || \"\"} onChange={(e) => setFormData({ ...formData, cnpj: e.target.value })} placeholder=\"00.000.000/0001-00\" disabled={!podeSalvar} data-permission=\"Cadastros.GrupoEmpresarial.editar\" data-action=\"editar-cnpj-grupo\" data-sensitive />\n        </div>\n\n        <div>\n          <Label>Inscricao Estadual</Label>\n          <Input value={formData.inscricao_estadual} onChange={(e) => setFormData({ ...formData, inscricao_estadual: e.target.value })} disabled={!podeSalvar} data-permission=\"Cadastros.GrupoEmpresarial.editar\" data-action=\"editar-inscricao-grupo\" data-sensitive />\n        </div>\n      </div>\n",
+        "after": "        <div>\n          <Label>CNPJ do Grupo</Label>\n          <Input value={formData.cnpj || \"\"} onChange={(e) => setFormData({ ...formData, cnpj: e.target.value })} placeholder=\"00.000.000/0001-00\" disabled={!podeSalvar} data-permission=\"Cadastros.Organizacional.editar\" data-action=\"editar-cnpj-grupo\" data-sensitive />\n        </div>\n\n        <div>\n          <Label>Inscricao Estadual</Label>\n          <Input value={formData.inscricao_estadual} onChange={(e) => setFormData({ ...formData, inscricao_estadual: e.target.value })} disabled={!podeSalvar || isHttpBackendMode} data-permission=\"Cadastros.Organizacional.editar\" data-action=\"editar-inscricao-grupo\" data-sensitive />\n        </div>\n      </div>\n"
+      },
+      {
+        "before": "              <div key={empresa.id} className=\"flex items-center justify-between p-2 hover:bg-slate-50 rounded\">\n                <div className=\"flex items-center gap-2\">\n                  <input type=\"checkbox\" checked={(formData.empresas_ids || []).includes(empresa.id)} onChange={() => toggleEmpresa(empresa.id)} disabled={!podeSalvar} className=\"w-4 h-4\" data-permission=\"Cadastros.GrupoEmpresarial.vincularEmpresa\" data-action=\"vincular-empresa-grupo\" data-sensitive />\n                  <div>\n                    <p className=\"text-sm font-medium\">{empresa.razao_social}</p>\n",
+        "after": "              <div key={empresa.id} className=\"flex items-center justify-between p-2 hover:bg-slate-50 rounded\">\n                <div className=\"flex items-center gap-2\">\n                  <input type=\"checkbox\" checked={(formData.empresas_ids || []).includes(empresa.id)} onChange={() => toggleEmpresa(empresa.id)} disabled={!podeSalvar || isHttpBackendMode} className=\"w-4 h-4\" data-permission=\"Cadastros.GrupoEmpresarial.vincularEmpresa\" data-action=\"vincular-empresa-grupo\" data-sensitive />\n                  <div>\n                    <p className=\"text-sm font-medium\">{empresa.razao_social}</p>\n"
+      },
+      {
+        "before": "          <p className=\"text-xs text-slate-500\">Sincroniza Plano de Contas entre empresas</p>\n        </div>\n        <Switch checked={formData.governanca_consolidada} onCheckedChange={(v) => setFormData({ ...formData, governanca_consolidada: v })} disabled={!podeSalvar} data-permission=\"Cadastros.GrupoEmpresarial.governanca\" data-action=\"alternar-governanca-grupo\" data-sensitive />\n      </div>\n\n      <Badge className=\"bg-blue-100 text-blue-700\">\n        <Network className=\"w-3 h-3 mr-1\" />\n        Score Integracao ERP: {formData.score_integracao_erp}% (calculado por IA)\n      </Badge>\n\n      <div className=\"flex justify-end gap-3 pt-4 border-t\">\n        {dadosIniciais && (\n          <>\n            <Button type=\"button\" variant=\"outline\" onClick={handleAlternarStatus} disabled={!podeEditar} data-permission=\"Cadastros.GrupoEmpresarial.alterarStatus\" data-sensitive className={formData.status === \"Ativo\" ? \"border-orange-300 text-orange-700\" : \"border-green-300 text-green-700\"}>\n              {formData.status === \"Ativo\" ? (\n                <><PowerOff className=\"w-4 h-4 mr-2\" />Inativar</>\n",
+        "after": "          <p className=\"text-xs text-slate-500\">Sincroniza Plano de Contas entre empresas</p>\n        </div>\n        <Switch checked={formData.governanca_consolidada} onCheckedChange={(v) => setFormData({ ...formData, governanca_consolidada: v })} disabled={!podeSalvar || isHttpBackendMode} data-permission=\"Cadastros.GrupoEmpresarial.governanca\" data-action=\"alternar-governanca-grupo\" data-sensitive />\n      </div>\n\n      {!isHttpBackendMode && <Badge className=\"bg-blue-100 text-blue-700\">\n        <Network className=\"w-3 h-3 mr-1\" />\n        Score Integracao ERP: {formData.score_integracao_erp}% (calculado por IA)\n      </Badge>}\n\n      <div className=\"flex justify-end gap-3 pt-4 border-t\">\n        {dadosIniciais && (\n          <>\n            <Button type=\"button\" variant=\"outline\" onClick={handleAlternarStatus} disabled={!podeEditar || isHttpBackendMode} data-permission=\"Cadastros.GrupoEmpresarial.alterarStatus\" data-sensitive className={formData.status === \"Ativo\" ? \"border-orange-300 text-orange-700\" : \"border-green-300 text-green-700\"}>\n              {formData.status === \"Ativo\" ? (\n                <><PowerOff className=\"w-4 h-4 mr-2\" />Inativar</>\n"
+      },
+      {
+        "before": "          </>\n        )}\n        <Button type=\"submit\" disabled={isSubmitting || !podeSalvar} data-permission=\"Cadastros.GrupoEmpresarial.salvar\" data-action=\"salvar-grupo-empresarial\" data-sensitive>\n          {isSubmitting && <Loader2 className=\"w-4 h-4 mr-2 animate-spin\" />}\n          {dadosIniciais ? \"Atualizar Grupo\" : \"Criar Grupo\"}\n",
+        "after": "          </>\n        )}\n        <Button type=\"submit\" disabled={isSubmitting || !podeSalvar} data-permission=\"Cadastros.Organizacional.editar\" data-action=\"salvar-grupo-empresarial\" data-sensitive>\n          {isSubmitting && <Loader2 className=\"w-4 h-4 mr-2 animate-spin\" />}\n          {dadosIniciais ? \"Atualizar Grupo\" : \"Criar Grupo\"}\n"
+      }
+    ]
+  },
+  "src/components/cadastros/EmpresaForm.jsx": {
+    "baseline": "259cfa15e5e4781a01c0df91c59b316e1ad69e7748db638300af861138d4e2fa",
+    "hunks": [
+      {
+        "before": "﻿import React, { useEffect, useState } from \"react\";\nimport { Input } from \"@/components/ui/input\";\nimport useCadastroRecordState from './useCadastroRecordState';\nimport { Label } from \"@/components/ui/label\";\n",
+        "after": "﻿import React, { useEffect, useState } from \"react\";\nimport { Input } from \"@/components/ui/input\";\nimport { useRef } from 'react';\nimport { isHttpBackendMode } from '@/api/base44Client';\nimport useCadastroRecordState from './useCadastroRecordState';\nimport { Label } from \"@/components/ui/label\";\n"
+      },
+      {
+        "before": "    ...EMPRESA_FORM_DEFAULTS,\n    ...src,\n    certificado_digital: {\n      ...EMPRESA_FORM_DEFAULTS.certificado_digital,\n",
+        "after": "    ...EMPRESA_FORM_DEFAULTS,\n    ...src,\n    regime_tributario: Array.isArray(src.supported_fields) && !Object.hasOwn(src, 'regime_tributario')\n      ? '' : (src.regime_tributario ?? EMPRESA_FORM_DEFAULTS.regime_tributario),\n    certificado_digital: {\n      ...EMPRESA_FORM_DEFAULTS.certificado_digital,\n"
+      },
+      {
+        "before": "    : \"Cadastros.Organizacional.criar\";\n  const permissaoCertificado = \"Cadastros.Empresa.Certificado.editar\";\n  const podeEditarCertificado = podeSalvar && hasPermissionKey(permissaoCertificado);\n  const saveBlocked = Boolean(isLoadingRecord || loadIncomplete);\n  const [formData, setFormData] = useCadastroRecordState(mergeEmpresaFormData(dadosIniciais), JSON.stringify([\n    dadosIniciais?.id ?? null, dadosIniciais?.updated_date ?? null,\n",
+        "after": "    : \"Cadastros.Organizacional.criar\";\n  const permissaoCertificado = \"Cadastros.Empresa.Certificado.editar\";\n  const podeEditarCertificado = !isHttpBackendMode && podeSalvar && hasPermissionKey(permissaoCertificado);\n  const saveBlocked = Boolean(isLoadingRecord || loadIncomplete);\n  const persistBusy = useRef(false);\n  const [formData, setFormData] = useCadastroRecordState(mergeEmpresaFormData(dadosIniciais), JSON.stringify([\n    dadosIniciais?.id ?? null, dadosIniciais?.updated_date ?? null,\n"
+      },
+      {
+        "before": "\n  const handleSubmit = async () => {\n    if (saveBlocked) {\n      toast.error(\"Aguarde o carregamento completo do registro antes de salvar.\");\n",
+        "after": "\n  const handleSubmit = async () => {\n    if (persistBusy.current) return;\n    if (saveBlocked) {\n      toast.error(\"Aguarde o carregamento completo do registro antes de salvar.\");\n"
+      },
+      {
+        "before": "      return;\n    }\n    onSubmit(payload);\n  };\n\n",
+        "after": "      return;\n    }\n    persistBusy.current = true;\n    try { await onSubmit(payload); }\n    catch (error) { toast.error(error.message || 'Falha ao salvar empresa.'); }\n    finally { persistBusy.current = false; }\n  };\n\n"
+      },
+      {
+        "before": "        <div>\n          <Label>Inscricao Estadual</Label>\n          <Input value={formData.inscricao_estadual} onChange={(e) => setFormData({ ...formData, inscricao_estadual: e.target.value })} disabled={!podeSalvar || saveBlocked} data-permission={permissaoFormulario} data-action=\"editar-inscricao-estadual-empresa\" data-sensitive />\n        </div>\n      </div>\n",
+        "after": "        <div>\n          <Label>Inscricao Estadual</Label>\n          <Input value={formData.inscricao_estadual} onChange={(e) => setFormData({ ...formData, inscricao_estadual: e.target.value })} disabled={!podeSalvar || saveBlocked || isHttpBackendMode} data-permission={permissaoFormulario} data-action=\"editar-inscricao-estadual-empresa\" data-sensitive />\n        </div>\n      </div>\n"
+      },
+      {
+        "before": "      <div>\n        <Label>Regime Tributario</Label>\n        <Select value={formData.regime_tributario} onValueChange={(v) => setFormData({ ...formData, regime_tributario: v })} disabled={!podeSalvar || saveBlocked}>\n          <SelectTrigger data-permission={permissaoFormulario} data-action=\"selecionar-regime-tributario-empresa\" data-sensitive>\n            <SelectValue />\n",
+        "after": "      <div>\n        <Label>Regime Tributario</Label>\n        <Select value={formData.regime_tributario} onValueChange={(v) => setFormData({ ...formData, regime_tributario: v })} disabled={!podeSalvar || saveBlocked || isHttpBackendMode}>\n          <SelectTrigger data-permission={permissaoFormulario} data-action=\"selecionar-regime-tributario-empresa\" data-sensitive>\n            <SelectValue />\n"
+      }
+    ]
+  },
+  "src/components/cadastros/VisualizadorUniversalEntidadeV24.jsx": {
+    "baseline": "41b81b733b08e16edd6d1a393ccbeb67e00670f8d8b77c597c882e64c8d85799",
+    "hunks": [
+      {
+        "before": " */\nimport React, { useState, useEffect, useCallback, useMemo, useRef } from \"react\";\nimport { useQuery, useQueryClient } from \"@tanstack/react-query\";\nimport {\n",
+        "after": " */\nimport React, { useState, useEffect, useCallback, useMemo, useRef } from \"react\";\nimport { buildOrganizacionalPatch } from '@/api/organizacionalHttp';\nimport { readErpHttpSession, HTTP_CONTEXT_CHANGED } from '@/api/erpHttpSession';\nimport { useQuery, useQueryClient } from \"@tanstack/react-query\";\nimport {\n"
+      },
+      {
+        "before": "  const scopeKey = ENTITY + \":\" + (groupId || \"\") + \":\" + (empresaId || \"\");\n  const formScopeRef = useRef(scopeKey);\n  const activeScopeRef = useRef(scopeKey);\n  const previousScopeRef = useRef(scopeKey);\n",
+        "after": "  const scopeKey = ENTITY + \":\" + (groupId || \"\") + \":\" + (empresaId || \"\");\n  const formScopeRef = useRef(scopeKey);\n  const organizacionalBusy = useRef(false);\n  const activeScopeRef = useRef(scopeKey);\n  const previousScopeRef = useRef(scopeKey);\n"
+      },
+      {
+        "before": "      throw error;\n    }\n    if (formData._action === \"delete\") {\n      if (!canDeleteCadastro) {\n",
+        "after": "      throw error;\n    }\n    if (isHttpBackendMode && isTenantMasterEntity(ENTITY)) {\n      if (organizacionalBusy.current) return;\n      if (!editItem?.id || isLoadingEdit || editLoadBlocked || !canEditCadastro || formData._action) {\n        throw new Error('Edicao organizacional indisponivel para este registro/acao.');\n      }\n      const opened = readErpHttpSession();\n      const generation = editRequestRef.current;\n      let changed = false;\n      const invalidate = () => { changed = true; };\n      const current = () => {\n        const active = readErpHttpSession();\n        return !changed && generation === editRequestRef.current && active && opened\n          && ['token', 'actorId', 'groupId', 'empresaId', 'scopeType'].every(k => active[k] === opened[k]);\n      };\n      if (!opened || opened.groupId !== groupId || (opened.empresaId || null) !== (empresaId || null)) throw new Error('Sessao/contexto alterado. Reabra o cadastro.');\n      organizacionalBusy.current = true;\n      window.addEventListener(HTTP_CONTEXT_CHANGED, invalidate);\n      setIsSaving(true);\n      try {\n        const payload = buildOrganizacionalPatch(ENTITY, editItem, formData);\n        if (!current()) throw new Error('Contexto alterado.');\n        await base44.entities[ENTITY].update(editItem.id, payload);\n        // Backend owns the transaction and audit. Never stamp a tenant-master company locally.\n        if (current()) handleCloseForm(true);\n      } catch (error) {\n        if (current()) alert('Erro ao salvar: ' + error.message);\n        throw error;\n      } finally {\n        window.removeEventListener(HTTP_CONTEXT_CHANGED, invalidate);\n        organizacionalBusy.current = false;\n        if (current()) setIsSaving(false);\n      }\n      return;\n    }\n    if (formData._action === \"delete\") {\n      if (!canDeleteCadastro) {\n"
+      }
+    ]
+  },
+  "tests/cursor-identidade-consolidacao.test.js": {
+    "baseline": "cd057ca776052f3ebf282be3383b562ec1afb50440aa594ec08df2251b10d4bd",
+    "hunks": [
+      {
+        "before": "import { perfilPolicyRemainder, perfilViewerRemainder } from './helpers/perfilGateRemainder.js';\nimport { scopeListCacheRemainder } from './helpers/scopeListCacheRemainder.js';\n\n// Coorte ID-only restante (golden e36231b3). Operador/Condicao/MoedaIndice/ContatoB2B\n",
+        "after": "import { perfilPolicyRemainder, perfilViewerRemainder } from './helpers/perfilGateRemainder.js';\nimport { scopeListCacheRemainder } from './helpers/scopeListCacheRemainder.js';\nimport { organizacionalSourceForPath } from './helpers/organizacionalRemainder.js';\n\n// Coorte ID-only restante (golden e36231b3). Operador/Condicao/MoedaIndice/ContatoB2B\n"
+      },
+      {
+        "before": "  ContatoB2B: 'contatoBoundId',\n};\nconst read = path => readFileSync(path, 'utf8').replace(/\\r\\n/g, '\\n');\nconst head = path => execFileSync('git', ['show', `e36231b3a7e546aa9fd2529abb8d5edb61d8189c:${path}`], { encoding: 'utf8' }).replace(/\\r\\n/g, '\\n');\nconst tree = (path, source) => ts.createSourceFile(path, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.JSX);\n",
+        "after": "  ContatoB2B: 'contatoBoundId',\n};\nconst read = path => {\n  const source = readFileSync(path, 'utf8').replace(/\\r\\n/g, '\\n');\n  return organizacionalSourceForPath(path, source);\n};\nconst head = path => execFileSync('git', ['show', `e36231b3a7e546aa9fd2529abb8d5edb61d8189c:${path}`], { encoding: 'utf8' }).replace(/\\r\\n/g, '\\n');\nconst tree = (path, source) => ts.createSourceFile(path, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.JSX);\n"
+      }
+    ]
+  },
+  "tests/perfil-pedido-contract-reconciliation.test.js": {
+    "baseline": "815c07900ca354437132fae6754486e7ae4ac5ad27b9c2743913dc4301aff278",
+    "hunks": [
+      {
+        "before": "  const cadastroPerm = evaluate(vars.get('cadastroPerm').getText(ast), { ENTITY: 'PerfilAcesso', getCadastroEntityPermissionKey });\n  for (const action of ['criar', 'editar', 'excluir']) {\n    const events = [], env = { ENTITY: 'PerfilAcesso', formScopeRef: { current: 'scope' }, scopeKey: 'scope', activeScopeRef: { current: 'scope' },\n      assertCadastroFormScopeCurrent, canCreateCadastro: false, canEditCadastro: false, canDeleteCadastro: false,\n      editItem: action === 'editar' ? { id: 'synthetic-profile' } : null, cadastroPerm,\n",
+        "after": "  const cadastroPerm = evaluate(vars.get('cadastroPerm').getText(ast), { ENTITY: 'PerfilAcesso', getCadastroEntityPermissionKey });\n  for (const action of ['criar', 'editar', 'excluir']) {\n    const events = [], env = { isHttpBackendMode: false, ENTITY: 'PerfilAcesso', formScopeRef: { current: 'scope' }, scopeKey: 'scope', activeScopeRef: { current: 'scope' },\n      assertCadastroFormScopeCurrent, canCreateCadastro: false, canEditCadastro: false, canDeleteCadastro: false,\n      editItem: action === 'editar' ? { id: 'synthetic-profile' } : null, cadastroPerm,\n"
+      }
+    ]
+  },
+  "tests/cliente-local-batch-preservation.test.js": {
+    "baseline": "bc51aedcd15eede90329b6606b68a397f881757f7acb130a706229c74344fa45",
+    "hunks": [
+      {
+        "before": "import assert from 'node:assert/strict';\nimport test from 'node:test';\n",
+        "after": "import { organizacionalSourceForPath } from './helpers/organizacionalRemainder.js';\nconst readOrganizacionalSource = (file, ...args) => organizacionalSourceForPath(file, readFileSync(file, ...args));\nimport assert from 'node:assert/strict';\nimport test from 'node:test';\n"
+      },
+      {
+        "before": "\ntest('address review PostgreSQL suite is wired to the required database and rejects skipped runs', () => {\n  const runner = readFileSync('server/scripts/runPostgresTests.mjs', 'utf8');\n  assert.match(runner, /\\['LEGACY_ADDRESS_REVIEW', 'tests\\/legacy-address-postgres\\.test\\.ts'\\]/);\n  assert.match(runner, /label === 'LEGACY_ADDRESS_REVIEW' \\? \\{ LEGACY_ADDRESS_PG_TEST_URL: process\\.env\\.DATABASE_URL \\}/);\n",
+        "after": "\ntest('address review PostgreSQL suite is wired to the required database and rejects skipped runs', () => {\n  const runner = readOrganizacionalSource('server/scripts/runPostgresTests.mjs', 'utf8');\n  assert.match(runner, /\\['LEGACY_ADDRESS_REVIEW', 'tests\\/legacy-address-postgres\\.test\\.ts'\\]/);\n  assert.match(runner, /label === 'LEGACY_ADDRESS_REVIEW' \\? \\{ LEGACY_ADDRESS_PG_TEST_URL: process\\.env\\.DATABASE_URL \\}/);\n"
+      },
+      {
+        "before": "test('local batch preserves entire prior router and historical guard comparisons', () => {\n  const file = 'server/src/api/router.ts';\n  const source = clienteLocalOperationalRemainder(file, readFileSync(file, 'utf8')).replace(/\\r\\n/g, '\\n');\n  const previous = execFileSync('git', ['show', `64f0dcf2:${file}`], { encoding: 'utf8' }).replace(/\\r\\n/g, '\\n');\n  assert.equal(clienteLocalBatchRemainder(file, source, true), previous);\n",
+        "after": "test('local batch preserves entire prior router and historical guard comparisons', () => {\n  const file = 'server/src/api/router.ts';\n  const source = clienteLocalOperationalRemainder(file, readOrganizacionalSource(file, 'utf8')).replace(/\\r\\n/g, '\\n');\n  const previous = execFileSync('git', ['show', `64f0dcf2:${file}`], { encoding: 'utf8' }).replace(/\\r\\n/g, '\\n');\n  assert.equal(clienteLocalBatchRemainder(file, source, true), previous);\n"
+      },
+      {
+        "before": "test('operational address wiring peels only exact additions and retains every ancestral byte', () => {\n  for (const file of ['server/src/api/router.ts', 'src/api/httpApiClient.js', 'src/components/cadastros/CadastroClienteCompleto.jsx']) {\n    const source = readFileSync(file, 'utf8').replace(/\\r\\n/g, '\\n');\n    const previous = execFileSync('git', ['show', `84f820d823e87499b0037b0ea2c75e508369afaf:${file}`], { encoding: 'utf8' }).replace(/\\r\\n/g, '\\n');\n    assert.equal(clienteLocalOperationalRemainder(file, source), previous);\n",
+        "after": "test('operational address wiring peels only exact additions and retains every ancestral byte', () => {\n  for (const file of ['server/src/api/router.ts', 'src/api/httpApiClient.js', 'src/components/cadastros/CadastroClienteCompleto.jsx']) {\n    const source = readOrganizacionalSource(file, 'utf8').replace(/\\r\\n/g, '\\n');\n    const previous = execFileSync('git', ['show', `84f820d823e87499b0037b0ea2c75e508369afaf:${file}`], { encoding: 'utf8' }).replace(/\\r\\n/g, '\\n');\n    assert.equal(clienteLocalOperationalRemainder(file, source), previous);\n"
+      }
+    ]
+  },
+  "tests/cursor-callback-record-state.test.js": {
+    "baseline": "e745dc7bdd022caeb9b444138870c1e6554822286610bc3b72633d797a4656d5",
+    "hunks": [
+      {
+        "before": "import test from 'node:test';\nimport assert from 'node:assert/strict';\n",
+        "after": "import { organizacionalSourceForPath } from './helpers/organizacionalRemainder.js';\nconst readOrganizacionalSource = (file, ...args) => organizacionalSourceForPath(file, fs.readFileSync(file, ...args));\nimport test from 'node:test';\nimport assert from 'node:assert/strict';\n"
+      },
+      {
+        "before": "}\nconst path = 'src/components/cadastros/useCadastroRecordState.js';\nconst source = fs.readFileSync(path, 'utf8');\nconst ast = parse(path, source);\nconst fn = ast.statements.find(ts.isFunctionDeclaration);\n",
+        "after": "}\nconst path = 'src/components/cadastros/useCadastroRecordState.js';\nconst source = readOrganizacionalSource(path, 'utf8');\nconst ast = parse(path, source);\nconst fn = ast.statements.find(ts.isFunctionDeclaration);\n"
+      },
+      {
+        "before": "  const file = `src/components/cadastros/${name}Form.jsx`;\n  // #353: CodigoField autorizado em RotaPadrao/TabelaPreco — remainder restaura pin e36231b3.\n  const after = parse(file, cadastroCodigoRegistroRemainder(file, fs.readFileSync(file, 'utf8')));\n  const before = parse(file, execFileSync('git', ['show', `e36231b3a7e546aa9fd2529abb8d5edb61d8189c:${file}`], { encoding: 'utf8' }));\n  const declarations = tree => find(tree, node => ts.isVariableDeclaration(node)\n",
+        "after": "  const file = `src/components/cadastros/${name}Form.jsx`;\n  // #353: CodigoField autorizado em RotaPadrao/TabelaPreco — remainder restaura pin e36231b3.\n  const after = parse(file, cadastroCodigoRegistroRemainder(file, readOrganizacionalSource(file, 'utf8')));\n  const before = parse(file, execFileSync('git', ['show', `e36231b3a7e546aa9fd2529abb8d5edb61d8189c:${file}`], { encoding: 'utf8' }));\n  const declarations = tree => find(tree, node => ts.isVariableDeclaration(node)\n"
+      },
+      {
+        "before": "test('ContatoB2B graduou do pin RecordState para useCadastroReopenOnIdentity com contatoBoundId', () => {\n  const file = 'src/components/cadastros/ContatoB2BForm.jsx';\n  const source = fs.readFileSync(file, 'utf8');\n  assert.equal(names.includes('ContatoB2B'), false);\n  assert.match(source, /useCadastroReopenOnIdentity/);\n",
+        "after": "test('ContatoB2B graduou do pin RecordState para useCadastroReopenOnIdentity com contatoBoundId', () => {\n  const file = 'src/components/cadastros/ContatoB2BForm.jsx';\n  const source = readOrganizacionalSource(file, 'utf8');\n  assert.equal(names.includes('ContatoB2B'), false);\n  assert.match(source, /useCadastroReopenOnIdentity/);\n"
+      },
+      {
+        "before": "test('Servico graduou do pin RecordState para useCadastroReopenOnIdentity com servicoBoundId', () => {\n  const file = 'src/components/cadastros/ServicoForm.jsx';\n  const source = fs.readFileSync(file, 'utf8');\n  assert.equal(names.includes('Servico'), false);\n  assert.match(source, /useCadastroReopenOnIdentity/);\n",
+        "after": "test('Servico graduou do pin RecordState para useCadastroReopenOnIdentity com servicoBoundId', () => {\n  const file = 'src/components/cadastros/ServicoForm.jsx';\n  const source = readOrganizacionalSource(file, 'utf8');\n  assert.equal(names.includes('Servico'), false);\n  assert.match(source, /useCadastroReopenOnIdentity/);\n"
+      },
+      {
+        "before": "test('TipoFrete graduou do pin RecordState para useCadastroReopenOnIdentity com tipoFreteBoundId', () => {\n  const file = 'src/components/cadastros/TipoFreteForm.jsx';\n  const source = fs.readFileSync(file, 'utf8');\n  assert.equal(names.includes('TipoFrete'), false);\n  assert.match(source, /useCadastroReopenOnIdentity/);\n",
+        "after": "test('TipoFrete graduou do pin RecordState para useCadastroReopenOnIdentity com tipoFreteBoundId', () => {\n  const file = 'src/components/cadastros/TipoFreteForm.jsx';\n  const source = readOrganizacionalSource(file, 'utf8');\n  assert.equal(names.includes('TipoFrete'), false);\n  assert.match(source, /useCadastroReopenOnIdentity/);\n"
+      },
+      {
+        "before": "test('SegmentoCliente graduou do pin RecordState para useCadastroReopenOnIdentity com segmentoBoundId', () => {\n  const file = 'src/components/cadastros/SegmentoClienteForm.jsx';\n  const source = fs.readFileSync(file, 'utf8');\n  assert.equal(names.includes('SegmentoCliente'), false);\n  assert.match(source, /useCadastroReopenOnIdentity/);\n",
+        "after": "test('SegmentoCliente graduou do pin RecordState para useCadastroReopenOnIdentity com segmentoBoundId', () => {\n  const file = 'src/components/cadastros/SegmentoClienteForm.jsx';\n  const source = readOrganizacionalSource(file, 'utf8');\n  assert.equal(names.includes('SegmentoCliente'), false);\n  assert.match(source, /useCadastroReopenOnIdentity/);\n"
+      },
+      {
+        "before": "test('KitProduto graduou do pin RecordState para useCadastroReopenOnIdentity com kitBoundId', () => {\n  const file = 'src/components/cadastros/KitProdutoForm.jsx';\n  const source = fs.readFileSync(file, 'utf8');\n  assert.equal(names.includes('KitProduto'), false);\n  assert.match(source, /useCadastroReopenOnIdentity/);\n",
+        "after": "test('KitProduto graduou do pin RecordState para useCadastroReopenOnIdentity com kitBoundId', () => {\n  const file = 'src/components/cadastros/KitProdutoForm.jsx';\n  const source = readOrganizacionalSource(file, 'utf8');\n  assert.equal(names.includes('KitProduto'), false);\n  assert.match(source, /useCadastroReopenOnIdentity/);\n"
+      },
+      {
+        "before": "test('Filial graduou do pin RecordState para useCadastroReopenOnIdentity com filialBoundId', () => {\n  const file = 'src/components/cadastros/FilialForm.jsx';\n  const source = fs.readFileSync(file, 'utf8');\n  assert.equal(names.includes('Filial'), false);\n  assert.match(source, /useCadastroReopenOnIdentity/);\n",
+        "after": "test('Filial graduou do pin RecordState para useCadastroReopenOnIdentity com filialBoundId', () => {\n  const file = 'src/components/cadastros/FilialForm.jsx';\n  const source = readOrganizacionalSource(file, 'utf8');\n  assert.equal(names.includes('Filial'), false);\n  assert.match(source, /useCadastroReopenOnIdentity/);\n"
+      },
+      {
+        "before": "test('CentroResultado graduou do pin RecordState para useCadastroReopenOnIdentity com centroBoundId', () => {\n  const file = 'src/components/cadastros/CentroResultadoForm.jsx';\n  const source = fs.readFileSync(file, 'utf8');\n  assert.equal(names.includes('CentroResultado'), false);\n  assert.match(source, /useCadastroReopenOnIdentity/);\n",
+        "after": "test('CentroResultado graduou do pin RecordState para useCadastroReopenOnIdentity com centroBoundId', () => {\n  const file = 'src/components/cadastros/CentroResultadoForm.jsx';\n  const source = readOrganizacionalSource(file, 'utf8');\n  assert.equal(names.includes('CentroResultado'), false);\n  assert.match(source, /useCadastroReopenOnIdentity/);\n"
+      },
+      {
+        "before": "test('JobAgendado graduou do pin RecordState para useCadastroReopenOnIdentity com jobBoundId', () => {\n  const file = 'src/components/cadastros/JobAgendadoForm.jsx';\n  const source = fs.readFileSync(file, 'utf8');\n  assert.equal(names.includes('JobAgendado'), false);\n  assert.match(source, /useCadastroReopenOnIdentity/);\n",
+        "after": "test('JobAgendado graduou do pin RecordState para useCadastroReopenOnIdentity com jobBoundId', () => {\n  const file = 'src/components/cadastros/JobAgendadoForm.jsx';\n  const source = readOrganizacionalSource(file, 'utf8');\n  assert.equal(names.includes('JobAgendado'), false);\n  assert.match(source, /useCadastroReopenOnIdentity/);\n"
+      },
+      {
+        "before": "test('RotaPadrao graduou do pin RecordState para useCadastroReopenOnIdentity com rotaBoundId', () => {\n  const file = 'src/components/cadastros/RotaPadraoForm.jsx';\n  const source = fs.readFileSync(file, 'utf8');\n  assert.equal(names.includes('RotaPadrao'), false);\n  assert.match(source, /useCadastroReopenOnIdentity/);\n",
+        "after": "test('RotaPadrao graduou do pin RecordState para useCadastroReopenOnIdentity com rotaBoundId', () => {\n  const file = 'src/components/cadastros/RotaPadraoForm.jsx';\n  const source = readOrganizacionalSource(file, 'utf8');\n  assert.equal(names.includes('RotaPadrao'), false);\n  assert.match(source, /useCadastroReopenOnIdentity/);\n"
+      },
+      {
+        "before": "test('CatalogoWeb graduou do pin RecordState para useCadastroReopenOnIdentity com catalogoBoundId', () => {\n  const file = 'src/components/cadastros/CatalogoWebForm.jsx';\n  const source = fs.readFileSync(file, 'utf8');\n  assert.equal(names.includes('CatalogoWeb'), false);\n  assert.match(source, /useCadastroReopenOnIdentity/);\n",
+        "after": "test('CatalogoWeb graduou do pin RecordState para useCadastroReopenOnIdentity com catalogoBoundId', () => {\n  const file = 'src/components/cadastros/CatalogoWebForm.jsx';\n  const source = readOrganizacionalSource(file, 'utf8');\n  assert.equal(names.includes('CatalogoWeb'), false);\n  assert.match(source, /useCadastroReopenOnIdentity/);\n"
+      },
+      {
+        "before": "test('Produto keeps the complete initializer and HTTP GET contract; props version cannot overwrite a loaded HTTP draft', () => {\n  const file = 'src/components/cadastros/ProdutoFormV22_Completo.jsx';\n  const after = parse(file, fs.readFileSync(file, 'utf8'));\n  const before = parse(file, execFileSync('git', ['show', `e36231b3a7e546aa9fd2529abb8d5edb61d8189c:${file}`], { encoding: 'utf8' }));\n  const declaration = (tree, name) => find(tree, node => ts.isVariableDeclaration(node) && node.name.getText(tree) === name)[0];\n",
+        "after": "test('Produto keeps the complete initializer and HTTP GET contract; props version cannot overwrite a loaded HTTP draft', () => {\n  const file = 'src/components/cadastros/ProdutoFormV22_Completo.jsx';\n  const after = parse(file, readOrganizacionalSource(file, 'utf8'));\n  const before = parse(file, execFileSync('git', ['show', `e36231b3a7e546aa9fd2529abb8d5edb61d8189c:${file}`], { encoding: 'utf8' }));\n  const declaration = (tree, name) => find(tree, node => ts.isVariableDeclaration(node) && node.name.getText(tree) === name)[0];\n"
+      },
+      {
+        "before": "test('Colaborador retains legacy-code permission and all save/status/delete handlers', () => {\n  const file = 'src/components/rh/ColaboradorForm.jsx';\n  const after = parse(file, fs.readFileSync(file, 'utf8'));\n  const before = parse(file, execFileSync('git', ['show', `e36231b3a7e546aa9fd2529abb8d5edb61d8189c:${file}`], { encoding: 'utf8' }));\n  const contracts = tree => find(tree, node => ts.isVariableDeclaration(node) && /^(handle|podeEditarCodigoLegado)/.test(node.name.getText(tree))).map(node => node.getText(tree));\n",
+        "after": "test('Colaborador retains legacy-code permission and all save/status/delete handlers', () => {\n  const file = 'src/components/rh/ColaboradorForm.jsx';\n  const after = parse(file, readOrganizacionalSource(file, 'utf8'));\n  const before = parse(file, execFileSync('git', ['show', `e36231b3a7e546aa9fd2529abb8d5edb61d8189c:${file}`], { encoding: 'utf8' }));\n  const contracts = tree => find(tree, node => ts.isVariableDeclaration(node) && /^(handle|podeEditarCodigoLegado)/.test(node.name.getText(tree))).map(node => node.getText(tree));\n"
+      },
+      {
+        "before": "  test(`${file}: retained payload owner, validators, complete initializer and permissions`, () => {\n    const path = 'src/components/' + file;\n    const after = parse(path, iaResponseValidationRemainder(path, fs.readFileSync(path, 'utf8')));\n    const before = parse(path, execFileSync('git', ['show', `e36231b3a7e546aa9fd2529abb8d5edb61d8189c:${path}`], { encoding: 'utf8' }));\n    const contract = tree => find(tree, node => ts.isVariableDeclaration(node)\n",
+        "after": "  test(`${file}: retained payload owner, validators, complete initializer and permissions`, () => {\n    const path = 'src/components/' + file;\n    const after = parse(path, iaResponseValidationRemainder(path, readOrganizacionalSource(path, 'utf8')));\n    const before = parse(path, execFileSync('git', ['show', `e36231b3a7e546aa9fd2529abb8d5edb61d8189c:${path}`], { encoding: 'utf8' }));\n    const contract = tree => find(tree, node => ts.isVariableDeclaration(node)\n"
+      },
+      {
+        "before": "test('Cliente RHF actual reset effect changes records, clears transient validation and preserves same-identity edits', () => {\n  const path = 'src/components/comercial/ClienteForm.jsx';\n  const tree = parse(path, fs.readFileSync(path, 'utf8'));\n  const effect = find(tree, node => ts.isCallExpression(node) && node.expression.getText(tree) === 'useEffect'\n    && node.arguments[0].getText(tree).includes('hydratedIdentity'))[0];\n",
+        "after": "test('Cliente RHF actual reset effect changes records, clears transient validation and preserves same-identity edits', () => {\n  const path = 'src/components/comercial/ClienteForm.jsx';\n  const tree = parse(path, readOrganizacionalSource(path, 'utf8'));\n  const effect = find(tree, node => ts.isCallExpression(node) && node.expression.getText(tree) === 'useEffect'\n    && node.arguments[0].getText(tree).includes('hydratedIdentity'))[0];\n"
+      },
+      {
+        "before": "test('TabelaPreco complete resets item draft by ID/scope without changing its persistence owner', () => {\n  const path = 'src/components/cadastros/TabelaPrecoFormCompleto.jsx';\n  const tree = parse(path, fs.readFileSync(path, 'utf8'));\n  const state = find(tree, node => ts.isVariableDeclaration(node) && node.name.getText(tree) === '[itensTabela, setItensTabela]')[0];\n  assert.equal(state.initializer.expression.getText(tree), 'useCadastroRecordState');\n",
+        "after": "test('TabelaPreco complete resets item draft by ID/scope without changing its persistence owner', () => {\n  const path = 'src/components/cadastros/TabelaPrecoFormCompleto.jsx';\n  const tree = parse(path, readOrganizacionalSource(path, 'utf8'));\n  const state = find(tree, node => ts.isVariableDeclaration(node) && node.name.getText(tree) === '[itensTabela, setItensTabela]')[0];\n  assert.equal(state.initializer.expression.getText(tree), 'useCadastroRecordState');\n"
+      },
+      {
+        "before": "  for (const name of ['ClienteForm', 'ClienteFormCompleto']) {\n    const path = `src/components/comercial/${name}.jsx`;\n    const tree = parse(path, fs.readFileSync(path, 'utf8'));\n    const declaration = find(tree, node => ts.isVariableDeclaration(node) && node.name.getText(tree) === 'cliente')[0];\n    const names = ['clienteProp', 'item', 'data', 'initialData', name === 'ClienteForm' ? 'defaultValuesProp' : 'defaultValues'];\n",
+        "after": "  for (const name of ['ClienteForm', 'ClienteFormCompleto']) {\n    const path = `src/components/comercial/${name}.jsx`;\n    const tree = parse(path, readOrganizacionalSource(path, 'utf8'));\n    const declaration = find(tree, node => ts.isVariableDeclaration(node) && node.name.getText(tree) === 'cliente')[0];\n    const names = ['clienteProp', 'item', 'data', 'initialData', name === 'ClienteForm' ? 'defaultValuesProp' : 'defaultValues'];\n"
+      },
+      {
+        "before": "test('Empresa reopen without validity metadata clears the previous expiry warning without a certificate fixture', () => {\n  const path = 'src/components/cadastros/EmpresaForm.jsx';\n  const tree = parse(path, fs.readFileSync(path, 'utf8'));\n  const effect = find(tree, node => ts.isCallExpression(node) && node.expression.getText(tree) === 'useEffect'\n    && node.arguments[0].getText(tree).includes('setAlertaCertificado'))[0];\n",
+        "after": "test('Empresa reopen without validity metadata clears the previous expiry warning without a certificate fixture', () => {\n  const path = 'src/components/cadastros/EmpresaForm.jsx';\n  const tree = parse(path, readOrganizacionalSource(path, 'utf8'));\n  const effect = find(tree, node => ts.isCallExpression(node) && node.expression.getText(tree) === 'useEffect'\n    && node.arguments[0].getText(tree).includes('setAlertaCertificado'))[0];\n"
+      }
+    ]
+  },
+  "tests/date-arithmetic-contracts.test.js": {
+    "baseline": "0fb38c71c7a859390ebd84ea930db1856b46d18c95c2653bc9cfdbb1ee5af435",
+    "hunks": [
+      {
+        "before": "import { portalReadRemainder } from './helpers/portalReadRemainder.js';\nimport {runtimeProofSource} from './helpers/runtimeProofSource.js';\n",
+        "after": "import { organizacionalSourceForPath } from './helpers/organizacionalRemainder.js';\nconst readOrganizacionalSource = (file, ...args) => organizacionalSourceForPath(file, fs.readFileSync(file, ...args));\nimport { portalReadRemainder } from './helpers/portalReadRemainder.js';\nimport {runtimeProofSource} from './helpers/runtimeProofSource.js';\n"
+      },
+      {
+        "before": "import {componentContractRemainder} from './helpers/componentContractRemainder.js';\n\nconst fixtures=JSON.parse(fs.readFileSync('tests/fixtures/date-arithmetic-stage21.json','utf8'));\ntest('date arithmetic cohort is fixed at 28 modules and 79 proven native Date operands',()=>{\n  assert.equal(fixtures.length,28);\n",
+        "after": "import {componentContractRemainder} from './helpers/componentContractRemainder.js';\n\nconst fixtures=JSON.parse(readOrganizacionalSource('tests/fixtures/date-arithmetic-stage21.json','utf8'));\ntest('date arithmetic cohort is fixed at 28 modules and 79 proven native Date operands',()=>{\n  assert.equal(fixtures.length,28);\n"
+      },
+      {
+        "before": "});\nfor(const fixture of fixtures) test(`${fixture.file}: exact timestamp edits preserve all remaining executable code`,()=>{\n  let source=queryKeyMigrationRemainder(fixture.file,primitiveUiBoundaryRemainder(fixture.file,iaResponseValidationRemainder(fixture.file,readBoundaryRemainder(fixture.file,componentContractRemainder(fixture.file,portalReadRemainder(fixture.file,runtimeProofSource(fixture.file)))))));\n  source=metricReportRemainder(fixture.file,boletoSourceRemainder(fixture.file,source));\n  if(fixture.file==='src/components/rh/PontoTab.jsx')source=partialInputRemainder(fixture.file,source);\n",
+        "after": "});\nfor(const fixture of fixtures) test(`${fixture.file}: exact timestamp edits preserve all remaining executable code`,()=>{\n  let source=queryKeyMigrationRemainder(fixture.file,primitiveUiBoundaryRemainder(fixture.file,iaResponseValidationRemainder(fixture.file,readBoundaryRemainder(fixture.file,componentContractRemainder(fixture.file,portalReadRemainder(fixture.file,organizacionalSourceForPath(fixture.file,runtimeProofSource(fixture.file))))))));\n  source=metricReportRemainder(fixture.file,boletoSourceRemainder(fixture.file,source));\n  if(fixture.file==='src/components/rh/PontoTab.jsx')source=partialInputRemainder(fixture.file,source);\n"
+      }
+    ]
+  },
+  "tests/fornecedor-http-preservation.test.js": {
+    "baseline": "a9e09883d2fe5c4f081503c5363484971877f42f91904e352f9a8e7d031de293",
+    "hunks": [
+      {
+        "before": "import test from 'node:test';\nimport assert from 'node:assert/strict';\n",
+        "after": "import { organizacionalSourceForPath } from './helpers/organizacionalRemainder.js';\nconst readOrganizacionalSource = (file, ...args) => organizacionalSourceForPath(file, fs.readFileSync(file, ...args));\nimport test from 'node:test';\nimport assert from 'node:assert/strict';\n"
+      },
+      {
+        "before": "for (const file of ['server/src/app.ts', 'server/src/api/router.ts']) {\n  test(`supplier wiring preserves entire prior ${file} and rejects outside edits`, () => {\n    const source = fs.readFileSync(file, 'utf8');\n    // Baseline composição #401 tip — adapter portado sem reescrever o restante.\n    const previous = execFileSync('git', ['show', `5d9a7e37c:${file}`], { encoding: 'utf8' });\n",
+        "after": "for (const file of ['server/src/app.ts', 'server/src/api/router.ts']) {\n  test(`supplier wiring preserves entire prior ${file} and rejects outside edits`, () => {\n    const source = readOrganizacionalSource(file, 'utf8');\n    // Baseline composição #401 tip — adapter portado sem reescrever o restante.\n    const previous = execFileSync('git', ['show', `5d9a7e37c:${file}`], { encoding: 'utf8' });\n"
+      },
+      {
+        "before": "test('legacy test retains whole-source equality and zero migration delta', () => {\n  const file = 'tests/legado-importador-consolidacao.test.js';\n  const source = fs.readFileSync(file, 'utf8');\n  const previous = execFileSync('git', ['show', `5d9a7e37c:${file}`], { encoding: 'utf8' });\n  assert.equal(fornecedorHttpRemainder(file, source).replace(/\\r\\n/g, '\\n'), previous.replace(/\\r\\n/g, '\\n'));\n",
+        "after": "test('legacy test retains whole-source equality and zero migration delta', () => {\n  const file = 'tests/legado-importador-consolidacao.test.js';\n  const source = readOrganizacionalSource(file, 'utf8');\n  const previous = execFileSync('git', ['show', `5d9a7e37c:${file}`], { encoding: 'utf8' });\n  assert.equal(fornecedorHttpRemainder(file, source).replace(/\\r\\n/g, '\\n'), previous.replace(/\\r\\n/g, '\\n'));\n"
+      }
+    ]
+  },
+  "tests/setor-rbac-preservation.test.js": {
+    "baseline": "9e9c0191a50216f5d09249490ad6429bb1b48697461b9407e8765391261726e5",
+    "hunks": [
+      {
+        "before": "import test from 'node:test';\nimport assert from 'node:assert/strict';\n",
+        "after": "import { organizacionalSourceForPath } from './helpers/organizacionalRemainder.js';\nconst readOrganizacionalSource = (file, ...args) => organizacionalSourceForPath(file, fs.readFileSync(file, ...args));\nimport test from 'node:test';\nimport assert from 'node:assert/strict';\n"
+      },
+      {
+        "before": "\nconst file = 'server/src/app.ts';\nconst source = fs.readFileSync(file, 'utf8').replace(/\\r\\n/g, '\\n');\nconst wiring = \"    authorization: { guard: rbacGuard, moduleName: 'Cadastros', section: 'setor_atividade' },\\n\";\ntest('Setor wiring preserves the complete published app, including supplier wiring', () => {\n",
+        "after": "\nconst file = 'server/src/app.ts';\nconst source = readOrganizacionalSource(file, 'utf8').replace(/\\r\\n/g, '\\n');\nconst wiring = \"    authorization: { guard: rbacGuard, moduleName: 'Cadastros', section: 'setor_atividade' },\\n\";\ntest('Setor wiring preserves the complete published app, including supplier wiring', () => {\n"
+      }
+    ]
+  },
+  "tests/cadastro-query-payload-boundaries.test.js": {
+    "baseline": "893c634f31fca9b887508ae05a3bc99961544c89e4dc0969f5a253c65931b9bd",
+    "hunks": [
+      {
+        "before": "test('Cliente contatos/locais: remainder rejeita omissao repeticao e efeito colateral nos hunks', () => {\n  const source = read('src/components/cadastros/CadastroClienteCompleto.jsx');\n",
+        "after": "import { organizacionalSourceForPath } from './helpers/organizacionalRemainder.js';\nconst readOrganizacionalSource = (file, ...args) => organizacionalSourceForPath(file, fs.readFileSync(file, ...args));\ntest('Cliente contatos/locais: remainder rejeita omissao repeticao e efeito colateral nos hunks', () => {\n  const source = read('src/components/cadastros/CadastroClienteCompleto.jsx');\n"
+      },
+      {
+        "before": "});\n\nconst read = path => fs.readFileSync(path, 'utf8').replace(/\\r\\n/g, '\\n');\nconst parse = (path, source = read(path)) => ts.createSourceFile(path, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.JSX);\nfunction nodes(tree, predicate) {\n",
+        "after": "});\n\nconst read = path => readOrganizacionalSource(path, 'utf8').replace(/\\r\\n/g, '\\n');\nconst parse = (path, source = read(path)) => ts.createSourceFile(path, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.JSX);\nfunction nodes(tree, predicate) {\n"
+      }
+    ]
+  },
+  "tests/publication-baseline-contracts.test.js": {
+    "baseline": "e3e364fcc87c04cdd0a5c2f309fd889e209d4183c304386afed6026b983a23c5",
+    "hunks": [
+      {
+        "before": "import { clienteConferenciaRemainder } from './helpers/consolidation81Remainder.js';\nimport {\n",
+        "after": "import { organizacionalSourceForPath } from './helpers/organizacionalRemainder.js';\nconst readOrganizacionalSource = (file, ...args) => organizacionalSourceForPath(file, fs.readFileSync(file, ...args));\nimport { clienteConferenciaRemainder } from './helpers/consolidation81Remainder.js';\nimport {\n"
+      },
+      {
+        "before": "import {execFileSync} from 'node:child_process';\n\nconst manifest=JSON.parse(fs.readFileSync(new URL('./helpers/publicationBaselineManifest.json',import.meta.url),'utf8'));\nconst base=PUBLICATION_BASE;\ntest('publication baseline is the verified composition commit and is available in Git history',()=>{\n",
+        "after": "import {execFileSync} from 'node:child_process';\n\nconst manifest=JSON.parse(readOrganizacionalSource(new URL('./helpers/publicationBaselineManifest.json',import.meta.url),'utf8'));\nconst base=PUBLICATION_BASE;\ntest('publication baseline is the verified composition commit and is available in Git history',()=>{\n"
+      },
+      {
+        "before": "}\ntest('bulk lifecycle evolution retains the original hash and rejects changed or repeated delegation assertions',()=>{\n const source=fs.readFileSync('server/tests/bulk-consolidacao.test.ts','utf8').replace(/\\r\\n/g,'\\n');\n const restored=restoreApprovedBulkDelta(source);\n assert.equal(restored.includes(approvedBulkDelta),false);\n",
+        "after": "}\ntest('bulk lifecycle evolution retains the original hash and rejects changed or repeated delegation assertions',()=>{\n const source=readOrganizacionalSource('server/tests/bulk-consolidacao.test.ts','utf8').replace(/\\r\\n/g,'\\n');\n const restored=restoreApprovedBulkDelta(source);\n assert.equal(restored.includes(approvedBulkDelta),false);\n"
+      },
+      {
+        "before": "});\ntest('ContatoB2B callback graduation retains beforeSha and rejects omission, repetition or out-of-scope edit',()=>{\n const source=fs.readFileSync('tests/cursor-callback-record-state.test.js','utf8').replace(/\\r\\n/g,'\\n');\n const afterCat=restoreApprovedCatalogoWebCallbackDelta(source);\n const afterRota=restoreApprovedRotaPadraoCallbackDelta(afterCat);\n",
+        "after": "});\ntest('ContatoB2B callback graduation retains beforeSha and rejects omission, repetition or out-of-scope edit',()=>{\n const source=readOrganizacionalSource('tests/cursor-callback-record-state.test.js','utf8').replace(/\\r\\n/g,'\\n');\n const afterCat=restoreApprovedCatalogoWebCallbackDelta(source);\n const afterRota=restoreApprovedRotaPadraoCallbackDelta(afterCat);\n"
+      },
+      {
+        "before": "});\ntest('Servico/TipoFrete callback graduation rejects omission, repetition or out-of-scope edit',()=>{\n const source=fs.readFileSync('tests/cursor-callback-record-state.test.js','utf8').replace(/\\r\\n/g,'\\n');\n const afterCat=restoreApprovedCatalogoWebCallbackDelta(source);\n const afterRota=restoreApprovedRotaPadraoCallbackDelta(afterCat);\n",
+        "after": "});\ntest('Servico/TipoFrete callback graduation rejects omission, repetition or out-of-scope edit',()=>{\n const source=readOrganizacionalSource('tests/cursor-callback-record-state.test.js','utf8').replace(/\\r\\n/g,'\\n');\n const afterCat=restoreApprovedCatalogoWebCallbackDelta(source);\n const afterRota=restoreApprovedRotaPadraoCallbackDelta(afterCat);\n"
+      },
+      {
+        "before": "});\ntest('SegmentoCliente callback graduation rejects omission, repetition or out-of-scope edit',()=>{\n const source=fs.readFileSync('tests/cursor-callback-record-state.test.js','utf8').replace(/\\r\\n/g,'\\n');\n const afterCat=restoreApprovedCatalogoWebCallbackDelta(source);\n const afterRota=restoreApprovedRotaPadraoCallbackDelta(afterCat);\n",
+        "after": "});\ntest('SegmentoCliente callback graduation rejects omission, repetition or out-of-scope edit',()=>{\n const source=readOrganizacionalSource('tests/cursor-callback-record-state.test.js','utf8').replace(/\\r\\n/g,'\\n');\n const afterCat=restoreApprovedCatalogoWebCallbackDelta(source);\n const afterRota=restoreApprovedRotaPadraoCallbackDelta(afterCat);\n"
+      },
+      {
+        "before": "});\ntest('KitProduto callback graduation rejects omission, repetition or out-of-scope edit',()=>{\n const source=fs.readFileSync('tests/cursor-callback-record-state.test.js','utf8').replace(/\\r\\n/g,'\\n');\n const afterCat=restoreApprovedCatalogoWebCallbackDelta(source);\n const afterRota=restoreApprovedRotaPadraoCallbackDelta(afterCat);\n",
+        "after": "});\ntest('KitProduto callback graduation rejects omission, repetition or out-of-scope edit',()=>{\n const source=readOrganizacionalSource('tests/cursor-callback-record-state.test.js','utf8').replace(/\\r\\n/g,'\\n');\n const afterCat=restoreApprovedCatalogoWebCallbackDelta(source);\n const afterRota=restoreApprovedRotaPadraoCallbackDelta(afterCat);\n"
+      },
+      {
+        "before": "});\ntest('Filial callback graduation rejects omission, repetition or out-of-scope edit',()=>{\n const source=fs.readFileSync('tests/cursor-callback-record-state.test.js','utf8').replace(/\\r\\n/g,'\\n');\n const afterCat=restoreApprovedCatalogoWebCallbackDelta(source);\n const afterRota=restoreApprovedRotaPadraoCallbackDelta(afterCat);\n",
+        "after": "});\ntest('Filial callback graduation rejects omission, repetition or out-of-scope edit',()=>{\n const source=readOrganizacionalSource('tests/cursor-callback-record-state.test.js','utf8').replace(/\\r\\n/g,'\\n');\n const afterCat=restoreApprovedCatalogoWebCallbackDelta(source);\n const afterRota=restoreApprovedRotaPadraoCallbackDelta(afterCat);\n"
+      },
+      {
+        "before": "});\ntest('CentroResultado callback graduation rejects omission, repetition or out-of-scope edit',()=>{\n const source=fs.readFileSync('tests/cursor-callback-record-state.test.js','utf8').replace(/\\r\\n/g,'\\n');\n const afterCat=restoreApprovedCatalogoWebCallbackDelta(source);\n const afterRota=restoreApprovedRotaPadraoCallbackDelta(afterCat);\n",
+        "after": "});\ntest('CentroResultado callback graduation rejects omission, repetition or out-of-scope edit',()=>{\n const source=readOrganizacionalSource('tests/cursor-callback-record-state.test.js','utf8').replace(/\\r\\n/g,'\\n');\n const afterCat=restoreApprovedCatalogoWebCallbackDelta(source);\n const afterRota=restoreApprovedRotaPadraoCallbackDelta(afterCat);\n"
+      },
+      {
+        "before": "});\ntest('JobAgendado callback graduation rejects omission, repetition or out-of-scope edit',()=>{\n const source=fs.readFileSync('tests/cursor-callback-record-state.test.js','utf8').replace(/\\r\\n/g,'\\n');\n const afterCat=restoreApprovedCatalogoWebCallbackDelta(source);\n const afterRota=restoreApprovedRotaPadraoCallbackDelta(afterCat);\n",
+        "after": "});\ntest('JobAgendado callback graduation rejects omission, repetition or out-of-scope edit',()=>{\n const source=readOrganizacionalSource('tests/cursor-callback-record-state.test.js','utf8').replace(/\\r\\n/g,'\\n');\n const afterCat=restoreApprovedCatalogoWebCallbackDelta(source);\n const afterRota=restoreApprovedRotaPadraoCallbackDelta(afterCat);\n"
+      },
+      {
+        "before": "});\ntest('RotaPadrao callback graduation rejects omission, repetition or out-of-scope edit',()=>{\n const source=fs.readFileSync('tests/cursor-callback-record-state.test.js','utf8').replace(/\\r\\n/g,'\\n');\n const afterCat=restoreApprovedCatalogoWebCallbackDelta(source);\n const restored=restoreApprovedRotaPadraoCallbackDelta(afterCat);\n",
+        "after": "});\ntest('RotaPadrao callback graduation rejects omission, repetition or out-of-scope edit',()=>{\n const source=readOrganizacionalSource('tests/cursor-callback-record-state.test.js','utf8').replace(/\\r\\n/g,'\\n');\n const afterCat=restoreApprovedCatalogoWebCallbackDelta(source);\n const restored=restoreApprovedRotaPadraoCallbackDelta(afterCat);\n"
+      },
+      {
+        "before": "});\ntest('CatalogoWeb callback graduation rejects omission, repetition or out-of-scope edit',()=>{\n const source=fs.readFileSync('tests/cursor-callback-record-state.test.js','utf8').replace(/\\r\\n/g,'\\n');\n const restored=restoreApprovedCatalogoWebCallbackDelta(source);\n assert.equal(restored.includes(approvedCatalogoWebGraduationTest),false);\n",
+        "after": "});\ntest('CatalogoWeb callback graduation rejects omission, repetition or out-of-scope edit',()=>{\n const source=readOrganizacionalSource('tests/cursor-callback-record-state.test.js','utf8').replace(/\\r\\n/g,'\\n');\n const restored=restoreApprovedCatalogoWebCallbackDelta(source);\n assert.equal(restored.includes(approvedCatalogoWebGraduationTest),false);\n"
+      },
+      {
+        "before": "}\ntest('LocalEstoque residual graduation retains beforeSha and rejects omission, repetition or out-of-scope edit',()=>{\n const source=fs.readFileSync('tests/cursor-residual-independent.test.js','utf8').replace(/\\r\\n/g,'\\n');\n const restored=restoreApprovedLocalEstoqueResidualDelta(source);\n assert.equal(restored.includes(approvedLocalEstoqueGraduationTest),false);\n",
+        "after": "}\ntest('LocalEstoque residual graduation retains beforeSha and rejects omission, repetition or out-of-scope edit',()=>{\n const source=readOrganizacionalSource('tests/cursor-residual-independent.test.js','utf8').replace(/\\r\\n/g,'\\n');\n const restored=restoreApprovedLocalEstoqueResidualDelta(source);\n assert.equal(restored.includes(approvedLocalEstoqueGraduationTest),false);\n"
+      },
+      {
+        "before": "});\nfor(const entry of manifest.cases)test(entry.path+': publication fixes only Git reference, preserving every prior assertion',()=>{\n const source=fs.readFileSync(entry.path,'utf8').replace(/\\r\\n/g,'\\n');\n assert.equal(source.includes('HEAD:'),false);\n assert.equal(source.includes(\"'HEAD'\"),false);\n",
+        "after": "});\nfor(const entry of manifest.cases)test(entry.path+': publication fixes only Git reference, preserving every prior assertion',()=>{\n const source=readOrganizacionalSource(entry.path,'utf8').replace(/\\r\\n/g,'\\n');\n assert.equal(source.includes('HEAD:'),false);\n assert.equal(source.includes(\"'HEAD'\"),false);\n"
+      },
+      {
+        "before": "});\ntest('CI retains historical source for proofs and checks frontend types before build',()=>{\n const source=fs.readFileSync('.github/workflows/erp-runtime-ci.yml','utf8');\n const frontend=source.slice(source.indexOf('  frontend:'),source.indexOf('  backend:'));\n assert.match(frontend,/fetch-depth: 0/);\n",
+        "after": "});\ntest('CI retains historical source for proofs and checks frontend types before build',()=>{\n const source=readOrganizacionalSource('.github/workflows/erp-runtime-ci.yml','utf8');\n const frontend=source.slice(source.indexOf('  frontend:'),source.indexOf('  backend:'));\n assert.match(frontend,/fetch-depth: 0/);\n"
+      },
+      {
+        "before": "  assert.equal(tipPub,parentPub);\n  const historical=JSON.parse(execFileSync('git',['show','90f0a315eb3d2b59e0c2bfcab7077abc27bc3613:tests/helpers/publicationBaselineManifest.json'],{encoding:'utf8'}));\n  const current=JSON.parse(fs.readFileSync('tests/helpers/publicationBaselineManifest.json','utf8'));\n  assert.equal(current.cases.length,18);\n  assert.equal(historical.cases.length,18);\n",
+        "after": "  assert.equal(tipPub,parentPub);\n  const historical=JSON.parse(execFileSync('git',['show','90f0a315eb3d2b59e0c2bfcab7077abc27bc3613:tests/helpers/publicationBaselineManifest.json'],{encoding:'utf8'}));\n  const current=JSON.parse(readOrganizacionalSource('tests/helpers/publicationBaselineManifest.json','utf8'));\n  assert.equal(current.cases.length,18);\n  assert.equal(historical.cases.length,18);\n"
+      },
+      {
+        "before": "\ntest('P1 reopen guards reject assertion removal after beforeSha recalculation (Codex contraprova)',()=>{\n  const authorized=normalizePublicationSource(fs.readFileSync(REOPEN_CONSOLIDACAO_PATH,'utf8'));\n  assert.equal(publicationRestoredHash(authorized), REOPEN_AUTHORIZED_CURRENT_SHA);\n  assert.equal(restoreAuthorizedReopenConsolidacao(authorized), loadHistoricalReopenConsolidacao());\n",
+        "after": "\ntest('P1 reopen guards reject assertion removal after beforeSha recalculation (Codex contraprova)',()=>{\n  const authorized=normalizePublicationSource(readOrganizacionalSource(REOPEN_CONSOLIDACAO_PATH,'utf8'));\n  assert.equal(publicationRestoredHash(authorized), REOPEN_AUTHORIZED_CURRENT_SHA);\n  assert.equal(restoreAuthorizedReopenConsolidacao(authorized), loadHistoricalReopenConsolidacao());\n"
+      },
+      {
+        "before": "\ntest('P1 reopen guards reject internal mutation, omission, repetition and baseline tampering',()=>{\n  const authorized=normalizePublicationSource(fs.readFileSync(REOPEN_CONSOLIDACAO_PATH,'utf8'));\n\n  // Mutação interna (trocar outcome keep→apply).\n",
+        "after": "\ntest('P1 reopen guards reject internal mutation, omission, repetition and baseline tampering',()=>{\n  const authorized=normalizePublicationSource(readOrganizacionalSource(REOPEN_CONSOLIDACAO_PATH,'utf8'));\n\n  // Mutação interna (trocar outcome keep→apply).\n"
+      }
+    ]
+  },
+  "tests/http-api-client.test.js": {
+    "baseline": "fd50e1e4a093d62a7c94978639b48cccd01843cba01297eba0bda42cd01035f4",
+    "hunks": [
+      {
+        "before": "test('CANAL selected reference preserves previous hashes and rejects mutations inside outside omitted duplicated hunks', async () => {\n  const { readFileSync } = await import('node:fs');\n",
+        "after": "import { organizacionalSourceForPath } from './helpers/organizacionalRemainder.js';\ntest('CANAL selected reference preserves previous hashes and rejects mutations inside outside omitted duplicated hunks', async () => {\n  const { readFileSync } = await import('node:fs');\n"
+      },
+      {
+        "before": "  const { clienteConferenciaRemainder, clienteSelectedReferenceHunks } = await import('./helpers/consolidation81Remainder.js');\n  for (const [file,entry] of Object.entries(clienteSelectedReferenceHunks)) {\n    const current=readFileSync(file,'utf8');\n    // Validate the full composed file first; only then inspect the unchanged ancestral hunks.\n    assert.doesNotThrow(()=>clienteConferenciaRemainder(file,current));\n",
+        "after": "  const { clienteConferenciaRemainder, clienteSelectedReferenceHunks } = await import('./helpers/consolidation81Remainder.js');\n  for (const [file,entry] of Object.entries(clienteSelectedReferenceHunks)) {\n    const current=organizacionalSourceForPath(file,readFileSync(file,'utf8'));\n    // Validate the full composed file first; only then inspect the unchanged ancestral hunks.\n    assert.doesNotThrow(()=>clienteConferenciaRemainder(file,current));\n"
+      },
+      {
+        "before": "test('CANAL actual consumer does not auto-read and clears late results on session change',async()=>{\n const {readFile}=await import('node:fs/promises');const {default:ts}=await import('typescript');const vm=await import('node:vm');\n const source=await readFile(new URL('../src/components/comercial/ClienteConferenciaLegado.jsx',import.meta.url),'utf8');\n const slots=[];let cursor=0,effects=[],listener,finish,calls=0;\n const react={createElement:(type,props,...children)=>({type,props:{...props,children:children.flat()}}),useState:init=>{const i=cursor++;if(!(i in slots))slots[i]=init;return[slots[i],v=>{slots[i]=v;}];},useRef:init=>{const i=cursor++;if(!(i in slots))slots[i]={current:init};return slots[i];},useEffect:(fn,deps)=>{const i=cursor++;if(!slots[i]||deps.some((v,n)=>v!==slots[i][n])){slots[i]=deps;effects.push(fn);}}};\n",
+        "after": "test('CANAL actual consumer does not auto-read and clears late results on session change',async()=>{\n const {readFile}=await import('node:fs/promises');const {default:ts}=await import('typescript');const vm=await import('node:vm');\n const source=organizacionalSourceForPath(new URL('../src/components/comercial/ClienteConferenciaLegado.jsx',import.meta.url),await readFile(new URL('../src/components/comercial/ClienteConferenciaLegado.jsx',import.meta.url),'utf8'));\n const slots=[];let cursor=0,effects=[],listener,finish,calls=0;\n const react={createElement:(type,props,...children)=>({type,props:{...props,children:children.flat()}}),useState:init=>{const i=cursor++;if(!(i in slots))slots[i]=init;return[slots[i],v=>{slots[i]=v;}];},useRef:init=>{const i=cursor++;if(!(i in slots))slots[i]={current:init};return slots[i];},useEffect:(fn,deps)=>{const i=cursor++;if(!slots[i]||deps.some((v,n)=>v!==slots[i][n])){slots[i]=deps;effects.push(fn);}}};\n"
+      },
+      {
+        "before": " let tree;const render=()=>{cursor=0;tree=exports.default();effects.splice(0).forEach(fn=>fn());};const walk=node=>!node||typeof node!=='object'?[]:[node,...(node.props?.children||[]).flatMap(walk)];\n render();assert.equal(calls,0);walk(tree).find(n=>n.type==='textarea').props.onChange({target:{value:JSON.stringify({identidades:[{documento:'11222333000181'}]})}});render();const run=walk(tree).find(n=>n.type==='button').props.onClick();assert.equal(calls,1);session.token='new';listener();finish([{indice:0,documento:null,legado:null}]);await run;render();assert.equal(walk(tree).some(n=>n.type==='table'),false);assert.equal(calls,1);\n const tab=await readFile(new URL('../src/components/comercial/ClientesTab.jsx',import.meta.url),'utf8');assert.ok(tab.indexOf('if (conferencia) return')<tab.indexOf('<VisualizadorUniversalEntidadeV24'));assert.match(tab,/conferencia_legado/);const commercial=await readFile(new URL('../src/pages/Comercial.jsx',import.meta.url),'utf8');const ast=ts.createSourceFile('Comercial.jsx',commercial,ts.ScriptTarget.Latest,true,ts.ScriptKind.JSX);const wrapper=ast.statements.find(n=>ts.isFunctionDeclaration(n)&&n.name?.text==='Comercial');assert.ok(wrapper);const exported={};vm.runInNewContext(ts.transpileModule(wrapper.getText(ast),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.React}}).outputText,{exports:exported,window:{location:{search:'?conferencia_legado=1'}},URLSearchParams,React:react,Suspense:'Suspense',ClientesTab:'EXACT_ONLY',ComercialContent:'BROAD'});const route=exported.default();assert.equal(route.props.children[0].type,'EXACT_ONLY');assert.equal(route.type,'Suspense');\n});\n\n",
+        "after": " let tree;const render=()=>{cursor=0;tree=exports.default();effects.splice(0).forEach(fn=>fn());};const walk=node=>!node||typeof node!=='object'?[]:[node,...(node.props?.children||[]).flatMap(walk)];\n render();assert.equal(calls,0);walk(tree).find(n=>n.type==='textarea').props.onChange({target:{value:JSON.stringify({identidades:[{documento:'11222333000181'}]})}});render();const run=walk(tree).find(n=>n.type==='button').props.onClick();assert.equal(calls,1);session.token='new';listener();finish([{indice:0,documento:null,legado:null}]);await run;render();assert.equal(walk(tree).some(n=>n.type==='table'),false);assert.equal(calls,1);\n const tab=organizacionalSourceForPath(new URL('../src/components/comercial/ClientesTab.jsx',import.meta.url),await readFile(new URL('../src/components/comercial/ClientesTab.jsx',import.meta.url),'utf8'));assert.ok(tab.indexOf('if (conferencia) return')<tab.indexOf('<VisualizadorUniversalEntidadeV24'));assert.match(tab,/conferencia_legado/);const commercial=organizacionalSourceForPath(new URL('../src/pages/Comercial.jsx',import.meta.url),await readFile(new URL('../src/pages/Comercial.jsx',import.meta.url),'utf8'));const ast=ts.createSourceFile('Comercial.jsx',commercial,ts.ScriptTarget.Latest,true,ts.ScriptKind.JSX);const wrapper=ast.statements.find(n=>ts.isFunctionDeclaration(n)&&n.name?.text==='Comercial');assert.ok(wrapper);const exported={};vm.runInNewContext(ts.transpileModule(wrapper.getText(ast),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.React}}).outputText,{exports:exported,window:{location:{search:'?conferencia_legado=1'}},URLSearchParams,React:react,Suspense:'Suspense',ClientesTab:'EXACT_ONLY',ComercialContent:'BROAD'});const route=exported.default();assert.equal(route.props.children[0].type,'EXACT_ONLY');assert.equal(route.type,'Suspense');\n});\n\n"
+      },
+      {
+        "before": " const {readFile}=await import('node:fs/promises');\n for(const path of Object.keys(clienteConferenciaHunks)){\n  const raw=await readFile(path,'utf8');\n  assert.ok(clienteConferenciaRemainder(path,raw));\n  const source=clienteSelectedReferenceRemainder(path,raw);\n",
+        "after": " const {readFile}=await import('node:fs/promises');\n for(const path of Object.keys(clienteConferenciaHunks)){\n  const raw=organizacionalSourceForPath(path,await readFile(path,'utf8'));\n  assert.ok(clienteConferenciaRemainder(path,raw));\n  const source=clienteSelectedReferenceRemainder(path,raw);\n"
+      },
+      {
+        "before": "  const { clienteConferenciaHunks, clienteConferenciaRemainder: composed, clienteSelectedReferenceRemainder, clienteConferenciaHistoricalRemainder: clienteConferenciaRemainder } = await import('./helpers/consolidation81Remainder.js');\n  for (const path of ['server/src/api/router.ts','server/src/services/clienteService.ts','src/api/httpApiClient.js']) {\n    const raw = readFileSync(path, 'utf8');\n    assert.doesNotThrow(() => composed(path, raw));\n    const source = clienteSelectedReferenceRemainder(path, raw);\n",
+        "after": "  const { clienteConferenciaHunks, clienteConferenciaRemainder: composed, clienteSelectedReferenceRemainder, clienteConferenciaHistoricalRemainder: clienteConferenciaRemainder } = await import('./helpers/consolidation81Remainder.js');\n  for (const path of ['server/src/api/router.ts','server/src/services/clienteService.ts','src/api/httpApiClient.js']) {\n    const raw = organizacionalSourceForPath(path,readFileSync(path, 'utf8'));\n    assert.doesNotThrow(() => composed(path, raw));\n    const source = clienteSelectedReferenceRemainder(path, raw);\n"
+      }
+    ]
+  }
 };
+
 export function organizacionalRemainder(file, source) {
+ const entry=entries[file]; if(!entry) return source;
  let result=source.replace(/\r\n/g,'\n');
- for(const {before,after} of hunks[file]||[]) {
+ if(createHash('sha256').update(result).digest('hex')===entry.baseline) return result;
+ for(const {before,after} of entry.hunks) {
   assert.equal(result.split(after).length,2,`Exact organizational hunk: ${file}: ${after.slice(0,80)}`);
   result=result.replace(after,before);
  }
  return result;
+}
+export function organizacionalSourceForPath(file, source) {
+ if(typeof source!=='string') return source;
+ const name=decodeURIComponent(String(file)).replaceAll('\\','/');
+ const key=Object.keys(entries).find(k=>name===k||name.endsWith('/'+k));
+ return key?organizacionalRemainder(key,source):source;
 }

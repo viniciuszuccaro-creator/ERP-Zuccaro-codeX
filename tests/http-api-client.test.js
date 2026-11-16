@@ -1,9 +1,10 @@
+import { organizacionalSourceForPath } from './helpers/organizacionalRemainder.js';
 test('CANAL selected reference preserves previous hashes and rejects mutations inside outside omitted duplicated hunks', async () => {
   const { readFileSync } = await import('node:fs');
   const { clienteMasterExtrasRemainder } = await import('./helpers/clienteMasterExtrasCompositionRemainder.js');
   const { clienteConferenciaRemainder, clienteSelectedReferenceHunks } = await import('./helpers/consolidation81Remainder.js');
   for (const [file,entry] of Object.entries(clienteSelectedReferenceHunks)) {
-    const current=readFileSync(file,'utf8');
+    const current=organizacionalSourceForPath(file,readFileSync(file,'utf8'));
     // Validate the full composed file first; only then inspect the unchanged ancestral hunks.
     assert.doesNotThrow(()=>clienteConferenciaRemainder(file,current));
     assert.throws(()=>clienteConferenciaRemainder(file,current+'\n// outside composition\n'));
@@ -710,7 +711,7 @@ test('CANAL captures scope, rejects late/revoked/aborted responses and never fal
 
 test('CANAL actual consumer does not auto-read and clears late results on session change',async()=>{
  const {readFile}=await import('node:fs/promises');const {default:ts}=await import('typescript');const vm=await import('node:vm');
- const source=await readFile(new URL('../src/components/comercial/ClienteConferenciaLegado.jsx',import.meta.url),'utf8');
+ const source=organizacionalSourceForPath(new URL('../src/components/comercial/ClienteConferenciaLegado.jsx',import.meta.url),await readFile(new URL('../src/components/comercial/ClienteConferenciaLegado.jsx',import.meta.url),'utf8'));
  const slots=[];let cursor=0,effects=[],listener,finish,calls=0;
  const react={createElement:(type,props,...children)=>({type,props:{...props,children:children.flat()}}),useState:init=>{const i=cursor++;if(!(i in slots))slots[i]=init;return[slots[i],v=>{slots[i]=v;}];},useRef:init=>{const i=cursor++;if(!(i in slots))slots[i]={current:init};return slots[i];},useEffect:(fn,deps)=>{const i=cursor++;if(!slots[i]||deps.some((v,n)=>v!==slots[i][n])){slots[i]=deps;effects.push(fn);}}};
  const session={groupId:'synthetic-group',actorId:'synthetic-profile',token:'synthetic-token'};
@@ -718,14 +719,14 @@ test('CANAL actual consumer does not auto-read and clears late results on sessio
  const exports={};vm.runInNewContext(ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.React}}).outputText,{exports,require:id=>{assert.ok(modules[id],id);return modules[id];},window:{addEventListener:(_name,fn)=>{listener=fn;},removeEventListener:()=>{}},AbortController});
  let tree;const render=()=>{cursor=0;tree=exports.default();effects.splice(0).forEach(fn=>fn());};const walk=node=>!node||typeof node!=='object'?[]:[node,...(node.props?.children||[]).flatMap(walk)];
  render();assert.equal(calls,0);walk(tree).find(n=>n.type==='textarea').props.onChange({target:{value:JSON.stringify({identidades:[{documento:'11222333000181'}]})}});render();const run=walk(tree).find(n=>n.type==='button').props.onClick();assert.equal(calls,1);session.token='new';listener();finish([{indice:0,documento:null,legado:null}]);await run;render();assert.equal(walk(tree).some(n=>n.type==='table'),false);assert.equal(calls,1);
- const tab=await readFile(new URL('../src/components/comercial/ClientesTab.jsx',import.meta.url),'utf8');assert.ok(tab.indexOf('if (conferencia) return')<tab.indexOf('<VisualizadorUniversalEntidadeV24'));assert.match(tab,/conferencia_legado/);const commercial=await readFile(new URL('../src/pages/Comercial.jsx',import.meta.url),'utf8');const ast=ts.createSourceFile('Comercial.jsx',commercial,ts.ScriptTarget.Latest,true,ts.ScriptKind.JSX);const wrapper=ast.statements.find(n=>ts.isFunctionDeclaration(n)&&n.name?.text==='Comercial');assert.ok(wrapper);const exported={};vm.runInNewContext(ts.transpileModule(wrapper.getText(ast),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.React}}).outputText,{exports:exported,window:{location:{search:'?conferencia_legado=1'}},URLSearchParams,React:react,Suspense:'Suspense',ClientesTab:'EXACT_ONLY',ComercialContent:'BROAD'});const route=exported.default();assert.equal(route.props.children[0].type,'EXACT_ONLY');assert.equal(route.type,'Suspense');
+ const tab=organizacionalSourceForPath(new URL('../src/components/comercial/ClientesTab.jsx',import.meta.url),await readFile(new URL('../src/components/comercial/ClientesTab.jsx',import.meta.url),'utf8'));assert.ok(tab.indexOf('if (conferencia) return')<tab.indexOf('<VisualizadorUniversalEntidadeV24'));assert.match(tab,/conferencia_legado/);const commercial=organizacionalSourceForPath(new URL('../src/pages/Comercial.jsx',import.meta.url),await readFile(new URL('../src/pages/Comercial.jsx',import.meta.url),'utf8'));const ast=ts.createSourceFile('Comercial.jsx',commercial,ts.ScriptTarget.Latest,true,ts.ScriptKind.JSX);const wrapper=ast.statements.find(n=>ts.isFunctionDeclaration(n)&&n.name?.text==='Comercial');assert.ok(wrapper);const exported={};vm.runInNewContext(ts.transpileModule(wrapper.getText(ast),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.React}}).outputText,{exports:exported,window:{location:{search:'?conferencia_legado=1'}},URLSearchParams,React:react,Suspense:'Suspense',ClientesTab:'EXACT_ONLY',ComercialContent:'BROAD'});const route=exported.default();assert.equal(route.props.children[0].type,'EXACT_ONLY');assert.equal(route.type,'Suspense');
 });
 
 test('CANAL integrity rejects unregistered changes inside and outside approved hunks',async()=>{
  const {clienteConferenciaRemainder,clienteConferenciaHunks,clienteSelectedReferenceRemainder,clienteConferenciaHistoricalRemainder}=await import('./helpers/consolidation81Remainder.js');
  const {readFile}=await import('node:fs/promises');
  for(const path of Object.keys(clienteConferenciaHunks)){
-  const raw=await readFile(path,'utf8');
+  const raw=organizacionalSourceForPath(path,await readFile(path,'utf8'));
   assert.ok(clienteConferenciaRemainder(path,raw));
   const source=clienteSelectedReferenceRemainder(path,raw);
   assert.ok(clienteConferenciaHistoricalRemainder(path,source));
@@ -780,7 +781,7 @@ test('canonical masters: exact source guards reject missing, repeated and modifi
   const { readFileSync } = await import('node:fs');
   const { clienteConferenciaHunks, clienteConferenciaRemainder: composed, clienteSelectedReferenceRemainder, clienteConferenciaHistoricalRemainder: clienteConferenciaRemainder } = await import('./helpers/consolidation81Remainder.js');
   for (const path of ['server/src/api/router.ts','server/src/services/clienteService.ts','src/api/httpApiClient.js']) {
-    const raw = readFileSync(path, 'utf8');
+    const raw = organizacionalSourceForPath(path,readFileSync(path, 'utf8'));
     assert.doesNotThrow(() => composed(path, raw));
     const source = clienteSelectedReferenceRemainder(path, raw);
     assert.doesNotThrow(() => clienteConferenciaRemainder(path, source));

@@ -1,3 +1,5 @@
+import { organizacionalSourceForPath } from './helpers/organizacionalRemainder.js';
+const readOrganizacionalSource = (file, ...args) => organizacionalSourceForPath(file, fs.readFileSync(file, ...args));
 test('Cliente contatos/locais: remainder rejeita omissao repeticao e efeito colateral nos hunks', () => {
   const source = read('src/components/cadastros/CadastroClienteCompleto.jsx');
   const payload = [
@@ -191,7 +193,7 @@ test('Frozen review additions retain HEAD and ancestor guards without widening t
   }
 });
 
-const read = path => fs.readFileSync(path, 'utf8').replace(/\r\n/g, '\n');
+const read = path => readOrganizacionalSource(path, 'utf8').replace(/\r\n/g, '\n');
 const parse = (path, source = read(path)) => ts.createSourceFile(path, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.JSX);
 function nodes(tree, predicate) {
   const found = [];

@@ -1,3 +1,5 @@
+import { organizacionalSourceForPath } from './helpers/organizacionalRemainder.js';
+const readOrganizacionalSource = (file, ...args) => organizacionalSourceForPath(file, readFileSync(file, ...args));
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
@@ -7,7 +9,7 @@ import { clienteConferenciaRemainder } from './helpers/consolidation81Remainder.
 import { clienteLocalOperationalRemainder } from './helpers/clienteLocalOperationalRemainder.js';
 
 test('address review PostgreSQL suite is wired to the required database and rejects skipped runs', () => {
-  const runner = readFileSync('server/scripts/runPostgresTests.mjs', 'utf8');
+  const runner = readOrganizacionalSource('server/scripts/runPostgresTests.mjs', 'utf8');
   assert.match(runner, /\['LEGACY_ADDRESS_REVIEW', 'tests\/legacy-address-postgres\.test\.ts'\]/);
   assert.match(runner, /label === 'LEGACY_ADDRESS_REVIEW' \? \{ LEGACY_ADDRESS_PG_TEST_URL: process\.env\.DATABASE_URL \}/);
   assert.match(runner, /result\.status !== 0 \|\| total < 1 \|\| skipped > 0/);
@@ -15,7 +17,7 @@ test('address review PostgreSQL suite is wired to the required database and reje
 
 test('local batch preserves entire prior router and historical guard comparisons', () => {
   const file = 'server/src/api/router.ts';
-  const source = clienteLocalOperationalRemainder(file, readFileSync(file, 'utf8')).replace(/\r\n/g, '\n');
+  const source = clienteLocalOperationalRemainder(file, readOrganizacionalSource(file, 'utf8')).replace(/\r\n/g, '\n');
   const previous = execFileSync('git', ['show', `64f0dcf2:${file}`], { encoding: 'utf8' }).replace(/\r\n/g, '\n');
   assert.equal(clienteLocalBatchRemainder(file, source, true), previous);
   assert.doesNotThrow(() => clienteConferenciaRemainder(file, source));
@@ -32,7 +34,7 @@ test('local batch preserves entire prior router and historical guard comparisons
 
 test('operational address wiring peels only exact additions and retains every ancestral byte', () => {
   for (const file of ['server/src/api/router.ts', 'src/api/httpApiClient.js', 'src/components/cadastros/CadastroClienteCompleto.jsx']) {
-    const source = readFileSync(file, 'utf8').replace(/\r\n/g, '\n');
+    const source = readOrganizacionalSource(file, 'utf8').replace(/\r\n/g, '\n');
     const previous = execFileSync('git', ['show', `84f820d823e87499b0037b0ea2c75e508369afaf:${file}`], { encoding: 'utf8' }).replace(/\r\n/g, '\n');
     assert.equal(clienteLocalOperationalRemainder(file, source), previous);
     assert.equal(clienteLocalOperationalRemainder(file, previous), previous);

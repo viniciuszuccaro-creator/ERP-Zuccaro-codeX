@@ -1,3 +1,5 @@
+import { organizacionalSourceForPath } from './helpers/organizacionalRemainder.js';
+const readOrganizacionalSource = (file, ...args) => organizacionalSourceForPath(file, fs.readFileSync(file, ...args));
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -6,7 +8,7 @@ import { fornecedorHttpRemainder } from './helpers/fornecedorHttpRemainder.js';
 
 for (const file of ['server/src/app.ts', 'server/src/api/router.ts']) {
   test(`supplier wiring preserves entire prior ${file} and rejects outside edits`, () => {
-    const source = fs.readFileSync(file, 'utf8');
+    const source = readOrganizacionalSource(file, 'utf8');
     // Baseline composição #401 tip — adapter portado sem reescrever o restante.
     const previous = execFileSync('git', ['show', `5d9a7e37c:${file}`], { encoding: 'utf8' });
     assert.match(source, /fornecedorService/);
@@ -22,7 +24,7 @@ for (const file of ['server/src/app.ts', 'server/src/api/router.ts']) {
 
 test('legacy test retains whole-source equality and zero migration delta', () => {
   const file = 'tests/legado-importador-consolidacao.test.js';
-  const source = fs.readFileSync(file, 'utf8');
+  const source = readOrganizacionalSource(file, 'utf8');
   const previous = execFileSync('git', ['show', `5d9a7e37c:${file}`], { encoding: 'utf8' });
   assert.equal(fornecedorHttpRemainder(file, source).replace(/\r\n/g, '\n'), previous.replace(/\r\n/g, '\n'));
   assert.throws(() => fornecedorHttpRemainder(file, source + '\nthrow new Error("OUTSIDE_SCOPE");\n'));

@@ -1,3 +1,5 @@
+import { organizacionalSourceForPath } from './helpers/organizacionalRemainder.js';
+const readOrganizacionalSource = (file, ...args) => organizacionalSourceForPath(file, fs.readFileSync(file, ...args));
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -6,7 +8,7 @@ import { setorRbacRemainder } from './helpers/setorRbacRemainder.js';
 import { fornecedorHttpRemainder } from './helpers/fornecedorHttpRemainder.js';
 
 const file = 'server/src/app.ts';
-const source = fs.readFileSync(file, 'utf8').replace(/\r\n/g, '\n');
+const source = readOrganizacionalSource(file, 'utf8').replace(/\r\n/g, '\n');
 const wiring = "    authorization: { guard: rbacGuard, moduleName: 'Cadastros', section: 'setor_atividade' },\n";
 test('Setor wiring preserves the complete published app, including supplier wiring', () => {
   assert.equal(source.split(wiring).length, 2, 'current source requires exactly one authorization wiring');

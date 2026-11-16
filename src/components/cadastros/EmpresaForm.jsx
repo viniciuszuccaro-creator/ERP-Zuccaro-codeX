@@ -46,6 +46,8 @@ function mergeEmpresaFormData(partial) {
   return {
     ...EMPRESA_FORM_DEFAULTS,
     ...src,
+    regime_tributario: Array.isArray(src.supported_fields) && !Object.hasOwn(src, 'regime_tributario')
+      ? '' : (src.regime_tributario ?? EMPRESA_FORM_DEFAULTS.regime_tributario),
     certificado_digital: {
       ...EMPRESA_FORM_DEFAULTS.certificado_digital,
       ...(src.certificado_digital && typeof src.certificado_digital === "object" ? src.certificado_digital : {}),

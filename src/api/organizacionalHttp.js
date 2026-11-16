@@ -1,3 +1,5 @@
+import { HTTP_CONTEXT_CHANGED } from './erpHttpSession.js';
+
 const fields = {
   GrupoEmpresarial: { nome: 'nome_do_grupo', descricao: 'observacoes', cnpj: 'cnpj_grupo' },
   Empresa: { razao_social: 'razao_social', nome_fantasia: 'nome_fantasia', cnpj: 'cnpj' },
@@ -46,7 +48,24 @@ function matches(row, query) {
 }
 
 /** Uses the existing HTTP request owner; no mirror fallback or independent store. */
-export function createOrganizacionalHttp(kind, request) {
+export function createOrganizacionalHttp(kind, transport, getScope) {
+  const request = async (path, options = {}) => {
+    const opened = getScope ? Object.freeze({ ...getScope() }) : null;
+    if (getScope && (!opened?.token || !opened?.actorId || !opened?.groupId)) throw new Error('Sessao organizacional ausente.');
+    let changed = false;
+    const invalidate = () => { changed = true; };
+    if (typeof window !== 'undefined') window.addEventListener(HTTP_CONTEXT_CHANGED, invalidate);
+    try {
+      const result = await transport(path, options, opened || undefined);
+      const active = getScope?.();
+      if (changed || (getScope && (!active || ['token', 'actorId', 'groupId', 'empresaId', 'scopeType'].some(k => active[k] !== opened[k])))) {
+        throw Object.assign(new Error('Contexto alterado. Reabra o cadastro.'), { code: 'CONTEXT_CHANGED' });
+      }
+      return result;
+    } finally {
+      if (typeof window !== 'undefined') window.removeEventListener(HTTP_CONTEXT_CHANGED, invalidate);
+    }
+  };
   const path = kind === 'Empresa' ? '/api/v1/empresas' : '/api/v1/grupos-empresariais';
   const all = async () => {
     const result = await request(path, { unwrap: false });
@@ -57,8 +76,16 @@ export function createOrganizacionalHttp(kind, request) {
     list: () => all(),
     async filter(query = {}, _order, limit = 100, skip = 0) { return (await all()).filter(r => matches(r, query)).slice(skip, skip + limit); },
     async count(query = {}) { return (await all()).filter(r => matches(r, query)).length; },
-    async get(id) { return hydrateOrganizacional(kind, await request(`${path}/${encodeURIComponent(id)}`)); },
-    async update(id, payload) { return hydrateOrganizacional(kind, await request(`${path}/${encodeURIComponent(id)}`, { method: 'PATCH', body: payload })); },
+    async get(id) {
+      const row = hydrateOrganizacional(kind, await request(`${path}/${encodeURIComponent(id)}`));
+      if (row.id !== id) throw new Error('Identidade organizacional divergente.');
+      return row;
+    },
+    async update(id, payload) {
+      const row = hydrateOrganizacional(kind, await request(`${path}/${encodeURIComponent(id)}`, { method: 'PATCH', body: payload }));
+      if (row.id !== id) throw new Error('Identidade organizacional divergente.');
+      return row;
+    },
     async create() { throw new Error('Criacao organizacional ainda nao habilitada neste contrato.'); },
     async delete() { throw new Error('Inativacao organizacional exige fluxo especifico.'); },
   };

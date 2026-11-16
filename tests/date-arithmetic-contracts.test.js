@@ -1,3 +1,5 @@
+import { organizacionalSourceForPath } from './helpers/organizacionalRemainder.js';
+const readOrganizacionalSource = (file, ...args) => organizacionalSourceForPath(file, fs.readFileSync(file, ...args));
 import { portalReadRemainder } from './helpers/portalReadRemainder.js';
 import {runtimeProofSource} from './helpers/runtimeProofSource.js';
 import { boletoSourceRemainder } from './helpers/boletoSourceRemainder.js';
@@ -16,14 +18,14 @@ import {iaResponseValidationRemainder} from './helpers/iaResponseValidationRemai
 import {readBoundaryRemainder} from './helpers/readBoundaryRemainder.js';
 import {componentContractRemainder} from './helpers/componentContractRemainder.js';
 
-const fixtures=JSON.parse(fs.readFileSync('tests/fixtures/date-arithmetic-stage21.json','utf8'));
+const fixtures=JSON.parse(readOrganizacionalSource('tests/fixtures/date-arithmetic-stage21.json','utf8'));
 test('date arithmetic cohort is fixed at 28 modules and 79 proven native Date operands',()=>{
   assert.equal(fixtures.length,28);
   assert.equal(fixtures.reduce((n,f)=>n+f.operands,0),79);
   assert.equal(new Set(fixtures.map(f=>f.file)).size,28);
 });
 for(const fixture of fixtures) test(`${fixture.file}: exact timestamp edits preserve all remaining executable code`,()=>{
-  let source=queryKeyMigrationRemainder(fixture.file,primitiveUiBoundaryRemainder(fixture.file,iaResponseValidationRemainder(fixture.file,readBoundaryRemainder(fixture.file,componentContractRemainder(fixture.file,portalReadRemainder(fixture.file,runtimeProofSource(fixture.file)))))));
+  let source=queryKeyMigrationRemainder(fixture.file,primitiveUiBoundaryRemainder(fixture.file,iaResponseValidationRemainder(fixture.file,readBoundaryRemainder(fixture.file,componentContractRemainder(fixture.file,portalReadRemainder(fixture.file,organizacionalSourceForPath(fixture.file,runtimeProofSource(fixture.file))))))));
   source=metricReportRemainder(fixture.file,boletoSourceRemainder(fixture.file,source));
   if(fixture.file==='src/components/rh/PontoTab.jsx')source=partialInputRemainder(fixture.file,source);
   if(fixture.file==='src/components/financeiro/contas-receber/TabelaReceber.jsx') source=consumerWindowRemainder(fixture.file,source);

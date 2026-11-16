@@ -1,5 +1,14 @@
 ## Edicao Grupo/Empresa canonica em validacao (2026-11-16)
 
+CI7214/e7b5bc33: backend e composicaoPG SUCCESS; frontend bloqueou11guardas
+de preservacao integral que desconheciam os hunks organizacionais. Nenhum
+hashhistorico trocado. Chamadores das provas historicas agora projetam apenas
+o delta exato aprovado;179testes de preservacao/contraprovas PASS. Provas do
+comportamento atual continuam lendo codigo atual,sem essa projecao.
+Adicionalmente leitura/escrita HTTP captura ator/sessao/escopo e descarta
+respostas antigas inclusive A-B-A. Regime tributario desconhecido nao assume
+SimplesNacional no DTOHML. Nenhum gate SQL/deploy aplicado porCI7214 falha.
+
 Dono confirmou troca CPA/3Z embe67: aceite seletor ENCERRADO. Novo escopo:
 editar mestres existentes viaAPI,sem espelho local como persistencia. Causa:
 GrupoForm usava chaves antigas; backend tinha repositorio Empresa so leitura/

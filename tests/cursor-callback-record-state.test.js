@@ -1,3 +1,5 @@
+import { organizacionalSourceForPath } from './helpers/organizacionalRemainder.js';
+const readOrganizacionalSource = (file, ...args) => organizacionalSourceForPath(file, fs.readFileSync(file, ...args));
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -28,7 +30,7 @@ function find(tree, predicate) {
   visit(tree); return found;
 }
 const path = 'src/components/cadastros/useCadastroRecordState.js';
-const source = fs.readFileSync(path, 'utf8');
+const source = readOrganizacionalSource(path, 'utf8');
 const ast = parse(path, source);
 const fn = ast.statements.find(ts.isFunctionDeclaration);
 const emitted = ts.transpileModule(fn.getText(ast).replace('export default ', ''), {
@@ -69,7 +71,7 @@ test('actual shared hook switches identity before effects, resets new records, p
 for (const name of names) test(`${name}: unchanged save, permission, fields and defaults; scoped reopen identity`, () => {
   const file = `src/components/cadastros/${name}Form.jsx`;
   // #353: CodigoField autorizado em RotaPadrao/TabelaPreco — remainder restaura pin e36231b3.
-  const after = parse(file, cadastroCodigoRegistroRemainder(file, fs.readFileSync(file, 'utf8')));
+  const after = parse(file, cadastroCodigoRegistroRemainder(file, readOrganizacionalSource(file, 'utf8')));
   const before = parse(file, execFileSync('git', ['show', `e36231b3a7e546aa9fd2529abb8d5edb61d8189c:${file}`], { encoding: 'utf8' }));
   const declarations = tree => find(tree, node => ts.isVariableDeclaration(node)
     && /^(handle|buildPayload|pode|contextoValido|groupId|dadosIniciais)/.test(node.name.getText(tree))).map(node => node.getText(tree));
@@ -87,7 +89,7 @@ for (const name of names) test(`${name}: unchanged save, permission, fields and 
 
 test('ContatoB2B graduou do pin RecordState para useCadastroReopenOnIdentity com contatoBoundId', () => {
   const file = 'src/components/cadastros/ContatoB2BForm.jsx';
-  const source = fs.readFileSync(file, 'utf8');
+  const source = readOrganizacionalSource(file, 'utf8');
   assert.equal(names.includes('ContatoB2B'), false);
   assert.match(source, /useCadastroReopenOnIdentity/);
   assert.match(source, /contatoBoundId/);
@@ -98,7 +100,7 @@ test('ContatoB2B graduou do pin RecordState para useCadastroReopenOnIdentity com
 
 test('Servico graduou do pin RecordState para useCadastroReopenOnIdentity com servicoBoundId', () => {
   const file = 'src/components/cadastros/ServicoForm.jsx';
-  const source = fs.readFileSync(file, 'utf8');
+  const source = readOrganizacionalSource(file, 'utf8');
   assert.equal(names.includes('Servico'), false);
   assert.match(source, /useCadastroReopenOnIdentity/);
   assert.match(source, /servicoBoundId/);
@@ -108,7 +110,7 @@ test('Servico graduou do pin RecordState para useCadastroReopenOnIdentity com se
 
 test('TipoFrete graduou do pin RecordState para useCadastroReopenOnIdentity com tipoFreteBoundId', () => {
   const file = 'src/components/cadastros/TipoFreteForm.jsx';
-  const source = fs.readFileSync(file, 'utf8');
+  const source = readOrganizacionalSource(file, 'utf8');
   assert.equal(names.includes('TipoFrete'), false);
   assert.match(source, /useCadastroReopenOnIdentity/);
   assert.match(source, /tipoFreteBoundId/);
@@ -118,7 +120,7 @@ test('TipoFrete graduou do pin RecordState para useCadastroReopenOnIdentity com 
 
 test('SegmentoCliente graduou do pin RecordState para useCadastroReopenOnIdentity com segmentoBoundId', () => {
   const file = 'src/components/cadastros/SegmentoClienteForm.jsx';
-  const source = fs.readFileSync(file, 'utf8');
+  const source = readOrganizacionalSource(file, 'utf8');
   assert.equal(names.includes('SegmentoCliente'), false);
   assert.match(source, /useCadastroReopenOnIdentity/);
   assert.match(source, /segmentoBoundId/);
@@ -128,7 +130,7 @@ test('SegmentoCliente graduou do pin RecordState para useCadastroReopenOnIdentit
 
 test('KitProduto graduou do pin RecordState para useCadastroReopenOnIdentity com kitBoundId', () => {
   const file = 'src/components/cadastros/KitProdutoForm.jsx';
-  const source = fs.readFileSync(file, 'utf8');
+  const source = readOrganizacionalSource(file, 'utf8');
   assert.equal(names.includes('KitProduto'), false);
   assert.match(source, /useCadastroReopenOnIdentity/);
   assert.match(source, /kitBoundId/);
@@ -139,7 +141,7 @@ test('KitProduto graduou do pin RecordState para useCadastroReopenOnIdentity com
 
 test('Filial graduou do pin RecordState para useCadastroReopenOnIdentity com filialBoundId', () => {
   const file = 'src/components/cadastros/FilialForm.jsx';
-  const source = fs.readFileSync(file, 'utf8');
+  const source = readOrganizacionalSource(file, 'utf8');
   assert.equal(names.includes('Filial'), false);
   assert.match(source, /useCadastroReopenOnIdentity/);
   assert.match(source, /filialBoundId/);
@@ -150,7 +152,7 @@ test('Filial graduou do pin RecordState para useCadastroReopenOnIdentity com fil
 
 test('CentroResultado graduou do pin RecordState para useCadastroReopenOnIdentity com centroBoundId', () => {
   const file = 'src/components/cadastros/CentroResultadoForm.jsx';
-  const source = fs.readFileSync(file, 'utf8');
+  const source = readOrganizacionalSource(file, 'utf8');
   assert.equal(names.includes('CentroResultado'), false);
   assert.match(source, /useCadastroReopenOnIdentity/);
   assert.match(source, /centroBoundId/);
@@ -161,7 +163,7 @@ test('CentroResultado graduou do pin RecordState para useCadastroReopenOnIdentit
 
 test('JobAgendado graduou do pin RecordState para useCadastroReopenOnIdentity com jobBoundId', () => {
   const file = 'src/components/cadastros/JobAgendadoForm.jsx';
-  const source = fs.readFileSync(file, 'utf8');
+  const source = readOrganizacionalSource(file, 'utf8');
   assert.equal(names.includes('JobAgendado'), false);
   assert.match(source, /useCadastroReopenOnIdentity/);
   assert.match(source, /jobBoundId/);
@@ -172,7 +174,7 @@ test('JobAgendado graduou do pin RecordState para useCadastroReopenOnIdentity co
 
 test('RotaPadrao graduou do pin RecordState para useCadastroReopenOnIdentity com rotaBoundId', () => {
   const file = 'src/components/cadastros/RotaPadraoForm.jsx';
-  const source = fs.readFileSync(file, 'utf8');
+  const source = readOrganizacionalSource(file, 'utf8');
   assert.equal(names.includes('RotaPadrao'), false);
   assert.match(source, /useCadastroReopenOnIdentity/);
   assert.match(source, /rotaBoundId/);
@@ -183,7 +185,7 @@ test('RotaPadrao graduou do pin RecordState para useCadastroReopenOnIdentity com
 
 test('CatalogoWeb graduou do pin RecordState para useCadastroReopenOnIdentity com catalogoBoundId', () => {
   const file = 'src/components/cadastros/CatalogoWebForm.jsx';
-  const source = fs.readFileSync(file, 'utf8');
+  const source = readOrganizacionalSource(file, 'utf8');
   assert.equal(names.includes('CatalogoWeb'), false);
   assert.match(source, /useCadastroReopenOnIdentity/);
   assert.match(source, /catalogoBoundId/);
@@ -194,7 +196,7 @@ test('CatalogoWeb graduou do pin RecordState para useCadastroReopenOnIdentity co
 
 test('Produto keeps the complete initializer and HTTP GET contract; props version cannot overwrite a loaded HTTP draft', () => {
   const file = 'src/components/cadastros/ProdutoFormV22_Completo.jsx';
-  const after = parse(file, fs.readFileSync(file, 'utf8'));
+  const after = parse(file, readOrganizacionalSource(file, 'utf8'));
   const before = parse(file, execFileSync('git', ['show', `e36231b3a7e546aa9fd2529abb8d5edb61d8189c:${file}`], { encoding: 'utf8' }));
   const declaration = (tree, name) => find(tree, node => ts.isVariableDeclaration(node) && node.name.getText(tree) === name)[0];
   assert.equal(declaration(after, 'initialFormData').initializer.arguments[0].getText(after),
@@ -214,7 +216,7 @@ test('Produto keeps the complete initializer and HTTP GET contract; props versio
 
 test('Colaborador retains legacy-code permission and all save/status/delete handlers', () => {
   const file = 'src/components/rh/ColaboradorForm.jsx';
-  const after = parse(file, fs.readFileSync(file, 'utf8'));
+  const after = parse(file, readOrganizacionalSource(file, 'utf8'));
   const before = parse(file, execFileSync('git', ['show', `e36231b3a7e546aa9fd2529abb8d5edb61d8189c:${file}`], { encoding: 'utf8' }));
   const contracts = tree => find(tree, node => ts.isVariableDeclaration(node) && /^(handle|podeEditarCodigoLegado)/.test(node.name.getText(tree))).map(node => node.getText(tree));
   assert.deepEqual(contracts(after), contracts(before));
@@ -228,7 +230,7 @@ for (const file of ['cadastros/EmpresaForm.jsx', 'cadastros/EmpresaFormCompleto.
   'comercial/ClienteFormCompleto.jsx', 'cadastros/TabelaPrecoFormCompleto.jsx']) {
   test(`${file}: retained payload owner, validators, complete initializer and permissions`, () => {
     const path = 'src/components/' + file;
-    const after = parse(path, iaResponseValidationRemainder(path, fs.readFileSync(path, 'utf8')));
+    const after = parse(path, iaResponseValidationRemainder(path, readOrganizacionalSource(path, 'utf8')));
     const before = parse(path, execFileSync('git', ['show', `e36231b3a7e546aa9fd2529abb8d5edb61d8189c:${path}`], { encoding: 'utf8' }));
     const contract = tree => find(tree, node => ts.isVariableDeclaration(node)
       && /^(handle|buildPayload|pode|contextoValido|groupId|saveBlocked|permissao|schema)/.test(node.name.getText(tree)))
@@ -250,7 +252,7 @@ for (const file of ['cadastros/EmpresaForm.jsx', 'cadastros/EmpresaFormCompleto.
 
 test('Cliente RHF actual reset effect changes records, clears transient validation and preserves same-identity edits', () => {
   const path = 'src/components/comercial/ClienteForm.jsx';
-  const tree = parse(path, fs.readFileSync(path, 'utf8'));
+  const tree = parse(path, readOrganizacionalSource(path, 'utf8'));
   const effect = find(tree, node => ts.isCallExpression(node) && node.expression.getText(tree) === 'useEffect'
     && node.arguments[0].getText(tree).includes('hydratedIdentity'))[0];
   const hydratedIdentity = { current: 'a:v1:company-a' };
@@ -269,7 +271,7 @@ test('Cliente RHF actual reset effect changes records, clears transient validati
 
 test('TabelaPreco complete resets item draft by ID/scope without changing its persistence owner', () => {
   const path = 'src/components/cadastros/TabelaPrecoFormCompleto.jsx';
-  const tree = parse(path, fs.readFileSync(path, 'utf8'));
+  const tree = parse(path, readOrganizacionalSource(path, 'utf8'));
   const state = find(tree, node => ts.isVariableDeclaration(node) && node.name.getText(tree) === '[itensTabela, setItensTabela]')[0];
   assert.equal(state.initializer.expression.getText(tree), 'useCadastroRecordState');
   assert.equal(state.initializer.arguments[0].getText(tree), '[]');
@@ -285,7 +287,7 @@ test('TabelaPreco complete resets item draft by ID/scope without changing its pe
 test('Cliente adapters normalize actual aliases with primary precedence and no persistence replacement', () => {
   for (const name of ['ClienteForm', 'ClienteFormCompleto']) {
     const path = `src/components/comercial/${name}.jsx`;
-    const tree = parse(path, fs.readFileSync(path, 'utf8'));
+    const tree = parse(path, readOrganizacionalSource(path, 'utf8'));
     const declaration = find(tree, node => ts.isVariableDeclaration(node) && node.name.getText(tree) === 'cliente')[0];
     const names = ['clienteProp', 'item', 'data', 'initialData', name === 'ClienteForm' ? 'defaultValuesProp' : 'defaultValues'];
     const resolve = values => new Function(...names, `return ${declaration.initializer.getText(tree)}`)(...values);
@@ -303,7 +305,7 @@ test('Cliente adapters normalize actual aliases with primary precedence and no p
 
 test('Empresa reopen without validity metadata clears the previous expiry warning without a certificate fixture', () => {
   const path = 'src/components/cadastros/EmpresaForm.jsx';
-  const tree = parse(path, fs.readFileSync(path, 'utf8'));
+  const tree = parse(path, readOrganizacionalSource(path, 'utf8'));
   const effect = find(tree, node => ts.isCallExpression(node) && node.expression.getText(tree) === 'useEffect'
     && node.arguments[0].getText(tree).includes('setAlertaCertificado'))[0];
   let alert = { tipo: 'error' };
