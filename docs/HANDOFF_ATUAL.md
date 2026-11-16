@@ -1,3 +1,43 @@
+## Billing conferido pelos canais existentes; preparacao continua (2026-11-16)
+
+Autorizacao atual: recuperar artefatos indispensaveis exclusivos do MESMO
+Codespace, inicialmente10min/tetoUS1, primeiro5exports+manifestos, depois
+inventario DIRIGIDO por caminhos/manifestos documentados e comparacao comVPS.
+Sem segredos/cache/deps/builds/duplicatas, SQLnovo/carga/deploy/exclusao. Nao
+excederjanela sem informar bytes/quantidade/finalidade/tempo/custo restantes.
+
+Nao foi possivel inspecionar painelBilling: ambos controles locais falharam
+antes doChrome com kernel assets/oserror3. AlternativaCLI autenticada: usageAPI
+HTTP404 com diagnostico explicito user scope required; budgetsAPI HTTP404.
+Nao solicitar/elevar scopes nem alterar cobranca/teto por inferencia. HTTP402
+da partida anterior permanece unica evidencia de bloqueio financeiro; causa
+exata/saldo/metodo pagamento NAO comprovados. Nao orientar trocar cartao como
+diagnostico confirmado. Proxima intervencao especifica: tornar painelBilling
+autenticado acessivel pelo controle suportado ou fornecer seu aviso sanitizado.
+Codespace reconfirmado Shutdown;0transferencias/0novaspartidas neste lote.
+
+Dono confirmou Revisar fiscal E Revisar entrega: aceite visual de permissoes,
+nao gravacao/ativacao. Indice privado atualizado, sem repetir concessao.
+Preparacao independente:4pins existentes (matriz+3fontes) conferidos naVPS;
+2295Obras/chaves nativas unicas/1497pais. Todos2295 ligam a pais Inativo no
+snapshot de16/11 e cobrem ZERO dos novos5000. Nao usar como contatos/locais
+dos5000 nem reativar pais para liberar importacao. ComplementoEndereco ausente
+nessas2295;numero/pais nao inferidos. Evidencia privada works-vs-scale5000-
+20261116.private.json;comparacao usa snapshot identificado, nao binding fresco
+para escrita. Fonte e217locais aplicados permanecem intactos.
+
+Preflight FRESCO pelo principalapp em READONLY/ROLLBACK, banco/schemaOID
+conferidos:0duplicidades de identidade legada;9indices existentes, falta
+clientes_legacy_identity_uidx. SQLcandidato EXATO de043 somente para clientes
+HML preparado no incoming/scale-5000-20261116,NAOexecutado/NAOautorizadoDDL.
+Nao executar043inteira (inclui outros alvos). Revisao/backup/gateDDL especifico
+e coberturaaux/binding/escopo do lote continuam necessarios. Primeira tentativa
+driver usou socketdefault ausente;segunda omitiu credencial;ambas semTX. Corrigido
+para socketdocumentado e credencialexistente semexibir/copiar;nao alterarAuth.
+Recibos centrais: shared-artifacts/receipts/{scale-index-preflight,works-vs-
+scale5000,codespace-recovery-access}-20261116.private.json; indice aponta todos.
+0cargas/0ativacoes/0DDL/grants/alteracoesoperacionais.5000continuamPARCIAIS.
+
 ## AcessoHML aplicado e fonteaux pendente de janela (2026-11-16)
 
 ESTADO: codigo administrativo d64b7058b1a8aa384ff66af6e3e3c907284478ca/CI7203

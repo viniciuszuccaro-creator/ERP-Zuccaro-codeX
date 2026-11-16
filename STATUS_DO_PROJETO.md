@@ -22722,6 +22722,26 @@ Browser autenticado/sessao/aceite visual desta versao ainda pendentes; controle
 local/nativo kernelassets/oserror3. Janela ate12:10Z/09:10Brasilia, nao permanente.
 Proximo: aceite UI atual, depois componentes pendentes de enderecos e bindings;
 1500 continuam INATIVOS. Completude integral e pacoteVPS NAO declarados prontos.
+## 2026-11-16 - Billing sem canal de leitura; lotes/endereco preparados
+
+Pedidoatual inclui recuperacao dirigida de TODOS artefatos indispensaveis
+exclusivos doCodespace,10min/tetoUS1,primeiro5exports. Controles locais falharam
+kernelassets/os3; BillingusageAPI404 informa scopeuser ausente e budgetsAPI404.
+Nao ampliarautenticacao/cobranca; saldo/causa financeira especifica desconhecidos.
+Codespace permaneceShutdown,0transferencias; depende de acesso ao painelBilling
+para distinguir pendencia financeira concreta. Nao repetir start402sem mudanca.
+
+Aceite dono: Revisar fiscal/entrega aparecem;nao prova escrita. NaVPS,4pins
+fontes/matriz2295Obras conferidos,0chavesnativas duplicadas,1497pais Inativo;
+0cobertura dos novos5000. Nao reaproveitar esses locais para outrosclientes.
+Preflight HML com principalapp READONLY/ROLLBACK confirma9indices,0identidades
+legadas duplicadas e ausencia do indicecanonico. Candidato minimo043clientes
+qualificado HML preparado,naoexecutado. SemSQLfonte/carga/DDL/grants/ativacao.
+Recibos e indice privados centralizados; snapshot de binding identificado.
+5000selecionados continuamPARCIAIS/0aplicados. Proximo: recuperarbytesaux quando
+Billingacessivel, completar contratos e submeter gateDDL/lote concreto; preservar
+100ativos/1500inativos/4200contatos/217locais. Lote documental: diffcheck exigido.
+
 ## 2026-11-16 - Recuperacao privada autorizada: bloqueio HTTP402
 
 Dono confirmou botoes Revisar fiscal/entrega na HML: aceite visual, sem escrita.
