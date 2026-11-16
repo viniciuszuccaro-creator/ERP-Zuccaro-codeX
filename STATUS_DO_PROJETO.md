@@ -1,5 +1,12 @@
 ## HMLfb1: vinculos e salvar/reabrir validados; codigos condicionados (2026-11-16)
 
+Sucessor de codigos266a12ae/CI7224SUCCESS:checksLinuxcompletos,PGnativo
+concorrencia/reciboreversaPASS. Kit2220arquivos recebido/conferido privado
+naVPS(incoming/empresa-266a12ae),NAOaplicado;semdependencia local paraessekit.
+HMLservida fb1/CI7223,3savesnoop/reabertura2pools e16fingerprintsPASS.
+Gate2colunas/indices/3codigos ainda semresposta;nenhumcodigo atribuido.
+Aceitevisual pendente,nao simulado;nenhuma carga oumudanca operacional.
+
 fb1d512c/CI7223SUCCESS aplicadoAPI/webHML em20:01UTC. HTTPS/marcadores/
 assetSHA/anonimo401PASS;16tabelas identicas,PG/ERPDEVmesmosIDs/saudaveis.
 Backup194609Z-28e5a9a6 restaurado+externoACK;cf3 preservado parado.

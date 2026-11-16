@@ -1,5 +1,16 @@
 ## HMLfb1 aplicada: vinculos testados; codigo aguarda gate (2026-11-16)
 
+Fechamento: sucessor266a12ae88205d68d51d02ea05f1707f82f3d2b8/CI7224SUCCESS
+em todasfrentes, incluindo PGnativo comrecibolotealheio/codigoexterno negados.
+Kit INTEGRO central incoming/empresa-266a12ae/runtime-complete.tar.gz,
+2220arquivos/17923480bytes,TAR3980636bytes/SHA
+cd1a84ac36432de0fee69043080700974c681c2b42b13026c539803036022f1e;
+received.private.json confere cadaarquivo e indiceprivado atualizado. NAO
+aplicado: HML continua fb1/CI7223. Codigo aguarda somente gatespecifico das
+2colunas/indices e atribuicao3mestres, backup/rehearsal/revalidacao atuais.
+Nao usar kitsintermediarios ba90/a53/fb para a reversa de codigo. Aceitevisual
+dosvinculos pedido,semresposta ateestecheckpoint. Nao prometer browserE2E.
+
 API/web fb1d512c5598390a7df0f62da97b41f7e798cc4c/CI7223SUCCESS servidos
 em20:01UTC/17:01Brasilia. URL https://hml-erp.cpaferroeaco.com.br/cadastros .
 Backup194609Z-28e5a9a6 restaurado/externoACK;16fingerprints iguais,PG/ERPDEV
