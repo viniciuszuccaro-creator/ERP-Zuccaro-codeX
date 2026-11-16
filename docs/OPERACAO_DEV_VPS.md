@@ -1,5 +1,15 @@
 # Operação DEV: GitHub, Codex, Cursor e VPS
 
+## HML vigente fba27eeb (2026-11-16)
+
+API/webfba27eeb/CI7201SUCCESS, autorizacao especifica executada para retirar
+prefixo duplicadoGrupo. Mesmo enderecoHML. SemDDL/grants/carga/ativacao.
+Backupfresh13:46UTC/restore/externoEmpresa/ack verificados; atuaisAPI/web5e
+conservados parados com sufixo before-fba27eeb-20261116 para reversao.
+Configbackup aponta api-published-fba27eeb-config.private.json. Pins/specs/
+recibo no HANDOFF e diretorio privado promotion-fba27eeb-20261116. Nao repetir
+cargas nem confundir nomes corrigidos com mais registros ou cadastro completo.
+
 ## HML vigente5e e reversao restrita (2026-11-16)
 
 API/web5e0d11c3/CI7197 publicada por autorizacao especifica apos backup fresco,

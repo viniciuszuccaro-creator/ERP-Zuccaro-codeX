@@ -1,3 +1,16 @@
+## Rotulo corrigido e PUBLICADO na HML (2026-11-16)
+
+Autorizacao especifica do dono recebida parafba27eeb. API=webfba27eeb/CI7201SUCCESS
+publicadas13:49UTC (10:49Brasilia), semDDL/grants/cargas/ativacoes. Backupfresh
+hml-20261116T134658Z-9ba8405a/restore/copiaexternaEmpresa/ack passaram. Preservadas
+EXATAMENTE capabilities/limites/mounts/rede anteriores; originais5eAPI/web
+parados/conservados. Ready200 e marcadorAPI=webfba porHTTPS/localhost; JS servido
+confere SHA do manifesto, clientes401 semsessao. PG e operacional mesmosIDs e
+operacional200. Backupconfig/indiceprivado acompanhamfba. Nenhum dado renomeado.
+100clientes ativos continuam os mesmos; nao houve importacao ampliada.
+URL https://hml-erp.cpaferroeaco.com.br/cadastros . Conferencia autenticada do
+rotulo pelo dono pendente; renovar pagina para receber novo bundle.
+
 ## Rotulo do Grupo sem prefixo duplicado (2026-11-16)
 
 Relato do dono: Grupo . Grupo CPA e somente100clientes. Causa do rotulo era

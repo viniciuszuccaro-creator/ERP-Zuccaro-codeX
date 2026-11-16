@@ -1,3 +1,26 @@
+## HML vigente fba27eeb: somente rotulo do Grupo (2026-11-16)
+
+Autorizacao especifica recebida/executada. API/webfba27eeb5d5aa5f7133738f7863e357bb3007f69,
+CI7201SUCCESS. Em13:49UTC/10:49Brasilia: localhost/HTTPSready200 no novoSHA,
+marcadorAPI=web, clientes401 semsessao; entry /assets/index-DZoysGre.js servido
+confere SHA do manifesto. Retirado prefixo Grupo sem renomear cadastro/ID.
+API2002arquivos identicos a5e; novas provas de schema nao foram inventadas.
+Backupfresh hml-20261116T134658Z-9ba8405a/restore/externoEmpresa/ack pareados.
+Nada deDDL/grants/cargas/ativacao. PGHML e operacional mesmosIDs/saude200.
+
+Recibo privado promotion-fba27eeb-20261116/promotion.receipt.private.json no
+rootHML existente. Specs/backupconfiganteriores conservados; rollback runtime
+para5e: erp-hml-api-before-fba27eeb-20261116 e
+erp-hml-web-before-fba27eeb-20261116 parados/conservados. Conferir pins e novos
+deltas antes de troca/reversao; nao tocarPG nem restaurarDB. CapAddEXATO do
+Nginx e CapDropALL/read-only/tmpfs/limites/rede anteriores preservados.
+Configbackup aponta api-published-fba27eeb-config.private.json; indicecentral
+currentHml atualizado e indiceanterior preservado. OriginaisCasa nao alterados.
+Usuario deve atualizar mesmaURL para novoJS; aceitevisual autenticado pendente.
+Os100ativos NAO viraram cargaampliada;1500ensaios inativos intactos. Nenhuma
+automacao nova/permanente criada. Proximo: conferir rotulo com dono, retomar
+schemaComercial/selecoes/crosswalks pelos gates existentes, sem novas permissoes.
+
 ## Correcao de rotulo nao equivale a carga ampliada (2026-11-16)
 
 Dono informa mesma tela/100clientes e Grupo . GrupoCPA. EmpresaSwitcher tinha
