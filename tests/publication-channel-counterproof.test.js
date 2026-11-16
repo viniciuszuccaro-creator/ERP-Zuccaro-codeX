@@ -1,3 +1,5 @@
+import { organizacionalSourceForPath } from './helpers/organizacionalRemainder.js';
+const readOrganizacionalSource = (file, ...args) => organizacionalSourceForPath(file, fs.readFileSync(file, ...args));
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -11,7 +13,7 @@ import { clienteConferenciaHunks, clienteConferenciaRemainder, clienteSelectedRe
 
 for (const [file, entry] of Object.entries(clienteConferenciaHunks)) {
   test(file + ': channel normalization refuses changed, repeated and out-of-scope bytes', () => {
-    const composedSource = fs.readFileSync(file, 'utf8').replace(/\r\n/g, '\n');
+    const composedSource = readOrganizacionalSource(file, 'utf8').replace(/\r\n/g, '\n');
     assert.doesNotThrow(() => clienteConferenciaRemainder(file, composedSource));
     assert.throws(() => clienteConferenciaRemainder(file, composedSource + '\n// SYNTHETIC_UNAPPROVED_CHANGE\n'));
     const source = clienteSelectedReferenceRemainder(file, composedSource);
@@ -30,7 +32,7 @@ for (const [file, entry] of Object.entries(clienteConferenciaHunks)) {
 
 for (const [file, entry] of Object.entries(clienteSelectedReferenceHunks)) {
   test(file + ': selected-reference composition refuses changed, omitted and repeated hunks', () => {
-    const source = clienteMasterExtrasRemainder(file, fs.readFileSync(file, 'utf8')).replace(/\r\n/g, '\n');
+    const source = clienteMasterExtrasRemainder(file, readOrganizacionalSource(file, 'utf8')).replace(/\r\n/g, '\n');
     assert.doesNotThrow(() => clienteConferenciaRemainder(file, source));
     for (const [after] of entry.hunks) {
       assert.equal(source.split(after).length, 2);
@@ -47,9 +49,9 @@ for (const [file, entry] of Object.entries(clienteSelectedReferenceHunks)) {
 
 const sha = text => createHash('sha256').update(text).digest('hex');
 test('contacts helper: entire reviewed source is pinned, not just matching declarations', () => {
-  const source = fs.readFileSync(new URL('./helpers/clienteContatosRemainder.js', import.meta.url), 'utf8').replace(/\r\n/g, '\n');
+  const source = readOrganizacionalSource(new URL('./helpers/clienteContatosRemainder.js', import.meta.url), 'utf8').replace(/\r\n/g, '\n');
   const expected = '6bf7eca1801d8caaf1eb9f70973aad0a325f0342f6e4a838f5500d9a9ab2cc7f';
-  const bridge = JSON.parse(fs.readFileSync(new URL('./helpers/clienteMasterExtrasCompositionManifest.json', import.meta.url))).historicalHelper;
+  const bridge = JSON.parse(readOrganizacionalSource(new URL('./helpers/clienteMasterExtrasCompositionManifest.json', import.meta.url))).historicalHelper;
   const verify = text => {
     let previous = clienteMasterExtrasRemainder('tests/helpers/clienteContatosRemainder.js', text);
     for (const [after, before] of bridge.hunks) {
@@ -67,7 +69,7 @@ test('contacts helper: entire reviewed source is pinned, not just matching decla
 });
 for (const [file, entry] of Object.entries(clienteContatosHunks)) {
   test(file + ': exact contacts peel preserves full 0bb7313c and ancestor pins', () => {
-    const currentSource = fs.readFileSync(file, 'utf8').replace(/\r\n/g, '\n');
+    const currentSource = readOrganizacionalSource(file, 'utf8').replace(/\r\n/g, '\n');
     const source = clienteMasterExtrasRemainder(file, currentSource);
     const baseline = execFileSync('git', ['show', clienteContatosBaseline + ':' + file], { encoding: 'utf8' }).replace(/\r\n/g, '\n');
     assert.equal(sha(baseline), entry.hash);

@@ -1,3 +1,5 @@
+import { organizacionalSourceForPath } from './helpers/organizacionalRemainder.js';
+const readOrganizacionalSource = (file, ...args) => organizacionalSourceForPath(file, fs.readFileSync(file, ...args));
 import { clienteConferenciaRemainder } from './helpers/consolidation81Remainder.js';
 import assert from 'node:assert/strict';
 import test from 'node:test';
@@ -14,7 +16,7 @@ const exportLine="export { persistirEnderecoClienteGrupoLegado, criarRegistroEnd
 const readHead=path=>execFileSync('git',['show',`e36231b3a7e546aa9fd2529abb8d5edb61d8189c:${path}`],{encoding:'utf8'}).replaceAll('\r\n','\n');
 
 test('importer consolidation preserves every remote consumer/reconciliation byte except the reviewed address export',()=>{
-  const current=fs.readFileSync(sourcePath,'utf8').replaceAll('\r\n','\n');
+  const current=readOrganizacionalSource(sourcePath,'utf8').replaceAll('\r\n','\n');
   assert.equal(current.split(exportLine).length,2);
   assert.equal(current.replace(exportLine,''),readHead(sourcePath));
 });
@@ -27,7 +29,7 @@ test('importer consolidation retains all remote staging tests unchanged while ad
       .filter(expression=>ts.isCallExpression(expression)&&expression.expression.getText(file)==='test')
       .map(expression=>[expression.arguments[0].text,expression.getText(file)]));
   };
-  const before=collect(readHead(path)),after=collect(fs.readFileSync(path,'utf8'));
+  const before=collect(readHead(path)),after=collect(readOrganizacionalSource(path,'utf8'));
   assert.equal(before.size,13);assert.equal(after.size,23);
   for(const [name,text] of before)assert.equal(after.get(name),text,name);
 });
@@ -72,8 +74,8 @@ test('address persistence has no default transaction, rejects company/actor mism
     await assert.rejects(persistirEnderecoClienteGrupoLegado(source,{transaction}),/LEGACY_ADDRESS_SCOPE_INVALID/);
   }
   assert.equal(permissionCalls,0);
-  assert.equal(clienteConferenciaRemainder('server/src/api/router.ts',fs.readFileSync('server/src/api/router.ts','utf8')),readHead('server/src/api/router.ts'));
-  assert.equal(clienteConferenciaRemainder('server/src/app.ts',fs.readFileSync('server/src/app.ts','utf8')).replaceAll('\r\n','\n'),readHead('server/src/app.ts'));
+  assert.equal(clienteConferenciaRemainder('server/src/api/router.ts',readOrganizacionalSource('server/src/api/router.ts','utf8')),readHead('server/src/api/router.ts'));
+  assert.equal(clienteConferenciaRemainder('server/src/app.ts',readOrganizacionalSource('server/src/app.ts','utf8')).replaceAll('\r\n','\n'),readHead('server/src/app.ts'));
   // Baseline pós-045 contatos[] jsonb (#591 decisão a). Tip migrations bump; publication base e36231b3a7e546aa9fd2529abb8d5edb61d8189c permanece (2ª ref do canal).
   assert.equal(execFileSync('git',['diff',"cc7c71f5e913b8f0c19d90927bb94f51ba15de89",'--','server/migrations'],{encoding:'utf8'}),'');
 });

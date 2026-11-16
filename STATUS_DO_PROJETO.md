@@ -1,5 +1,10 @@
 ## Edicao Grupo/Empresa canonica em validacao (2026-11-16)
 
+CI7215 revelou mais chamadores diretos das mesmas guardas historicas (financeiro,
+OFX/Auth e canalpublicacao). A projecao exata agora tambem os cobre,sem retirar
+asserts ou substituir pins.116contraprovas adicionaisPASS. Runtime fe8c0c15
+fecha binding editor;delta posterior SOMENTE testes/status,sem aplicarHML.
+
 Revisao final do consumidor: sessao e identidade do editor agora sao capturadas
 na ABERTURA,nao no cliqueSalvar. EventoHTTP invalida editor;callback anterior
 nao escreve comnovoator/token nem emreabertura do mesmoID. Teste dohandler

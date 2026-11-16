@@ -1,3 +1,5 @@
+import { organizacionalSourceForPath } from './helpers/organizacionalRemainder.js';
+const readOrganizacionalSource = (file, ...args) => organizacionalSourceForPath(file, fs.readFileSync(file, ...args));
 import { clienteConferenciaRemainder } from './helpers/consolidation81Remainder.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -18,7 +20,7 @@ const response=value=>new Response(JSON.stringify({data:value}),{status:200});
 const inputs={postManual:manual,list:{accountId},reconcile:binding,reverseLink:binding};
 const receipts={postManual:{id:movementId,revision:'1',state:'POSTED',replay:false},list:page,reconcile:{id:linkId,active:true,replay:false},reverseLink:{id:linkId,active:false,replay:true}};
 function fixture(fetchImpl,getScope=()=>({...expected,token:'synthetic-token'})){return createHttpApiClient({baseUrl:'https://synthetic.invalid',getScope,fetchImpl}).financialMovements;}
-const read=file=>fs.readFileSync(file,'utf8').replace(/\r\n/g,'\n');
+const read=file=>readOrganizacionalSource(file,'utf8').replace(/\r\n/g,'\n');
 const hash=value=>crypto.createHash('sha256').update(value).digest('hex');
 test('shared bank executor and HTTP factory retain complete previous sources outside exact extraction/additions',()=>{
  let bank=read('src/api/bankStatementHttp.js');

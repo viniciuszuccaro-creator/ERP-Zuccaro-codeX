@@ -1,3 +1,5 @@
+import { organizacionalSourceForPath } from './helpers/organizacionalRemainder.js';
+const readOrganizacionalSource = (file, ...args) => organizacionalSourceForPath(file, readFileSync(file, ...args));
 import { clienteConferenciaRemainder } from './helpers/consolidation81Remainder.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -9,7 +11,7 @@ import { bankSourceHostRemainder } from './helpers/bankSourceHostRemainder.js';
 import { financialUiBoundaryRemainder } from './helpers/financialUiBoundaryRemainder.js';
 import { createHttpApiClient } from '../src/api/httpApiClient.js';
 
-const read = path => readFileSync(path, 'utf8').replace(/\r\n/g, '\n');
+const read = path => readOrganizacionalSource(path, 'utf8').replace(/\r\n/g, '\n');
 const head = path => execFileSync('git', ['show', `e36231b3a7e546aa9fd2529abb8d5edb61d8189c:${path}`], { encoding: 'utf8' }).replace(/\r\n/g, '\n');
 const emit = text => ts.transpileModule(text, { compilerOptions: { jsx: ts.JsxEmit.React, target: ts.ScriptTarget.ESNext, module: ts.ModuleKind.ESNext, removeComments: true } }).outputText;
 

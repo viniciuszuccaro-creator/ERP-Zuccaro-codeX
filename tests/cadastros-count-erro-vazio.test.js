@@ -1,3 +1,5 @@
+import { organizacionalSourceForPath } from './helpers/organizacionalRemainder.js';
+const readOrganizacionalSource = (file, ...args) => organizacionalSourceForPath(file, fs.readFileSync(file, ...args));
 /**
  * Pacote A / #431 — contraprova comportamental:
  * erro ≠ vazio; vazio ≠ falha; parcial ≠ total; negativos cross-tenant;
@@ -45,12 +47,12 @@ test('buildContextFilter canônico é compartilhado (useEntityCounts ≡ AllCoun
     buildCadastrosAllCountsFilter(...args),
   );
   assert.equal(
-    fs.readFileSync(path.join(ROOT, 'components/lib/useEntityCounts.jsx'), 'utf8')
+    readOrganizacionalSource(path.join(ROOT, 'components/lib/useEntityCounts.jsx'), 'utf8')
       .includes("from \"@/components/lib/cadastroCountFilter.js\""),
     true,
   );
   assert.equal(
-    fs.readFileSync(path.join(ROOT, 'components/cadastros/hooks/cadastrosAllCountsCore.js'), 'utf8')
+    readOrganizacionalSource(path.join(ROOT, 'components/cadastros/hooks/cadastrosAllCountsCore.js'), 'utf8')
       .includes("from '../../lib/cadastroCountFilter.js'"),
     true,
   );
@@ -263,17 +265,17 @@ test('contrato HTTP countEntities: invoke recebe nome+payload com filtro canôni
   assert.equal(calls[0].name, 'countEntities');
   assert.deepEqual(counts, { Produto: 1, Cliente: 1, Marca: 2 });
   // Bridge HTTP piloto permanece no facade (não só filtro local)
-  const facade = fs.readFileSync(path.join(ROOT, 'api/base44Client.js'), 'utf8');
+  const facade = readOrganizacionalSource(path.join(ROOT, 'api/base44Client.js'), 'utf8');
   assert.match(facade, /countEntitiesTouchesHttpPilot/);
   assert.match(facade, /runHttpPilotAwareCountEntities/);
 });
 
 test('resposta tardia de outro escopo é descartável via queryKey (hooks sem placeholder)', () => {
-  const all = fs.readFileSync(
+  const all = readOrganizacionalSource(
     path.join(ROOT, 'components/cadastros/hooks/useCadastrosAllCounts.jsx'),
     'utf8',
   );
-  const ent = fs.readFileSync(path.join(ROOT, 'components/lib/useEntityCounts.jsx'), 'utf8');
+  const ent = readOrganizacionalSource(path.join(ROOT, 'components/lib/useEntityCounts.jsx'), 'utf8');
   assert.match(all, /queryKey:\s*\["cadastros-all-counts-v5",\s*empresaId,\s*groupId,\s*grupoEmpIds,\s*actorId,\s*sessionKey\]/);
   assert.match(ent, /const queryKey = \['entityCounts_v5',\s*entitiesKey,\s*groupId,\s*empresaId,\s*grupoEmpIdsKey,\s*actorId,\s*sessionKey\];/);
   assert.match(all, /placeholderData:\s*undefined/);
@@ -294,7 +296,7 @@ test('resposta tardia de outro escopo é descartável via queryKey (hooks sem pl
 });
 
 test('falha countEntities não vira KPI via page.length / entityListSorted', () => {
-  const ent = fs.readFileSync(path.join(ROOT, 'components/lib/useEntityCounts.jsx'), 'utf8');
+  const ent = readOrganizacionalSource(path.join(ROOT, 'components/lib/useEntityCounts.jsx'), 'utf8');
   assert.doesNotMatch(ent, /entityListSorted/);
   assert.doesNotMatch(ent, /limit:\s*2000/);
   assert.doesNotMatch(ent, /res\.data\.length/);
@@ -303,16 +305,16 @@ test('falha countEntities não vira KPI via page.length / entityListSorted', () 
 });
 
 test('UI Cadastros distingue erro (—) de zero; banner data-counts-unavailable', () => {
-  const page = fs.readFileSync(path.join(ROOT, 'pages/Cadastros.jsx'), 'utf8');
+  const page = readOrganizacionalSource(path.join(ROOT, 'pages/Cadastros.jsx'), 'utf8');
   assert.match(page, /data-counts-unavailable/);
   assert.match(page, /countsUnavailable/);
   assert.match(page, /Contagens indisponíveis por erro de consulta/);
 
-  const badge = fs.readFileSync(path.join(ROOT, 'components/cadastros/GroupCountBadge.jsx'), 'utf8');
+  const badge = readOrganizacionalSource(path.join(ROOT, 'components/cadastros/GroupCountBadge.jsx'), 'utf8');
   assert.match(badge, /countsUnavailable/);
   assert.match(badge, /não é zero/);
 
-  const hook = fs.readFileSync(
+  const hook = readOrganizacionalSource(
     path.join(ROOT, 'components/cadastros/hooks/useCadastrosAllCounts.jsx'),
     'utf8',
   );
@@ -321,7 +323,7 @@ test('UI Cadastros distingue erro (—) de zero; banner data-counts-unavailable'
 });
 
 test('Visualizador zera lastGoodData na troca de escopo (lista pós-contexto)', () => {
-  const src = fs.readFileSync(
+  const src = readOrganizacionalSource(
     path.join(ROOT, 'components/cadastros/VisualizadorUniversalEntidadeV24.jsx'),
     'utf8',
   );
@@ -330,7 +332,7 @@ test('Visualizador zera lastGoodData na troca de escopo (lista pós-contexto)', 
   assert.match(src, /Erro ao carregar dados/);
   assert.match(src, /Nenhum registro de/);
   // remainder pin e36231b3 permanece autorizado
-  const rem = fs.readFileSync(
+  const rem = readOrganizacionalSource(
     path.join(path.resolve('tests/helpers/scopeListCacheRemainder.js')),
     'utf8',
   );
@@ -339,7 +341,7 @@ test('Visualizador zera lastGoodData na troca de escopo (lista pós-contexto)', 
 });
 
 test('Visualizador propaga countsUnavailable — total ≠ 0 fabricado; cross-page bloqueado', () => {
-  const src = fs.readFileSync(
+  const src = readOrganizacionalSource(
     path.join(ROOT, 'components/cadastros/VisualizadorUniversalEntidadeV24.jsx'),
     'utf8',
   );
@@ -355,7 +357,7 @@ test('Visualizador propaga countsUnavailable — total ≠ 0 fabricado; cross-pa
   assert.match(src, /if \(!countKnown\) return;/);
   assert.match(src, /Exclusao em lote bloqueada: contagem indisponivel/);
   assert.doesNotMatch(src, /entityListSorted[\s\S]{0,80}totalCount/);
-  const rem = fs.readFileSync(
+  const rem = readOrganizacionalSource(
     path.join(path.resolve('tests/helpers/scopeListCacheRemainder.js')),
     'utf8',
   );
@@ -364,7 +366,7 @@ test('Visualizador propaga countsUnavailable — total ≠ 0 fabricado; cross-pa
 });
 
 test('Contatos comercial: bind imutável, erro≠form vazio, single-save', () => {
-  const orphan = fs.readFileSync(
+  const orphan = readOrganizacionalSource(
     path.join(ROOT, 'components/comercial/GerenciarContatosCliente.jsx'),
     'utf8',
   );

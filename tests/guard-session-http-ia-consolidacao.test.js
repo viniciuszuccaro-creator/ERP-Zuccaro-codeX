@@ -1,3 +1,5 @@
+import { organizacionalSourceForPath } from './helpers/organizacionalRemainder.js';
+const readOrganizacionalSource = (file, ...args) => organizacionalSourceForPath(file, readFileSync(file, ...args));
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -9,7 +11,7 @@ import { createHttpApiClient, isHttpApiError, readHttpErrorBodyCode } from '../s
 import { validarSugestoesProdutosIA, validarRespostaFiscalIA } from '../src/components/lib/iaResponsePolicy.js';
 import { validarAnaliseAtendimentoIA, validarIntentAtendimentoIA } from '../src/components/lib/atendimentoIaResponsePolicy.js';
 
-const read = path => readFileSync(path, 'utf8').replace(/\r\n/g, '\n');
+const read = path => readOrganizacionalSource(path, 'utf8').replace(/\r\n/g, '\n');
 const head = path => execFileSync('git', ['show', `e36231b3a7e546aa9fd2529abb8d5edb61d8189c:${path}`], { encoding: 'utf8' }).replace(/\r\n/g, '\n');
 function declaration(source, name) {
   const tree = ts.createSourceFile('contract.js', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.JS);

@@ -459,6 +459,169 @@ const entries = {
         "after": "  const { clienteConferenciaHunks, clienteConferenciaRemainder: composed, clienteSelectedReferenceRemainder, clienteConferenciaHistoricalRemainder: clienteConferenciaRemainder } = await import('./helpers/consolidation81Remainder.js');\n  for (const path of ['server/src/api/router.ts','server/src/services/clienteService.ts','src/api/httpApiClient.js']) {\n    const raw = organizacionalSourceForPath(path,readFileSync(path, 'utf8'));\n    assert.doesNotThrow(() => composed(path, raw));\n    const source = clienteSelectedReferenceRemainder(path, raw);\n"
       }
     ]
+  },
+  "tests/financial-movement-http-client.test.js": {
+    "baseline": "ad99a609f17c925a4aa086b114bf6ddaa699f0565d46600b8384736588e09b92",
+    "hunks": [
+      {
+        "before": "import { clienteConferenciaRemainder } from './helpers/consolidation81Remainder.js';\nimport test from 'node:test';\n",
+        "after": "import { organizacionalSourceForPath } from './helpers/organizacionalRemainder.js';\nconst readOrganizacionalSource = (file, ...args) => organizacionalSourceForPath(file, fs.readFileSync(file, ...args));\nimport { clienteConferenciaRemainder } from './helpers/consolidation81Remainder.js';\nimport test from 'node:test';\n"
+      },
+      {
+        "before": "const receipts={postManual:{id:movementId,revision:'1',state:'POSTED',replay:false},list:page,reconcile:{id:linkId,active:true,replay:false},reverseLink:{id:linkId,active:false,replay:true}};\nfunction fixture(fetchImpl,getScope=()=>({...expected,token:'synthetic-token'})){return createHttpApiClient({baseUrl:'https://synthetic.invalid',getScope,fetchImpl}).financialMovements;}\nconst read=file=>fs.readFileSync(file,'utf8').replace(/\\r\\n/g,'\\n');\nconst hash=value=>crypto.createHash('sha256').update(value).digest('hex');\ntest('shared bank executor and HTTP factory retain complete previous sources outside exact extraction/additions',()=>{\n",
+        "after": "const receipts={postManual:{id:movementId,revision:'1',state:'POSTED',replay:false},list:page,reconcile:{id:linkId,active:true,replay:false},reverseLink:{id:linkId,active:false,replay:true}};\nfunction fixture(fetchImpl,getScope=()=>({...expected,token:'synthetic-token'})){return createHttpApiClient({baseUrl:'https://synthetic.invalid',getScope,fetchImpl}).financialMovements;}\nconst read=file=>readOrganizacionalSource(file,'utf8').replace(/\\r\\n/g,'\\n');\nconst hash=value=>crypto.createHash('sha256').update(value).digest('hex');\ntest('shared bank executor and HTTP factory retain complete previous sources outside exact extraction/additions',()=>{\n"
+      }
+    ]
+  },
+  "tests/guard-ofx-a1-consolidacao.test.js": {
+    "baseline": "4b5599fbd03fed8f665c70d64a106d7eca8629ccb00baa4998b6132b60fd9393",
+    "hunks": [
+      {
+        "before": "import { clienteConferenciaRemainder } from './helpers/consolidation81Remainder.js';\nimport test from 'node:test';\n",
+        "after": "import { organizacionalSourceForPath } from './helpers/organizacionalRemainder.js';\nconst readOrganizacionalSource = (file, ...args) => organizacionalSourceForPath(file, readFileSync(file, ...args));\nimport { clienteConferenciaRemainder } from './helpers/consolidation81Remainder.js';\nimport test from 'node:test';\n"
+      },
+      {
+        "before": "import { createHttpApiClient } from '../src/api/httpApiClient.js';\n\nconst read = path => readFileSync(path, 'utf8').replace(/\\r\\n/g, '\\n');\nconst head = path => execFileSync('git', ['show', `e36231b3a7e546aa9fd2529abb8d5edb61d8189c:${path}`], { encoding: 'utf8' }).replace(/\\r\\n/g, '\\n');\nconst emit = text => ts.transpileModule(text, { compilerOptions: { jsx: ts.JsxEmit.React, target: ts.ScriptTarget.ESNext, module: ts.ModuleKind.ESNext, removeComments: true } }).outputText;\n",
+        "after": "import { createHttpApiClient } from '../src/api/httpApiClient.js';\n\nconst read = path => readOrganizacionalSource(path, 'utf8').replace(/\\r\\n/g, '\\n');\nconst head = path => execFileSync('git', ['show', `e36231b3a7e546aa9fd2529abb8d5edb61d8189c:${path}`], { encoding: 'utf8' }).replace(/\\r\\n/g, '\\n');\nconst emit = text => ts.transpileModule(text, { compilerOptions: { jsx: ts.JsxEmit.React, target: ts.ScriptTarget.ESNext, module: ts.ModuleKind.ESNext, removeComments: true } }).outputText;\n"
+      }
+    ]
+  },
+  "tests/guard-session-http-ia-consolidacao.test.js": {
+    "baseline": "177201199e3aa6dbbf211193e03f4a6204d7f4b140ff7964f194267b4fa47220",
+    "hunks": [
+      {
+        "before": "import test from 'node:test';\nimport assert from 'node:assert/strict';\n",
+        "after": "import { organizacionalSourceForPath } from './helpers/organizacionalRemainder.js';\nconst readOrganizacionalSource = (file, ...args) => organizacionalSourceForPath(file, readFileSync(file, ...args));\nimport test from 'node:test';\nimport assert from 'node:assert/strict';\n"
+      },
+      {
+        "before": "import { validarAnaliseAtendimentoIA, validarIntentAtendimentoIA } from '../src/components/lib/atendimentoIaResponsePolicy.js';\n\nconst read = path => readFileSync(path, 'utf8').replace(/\\r\\n/g, '\\n');\nconst head = path => execFileSync('git', ['show', `e36231b3a7e546aa9fd2529abb8d5edb61d8189c:${path}`], { encoding: 'utf8' }).replace(/\\r\\n/g, '\\n');\nfunction declaration(source, name) {\n",
+        "after": "import { validarAnaliseAtendimentoIA, validarIntentAtendimentoIA } from '../src/components/lib/atendimentoIaResponsePolicy.js';\n\nconst read = path => readOrganizacionalSource(path, 'utf8').replace(/\\r\\n/g, '\\n');\nconst head = path => execFileSync('git', ['show', `e36231b3a7e546aa9fd2529abb8d5edb61d8189c:${path}`], { encoding: 'utf8' }).replace(/\\r\\n/g, '\\n');\nfunction declaration(source, name) {\n"
+      }
+    ]
+  },
+  "tests/publication-channel-counterproof.test.js": {
+    "baseline": "1507cb4cf7203988f171697f97ab5781c9fa9ff7cc23c99f15d70cceb0a82cce",
+    "hunks": [
+      {
+        "before": "import test from 'node:test';\nimport assert from 'node:assert/strict';\n",
+        "after": "import { organizacionalSourceForPath } from './helpers/organizacionalRemainder.js';\nconst readOrganizacionalSource = (file, ...args) => organizacionalSourceForPath(file, fs.readFileSync(file, ...args));\nimport test from 'node:test';\nimport assert from 'node:assert/strict';\n"
+      },
+      {
+        "before": "for (const [file, entry] of Object.entries(clienteConferenciaHunks)) {\n  test(file + ': channel normalization refuses changed, repeated and out-of-scope bytes', () => {\n    const composedSource = fs.readFileSync(file, 'utf8').replace(/\\r\\n/g, '\\n');\n    assert.doesNotThrow(() => clienteConferenciaRemainder(file, composedSource));\n    assert.throws(() => clienteConferenciaRemainder(file, composedSource + '\\n// SYNTHETIC_UNAPPROVED_CHANGE\\n'));\n",
+        "after": "for (const [file, entry] of Object.entries(clienteConferenciaHunks)) {\n  test(file + ': channel normalization refuses changed, repeated and out-of-scope bytes', () => {\n    const composedSource = readOrganizacionalSource(file, 'utf8').replace(/\\r\\n/g, '\\n');\n    assert.doesNotThrow(() => clienteConferenciaRemainder(file, composedSource));\n    assert.throws(() => clienteConferenciaRemainder(file, composedSource + '\\n// SYNTHETIC_UNAPPROVED_CHANGE\\n'));\n"
+      },
+      {
+        "before": "for (const [file, entry] of Object.entries(clienteSelectedReferenceHunks)) {\n  test(file + ': selected-reference composition refuses changed, omitted and repeated hunks', () => {\n    const source = clienteMasterExtrasRemainder(file, fs.readFileSync(file, 'utf8')).replace(/\\r\\n/g, '\\n');\n    assert.doesNotThrow(() => clienteConferenciaRemainder(file, source));\n    for (const [after] of entry.hunks) {\n",
+        "after": "for (const [file, entry] of Object.entries(clienteSelectedReferenceHunks)) {\n  test(file + ': selected-reference composition refuses changed, omitted and repeated hunks', () => {\n    const source = clienteMasterExtrasRemainder(file, readOrganizacionalSource(file, 'utf8')).replace(/\\r\\n/g, '\\n');\n    assert.doesNotThrow(() => clienteConferenciaRemainder(file, source));\n    for (const [after] of entry.hunks) {\n"
+      },
+      {
+        "before": "const sha = text => createHash('sha256').update(text).digest('hex');\ntest('contacts helper: entire reviewed source is pinned, not just matching declarations', () => {\n  const source = fs.readFileSync(new URL('./helpers/clienteContatosRemainder.js', import.meta.url), 'utf8').replace(/\\r\\n/g, '\\n');\n  const expected = '6bf7eca1801d8caaf1eb9f70973aad0a325f0342f6e4a838f5500d9a9ab2cc7f';\n  const bridge = JSON.parse(fs.readFileSync(new URL('./helpers/clienteMasterExtrasCompositionManifest.json', import.meta.url))).historicalHelper;\n  const verify = text => {\n    let previous = clienteMasterExtrasRemainder('tests/helpers/clienteContatosRemainder.js', text);\n",
+        "after": "const sha = text => createHash('sha256').update(text).digest('hex');\ntest('contacts helper: entire reviewed source is pinned, not just matching declarations', () => {\n  const source = readOrganizacionalSource(new URL('./helpers/clienteContatosRemainder.js', import.meta.url), 'utf8').replace(/\\r\\n/g, '\\n');\n  const expected = '6bf7eca1801d8caaf1eb9f70973aad0a325f0342f6e4a838f5500d9a9ab2cc7f';\n  const bridge = JSON.parse(readOrganizacionalSource(new URL('./helpers/clienteMasterExtrasCompositionManifest.json', import.meta.url))).historicalHelper;\n  const verify = text => {\n    let previous = clienteMasterExtrasRemainder('tests/helpers/clienteContatosRemainder.js', text);\n"
+      },
+      {
+        "before": "for (const [file, entry] of Object.entries(clienteContatosHunks)) {\n  test(file + ': exact contacts peel preserves full 0bb7313c and ancestor pins', () => {\n    const currentSource = fs.readFileSync(file, 'utf8').replace(/\\r\\n/g, '\\n');\n    const source = clienteMasterExtrasRemainder(file, currentSource);\n    const baseline = execFileSync('git', ['show', clienteContatosBaseline + ':' + file], { encoding: 'utf8' }).replace(/\\r\\n/g, '\\n');\n",
+        "after": "for (const [file, entry] of Object.entries(clienteContatosHunks)) {\n  test(file + ': exact contacts peel preserves full 0bb7313c and ancestor pins', () => {\n    const currentSource = readOrganizacionalSource(file, 'utf8').replace(/\\r\\n/g, '\\n');\n    const source = clienteMasterExtrasRemainder(file, currentSource);\n    const baseline = execFileSync('git', ['show', clienteContatosBaseline + ':' + file], { encoding: 'utf8' }).replace(/\\r\\n/g, '\\n');\n"
+      }
+    ]
+  },
+  "tests/cadastros-count-erro-vazio.test.js": {
+    "baseline": "5b5d8c8a3174d0beeffe21f2527d49516fecaf5275d18db7933192b68508955e",
+    "hunks": [
+      {
+        "before": "/**\n * Pacote A / #431 — contraprova comportamental:\n",
+        "after": "import { organizacionalSourceForPath } from './helpers/organizacionalRemainder.js';\nconst readOrganizacionalSource = (file, ...args) => organizacionalSourceForPath(file, fs.readFileSync(file, ...args));\n/**\n * Pacote A / #431 — contraprova comportamental:\n"
+      },
+      {
+        "before": "  );\n  assert.equal(\n    fs.readFileSync(path.join(ROOT, 'components/lib/useEntityCounts.jsx'), 'utf8')\n      .includes(\"from \\\"@/components/lib/cadastroCountFilter.js\\\"\"),\n    true,\n  );\n  assert.equal(\n    fs.readFileSync(path.join(ROOT, 'components/cadastros/hooks/cadastrosAllCountsCore.js'), 'utf8')\n      .includes(\"from '../../lib/cadastroCountFilter.js'\"),\n    true,\n",
+        "after": "  );\n  assert.equal(\n    readOrganizacionalSource(path.join(ROOT, 'components/lib/useEntityCounts.jsx'), 'utf8')\n      .includes(\"from \\\"@/components/lib/cadastroCountFilter.js\\\"\"),\n    true,\n  );\n  assert.equal(\n    readOrganizacionalSource(path.join(ROOT, 'components/cadastros/hooks/cadastrosAllCountsCore.js'), 'utf8')\n      .includes(\"from '../../lib/cadastroCountFilter.js'\"),\n    true,\n"
+      },
+      {
+        "before": "  assert.deepEqual(counts, { Produto: 1, Cliente: 1, Marca: 2 });\n  // Bridge HTTP piloto permanece no facade (não só filtro local)\n  const facade = fs.readFileSync(path.join(ROOT, 'api/base44Client.js'), 'utf8');\n  assert.match(facade, /countEntitiesTouchesHttpPilot/);\n  assert.match(facade, /runHttpPilotAwareCountEntities/);\n",
+        "after": "  assert.deepEqual(counts, { Produto: 1, Cliente: 1, Marca: 2 });\n  // Bridge HTTP piloto permanece no facade (não só filtro local)\n  const facade = readOrganizacionalSource(path.join(ROOT, 'api/base44Client.js'), 'utf8');\n  assert.match(facade, /countEntitiesTouchesHttpPilot/);\n  assert.match(facade, /runHttpPilotAwareCountEntities/);\n"
+      },
+      {
+        "before": "\ntest('resposta tardia de outro escopo é descartável via queryKey (hooks sem placeholder)', () => {\n  const all = fs.readFileSync(\n    path.join(ROOT, 'components/cadastros/hooks/useCadastrosAllCounts.jsx'),\n    'utf8',\n  );\n  const ent = fs.readFileSync(path.join(ROOT, 'components/lib/useEntityCounts.jsx'), 'utf8');\n  assert.match(all, /queryKey:\\s*\\[\"cadastros-all-counts-v5\",\\s*empresaId,\\s*groupId,\\s*grupoEmpIds,\\s*actorId,\\s*sessionKey\\]/);\n  assert.match(ent, /const queryKey = \\['entityCounts_v5',\\s*entitiesKey,\\s*groupId,\\s*empresaId,\\s*grupoEmpIdsKey,\\s*actorId,\\s*sessionKey\\];/);\n",
+        "after": "\ntest('resposta tardia de outro escopo é descartável via queryKey (hooks sem placeholder)', () => {\n  const all = readOrganizacionalSource(\n    path.join(ROOT, 'components/cadastros/hooks/useCadastrosAllCounts.jsx'),\n    'utf8',\n  );\n  const ent = readOrganizacionalSource(path.join(ROOT, 'components/lib/useEntityCounts.jsx'), 'utf8');\n  assert.match(all, /queryKey:\\s*\\[\"cadastros-all-counts-v5\",\\s*empresaId,\\s*groupId,\\s*grupoEmpIds,\\s*actorId,\\s*sessionKey\\]/);\n  assert.match(ent, /const queryKey = \\['entityCounts_v5',\\s*entitiesKey,\\s*groupId,\\s*empresaId,\\s*grupoEmpIdsKey,\\s*actorId,\\s*sessionKey\\];/);\n"
+      },
+      {
+        "before": "\ntest('falha countEntities não vira KPI via page.length / entityListSorted', () => {\n  const ent = fs.readFileSync(path.join(ROOT, 'components/lib/useEntityCounts.jsx'), 'utf8');\n  assert.doesNotMatch(ent, /entityListSorted/);\n  assert.doesNotMatch(ent, /limit:\\s*2000/);\n",
+        "after": "\ntest('falha countEntities não vira KPI via page.length / entityListSorted', () => {\n  const ent = readOrganizacionalSource(path.join(ROOT, 'components/lib/useEntityCounts.jsx'), 'utf8');\n  assert.doesNotMatch(ent, /entityListSorted/);\n  assert.doesNotMatch(ent, /limit:\\s*2000/);\n"
+      },
+      {
+        "before": "\ntest('UI Cadastros distingue erro (—) de zero; banner data-counts-unavailable', () => {\n  const page = fs.readFileSync(path.join(ROOT, 'pages/Cadastros.jsx'), 'utf8');\n  assert.match(page, /data-counts-unavailable/);\n  assert.match(page, /countsUnavailable/);\n  assert.match(page, /Contagens indisponíveis por erro de consulta/);\n\n  const badge = fs.readFileSync(path.join(ROOT, 'components/cadastros/GroupCountBadge.jsx'), 'utf8');\n  assert.match(badge, /countsUnavailable/);\n  assert.match(badge, /não é zero/);\n\n  const hook = fs.readFileSync(\n    path.join(ROOT, 'components/cadastros/hooks/useCadastrosAllCounts.jsx'),\n    'utf8',\n",
+        "after": "\ntest('UI Cadastros distingue erro (—) de zero; banner data-counts-unavailable', () => {\n  const page = readOrganizacionalSource(path.join(ROOT, 'pages/Cadastros.jsx'), 'utf8');\n  assert.match(page, /data-counts-unavailable/);\n  assert.match(page, /countsUnavailable/);\n  assert.match(page, /Contagens indisponíveis por erro de consulta/);\n\n  const badge = readOrganizacionalSource(path.join(ROOT, 'components/cadastros/GroupCountBadge.jsx'), 'utf8');\n  assert.match(badge, /countsUnavailable/);\n  assert.match(badge, /não é zero/);\n\n  const hook = readOrganizacionalSource(\n    path.join(ROOT, 'components/cadastros/hooks/useCadastrosAllCounts.jsx'),\n    'utf8',\n"
+      },
+      {
+        "before": "\ntest('Visualizador zera lastGoodData na troca de escopo (lista pós-contexto)', () => {\n  const src = fs.readFileSync(\n    path.join(ROOT, 'components/cadastros/VisualizadorUniversalEntidadeV24.jsx'),\n    'utf8',\n",
+        "after": "\ntest('Visualizador zera lastGoodData na troca de escopo (lista pós-contexto)', () => {\n  const src = readOrganizacionalSource(\n    path.join(ROOT, 'components/cadastros/VisualizadorUniversalEntidadeV24.jsx'),\n    'utf8',\n"
+      },
+      {
+        "before": "  assert.match(src, /Nenhum registro de/);\n  // remainder pin e36231b3 permanece autorizado\n  const rem = fs.readFileSync(\n    path.join(path.resolve('tests/helpers/scopeListCacheRemainder.js')),\n    'utf8',\n",
+        "after": "  assert.match(src, /Nenhum registro de/);\n  // remainder pin e36231b3 permanece autorizado\n  const rem = readOrganizacionalSource(\n    path.join(path.resolve('tests/helpers/scopeListCacheRemainder.js')),\n    'utf8',\n"
+      },
+      {
+        "before": "\ntest('Visualizador propaga countsUnavailable — total ≠ 0 fabricado; cross-page bloqueado', () => {\n  const src = fs.readFileSync(\n    path.join(ROOT, 'components/cadastros/VisualizadorUniversalEntidadeV24.jsx'),\n    'utf8',\n",
+        "after": "\ntest('Visualizador propaga countsUnavailable — total ≠ 0 fabricado; cross-page bloqueado', () => {\n  const src = readOrganizacionalSource(\n    path.join(ROOT, 'components/cadastros/VisualizadorUniversalEntidadeV24.jsx'),\n    'utf8',\n"
+      },
+      {
+        "before": "  assert.match(src, /Exclusao em lote bloqueada: contagem indisponivel/);\n  assert.doesNotMatch(src, /entityListSorted[\\s\\S]{0,80}totalCount/);\n  const rem = fs.readFileSync(\n    path.join(path.resolve('tests/helpers/scopeListCacheRemainder.js')),\n    'utf8',\n",
+        "after": "  assert.match(src, /Exclusao em lote bloqueada: contagem indisponivel/);\n  assert.doesNotMatch(src, /entityListSorted[\\s\\S]{0,80}totalCount/);\n  const rem = readOrganizacionalSource(\n    path.join(path.resolve('tests/helpers/scopeListCacheRemainder.js')),\n    'utf8',\n"
+      },
+      {
+        "before": "\ntest('Contatos comercial: bind imutável, erro≠form vazio, single-save', () => {\n  const orphan = fs.readFileSync(\n    path.join(ROOT, 'components/comercial/GerenciarContatosCliente.jsx'),\n    'utf8',\n",
+        "after": "\ntest('Contatos comercial: bind imutável, erro≠form vazio, single-save', () => {\n  const orphan = readOrganizacionalSource(\n    path.join(ROOT, 'components/comercial/GerenciarContatosCliente.jsx'),\n    'utf8',\n"
+      }
+    ]
+  },
+  "tests/cliente-master-extras-preservation.test.js": {
+    "baseline": "5bdbd31ddea88360f26b0c3b2ed4e388bc80981ffc1121689c06ab7489506203",
+    "hunks": [
+      {
+        "before": "import test from 'node:test';\nimport assert from 'node:assert/strict';\n",
+        "after": "import { organizacionalSourceForPath } from './helpers/organizacionalRemainder.js';\nconst readOrganizacionalSource = (file, ...args) => organizacionalSourceForPath(file, fs.readFileSync(file, ...args));\nimport test from 'node:test';\nimport assert from 'node:assert/strict';\n"
+      },
+      {
+        "before": "    ['./helpers/clienteMasterExtrasCompositionManifest.json', '7b87bd95567c0b94772b3c725fc2695c6b82400576f0fe42cfe76f5ac326fedc'],\n  ]) {\n    const source = Buffer.from(fs.readFileSync(new URL(file, import.meta.url), 'utf8').replace(/\\r\\n/g, '\\n'));\n    assert.equal(createHash('sha256').update(source).digest('hex'), expected);\n    assert.notEqual(createHash('sha256').update(Buffer.concat([source, Buffer.from('FORGED')])).digest('hex'), expected);\n",
+        "after": "    ['./helpers/clienteMasterExtrasCompositionManifest.json', '7b87bd95567c0b94772b3c725fc2695c6b82400576f0fe42cfe76f5ac326fedc'],\n  ]) {\n    const source = Buffer.from(readOrganizacionalSource(new URL(file, import.meta.url), 'utf8').replace(/\\r\\n/g, '\\n'));\n    assert.equal(createHash('sha256').update(source).digest('hex'), expected);\n    assert.notEqual(createHash('sha256').update(Buffer.concat([source, Buffer.from('FORGED')])).digest('hex'), expected);\n"
+      },
+      {
+        "before": "for (const [file, entry] of Object.entries(clienteMasterExtrasComposition.entries)) {\n  test(file + ': keep-both bridge rejects every removed, repeated or modified composition hunk', () => {\n    const current = fs.readFileSync(file, 'utf8').replace(/\\r\\n/g, '\\n');\n    const previous = clienteMasterExtrasRemainder(file, current);\n    assert.equal(createHash('sha256').update(previous).digest('hex'), entry.hash);\n",
+        "after": "for (const [file, entry] of Object.entries(clienteMasterExtrasComposition.entries)) {\n  test(file + ': keep-both bridge rejects every removed, repeated or modified composition hunk', () => {\n    const current = readOrganizacionalSource(file, 'utf8').replace(/\\r\\n/g, '\\n');\n    const previous = clienteMasterExtrasRemainder(file, current);\n    assert.equal(createHash('sha256').update(previous).digest('hex'), entry.hash);\n"
+      },
+      {
+        "before": "\ntest('new extension guard retains its complete reviewed bytes', () => {\n  const source = fs.readFileSync(new URL('./helpers/clienteMasterExtrasRemainder.js', import.meta.url));\n  const expected = '5f579b16b02e980742defc3bbfe01238fa645826efc724e3ec898f3fc2a536e3';\n  assert.equal(createHash('sha256').update(source).digest('hex'), expected);\n",
+        "after": "\ntest('new extension guard retains its complete reviewed bytes', () => {\n  const source = readOrganizacionalSource(new URL('./helpers/clienteMasterExtrasRemainder.js', import.meta.url));\n  const expected = '5f579b16b02e980742defc3bbfe01238fa645826efc724e3ec898f3fc2a536e3';\n  assert.equal(createHash('sha256').update(source).digest('hex'), expected);\n"
+      },
+      {
+        "before": "for (const [file, entry] of Object.entries(clienteMasterExtraHunks)) {\n  test(file + ': entire previous source survives only the exact reviewed extensions', () => {\n    const current = fs.readFileSync(file, 'utf8').replace(/\\r\\n/g, '\\n');\n    const before = clienteMasterExtrasRemainder(file, current);\n    const composed = clienteMasterExtrasComposition.entries[file];\n",
+        "after": "for (const [file, entry] of Object.entries(clienteMasterExtraHunks)) {\n  test(file + ': entire previous source survives only the exact reviewed extensions', () => {\n    const current = readOrganizacionalSource(file, 'utf8').replace(/\\r\\n/g, '\\n');\n    const before = clienteMasterExtrasRemainder(file, current);\n    const composed = clienteMasterExtrasComposition.entries[file];\n"
+      },
+      {
+        "before": "for (const file of Object.keys(clienteMasterExtraHunks).filter(file => clienteContatosHunks[file])) {\n  test(file + ': actual composed source still rejects mutations through every historical entry point', () => {\n    const current = fs.readFileSync(file, 'utf8').replace(/\\r\\n/g, '\\n');\n    const [hunk] = (clienteMasterExtrasComposition.entries[file] ?? clienteMasterExtraHunks[file]).hunks[0];\n    const mutations = [current + '\\nconst unrelated = true;\\n', current.replace(hunk, ''), current + hunk,\n",
+        "after": "for (const file of Object.keys(clienteMasterExtraHunks).filter(file => clienteContatosHunks[file])) {\n  test(file + ': actual composed source still rejects mutations through every historical entry point', () => {\n    const current = readOrganizacionalSource(file, 'utf8').replace(/\\r\\n/g, '\\n');\n    const [hunk] = (clienteMasterExtrasComposition.entries[file] ?? clienteMasterExtraHunks[file]).hunks[0];\n    const mutations = [current + '\\nconst unrelated = true;\\n', current.replace(hunk, ''), current + hunk,\n"
+      }
+    ]
+  },
+  "tests/legado-importador-consolidacao.test.js": {
+    "baseline": "228a4731f372deb69ff62e9cfa21b5522c8af3f4dca6bc381e8f11415f3b619a",
+    "hunks": [
+      {
+        "before": "import { clienteConferenciaRemainder } from './helpers/consolidation81Remainder.js';\nimport assert from 'node:assert/strict';\n",
+        "after": "import { organizacionalSourceForPath } from './helpers/organizacionalRemainder.js';\nconst readOrganizacionalSource = (file, ...args) => organizacionalSourceForPath(file, fs.readFileSync(file, ...args));\nimport { clienteConferenciaRemainder } from './helpers/consolidation81Remainder.js';\nimport assert from 'node:assert/strict';\n"
+      },
+      {
+        "before": "\ntest('importer consolidation preserves every remote consumer/reconciliation byte except the reviewed address export',()=>{\n  const current=fs.readFileSync(sourcePath,'utf8').replaceAll('\\r\\n','\\n');\n  assert.equal(current.split(exportLine).length,2);\n  assert.equal(current.replace(exportLine,''),readHead(sourcePath));\n",
+        "after": "\ntest('importer consolidation preserves every remote consumer/reconciliation byte except the reviewed address export',()=>{\n  const current=readOrganizacionalSource(sourcePath,'utf8').replaceAll('\\r\\n','\\n');\n  assert.equal(current.split(exportLine).length,2);\n  assert.equal(current.replace(exportLine,''),readHead(sourcePath));\n"
+      },
+      {
+        "before": "      .map(expression=>[expression.arguments[0].text,expression.getText(file)]));\n  };\n  const before=collect(readHead(path)),after=collect(fs.readFileSync(path,'utf8'));\n  assert.equal(before.size,13);assert.equal(after.size,23);\n  for(const [name,text] of before)assert.equal(after.get(name),text,name);\n",
+        "after": "      .map(expression=>[expression.arguments[0].text,expression.getText(file)]));\n  };\n  const before=collect(readHead(path)),after=collect(readOrganizacionalSource(path,'utf8'));\n  assert.equal(before.size,13);assert.equal(after.size,23);\n  for(const [name,text] of before)assert.equal(after.get(name),text,name);\n"
+      },
+      {
+        "before": "  }\n  assert.equal(permissionCalls,0);\n  assert.equal(clienteConferenciaRemainder('server/src/api/router.ts',fs.readFileSync('server/src/api/router.ts','utf8')),readHead('server/src/api/router.ts'));\n  assert.equal(clienteConferenciaRemainder('server/src/app.ts',fs.readFileSync('server/src/app.ts','utf8')).replaceAll('\\r\\n','\\n'),readHead('server/src/app.ts'));\n  // Baseline pós-045 contatos[] jsonb (#591 decisão a). Tip migrations bump; publication base e36231b3a7e546aa9fd2529abb8d5edb61d8189c permanece (2ª ref do canal).\n  assert.equal(execFileSync('git',['diff',\"cc7c71f5e913b8f0c19d90927bb94f51ba15de89\",'--','server/migrations'],{encoding:'utf8'}),'');\n",
+        "after": "  }\n  assert.equal(permissionCalls,0);\n  assert.equal(clienteConferenciaRemainder('server/src/api/router.ts',readOrganizacionalSource('server/src/api/router.ts','utf8')),readHead('server/src/api/router.ts'));\n  assert.equal(clienteConferenciaRemainder('server/src/app.ts',readOrganizacionalSource('server/src/app.ts','utf8')).replaceAll('\\r\\n','\\n'),readHead('server/src/app.ts'));\n  // Baseline pós-045 contatos[] jsonb (#591 decisão a). Tip migrations bump; publication base e36231b3a7e546aa9fd2529abb8d5edb61d8189c permanece (2ª ref do canal).\n  assert.equal(execFileSync('git',['diff',\"cc7c71f5e913b8f0c19d90927bb94f51ba15de89\",'--','server/migrations'],{encoding:'utf8'}),'');\n"
+      }
+    ]
   }
 };
 
