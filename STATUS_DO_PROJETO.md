@@ -1,3 +1,21 @@
+## Runtime aprovado centralizado para ensaio HML (2026-11-16)
+
+5e0d11c3/CI7197SUCCESS confirmado. v27/e920 ainda nao recebidos no indice e
+incomingCasa vazio em leitura direcionada. Sem esperarCasa, gerado pelo
+empacotador canonico novo runtime5e DISTINTO, PUBLISHED_CLEAN/API=web, semdados.
+Centralizado naVPS shared-artifacts/incoming/empresa-5e0d11c3/final tar nomeado
+runtime-5e0d11c3.final.tar.gz:3973822bytes,2216arquivos/17899304bytes conferidos
+individualmente; manifesto/recibo/indice centrais atualizados. Pins/limites e
+fila UNICA de ensaio/publicacao em HANDOFF, sem outro manual/plano/candidata.
+Copia inicial parcial preservada e NAO ACEITA; usar apenas final conferido.
+Delta inclui replayFornecedor e revisaoENTREGA posteriores ao e920; nao fingir
+que kit antigo os contem. Overlay offline canApply=false, sem DDL executavel.
+HML ainda d054e2b3 confirmado porHTTPS, nao disponivel o runtime novo.
+Zero dados reais importados/ativacoes/SQL/grants/deploy; backups estaveis nao
+repetidos. Vinculos comerciais exigem crosswalk porcodigo/escopo, nao nome.
+Proximo: revisar delta/ensaio restaurado com v27,principal e schema atestados;
+nenhuma permissao de editar/restaurar concedida implicitamente ao perfilHML.
+
 ## Fechamento da assercao de rotulo da revisao (2026-11-16)
 
 b1215ab1: CI passou backend completo/PG/compose, mas frontend3012PASS/1FAIL:

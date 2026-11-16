@@ -1,3 +1,57 @@
+## Preparacao central do runtime aprovado, sem esperar Casa (2026-11-16)
+
+CI7197 SUCCESS no SHA5e0d11c3f3a8956477656cda359acf6bc895c906:
+backend/PG/frontend/compose verdes; substitui a espera de CI descrita abaixo.
+Checkout limpo/ramo codex/casa-fechamento-hml-20261114 preservado. Consulta
+direcionada11:26UTC: indice ainda received=false para v27/e920 e incomingCasa
+sem arquivos. Nao comprova ausencia global nem autoriza substituir originais.
+
+Executado empacotador EXISTENTE package-hml-runtime.mjs, fonte PUBLISHED_CLEAN,
+sem .env/dados/migrations. Novo candidato DISTINTO na fonte centralVPS:
+shared-artifacts/incoming/empresa-5e0d11c3/runtime-5e0d11c3.final.tar.gz.
+3973822bytes/SHA145c7f4b2c829f3c8d16ab0bd7484917929dc90f13ace99f913b93e3e08831ce;
+2216arquivos/17899304bytes, filesSha
+bf8024efe21e8f7e0812ee4c92b4b4a7f763ed995496ee974dd1e0832e9469f9.
+Arquivo a arquivo verificado no tar, sem extrair/executar; API/web mesmoSHA.
+verification.receipt.private.json pareado; inventory.private.json atualizado,
+indice anterior preservado. Primeira copia durante compressao era parcial:
+runtime-5e0d11c3-candidate.tar.gz NAO ACEITO, conservado e identificado no recibo.
+Usar SOMENTE final.tar.gz conferido. Nenhum conteudo privado noGitHub.
+
+Delta e920->5e explicito: revalidacao de criar no replayFornecedor(f2b1f693),
+completar ENTREGA no editor existente e revalidacao editar/restaurar apos audit
+(b1215ab1), com testes posteriores. O kit e920 NAO contem esses deltas.
+Esse novo kit e preparacao do runtime, nao novo plano de schema nem deploy.
+
+Fila UNICA atualizada para o ensaio/publicacao; Codex ativo executa:
+1. Runtime: novo5e pronto/conferido/CI7197; fechar revisao do delta contraHML.
+2. Plano: v27 original ainda falta; Casa envia somente originais/pins ao destino
+   existente quando acessivel. Nenhuma nova decisao generica do dono resolve
+   falta dos bytes; nao refazer/relabelar plano ou exigir copia naEmpresa.
+3. Schema: CLI offline atual confirma18fontes/225objetos/101emitidos/124acoes,
+   canApply=false/targetAttested=false. Falta comparar SQL EXATO na copia
+   restaurada e fechar042/043/044/045/customcontrols; sem journal integral.
+4. Principal/escopo: reatestar cluster/schema/ator/Grupo e testar role minima
+   sem BYPASSRLS; perfil visualizar nao permite editar/restaurar enderecos.
+   Nao ampliar permissao. Falta pacote granular revisado antes de decisao.
+5. Backup/reversao: provasEmpresa16/11 preservadas, nao repetidas. Na janela
+   futura, parear backup fresco/restore/ack e specs/imagens para troca API+web.
+6. Publicacao: so apos itens anteriores apresentar pacote exato/DDL eventual/
+   impacto/reversao ao proprietario no gate especifico; entao provar Auth/Grupo/
+   cadastro/locais/pedido e saude operacional. Nao ha deploy autorizado porCI.
+
+Endereco: completar ENTREGA conserva mesmoID/inatividade/CAS; ativacao e escrita
+HML continuam separadas. Vendedor20/tabela5/regiao9/condicao4 chaves do recorte
+historico ainda exigem crosswalk nativo + identidade/escopo alvo; zeros nao sao
+condicao. Nao converter essas contagens antigas em reconciliacao atual ou carga.
+Sem nova fonte/crosswalk comprovado nao associar por nome ou inferir Empresa.
+
+HML HTTPS reconsultada: API/webd054e2b3,3containersHML continuam up; operacional
+nao modificado. Disco livre29315706880bytes. ZeroSQL/carga/ativacao/grant/deploy.
+Dados completos/parciais/rejeitados NAO recontados nesta preparacao de runtime.
+Automacao nao reativada. Proxima acao: revisar delta do novo kit e concluir
+ensaio somente com plano/identidade/permissoes atestados, sem parar codigo.
+
 ## CI da revisao: rotulo dinamico (2026-11-16)
 
 CI b1215ab1 backend/PG/compose PASS; frontend3012PASS/1FAIL por AST de rotulo
