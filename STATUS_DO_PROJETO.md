@@ -1,5 +1,11 @@
 ## Codigo de Grupo/Empresa e vinculos: implementacao em validacao (2026-11-16)
 
+CI7221ba90:backend/composicaoPASS,frontend2asserts markupIDlegado falharam.
+Reconciliados comCodigoRegistroField compartilhado+entityId,semretirarRBAC/
+fiscal;Reactmontado confereID eCodigo separados.34focadosPASS. SuitePGnativa
+adicionada ao runnerobrigatorio para concorrencia/replay/rollback/reversa;
+CIproprio obrigatorio. Kitba90 preparado mas NAOaplicadoHML. GateDDLpendente.
+
 MesmoPR594/branch,semnovoambiente. Reusa sequenciacanonica,servicoOrg e
 CodigoRegistroField. Reserva deGrupo highwaterglobal/lock,Empresa porGrupo,
 codigos imutaveis,IDpreservado,replay,CAS,auditoria atomica/reversa restrita.

@@ -423,8 +423,8 @@ test('EmpresaForm: ID visível, deep-merge, Organizacional, certificado granular
   assert.match(source, /isLoadingRecord/);
   assert.match(source, /Aguarde o carregamento completo/);
   assert.match(source, /id: formData\.id \|\| dadosIniciais\?\.id/);
-  assert.match(source, /ID do cadastro \(somente leitura\)/);
-  assert.match(source, /<code className="break-all select-text">\{dadosIniciais\.id\}<\/code>/);
+  assert.match(source, /import CadastroCodigoRegistroField/);
+  assert.match(source, /<CadastroCodigoRegistroField value=\{dadosIniciais\?\.codigo\} hasId=\{Boolean\(dadosIniciais\?\.id\)\} entityId=\{dadosIniciais\?\.id\}/);
   assert.match(source, /hasCadastroEntityPermission\("Empresa"/);
   assert.match(source, /Cadastros\.Organizacional\.editar/);
   assert.match(source, /Cadastros\.Empresa\.Certificado\.editar/);

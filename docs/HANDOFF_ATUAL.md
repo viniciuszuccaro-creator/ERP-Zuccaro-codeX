@@ -1,5 +1,14 @@
 ## Codigo organizacional e empresas no formulario: pacote em validacao (2026-11-16)
 
+ba90e041/CI7221: backend/composicaoPASS;frontend falhou SOMENTE2assertsAST
+do markupIDantigo deEmpresaForm. Componente compartilhado continuaexibindo
+ID distinto docodigo;asserts atualizadas para bindingCodigo+entityId eReact
+montado confereambos. Nao removerassertsRBAC/contexto/fiscal.34focadosPASS.
+Nova suite obrigatoria no runnerPostgreSQLisolado verifica reserva concorrente,
+replay3x semauditoriasextras,rollbackauditoria e reversa recusada aposedicaomanual.
+Nao executada localmente porfaltaURLisolada;semSkip,CIdeveexecutar eprovar.
+Kitba90 central privado preparado,NAO promoverCIvermelha;usar novoSHA/kit.
+
 Pedido atual: codigo sequencial e exibicao dos vinculos,semoperacional ou
 ampliarpermissoes. WIP proprio sobre a7bbf6c1,mesmabranchPR594;Cursor semcreditos,
 nenhum outro escritor observado. Codespace adiado por decisao do dono:nao

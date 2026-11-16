@@ -36,6 +36,7 @@ async function run(){
  check('both_existing_links_visible',host.textContent.includes('Synthetic A')&&host.textContent.includes('Synthetic B'));
  check('checked_links_readonly',Array.from(host.querySelectorAll('input[type=checkbox]')).filter(i=>i.checked&&i.disabled).length===2);
  check('code_not_technical_id',host.querySelector('[data-action="codigo-registro-grupo-empresarial"]').value==='001');
+ check('technical_id_preserved_separately',host.querySelector('[data-action="id-tecnico-grupo-empresarial"]').value==='g');
  fail=true;await act(async()=>host.querySelector('form').requestSubmit());await pause();
  check('rejection_preserves_form',calls===1&&Array.from(host.querySelectorAll('input')).some(i=>i.value==='Synthetic group'));
  check('payload_keeps_ids_and_links',payload.id==='g'&&payload.empresas_ids.join(',')==='a,b');
