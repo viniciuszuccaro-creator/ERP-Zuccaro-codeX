@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { organizacionalRemainder } from './organizacionalRemainder.js';
 import crypto from 'node:crypto';
 import { clienteLocaisReviewRemainder } from './clienteLocaisReviewRemainder.js';
 import { clienteLocaisPurposeRemainder } from './clienteLocaisPurposeRemainder.js';
@@ -72,6 +73,7 @@ export function clienteConferenciaRemainder(file,text,verify=true){
  return clienteConferenciaHistoricalRemainder(file,clienteSelectedReferenceRemainder(file,text,verify),verify);
 }
 export function clienteSelectedReferenceRemainder(file,text,verify=true){
+ if(['server/src/app.ts','server/src/api/router.ts','src/api/httpApiClient.js','tests/cursor-identidade-consolidacao.test.js'].includes(file)) text=organizacionalRemainder(file,text);
  text=clienteLocaisReviewRemainder(file,clienteLocaisPurposeRemainder(file,text));
  const source=fornecedorHttpRemainder(file,text).replace(/\r\n/g,'\n'), entry=clienteSelectedReferenceHunks[file];
  if(entry && crypto.createHash('sha256').update(source).digest('hex')===clienteContatosHunks[file]?.hash){

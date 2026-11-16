@@ -197,6 +197,7 @@ function viewerOwner(record, overrides = {}) {
   const writes = [], audits = [], closed = [], alerts = [];
   const scope = { groupId: 'group-a', empresaId: 'company-a' };
   const bindings = {
+    isHttpBackendMode: false,
     ENTITY: 'Produto', editItem: record, canDeleteCadastro: false, canEditCadastro: true,
     canCreateCadastro: true, isLoadingEdit: false, editLoadBlocked: false,
     formScopeRef: { current: scope }, scopeKey: scope, activeScopeRef: { current: scope },

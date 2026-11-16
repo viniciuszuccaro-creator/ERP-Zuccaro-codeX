@@ -1,5 +1,7 @@
 import useCadastroRecordState from './useCadastroRecordState';
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useRef } from "react";
+import { isHttpBackendMode } from '@/api/base44Client';
+import { hasCadastroEntityPermission } from './cadastroEditLoadPolicy';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -20,7 +22,7 @@ const toNumber = (value, fallback = 0) => Number.isFinite(Number(value)) ? Numbe
 /**
  * V21.1.2 - WINDOW MODE READY
  */
-export default function GrupoEmpresarialForm({ grupo, item, data, initialData, defaultValues, onSubmit, isSubmitting, windowMode = false }) {
+export default function GrupoEmpresarialForm({ grupo, item, data, initialData, defaultValues, onSubmit, isSubmitting, windowMode = false, loadIncomplete = false, isLoadingRecord = false }) {
   const normalize = (registro) => {
     if (!registro) return null;
     return {
@@ -31,14 +33,16 @@ export default function GrupoEmpresarialForm({ grupo, item, data, initialData, d
   };
 
   const dadosIniciais = normalize(item || data || initialData || defaultValues || grupo);
-  const { canCreate, canEdit, canDelete } = usePermissions();
+  const { canCreate, canEdit, canDelete, hasPermission, isLoading: permissionsLoading } = usePermissions();
   const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || dadosIniciais?.id || null;
   const contextoValido = Boolean(groupId || dadosIniciais?.id);
-  const podeCriar = canCreate("Cadastros", "GrupoEmpresarial") || canCreate("Sistema", "Grupos") || canCreate("Cadastros", null);
-  const podeEditar = canEdit("Cadastros", "GrupoEmpresarial") || canEdit("Sistema", "Grupos") || canEdit("Cadastros", null);
-  const podeExcluir = canDelete("Cadastros", "GrupoEmpresarial") || canDelete("Sistema", "Grupos") || canDelete("Cadastros", null);
-  const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
+  const checkers = { canCreate, canEdit, canDelete, hasPermission };
+  const podeCriar = !permissionsLoading && !isHttpBackendMode && hasCadastroEntityPermission('GrupoEmpresarial', 'criar', checkers);
+  const podeEditar = !permissionsLoading && hasCadastroEntityPermission('GrupoEmpresarial', 'editar', checkers);
+  const podeExcluir = !isHttpBackendMode && hasCadastroEntityPermission('GrupoEmpresarial', 'excluir', checkers);
+  const podeSalvar = !loadIncomplete && !isLoadingRecord && (dadosIniciais?.id ? podeEditar : podeCriar);
+  const busy = useRef(false);
 
   const [formData, setFormData] = useCadastroRecordState(dadosIniciais || {
     nome: "",
@@ -82,8 +86,9 @@ export default function GrupoEmpresarialForm({ grupo, item, data, initialData, d
     };
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    if (busy.current) return;
     if (!podeSalvar) {
       alert(dadosIniciais?.id ? "Sem permissao para editar grupo empresarial." : "Sem permissao para criar grupo empresarial.");
       return;
@@ -98,7 +103,10 @@ export default function GrupoEmpresarialForm({ grupo, item, data, initialData, d
       alert("Preencha o nome do grupo");
       return;
     }
-    onSubmit(payload);
+    busy.current = true;
+    try { await onSubmit(payload); }
+    catch (error) { console.error('Falha ao salvar grupo', error); }
+    finally { busy.current = false; }
   };
 
   const handleExcluir = () => {
@@ -115,6 +123,7 @@ export default function GrupoEmpresarialForm({ grupo, item, data, initialData, d
   };
 
   const handleAlternarStatus = () => {
+    if (isHttpBackendMode) return;
     if (!podeEditar) {
       alert("Sem permissao para alterar status do grupo empresarial.");
       return;
@@ -124,6 +133,7 @@ export default function GrupoEmpresarialForm({ grupo, item, data, initialData, d
   };
 
   const toggleEmpresa = (empresaId) => {
+    if (isHttpBackendMode) return;
     if (!podeSalvar) return;
     const ids = formData.empresas_ids || [];
     if (ids.includes(empresaId)) {
@@ -143,23 +153,23 @@ export default function GrupoEmpresarialForm({ grupo, item, data, initialData, d
       />
       <div>
         <Label>Nome do Grupo *</Label>
-        <Input value={formData.nome} onChange={(e) => setFormData({ ...formData, nome: e.target.value })} placeholder="Ex: Grupo CPA" disabled={!podeSalvar} data-permission="Cadastros.GrupoEmpresarial.editar" data-action="editar-nome-grupo" data-sensitive />
+        <Input value={formData.nome} onChange={(e) => setFormData({ ...formData, nome: e.target.value })} placeholder="Ex: Grupo CPA" disabled={!podeSalvar} data-permission="Cadastros.Organizacional.editar" data-action="editar-nome-grupo" data-sensitive />
       </div>
 
       <div>
         <Label>Descricao</Label>
-        <Textarea value={formData.descricao || ""} onChange={(e) => setFormData({ ...formData, descricao: e.target.value })} placeholder="Descricao do grupo empresarial..." rows={2} disabled={!podeSalvar} data-permission="Cadastros.GrupoEmpresarial.editar" data-action="editar-descricao-grupo" data-sensitive />
+        <Textarea value={formData.descricao || ""} onChange={(e) => setFormData({ ...formData, descricao: e.target.value })} placeholder="Descricao do grupo empresarial..." rows={2} disabled={!podeSalvar} data-permission="Cadastros.Organizacional.editar" data-action="editar-descricao-grupo" data-sensitive />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label>CNPJ do Grupo</Label>
-          <Input value={formData.cnpj || ""} onChange={(e) => setFormData({ ...formData, cnpj: e.target.value })} placeholder="00.000.000/0001-00" disabled={!podeSalvar} data-permission="Cadastros.GrupoEmpresarial.editar" data-action="editar-cnpj-grupo" data-sensitive />
+          <Input value={formData.cnpj || ""} onChange={(e) => setFormData({ ...formData, cnpj: e.target.value })} placeholder="00.000.000/0001-00" disabled={!podeSalvar} data-permission="Cadastros.Organizacional.editar" data-action="editar-cnpj-grupo" data-sensitive />
         </div>
 
         <div>
           <Label>Inscricao Estadual</Label>
-          <Input value={formData.inscricao_estadual} onChange={(e) => setFormData({ ...formData, inscricao_estadual: e.target.value })} disabled={!podeSalvar} data-permission="Cadastros.GrupoEmpresarial.editar" data-action="editar-inscricao-grupo" data-sensitive />
+          <Input value={formData.inscricao_estadual} onChange={(e) => setFormData({ ...formData, inscricao_estadual: e.target.value })} disabled={!podeSalvar || isHttpBackendMode} data-permission="Cadastros.Organizacional.editar" data-action="editar-inscricao-grupo" data-sensitive />
         </div>
       </div>
 
@@ -170,7 +180,7 @@ export default function GrupoEmpresarialForm({ grupo, item, data, initialData, d
             {empresasDoGrupo.map((empresa) => (
               <div key={empresa.id} className="flex items-center justify-between p-2 hover:bg-slate-50 rounded">
                 <div className="flex items-center gap-2">
-                  <input type="checkbox" checked={(formData.empresas_ids || []).includes(empresa.id)} onChange={() => toggleEmpresa(empresa.id)} disabled={!podeSalvar} className="w-4 h-4" data-permission="Cadastros.GrupoEmpresarial.vincularEmpresa" data-action="vincular-empresa-grupo" data-sensitive />
+                  <input type="checkbox" checked={(formData.empresas_ids || []).includes(empresa.id)} onChange={() => toggleEmpresa(empresa.id)} disabled={!podeSalvar || isHttpBackendMode} className="w-4 h-4" data-permission="Cadastros.GrupoEmpresarial.vincularEmpresa" data-action="vincular-empresa-grupo" data-sensitive />
                   <div>
                     <p className="text-sm font-medium">{empresa.razao_social}</p>
                     <p className="text-xs text-slate-500">{empresa.cnpj}</p>
@@ -198,18 +208,18 @@ export default function GrupoEmpresarialForm({ grupo, item, data, initialData, d
           <Label>Governanca Consolidada</Label>
           <p className="text-xs text-slate-500">Sincroniza Plano de Contas entre empresas</p>
         </div>
-        <Switch checked={formData.governanca_consolidada} onCheckedChange={(v) => setFormData({ ...formData, governanca_consolidada: v })} disabled={!podeSalvar} data-permission="Cadastros.GrupoEmpresarial.governanca" data-action="alternar-governanca-grupo" data-sensitive />
+        <Switch checked={formData.governanca_consolidada} onCheckedChange={(v) => setFormData({ ...formData, governanca_consolidada: v })} disabled={!podeSalvar || isHttpBackendMode} data-permission="Cadastros.GrupoEmpresarial.governanca" data-action="alternar-governanca-grupo" data-sensitive />
       </div>
 
-      <Badge className="bg-blue-100 text-blue-700">
+      {!isHttpBackendMode && <Badge className="bg-blue-100 text-blue-700">
         <Network className="w-3 h-3 mr-1" />
         Score Integracao ERP: {formData.score_integracao_erp}% (calculado por IA)
-      </Badge>
+      </Badge>}
 
       <div className="flex justify-end gap-3 pt-4 border-t">
         {dadosIniciais && (
           <>
-            <Button type="button" variant="outline" onClick={handleAlternarStatus} disabled={!podeEditar} data-permission="Cadastros.GrupoEmpresarial.alterarStatus" data-sensitive className={formData.status === "Ativo" ? "border-orange-300 text-orange-700" : "border-green-300 text-green-700"}>
+            <Button type="button" variant="outline" onClick={handleAlternarStatus} disabled={!podeEditar || isHttpBackendMode} data-permission="Cadastros.GrupoEmpresarial.alterarStatus" data-sensitive className={formData.status === "Ativo" ? "border-orange-300 text-orange-700" : "border-green-300 text-green-700"}>
               {formData.status === "Ativo" ? (
                 <><PowerOff className="w-4 h-4 mr-2" />Inativar</>
               ) : (
@@ -221,7 +231,7 @@ export default function GrupoEmpresarialForm({ grupo, item, data, initialData, d
             </Button>
           </>
         )}
-        <Button type="submit" disabled={isSubmitting || !podeSalvar} data-permission="Cadastros.GrupoEmpresarial.salvar" data-action="salvar-grupo-empresarial" data-sensitive>
+        <Button type="submit" disabled={isSubmitting || !podeSalvar} data-permission="Cadastros.Organizacional.editar" data-action="salvar-grupo-empresarial" data-sensitive>
           {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
           {dadosIniciais ? "Atualizar Grupo" : "Criar Grupo"}
         </Button>

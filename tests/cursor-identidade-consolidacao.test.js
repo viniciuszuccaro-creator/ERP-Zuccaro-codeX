@@ -11,6 +11,7 @@ import { MASTER_CODE_SPECS } from '../src/api/localCadastroMasterPolicy.js';
 import { clienteNavigationRemainder } from './helpers/clienteNavigationRemainder.js';
 import { perfilPolicyRemainder, perfilViewerRemainder } from './helpers/perfilGateRemainder.js';
 import { scopeListCacheRemainder } from './helpers/scopeListCacheRemainder.js';
+import { organizacionalRemainder } from './helpers/organizacionalRemainder.js';
 
 // Coorte ID-only restante (golden e36231b3). Operador/Condicao/MoedaIndice/ContatoB2B
 // graduaram para useCadastroReopenOnIdentity — cobertos no teste seguinte.
@@ -22,7 +23,10 @@ const graduatedReopen = {
   MoedaIndice: 'moedaBoundId',
   ContatoB2B: 'contatoBoundId',
 };
-const read = path => readFileSync(path, 'utf8').replace(/\r\n/g, '\n');
+const read = path => {
+  const source = readFileSync(path, 'utf8').replace(/\r\n/g, '\n');
+  return path.endsWith('/GrupoEmpresarialForm.jsx') ? organizacionalRemainder(path, source) : source;
+};
 const head = path => execFileSync('git', ['show', `e36231b3a7e546aa9fd2529abb8d5edb61d8189c:${path}`], { encoding: 'utf8' }).replace(/\r\n/g, '\n');
 const tree = (path, source) => ts.createSourceFile(path, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.JSX);
 const emit = source => ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ESNext, jsx: ts.JsxEmit.React, module: ts.ModuleKind.ESNext, removeComments: true } }).outputText;

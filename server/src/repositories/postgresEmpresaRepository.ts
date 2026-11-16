@@ -1,4 +1,4 @@
-import type { DbClient } from '../db/client.js';
+import type { DbClient, DbQueryExecutor } from '../db/client.js';
 import type { TenantScope } from '../audit/types.js';
 import type { Empresa, EmpresaCreateInput, EmpresaRepository } from './empresaTypes.js';
 
@@ -18,17 +18,17 @@ function mapRow(row: Record<string, unknown>): Empresa {
 export class PostgresEmpresaRepository implements EmpresaRepository {
   constructor(private readonly db: DbClient) {}
 
-  async list(scope: TenantScope): Promise<Empresa[]> {
-    const result = await this.db.query(
+  async list(scope: TenantScope, executor: DbQueryExecutor = this.db): Promise<Empresa[]> {
+    const result = await executor.query(
       `SELECT * FROM empresas WHERE group_id = $1 ORDER BY razao_social ASC`,
       [scope.groupId],
     );
     return result.rows.map((row) => mapRow(row as Record<string, unknown>));
   }
 
-  async getById(scope: TenantScope, id: string): Promise<Empresa | null> {
-    const result = await this.db.query(
-      `SELECT * FROM empresas WHERE group_id = $1 AND id = $2`,
+  async getById(scope: TenantScope, id: string, executor: DbQueryExecutor = this.db, lock = false): Promise<Empresa | null> {
+    const result = await executor.query(
+      `SELECT * FROM empresas WHERE group_id = $1 AND id = $2${lock ? ' FOR UPDATE' : ''}`,
       [scope.groupId, id],
     );
     const row = result.rows[0];

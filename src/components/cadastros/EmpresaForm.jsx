@@ -1,5 +1,7 @@
 ﻿import React, { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
+import { useRef } from 'react';
+import { isHttpBackendMode } from '@/api/base44Client';
 import useCadastroRecordState from './useCadastroRecordState';
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -84,8 +86,9 @@ export default function EmpresaForm({
     ? "Cadastros.Organizacional.editar"
     : "Cadastros.Organizacional.criar";
   const permissaoCertificado = "Cadastros.Empresa.Certificado.editar";
-  const podeEditarCertificado = podeSalvar && hasPermissionKey(permissaoCertificado);
+  const podeEditarCertificado = !isHttpBackendMode && podeSalvar && hasPermissionKey(permissaoCertificado);
   const saveBlocked = Boolean(isLoadingRecord || loadIncomplete);
+  const persistBusy = useRef(false);
   const [formData, setFormData] = useCadastroRecordState(mergeEmpresaFormData(dadosIniciais), JSON.stringify([
     dadosIniciais?.id ?? null, dadosIniciais?.updated_date ?? null,
     dadosIniciais?.razao_social, dadosIniciais?.cnpj, dadosIniciais?.nome_fantasia,
@@ -173,6 +176,7 @@ export default function EmpresaForm({
   };
 
   const handleSubmit = async () => {
+    if (persistBusy.current) return;
     if (saveBlocked) {
       toast.error("Aguarde o carregamento completo do registro antes de salvar.");
       return;
@@ -195,7 +199,10 @@ export default function EmpresaForm({
       toast.error("Razao Social e CNPJ sao obrigatorios.");
       return;
     }
-    onSubmit(payload);
+    persistBusy.current = true;
+    try { await onSubmit(payload); }
+    catch (error) { toast.error(error.message || 'Falha ao salvar empresa.'); }
+    finally { persistBusy.current = false; }
   };
 
   const formContent = (
@@ -236,13 +243,13 @@ export default function EmpresaForm({
 
         <div>
           <Label>Inscricao Estadual</Label>
-          <Input value={formData.inscricao_estadual} onChange={(e) => setFormData({ ...formData, inscricao_estadual: e.target.value })} disabled={!podeSalvar || saveBlocked} data-permission={permissaoFormulario} data-action="editar-inscricao-estadual-empresa" data-sensitive />
+          <Input value={formData.inscricao_estadual} onChange={(e) => setFormData({ ...formData, inscricao_estadual: e.target.value })} disabled={!podeSalvar || saveBlocked || isHttpBackendMode} data-permission={permissaoFormulario} data-action="editar-inscricao-estadual-empresa" data-sensitive />
         </div>
       </div>
 
       <div>
         <Label>Regime Tributario</Label>
-        <Select value={formData.regime_tributario} onValueChange={(v) => setFormData({ ...formData, regime_tributario: v })} disabled={!podeSalvar || saveBlocked}>
+        <Select value={formData.regime_tributario} onValueChange={(v) => setFormData({ ...formData, regime_tributario: v })} disabled={!podeSalvar || saveBlocked || isHttpBackendMode}>
           <SelectTrigger data-permission={permissaoFormulario} data-action="selecionar-regime-tributario-empresa" data-sensitive>
             <SelectValue />
           </SelectTrigger>

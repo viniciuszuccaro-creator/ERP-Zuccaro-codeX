@@ -71,7 +71,7 @@ test('Actual V24 gate, toolbar key and rejected mutation audit use the same prof
   }
   const cadastroPerm = evaluate(vars.get('cadastroPerm').getText(ast), { ENTITY: 'PerfilAcesso', getCadastroEntityPermissionKey });
   for (const action of ['criar', 'editar', 'excluir']) {
-    const events = [], env = { ENTITY: 'PerfilAcesso', formScopeRef: { current: 'scope' }, scopeKey: 'scope', activeScopeRef: { current: 'scope' },
+    const events = [], env = { isHttpBackendMode: false, ENTITY: 'PerfilAcesso', formScopeRef: { current: 'scope' }, scopeKey: 'scope', activeScopeRef: { current: 'scope' },
       assertCadastroFormScopeCurrent, canCreateCadastro: false, canEditCadastro: false, canDeleteCadastro: false,
       editItem: action === 'editar' ? { id: 'synthetic-profile' } : null, cadastroPerm,
       auditCadastroEvent: async (...args) => events.push(args) };

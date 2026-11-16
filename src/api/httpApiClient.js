@@ -6,6 +6,7 @@ import { createBankStatementApi } from './bankStatementHttp.js';
 import { createFinancialMovementApi } from './financialMovementHttp.js';
 import { MAX_BANK_STATEMENT_BYTES } from './bankStatementContract.js';
 import { createClienteLocalBatchHttpApi } from './clienteLocalBatchHttp.js';
+import { createOrganizacionalHttp } from './organizacionalHttp.js';
 
 /**
  * Cliente HTTP compativel com a superficie parcial de base44.entities.*
@@ -1041,6 +1042,7 @@ SeparacaoConferencia: {
   };
   /** @type {Record<string, ReturnType<typeof createCrudEntity>>} */
   const entities = {};
+  for (const name of ['GrupoEmpresarial', 'Empresa']) entities[name] = createOrganizacionalHttp(name, request);
   for (const name of ["Entrega","Romaneio","SeparacaoConferencia"]) entities[name]=entityRoutes[name];
   for (const name of HTTP_PILOT_ENTITIES) {
     entities[name] = entityRoutes[name] || entityRoutes.Marca;

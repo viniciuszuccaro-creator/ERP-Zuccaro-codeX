@@ -13,6 +13,7 @@ import ts from 'typescript';
 import * as policy from '../src/components/cadastros/cadastroReopenPolicy.js';
 import { assertCadastroFormScopeCurrent } from '../src/components/lib/contextoMultiempresaPolicy.js';
 import { buildCadastroEditSavePayload } from '../src/components/cadastros/cadastroEditLoadPolicy.js';
+import { buildOrganizacionalPatch } from '../src/api/organizacionalHttp.js';
 
 function compile(source) {
   return ts.transpileModule(source, {
@@ -239,6 +240,7 @@ function viewerPersistSubmit(record, overrides = {}) {
     const alerts = [];
     const scope = { groupId: 'grp-1', empresaId: 'emp-1' };
     const bindings = {
+      isHttpBackendMode: false,
       ENTITY: 'OperadorCaixa',
       editItem: record,
       canDeleteCadastro: false,
@@ -271,6 +273,38 @@ function viewerPersistSubmit(record, overrides = {}) {
     return { save, writes, closed, audits, alerts };
   })();
 }
+
+test('V24 organizational writer: one PATCH, stale completion ignored and rejection keeps draft', async () => {
+  for (const change of ['none', 'session', 'roundtrip', 'reject']) {
+    const before = { id: 'emp-1', group_id: 'grp-1', razao_social: 'Synthetic', cnpj: '11222333000181',
+      nome_fantasia: 'Before', version: 'a'.repeat(64), supported_fields: ['razao_social', 'nome_fantasia', 'cnpj'] };
+    let active = { token: 'synthetic', actorId: 'actor', groupId: 'grp-1', empresaId: 'emp-1', scopeType: 'empresa' };
+    const listeners = new Set(), calls = []; let resolve, reject;
+    const harness = await viewerPersistSubmit(before, {
+      ENTITY: 'Empresa', isHttpBackendMode: true, isTenantMasterEntity: () => true,
+      organizacionalBusy: { current: false }, editRequestRef: { current: 1 },
+      buildOrganizacionalPatch, readErpHttpSession: () => active, HTTP_CONTEXT_CHANGED: 'context',
+      window: { addEventListener: (_, f) => listeners.add(f), removeEventListener: (_, f) => listeners.delete(f) },
+      base44: { entities: { Empresa: { update: (id, patch) => {
+        calls.push({ id, patch }); return new Promise((a, b) => { resolve = a; reject = b; });
+      } } } },
+    });
+    const pending = harness.save({ ...before, nome_fantasia: 'After' });
+    await harness.save({ ...before, nome_fantasia: 'Double' });
+    assert.equal(calls.length, 1); assert.equal(calls[0].patch.nome_fantasia, 'After');
+    if (change === 'session') active = { ...active, token: 'renewed' };
+    if (change === 'roundtrip') listeners.forEach(f => f());
+    if (change === 'reject') {
+      reject(new Error('Backend rejected')); await assert.rejects(pending, /rejected/);
+      assert.equal(harness.alerts.length, 1);
+    } else { resolve(before); await pending; }
+    assert.equal(harness.closed.length, change === 'none' ? 1 : 0);
+    assert.equal(harness.writes.length, 0, 'no second local persistence');
+    assert.equal(harness.audits.length, 0, 'backend owns transactional audit');
+    assert.equal(listeners.size, 0);
+    assert.equal(before.nome_fantasia, 'Before');
+  }
+});
 
 test('OperadorCaixaForm declara self-managed minify-safe (V24 não usa handlePersistSubmit)', async () => {
   const formSource = await readFile(new URL('../src/components/cadastros/OperadorCaixaForm.jsx', import.meta.url), 'utf8');

@@ -82,6 +82,7 @@ export function isHttpClienteListEnabled(env = import.meta.env) {
 
 export function resolveHttpPilotEntities(env = import.meta.env) {
   const list = [...HTTP_PILOT_ENTITIES];
+  list.push('GrupoEmpresarial', 'Empresa');
   if (isHttpClienteListEnabled(env) && !list.includes('Cliente')) list.push('Cliente');
   void env?.VITE_ERP_HTTP_PRODUTO; // opt-in do formulario; nao troca fonte dos grids
   if (isHttpExpedicaoEnabled(env)) list.push(...HTTP_EXPEDICAO_ENTITIES);

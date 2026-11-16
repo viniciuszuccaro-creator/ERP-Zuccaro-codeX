@@ -1,4 +1,38 @@
-## HML atualizada para troca Grupo/Empresa; aceite da sessao pendente (2026-11-16)
+## Edicao Grupo/Empresa canonica em validacao (2026-11-16)
+
+Dono confirmou troca CPA/3Z embe67: aceite seletor ENCERRADO. Novo escopo:
+editar mestres existentes viaAPI,sem espelho local como persistencia. Causa:
+GrupoForm usava chaves antigas; backend tinha repositorio Empresa so leitura/
+criacao,sem endpointedicao; HMLSELECT-only emgroups/empresas. Perfil ja possui
+Cadastros.organizacional.editar,roleuser permanece. Nao e falta de admin.
+
+Reutilizados formulários, V24 dono da persistencia, HttpApiClient, repositorio
+Empresa, TenantGuard/RbacGuard/PostgresAuditRepository e transacao canonica.
+Servico organizacional/rotas auxiliares novos POR NAO EXISTIR equivalente:
+leitura exata, campos estritos existentes, CAS porfingerprint, rowlock, audit
+atomica,negativecross-group/company,confirmacao de permissao no fim. Campos
+ausentes nao apagam valores; status/vinculos/fiscal/certificado nao liberados.
+GrupoForm alinha Organizacional; HTTP grupo exige contexto Grupo na escrita.
+Sem nova tela, entidade, copia de dados ou armazenamento paralelo.
+
+Gate SQLHML especifico autorizado pelo dono nesta conversa: UPDATE somente
+colunas cadastrais existentes eupdated_at;duas policies limitadas aoCPA/duas
+empresas. Sem IDs/status/perfil/novo role/operacional. Gerador no programa
+existente hml-owner-permissions exige identidade fisica/binding; aplicacao
+ainda condicionada aCI/revisao/backup/ensaio/preflight/reversaoCAS.
+
+121 testes frontend focados +6persistencia PGlite PASS; dois contratos novos
+do adaptador/gerador PASS. Prova callbackreal extraidoV24,NAO browsermontado.
+Audit/lint/typecheck/build root/server PASS (lint2avisosanteriores). Suite
+completa Ubuntu pela excecao draft ja autorizada de WindowsPOSIX. Pins antigos
+conservados; peels exatos registram somente o delta autorizado, com testes
+semanticos separados. Nenhuma permissaoSQL aplicada ou HMLatualizada ainda.
+
+Proximo: CI SHAexato, ensaio/reviewSQLHML, backupfresh/restauracao/externo,
+aplicar somente grant/policy aprovado; promover API/web compativeis e provar
+save/reopen/reversao. BrowserAuth ainda exige canal suportado/aceite dono.
+
+## HML atualizada para troca Grupo/Empresa; aceite confirmado (2026-11-16)
 
 be67c103caec62a9c2ac53c1ef43e988c384afcd/CI7212SUCCESS publicado e aplicado
 APENAS API/webHML em17:52UTC/14:52Brasilia, apos autorizacao especifica do dono.

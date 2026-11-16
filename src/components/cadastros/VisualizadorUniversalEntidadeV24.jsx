@@ -6,6 +6,8 @@
  * - Erros mantêm cache visível com banner discreto
  */
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { buildOrganizacionalPatch } from '@/api/organizacionalHttp';
+import { readErpHttpSession, HTTP_CONTEXT_CHANGED } from '@/api/erpHttpSession';
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   base44,
@@ -381,6 +383,7 @@ export default function VisualizadorUniversalEntidadeV24({
   const editRequestRef = useRef(0);
   const scopeKey = ENTITY + ":" + (groupId || "") + ":" + (empresaId || "");
   const formScopeRef = useRef(scopeKey);
+  const organizacionalBusy = useRef(false);
   const activeScopeRef = useRef(scopeKey);
   const previousScopeRef = useRef(scopeKey);
   activeScopeRef.current = scopeKey;
@@ -641,6 +644,40 @@ export default function VisualizadorUniversalEntidadeV24({
         motivo: "escopo_alterado",
       });
       throw error;
+    }
+    if (isHttpBackendMode && isTenantMasterEntity(ENTITY)) {
+      if (organizacionalBusy.current) return;
+      if (!editItem?.id || isLoadingEdit || editLoadBlocked || !canEditCadastro || formData._action) {
+        throw new Error('Edicao organizacional indisponivel para este registro/acao.');
+      }
+      const opened = readErpHttpSession();
+      const generation = editRequestRef.current;
+      let changed = false;
+      const invalidate = () => { changed = true; };
+      const current = () => {
+        const active = readErpHttpSession();
+        return !changed && generation === editRequestRef.current && active && opened
+          && ['token', 'actorId', 'groupId', 'empresaId', 'scopeType'].every(k => active[k] === opened[k]);
+      };
+      if (!opened || opened.groupId !== groupId || (opened.empresaId || null) !== (empresaId || null)) throw new Error('Sessao/contexto alterado. Reabra o cadastro.');
+      organizacionalBusy.current = true;
+      window.addEventListener(HTTP_CONTEXT_CHANGED, invalidate);
+      setIsSaving(true);
+      try {
+        const payload = buildOrganizacionalPatch(ENTITY, editItem, formData);
+        if (!current()) throw new Error('Contexto alterado.');
+        await base44.entities[ENTITY].update(editItem.id, payload);
+        // Backend owns the transaction and audit. Never stamp a tenant-master company locally.
+        if (current()) handleCloseForm(true);
+      } catch (error) {
+        if (current()) alert('Erro ao salvar: ' + error.message);
+        throw error;
+      } finally {
+        window.removeEventListener(HTTP_CONTEXT_CHANGED, invalidate);
+        organizacionalBusy.current = false;
+        if (current()) setIsSaving(false);
+      }
+      return;
     }
     if (formData._action === "delete") {
       if (!canDeleteCadastro) {

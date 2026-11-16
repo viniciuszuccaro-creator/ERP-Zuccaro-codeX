@@ -9,6 +9,46 @@ const digest = value => createHash('sha256').update(JSON.stringify(value)).diges
 const uuid = value => typeof value === 'string' && /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(value);
 const literal = value => "'" + String(value).replaceAll("'", "''") + "'";
 const json = value => literal(JSON.stringify(value)) + '::jsonb';
+
+/** Narrow SQL capability for the existing organizational editor; never runs SQL itself. */
+export function prepareHmlOrganizacionalSqlPermissions(expected, empresaIds) {
+  assert.ok(/^hml[a-z0-9_]+$/.test(expected.database) && /^hml[a-z0-9_]+$/.test(expected.schema));
+  assert.ok(/^[a-z][a-z0-9_]+$/.test(expected.role) && /^\d+$/.test(expected.schemaOid)
+    && /^\d+$/.test(expected.clusterIdentifier));
+  for (const k of ['groupId', 'profileId', 'authUserId']) assert.ok(uuid(expected[k]));
+  assert.ok(Array.isArray(empresaIds) && empresaIds.length === 2 && new Set(empresaIds).size === 2 && empresaIds.every(uuid));
+  const schema = `"${expected.schema}"`, role = `"${expected.role}"`;
+  const group = literal(expected.groupId) + '::uuid';
+  const companies = empresaIds.map(id => literal(id) + '::uuid').join(',');
+  const groupContext = `current_setting('app.group_id',true)=${literal(expected.groupId)}`;
+  const predicate = {
+    groups: `id=${group} AND ${groupContext} AND coalesce(current_setting('app.empresa_id',true),'')=''`,
+    empresas: `group_id=${group} AND id IN (${companies}) AND ${groupContext}
+      AND (coalesce(current_setting('app.empresa_id',true),'')='' OR id::text=current_setting('app.empresa_id',true))`,
+  };
+  const columns = { groups: ['nome_do_grupo', 'razao_social_grupo', 'cnpj_grupo', 'observacoes', 'updated_at'],
+    empresas: ['razao_social', 'nome_fantasia', 'cnpj', 'updated_at'] };
+  const guard = `DO $hml_org$
+BEGIN
+ IF current_database()<>${literal(expected.database)}
+  OR (SELECT oid::text FROM pg_namespace WHERE nspname=${literal(expected.schema)}) IS DISTINCT FROM ${literal(expected.schemaOid)}
+  OR (SELECT system_identifier::text FROM pg_control_system())<>${literal(expected.clusterIdentifier)}
+  OR NOT EXISTS(SELECT 1 FROM ${schema}.profiles WHERE id=${literal(expected.profileId)}::uuid
+    AND auth_user_id=${literal(expected.authUserId)}::uuid AND group_id=${group} AND empresa_id IS NULL AND ativo AND role='user')
+  OR (SELECT count(*) FROM ${schema}.empresas WHERE group_id=${group} AND id IN (${companies}))<>2
+  OR NOT EXISTS(SELECT 1 FROM pg_roles WHERE rolname=${literal(expected.role)} AND NOT rolsuper AND NOT rolbypassrls)
+ THEN RAISE EXCEPTION 'HML_ORGANIZACIONAL_TARGET_MISMATCH'; END IF;
+END $hml_org$;`;
+  const changes = Object.entries(columns).map(([table, cols]) => `GRANT UPDATE (${cols.join(',')}) ON ${schema}.${table} TO ${role};
+CREATE POLICY hml_org_edit ON ${schema}.${table} FOR UPDATE TO ${role}
+ USING (${predicate[table]}) WITH CHECK (${predicate[table]});`).join('\n');
+  const reverse = Object.entries(columns).map(([table, cols]) => `DROP POLICY hml_org_edit ON ${schema}.${table};
+REVOKE UPDATE (${cols.join(',')}) ON ${schema}.${table} FROM ${role};`).join('\n');
+  return { kind: 'HML_ORGANIZACIONAL_SQL_PLAN_NOT_EXECUTED', sql: guard + '\n' + changes,
+    reverseSql: guard + '\n' + reverse, columns, empresaIds: [...empresaIds], target: { ...expected },
+    sqlSha256: digest(guard + '\n' + changes), changesRole: false, operationalAuthorized: false,
+    requiresBackupRestoreReviewAndAbsentColumnPrivileges: true, requiresPostimageCasBeforeReversal: true };
+}
 function validateTree(value) {
   assert.ok(value && typeof value === 'object', 'PERMISSION_TREE_REQUIRED');
   if (Array.isArray(value)) {

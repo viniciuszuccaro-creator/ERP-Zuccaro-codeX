@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { organizacionalRemainder } from './organizacionalRemainder.js';
 
 /**
  * Pacote A — remainder autorizado do Visualizador V24 (pin e36231b3):
@@ -12,7 +13,7 @@ function peelOnce(source, after, before, label) {
 }
 
 export function scopeListCacheRemainder(source) {
-  let result = source.replace(/\r\n/g, '\n');
+  let result = organizacionalRemainder('src/components/cadastros/VisualizadorUniversalEntidadeV24.jsx', source);
 
   // #591 — origem lista Cliente (fonte local ≠ contagem API); peel → golden e36231b3.
   result = peelOnce(

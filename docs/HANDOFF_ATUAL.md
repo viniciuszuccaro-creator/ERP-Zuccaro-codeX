@@ -1,4 +1,24 @@
-## HMLbe67 aplicada; confirmar troca de empresa no navegador (2026-11-16)
+## Edicao organizacional: gate HML autorizado, codigo em validacao (2026-11-16)
+
+Aceite dono troca CPA/3Z recebido: nao reabrir seletor. Pedido atual e editar
+Grupo/Empresa pelo contrato real. Implementacao altera SOMENTE mestres ja
+existentes: Org.editar;HTTPGET/PATCH;CAS/lock;audit atomica;versao/conflito;
+trava dupla e conclusao antiga descartada noV24. Sem persistencia local.
+Campos sem coluna/contrato continuam bloqueados (IE/regime/certificado,
+status/vinculos). Nao declarar cadastro completo nemCRIARempresa/grupo.
+
+Autorizacao especifica SQLHML: UPDATEcols existentes deGroupnome/razao/CNPJ/
+observacoes/updated_at eEmpresarazao/fantasia/CNPJ/updated_at;2policies somente
+CPA/2empresas. Sem novosroles/colunas/IDs/status/perfis/operacional. Gerador
+reusa hml-owner-permissions;backup/restore/ensaio/revisao/CAS/reversao ainda
+obrigatorios. Nao executar grants pelo mero verde deCI.
+121testesfocados+6PGlite+2contratosPASS;root/serverchecksPASS. Publicacao draft
+paraLinuxCI conforme excecao documentada,nao homologado antes dela. Proxima
+acao CIexata,ensaioSQLrestrito/backup e atualizacaoHML comsave/reopen. Nao
+prometerbrowserE2E porcallbackextraido. Dados100/1500/contatos/locais intocados.
+WIP privado anterior continuaimutavel; nao reaplicado cegamente ou perdido.
+
+## HMLbe67 aplicada; troca de empresa aceita pelo dono (2026-11-16)
 
 API/webbe67c103caec62a9c2ac53c1ef43e988c384afcd/CI7212SUCCESS aplicados
 em17:52UTC/14:52Brasilia, apos gate especifico autorizado nesta conversa.

@@ -49,6 +49,7 @@ import { TabelaPrecoService } from './services/tabelaPrecoService.js';
 import { MarcaService } from './services/marcaService.js';
 import { ProdutoService } from './services/produtoService.js';
 import { TenantCrudService } from './services/tenantCrudService.js';
+import { OrganizacionalService } from './services/organizacionalService.js';
 import { createApiRouter } from './api/router.js';
 import { InMemoryTabelaPrecoRepository } from './repositories/inMemoryTabelaPrecoRepository.js';
 import { PostgresTabelaPrecoRepository } from './repositories/postgresTabelaPrecoRepository.js';
@@ -287,6 +288,7 @@ export function createApp(options: CreateAppOptions) {
     });
   }
   app.use(createApiRouter({
+    organizacionalService: useMemory ? undefined : new OrganizacionalService(db, auditRepo, rbacGuard, tenantGuard),
     fornecedorService,
     config,
     db,
