@@ -1,5 +1,11 @@
 ## Edicao Grupo/Empresa canonica em validacao (2026-11-16)
 
+Revisao final do consumidor: sessao e identidade do editor agora sao capturadas
+na ABERTURA,nao no cliqueSalvar. EventoHTTP invalida editor;callback anterior
+nao escreve comnovoator/token nem emreabertura do mesmoID. Teste dohandler
+realV24 cobre esse negativo alem deawait tardio/dobro/rejeicao. Sem mudanca
+de SQL/escopo autorizado;HML continua be67 ateCI/revisao/gates concluidos.
+
 CI7214/e7b5bc33: backend e composicaoPG SUCCESS; frontend bloqueou11guardas
 de preservacao integral que desconheciam os hunks organizacionais. Nenhum
 hashhistorico trocado. Chamadores das provas historicas agora projetam apenas

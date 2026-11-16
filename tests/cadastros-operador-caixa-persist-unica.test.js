@@ -279,10 +279,12 @@ test('V24 organizational writer: one PATCH, stale completion ignored and rejecti
     const before = { id: 'emp-1', group_id: 'grp-1', razao_social: 'Synthetic', cnpj: '11222333000181',
       nome_fantasia: 'Before', version: 'a'.repeat(64), supported_fields: ['razao_social', 'nome_fantasia', 'cnpj'] };
     let active = { token: 'synthetic', actorId: 'actor', groupId: 'grp-1', empresaId: 'emp-1', scopeType: 'empresa' };
+    const binding = { id: before.id, session: { ...active } };
     const listeners = new Set(), calls = []; let resolve, reject;
     const harness = await viewerPersistSubmit(before, {
       ENTITY: 'Empresa', isHttpBackendMode: true, isTenantMasterEntity: () => true,
       organizacionalBusy: { current: false }, editRequestRef: { current: 1 },
+      organizacionalBinding: binding, organizacionalEditor: { current: binding },
       buildOrganizacionalPatch, readErpHttpSession: () => active, HTTP_CONTEXT_CHANGED: 'context',
       window: { addEventListener: (_, f) => listeners.add(f), removeEventListener: (_, f) => listeners.delete(f) },
       base44: { entities: { Empresa: { update: (id, patch) => {
@@ -303,6 +305,21 @@ test('V24 organizational writer: one PATCH, stale completion ignored and rejecti
     assert.equal(harness.audits.length, 0, 'backend owns transactional audit');
     assert.equal(listeners.size, 0);
     assert.equal(before.nome_fantasia, 'Before');
+  }
+});
+
+test('V24 organizational callback is bound to loaded editor, not actor/session at click', async () => {
+  const session = { token: 'synthetic', actorId: 'actor-a', groupId: 'grp-1', empresaId: 'emp-1', scopeType: 'empresa' };
+  const record = { id: 'emp-1', group_id: 'grp-1', razao_social: 'Synthetic', cnpj: '11222333000181', version: 'a'.repeat(64), supported_fields: ['razao_social'] };
+  for (const changed of ['actorId', 'token', 'groupId', 'empresaId', 'reopened-editor']) {
+    const binding = { id: record.id, session }, active = { ...session };
+    if (changed !== 'reopened-editor') active[changed] = 'changed';
+    const h = await viewerPersistSubmit(record, { ENTITY: 'Empresa', isHttpBackendMode: true,
+      isTenantMasterEntity: () => true, organizacionalBusy: { current: false },
+      organizacionalBinding: binding, organizacionalEditor: { current: changed === 'reopened-editor' ? { ...binding } : binding },
+      readErpHttpSession: () => active });
+    await assert.rejects(h.save({ ...record, razao_social: 'Never' }), /obsoleto/);
+    assert.equal(h.writes.length, 0); assert.equal(h.closed.length, 0);
   }
 });
 

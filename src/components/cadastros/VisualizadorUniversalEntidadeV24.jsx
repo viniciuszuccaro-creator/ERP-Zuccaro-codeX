@@ -384,6 +384,19 @@ export default function VisualizadorUniversalEntidadeV24({
   const scopeKey = ENTITY + ":" + (groupId || "") + ":" + (empresaId || "");
   const formScopeRef = useRef(scopeKey);
   const organizacionalBusy = useRef(false);
+  const organizacionalEditor = useRef(null);
+  useEffect(() => {
+    const invalidate = () => {
+      if (!organizacionalEditor.current) return;
+      organizacionalEditor.current = null;
+      editRequestRef.current += 1;
+      setShowForm(false);
+      setEditItem(null);
+      setIsSaving(false);
+    };
+    window.addEventListener(HTTP_CONTEXT_CHANGED, invalidate);
+    return () => { window.removeEventListener(HTTP_CONTEXT_CHANGED, invalidate); invalidate(); };
+  }, []);
   const activeScopeRef = useRef(scopeKey);
   const previousScopeRef = useRef(scopeKey);
   activeScopeRef.current = scopeKey;
@@ -612,6 +625,7 @@ export default function VisualizadorUniversalEntidadeV24({
 
   // ── formulário ───────────────────────────────────────────────────────────────
   const handleCloseForm = useCallback(function(wasSaved) {
+    organizacionalEditor.current = null;
     editRequestRef.current += 1;
     formScopeRef.current = null;
     setShowForm(false);
@@ -629,6 +643,7 @@ export default function VisualizadorUniversalEntidadeV24({
     setTimeout(function() { invalidateAll(queryClient, ENTITY); }, 50);
   }, [ENTITY, queryClient]);
 
+  const organizacionalBinding = organizacionalEditor.current;
   const handlePersistSubmit = useCallback(async function(formData) {
     if (!formData || !ENTITY) return;
     try {
@@ -651,12 +666,18 @@ export default function VisualizadorUniversalEntidadeV24({
         throw new Error('Edicao organizacional indisponivel para este registro/acao.');
       }
       const opened = readErpHttpSession();
+      if (!organizacionalBinding || organizacionalEditor.current !== organizacionalBinding
+          || organizacionalBinding.id !== editItem.id || !opened
+          || ['token', 'actorId', 'groupId', 'empresaId', 'scopeType'].some(k => opened[k] !== organizacionalBinding.session?.[k])) {
+        alert('Contexto alterado desde a abertura. Reabra o cadastro.');
+        throw new Error('Editor organizacional obsoleto.');
+      }
       const generation = editRequestRef.current;
       let changed = false;
       const invalidate = () => { changed = true; };
       const current = () => {
         const active = readErpHttpSession();
-        return !changed && generation === editRequestRef.current && active && opened
+        return !changed && organizacionalEditor.current === organizacionalBinding && generation === editRequestRef.current && active && opened
           && ['token', 'actorId', 'groupId', 'empresaId', 'scopeType'].every(k => active[k] === opened[k]);
       };
       if (!opened || opened.groupId !== groupId || (opened.empresaId || null) !== (empresaId || null)) throw new Error('Sessao/contexto alterado. Reabra o cadastro.');
@@ -668,7 +689,7 @@ export default function VisualizadorUniversalEntidadeV24({
         if (!current()) throw new Error('Contexto alterado.');
         await base44.entities[ENTITY].update(editItem.id, payload);
         // Backend owns the transaction and audit. Never stamp a tenant-master company locally.
-        if (current()) handleCloseForm(true);
+        if (current()) { setIsSaving(false); handleCloseForm(true); }
       } catch (error) {
         if (current()) alert('Erro ao salvar: ' + error.message);
         throw error;
@@ -727,7 +748,7 @@ export default function VisualizadorUniversalEntidadeV24({
     } finally {
       setIsSaving(false);
     }
-  }, [ENTITY, editItem, empresaId, groupId, scopeKey, handleCloseForm, canCreateCadastro, canEditCadastro, canDeleteCadastro, createInContext, updateInContext, deleteInContext, auditCadastroEvent, isLoadingEdit, editLoadBlocked]);
+  }, [ENTITY, editItem, empresaId, groupId, scopeKey, handleCloseForm, canCreateCadastro, canEditCadastro, canDeleteCadastro, createInContext, updateInContext, deleteInContext, auditCadastroEvent, isLoadingEdit, editLoadBlocked, organizacionalBinding]);
 
   const handleNewItem = useCallback(function() {
     if (!contextoValido) {
@@ -766,6 +787,8 @@ export default function VisualizadorUniversalEntidadeV24({
     }
     formScopeRef.current = scopeKey;
     const request = ++editRequestRef.current;
+    organizacionalEditor.current = isHttpBackendMode && isTenantMasterEntity(ENTITY)
+      ? Object.freeze({ id: item.id, session: Object.freeze({ ...readErpHttpSession() }) }) : null;
     const requestedScope = scopeKey;
     const stillCurrent = function() {
       return navigationIsCurrent() && isEditRequestCurrent({
