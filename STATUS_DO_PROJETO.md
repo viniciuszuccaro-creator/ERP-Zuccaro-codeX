@@ -1,5 +1,10 @@
 ## Edicao Grupo/Empresa canonica em validacao (2026-11-16)
 
+CI7217: unico residuo funcional das provas era o executor extraido de
+handleEditItem para Cliente,sem a nova referencia organizacional inerte no
+modoCliente. Fixture recebe refnull+modoHTTPfalse;asserts e comportamento
+Cliente permanecem. Nao e UUIDv7 quebrado no produto nem autorizacao deHML.
+
 CI7215 revelou mais chamadores diretos das mesmas guardas historicas (financeiro,
 OFX/Auth e canalpublicacao). A projecao exata agora tambem os cobre,sem retirar
 asserts ou substituir pins.116contraprovas adicionaisPASS. Runtime fe8c0c15

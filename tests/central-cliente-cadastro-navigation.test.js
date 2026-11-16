@@ -102,7 +102,8 @@ function editor(load) {
   const node = find(tree, node => ts.isVariableDeclaration(node) && node.name.getText(tree) === 'handleEditItem')[0];
   const state = { item: null, blocked: false, loading: false, shown: false, reads: [], audits: [], errors: 0 };
   const refs = { formScopeRef: { current: null }, editRequestRef: { current: 0 }, activeScopeRef: { current: 'synthetic-scope' } };
-  const env = { ...refs, ENTITY: 'Cliente', contextoValido: true, canEditCadastro: true, scopeKey: 'synthetic-scope',
+  const env = { ...refs, organizacionalEditor: { current: null }, isHttpBackendMode: false,
+    ENTITY: 'Cliente', contextoValido: true, canEditCadastro: true, scopeKey: 'synthetic-scope',
     groupId: scope.groupId, empresaId: scope.empresaId, contextoCanonico: { ...rendered, scopeType: 'empresa' }, ENTITY_CONTEXT_FIELD: {},
     isEditRequestCurrent, assertCadastroRecordInTenant, classifyCadastroEditLoad, mergeCadastroEditHydration,
     auditCadastroEvent: (...args) => state.audits.push(args), alert: message => { state.alert = message; },
