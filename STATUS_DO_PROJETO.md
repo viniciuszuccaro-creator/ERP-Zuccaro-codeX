@@ -22722,3 +22722,14 @@ Browser autenticado/sessao/aceite visual desta versao ainda pendentes; controle
 local/nativo kernelassets/oserror3. Janela ate12:10Z/09:10Brasilia, nao permanente.
 Proximo: aceite UI atual, depois componentes pendentes de enderecos e bindings;
 1500 continuam INATIVOS. Completude integral e pacoteVPS NAO declarados prontos.
+## 2026-11-16 - Recuperacao privada autorizada: bloqueio HTTP402
+
+Dono confirmou botoes Revisar fiscal/entrega na HML: aceite visual, sem escrita.
+Autorizada recuperacao dirigida de artefatos exclusivos do Codespace existente
+em ate10min/tetoUS1, primeiro5exports+manifestos, semSQL/carga/deploy/segredos.
+CLI confirmou Shutdown; unica tentativa SSH foi recusada no start por HTTP402
+billing issue. Ambiente nao iniciado,0arquivos transferidos, cobranca intacta.
+Proxima acao depende de regularizacao de pagamento pelo proprietario noGitHub,
+sem elevar teto; depois recuperar/verificar/centralizar e encerrar na janela.
+Nao confundir erro generico com saldo comprovado ou ausencia dos arquivos.
+Lote exclusivamente documental: git diff --check; runtime/dados inalterados.

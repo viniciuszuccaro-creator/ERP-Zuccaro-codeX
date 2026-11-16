@@ -12427,3 +12427,23 @@ No código `84640c6c`, a execução completa de `npm run typecheck` retornou 164
 ### Rechecagem após lock — defeito reproduzido e corrigido
 
 A jornada ampliada revoga a permissão no executor logo após a leitura bloqueante da Entrega. Contra o código publicado anterior, falhou com `Missing expected rejection`: o registro parcial era aceito. Na correção, tenant/RBAC são rechecados depois do lock de Entrega em separação, registro, devolução e patch; criação revalida depois da leitura bloqueante de Pedido e antes do INSERT. Romaneio preserva rechecagem após carregar/travar entregas. A mesma jornada passou localmente com 403, estado anterior preservado e rollback da revogação sintética. Typecheck backend aprovado. Exigir nova CI/revisão desse último delta; não atribuir a ele a CI de SHAs anteriores.
+## Recuperacao autorizada recusada pela plataforma (2026-11-16)
+
+Dono confirmou que Revisar fiscal e Revisar entrega aparecem na HML apos
+renovacao do acesso. Aceite visual de permissao, nao prova de escrita/ativacao.
+Autorizou janela inicial de ate10min no Codespace existente, dentro do tetoUS1,
+para recuperar primeiro5exports+manifestos e depois inventario DIRIGIDO dos
+artefatos indispensaveis exclusivos, comparando com indice privadoVPS. Excluir
+credenciais/caches/dependencias/builds/duplicatas; semSQL/carga/deploy/exclusao.
+
+ConsultaCLI confirmou Shutdown. Tentativa UNICA de gh codespace ssh recusada
+antes da partida: HTTP402, billing issue preventing start. Nenhum arquivo
+transferido/inventariado remotamente; orcamento/cobranca nao alterados. Nao
+repetir ate mudanca da condicao. Intervencao: proprietario regularizar o problema
+de pagamento indicado em GitHub Settings > Billing, sem elevar tetoUS1; apos
+confirmacao retomar mesma janela autorizada e encerrar Codespace ao final.
+Saldo/causa financeira especifica nao comprovados pelo erro generico402.
+Prioridade5raw35281985bytes; volume adicional AINDA desconhecido. Antes de
+exceder10min informar quantidade/bytes/finalidade/estimativa e pedir extensao
+concreta. Fonte central permanece VPS; nao declarar eliminada a dependencia
+dos bytes ainda exclusivos do Codespace. Nenhuma carga100/5000 repetida.
