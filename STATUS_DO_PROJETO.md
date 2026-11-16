@@ -1,3 +1,29 @@
+## PerfilHML autorizado aplicado;5000parciais preparados (2026-11-16)
+
+d64b7058/CI7203SUCCESS. Permissao aplicada APENAS ao perfilHML existente do
+dono, identidade/email confirmados e bindingAuth/Grupo privado conferido.
+Catalogo explicito canonico, roleuser preservada:1perfil/1audit/replay0novoaudit.
+Backupfresh hml-20261116T144508Z-ee98301c+restore+externoEmpresa/ack pareados.
+Clientes/locais/finalidades comparados porvalores antes/depois:1600/217/217
+iguais,contatos preservados. SemGRANT/roles/BYPASSRLS/outrosgrupos/operacional.
+AppRbac SQLreal passou editar/restaurar/principal/visualizar,2empresasexistentes,
+Organizacional/menus; rejeitou grupo/ator/empresa adulterados, READONLY/ROLLBACK.
+Nao e browserAuth. Dono deve sair/entrar naHML para renovar arvore da sessao.
+RuntimeAPI/web continuafba27eeb/CI7201,sem novo deploy ou ativacao de enderecos.
+Reversao CAS privada preparada, ensaiada emcopy, fonte NAO revertida.
+
+Diagnostico fresco dos4blocos porprincipal app real: SetorAtividade/GrupoProduto/
+UnidadeMedida = SCHEMA_ABSENT; Marca = existente/SQL_SELECT_DENIED. Nao zerar
+contagem nem tratar tudo como perfil. Nenhum GRANT/policy inferido dessa leitura.
+Plano5000 em5x1000 esta centralizado,PARCIAL/0aplicado,exclui1600existentes.
+Os987segregados sao INATIVOSnafonteCSV,nao invalidos. Camposrelacionados requerem
+bytes dos5exports auxiliares existentes;recibos nao substituem arquivos.
+Codespace existente confirmadoShutdown; solicitada recuperacao limit10min,
+somente5raw/pins(~35MB),semSQLnovo/carga/instalacao/aumento tetoUS1; PENDENTE
+resposta do dono. Sem iniciar ou prometer background. Proxima acao exata:
+com autorizacao,recuperar/conferir somente essesbytes e completar cobertura5000;
+sem ela,fonte privada indisponivel impede chamar carga parcial de completa.
+
 ## AcessoHML e preparacao5000 sem nova carga (2026-11-16)
 
 Nova instrucao do dono AUTORIZA perfil completo SOMENTE HML; substitui antigo

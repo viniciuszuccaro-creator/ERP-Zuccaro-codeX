@@ -1,5 +1,18 @@
 # Operação DEV: GitHub, Codex, Cursor e VPS
 
+## Perfil do dono HML com catalogo explicito (2026-11-16)
+
+Autorizacao de16/11 substitui limite de leitura APENAS no perfilHML existente:
+catalogo owner-admin-permissoes.json aplicado por hml-owner-permissions.mjs,
+codigo d64b7058/CI7203,manutencao administrativa SEM novoendpoint/role/grants.
+Identidade confirmada privadamente; roleuser e escopoGrupoCPA/empresasmantidos.
+CAS integral/lock/audit1/replay0/reverse porrecibo;PG restaurado testado antes.
+Recibos/reversao em shared-artifacts/incoming/owner-access-20261116. Antes de
+reverter,reconferirpostimage/recibo;nao reaplicar ourevogar cegamente. Renovar
+login para UI receberpermissoes. SQLprincipal continua limitado:3tabelasausentes
+e Marca semSELECT sao gates distintos,nao ausencia de dados ou0confirmado.
+Nao herdar esta concessao para outroperfil/Grupo/banco ou efeitos externos.
+
 ## HML vigente fba27eeb (2026-11-16)
 
 API/webfba27eeb/CI7201SUCCESS, autorizacao especifica executada para retirar

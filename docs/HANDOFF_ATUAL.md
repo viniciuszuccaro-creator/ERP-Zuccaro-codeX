@@ -1,3 +1,53 @@
+## AcessoHML aplicado e fonteaux pendente de janela (2026-11-16)
+
+ESTADO: codigo administrativo d64b7058b1a8aa384ff66af6e3e3c907284478ca/CI7203
+SUCCESS; API/webHML continuam fba27eeb/CI7201. Dono autorizou perfil completoHML
+e confirmou email, comparado privadamente comAuthID/perfil/Grupo da config.
+Em14:52UTC(11:52Brasilia) aplicado JSONpermissoes APENAS nesseperfil,1audit;
+replay0audit. Roleuser/identidade/grupo/empresaNULL/SQLroles/grants preservados.
+Backupfresh hml-20261116T144508Z-ee98301c+restore+externoEmpresa/ack antes.
+Fingerprint integral de clientes/locais/finalidades doGrupo antes/depois igual:
+1600/217/217. Os100ativos,1500ensaiosinativos,4200contatos permanecem intactos.
+Nenhuma carga de clientes, endereco ativado ou escrita operacional.
+
+Guardas reais no processoAPI/role SQLapp: visualizar/editar/restaurar/principal
+cliente_local,8modulos e Organizacional permitidos;2empresas existentes noGrupo
+validadas porTenantGuard;grupo/ator/empresa adulterados rejeitados. Tudo em
+READONLY/ROLLBACK. Nao e prova browser/AuthHTTP nem escrita de endereco.
+Pedido ao dono: sair/entrar na mesmaHML e conferir menus/Revisarfiscal/entrega.
+Nao confundir arvore antiga em sessao com concessao fonte nao aplicada.
+Efeitos externos nao ativados; hmlAuthFetch segue restrito aos2endpointsAuth.
+
+Fontecentral dos recibos/planos/reversao: shared-artifacts/incoming/
+owner-access-20261116/{live-snapshot,owner-grant-live,live-started,live-after,
+live-applied,real-app-rbac-postcheck,owner-reverse-live}.private.(json/sql).
+Reversao REQUER postimageCAS inalterado e recibo original; nao executar para
+"reproduzir prova" nem apagar audit. live-started/applied existem: SEM retry
+cego da concessao. Indice privado atualizado com ownerAccess e scaleLoadCandidate.
+
+Metadados FRESCOS pelo principal real: setores_atividade/grupos_produto/
+unidades_medida AUSENTES, marcas PRESENTE masSELECTnegado. Perfil pleno NAO
+cria schema oupolicy/grant. Preparar delta minimo antes de decisao especifica;
+nao rodar migrations inteiras ou conceder globais para eliminar o banner.
+
+5000clientesPARCIAIS selecionados em5x1000;0APLICADOS/0completos confirmados.
+CSVcentral e snapshotCPA conferidos;1600existentes excluidos;0conflitoscodigo/
+documento nesse recorte.245emails, nenhum telefone noexportCSV; nao assumir
+ausencia nativa.5000componentesfiscais presentes,numero/pais nao segregados.
+Plano comprimido e recibo naVPS conforme secao abaixo;nao nova fonte local.
+987inativosCSV segregados sao distintos dos1500ensaiosinativosHML.
+
+Rawaux original documentado: /workspaces/.erp-private-344/aux-reader-20261110/
+netbind-attempt;5arquivos/53412linhas/35281985bytes,48568ClientesTelefones.
+Bytes NAO encontrados noespelhoHML nem nomes exatos nos2roots recuperados
+staging/sql-work consultados;nao prova ausencia global. CLIautorizada confirmou
+potential-xylophone-5gj7r9v9qqg637vxp EXISTE/Shutdown/ultimo uso14/11. Nao iniciado.
+SOLICITADA autorizacao limitada10min para recuperarSOMENTE5raw+pins existentes
+paraVPS,semSQLnovo/extracao/instalacao/carga/aumento tetoUS1;parar seorcamento
+nao permitir e encerrar aposcopia. Aguardar essa decisao especifica,naoCasa.
+Depois: conferirhash/bytes/linhas e joins porcodigo/SEQUENCIA, completar5klote
+antes de solicitar indice/carga exatos;nao substituir bytes por recibos.
+
 ## Lote atual: acesso autorizado e selecao5000 central (2026-11-16)
 
 Nova autorizacao explicita do dono: acesso completo de seu perfil existenteHML,
