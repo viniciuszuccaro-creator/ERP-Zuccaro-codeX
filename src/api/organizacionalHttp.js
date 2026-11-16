@@ -32,6 +32,13 @@ export function buildOrganizacionalPatch(kind, before, draft) {
 
 function matches(row, query) {
   return Object.entries(query || {}).every(([key, value]) => {
+    if (key === 'search') {
+      if (typeof value !== 'string' || value.length > 180) throw new Error('Busca organizacional invalida.');
+      const normalize = text => String(text || '').normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
+      const term = normalize(value.trim());
+      return ['nome', 'nome_do_grupo', 'razao_social', 'nome_fantasia', 'cnpj', 'cnpj_grupo']
+        .some(field => normalize(row[field]).includes(term));
+    }
     if (key === '$or' || key === '$and') {
       if (!Array.isArray(value)) throw new Error('Filtro organizacional invalido.');
       return key === '$or' ? value.some(q => matches(row, q)) : value.every(q => matches(row, q));
@@ -72,9 +79,22 @@ export function createOrganizacionalHttp(kind, transport, getScope) {
     if (!Array.isArray(result?.data) || result?.meta?.total !== result.data.length) throw new Error('Lista organizacional parcial ou invalida.');
     return result.data.map(r => hydrateOrganizacional(kind, r));
   };
+  const page = async (query, order, limit, skip) => {
+    if (!Number.isSafeInteger(limit) || limit < 1 || limit > 500 || !Number.isSafeInteger(skip) || skip < 0) {
+      throw new Error('Paginacao organizacional invalida.');
+    }
+    const rows = (await all()).filter(r => matches(r, query));
+    if (order) {
+      if (typeof order !== 'string' || !/^-?[a-z_]+$/.test(order)) throw new Error('Ordenacao organizacional invalida.');
+      const desc = order.startsWith('-'), requested = order.replace(/^-/, '');
+      const field = { updated_date: 'updated_at', created_date: 'created_at' }[requested] || requested;
+      rows.sort((a, b) => (desc ? -1 : 1) * String(a[field] ?? '').localeCompare(String(b[field] ?? ''), 'pt-BR', { numeric: true }));
+    }
+    return rows.slice(skip, skip + limit);
+  };
   return {
-    list: () => all(),
-    async filter(query = {}, _order, limit = 100, skip = 0) { return (await all()).filter(r => matches(r, query)).slice(skip, skip + limit); },
+    list: (order, limit = 100) => page({}, order, limit, 0),
+    filter: (query = {}, order, limit = 100, skip = 0) => page(query, order, limit, skip),
     async count(query = {}) { return (await all()).filter(r => matches(r, query)).length; },
     async get(id) {
       const row = hydrateOrganizacional(kind, await request(`${path}/${encodeURIComponent(id)}`));

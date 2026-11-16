@@ -60,3 +60,15 @@ test('organizacional read/update discards late actor/session/company results, in
     }
   } finally { globalThis.window = beforeWindow; }
 });
+
+test('real grid search payload and sort paginate the complete authorized organizational set', async () => {
+  const rows = [
+    { id: 'a', group_id: 'g', razao_social: 'Aco Teste', nome_fantasia: 'Aço', version: 'a'.repeat(64), supported_fields: ['razao_social'] },
+    { id: 'b', group_id: 'g', razao_social: 'Zeta Teste', nome_fantasia: 'Zeta', version: 'b'.repeat(64), supported_fields: ['razao_social'] },
+  ];
+  const api = createOrganizacionalHttp('Empresa', async () => ({ data: rows, meta: { total: 2 } }));
+  assert.deepEqual((await api.filter({ group_id: 'g', search: 'AÇO' })).map(r => r.id), ['a']);
+  assert.equal(await api.count({ group_id: 'g', search: 'aco' }), 1);
+  assert.deepEqual((await api.filter({ group_id: 'g' }, '-razao_social', 1, 0)).map(r => r.id), ['b']);
+  assert.deepEqual((await api.filter({ group_id: 'g' }, '-razao_social', 1, 1)).map(r => r.id), ['a']);
+});

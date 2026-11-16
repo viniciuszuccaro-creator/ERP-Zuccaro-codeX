@@ -1,4 +1,37 @@
-## Edicao Grupo/Empresa canonica em validacao (2026-11-16)
+## Edicao organizacional aplicada e ensaiada na HML; delta de busca (2026-11-16)
+
+c966fb02c9fda47a10d64856f38cd50855bc75c8/CI7218SUCCESS aplicado SOMENTE API/web
+HML em19:06UTC/16:06Brasilia. HTTPS/assetSHA/anonimo401 e16fingerprints iguais
+na promocao. ERPDEV/PG mesmosIDs. Backupfresh185728Z-53573573 restaurado e
+copiaexterna/ack antes. be67 guardado parado para reversao. Sem cargas, seeds,
+clientesnovos, mudancas de perfil/role/status/IDs ou operacional.
+
+Gate SQL ESPECIFICO autorizado e concluido:9colunas cadastrais/updated_at,
+2policies UPDATE no proprioCPA/duasEmpresas. Ensaio SQL comROLLBACK positivo
+proprioescopo e negativos cross-group/company/ID.15tabelas negocio identicas;
+somente1auditoria administrativa de capacidade. Sem novascolunas/roles.
+Recibos e CAS/reversao em incoming/empresa-e7b5bc33/permissions.* privados.
+
+Servico canonico executado com PRINCIPAL APP real daHML, preflight fisico,
+perfil vinculado eRBAC: Grupo e2Empresas salvos, reabertos porpoolnovo e
+restaurados porCAS aosvalores originais.6auditorias verificadas;13outras
+tabelas identicas. Somenteupdated_at dessesmestres e auditorias mudaram.
+NAO e provaBrowserBearer: execucao dominio/PG,semIdP/JWT inventado. Aceite
+do dono emsessao solicitadopelochat,pendente. Recibo privado central
+incoming/empresa-c966fb02/save-reopen.receipt.private.json.
+Primeirodriver enviou espaco inicial no ensaioGrupo;validacao trimcorreta.
+Gravacao/reabertura/reversao ocorreram;comparacao do DRIVER falhou. Recibo
+imutavel preservado. Retomada reutilizou provaGrupo e testouas2Empresas,
+sem repetir escritadoGrupo. Nenhum valor deensaio permaneceu.
+
+Contraprova adicional reproduziu buscaGrupo/Empresa zerando lista, pois
+filter.search do consumidor real era tratado comocampo. Corrigido adaptador
+existente: busca semacentos,sort e paginacao do conjunto autorizado completo;
+count separado continuaautoritativo.4testesHTTP+6PGlitePASS. Listservice
+reusa listEmpresas semrelerIDporID (semN+1); escrita/audit/CAS inalteradas.
+Delta aguardaCI/promocaoAPIweb;SEMnovo SQLgrant ourepeticao do ensaioescrita.
+
+## Historico da preparacao organizacional (2026-11-16)
 
 CI7217: unico residuo funcional das provas era o executor extraido de
 handleEditItem para Cliente,sem a nova referencia organizacional inerte no

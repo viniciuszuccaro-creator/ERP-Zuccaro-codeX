@@ -77,10 +77,11 @@ export class OrganizacionalService {
     ctx = Object.freeze({ ...ctx });
     return this.db.withTransaction(async q => {
       await this.authorize(ctx, kind, 'visualizar', q);
-      const ids = kind === 'GrupoEmpresarial' ? [ctx.groupId] : ctx.empresaId ? [ctx.empresaId]
-        : (await this.empresas.list({ groupId: ctx.groupId }, q)).map(r => r.id);
+      const records = kind === 'GrupoEmpresarial' ? [await this.read(ctx, kind, ctx.groupId, q)]
+        : ctx.empresaId ? [await this.read(ctx, kind, ctx.empresaId, q)]
+        : (await this.empresas.list({ groupId: ctx.groupId }, q)).map(r => ({ ...r }));
       const rows = [];
-      for (const id of ids) rows.push(await this.dto(kind, await this.read(ctx, kind, id, q), ctx, q));
+      for (const row of records) rows.push(await this.dto(kind, row, ctx, q));
       await this.authorize(ctx, kind, 'visualizar', q);
       return rows;
     });

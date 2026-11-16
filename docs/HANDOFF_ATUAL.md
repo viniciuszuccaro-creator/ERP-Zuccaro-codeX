@@ -1,4 +1,34 @@
-## Edicao organizacional: gate HML autorizado, codigo em validacao (2026-11-16)
+## Organizacional HMLc966 aplicado; fechar apenas delta busca (2026-11-16)
+
+CI7218SUCCESS/c966fb02c9fda47a10d64856f38cd50855bc75c8 aplicado API/webHML
+em19:06UTC/16:06Brasilia. https://hml-erp.cpaferroeaco.com.br/cadastros .
+Kit2220arquivos/17917255bytes,3979287bytesTAR/SHA
+00aff247c0f9c8513e78ae393246f4e78eb5ebbf176073b0d82f49e034f244bb.
+Recibo promotion-c966fb02-20261116-r1/promotion.receipt.private.json.
+Configbackup apontaapi-published-c966fb02-config.private.json;be67guardado
+paradobefore-c966fb02-20261116-r1. ProtegidosPG/ERPDEVinalterados;semcarga.
+
+NAO reaplicar SQL: gate minimo aprovado EXECUTADO emgroups/empresasHML,
+9colunas UPDATE+2policies CPA/2Empresas. Perfilroleuserinalterado;semoutros
+grants/DDLcoluna/ativacoes. EnsaioRollback/negativas/reversaoCAS preparados,
+recibos incoming/empresa-e7b5bc33/permissions.*. Auditcapacidade1 legitimo.
+Backup previo185728Z-53573573/restore/externoACKconferidos.
+
+Prova dominio/PGAPPHML passou3mestres/6writes (teste+restauracao),reabertura
+porpoolindependente,CAS/RBAC/crossEmpresa. Valoresoriginais/IDs preservados;
+updated_at e6auditorias legitimos;13outrastabelas iguais. Primeirodriver
+falhoucomparacao whitespace (trimprodutoCORRETO),reutilizada provaGrupo;
+retomada SOMENTE2Empresas. Arquivosimuteveis incoming/empresa-c966fb02/
+save-reopen*.private.*. SemFakeAuth; NAO declarar BrowserBearer E2E porisso.
+Dono solicitado conferirGrupo/Empresa salvarsemalterar/reabrir na sessao.
+
+Proximo imediato: publicar/checkCI delta deBUSCA/SORT do adaptador existente.
+Reproducao payloadrealfilter.search esvaziava lista;4testesHTTP e6PGlitePASS.
+ServidorlistsemN+1;update/get/auditC966inalterados,reusarprovaescrita. Backup
+POS-ENSAIO emexecucao pelo servico existente,captura novaspolicies/auditorias;
+conferirrecibo eexterno antes dapromocao. Sem novosgrants/cargas/operacional.
+
+## Historico da preparacao e autorizacao (2026-11-16)
 
 Aceite dono troca CPA/3Z recebido: nao reabrir seletor. Pedido atual e editar
 Grupo/Empresa pelo contrato real. Implementacao altera SOMENTE mestres ja
