@@ -113,7 +113,7 @@ test('ProtectedSection real revalida HTTP e não reaproveita aprovação entre p
 test('hook real troca Grupo/A/B usando empresas revalidadas sem filtro do cadastro local', async () => {
   const mutations = [];
   const empresas = [EMPRESA_A, EMPRESA_B].map(id => ({ id, group_id: GROUP, status: 'Ativa' }));
-  const session = { token: 'synthetic', groupId: GROUP, actorId: ACTOR, role: 'admin', empresas };
+  const session = { token: 'synthetic', groupId: GROUP, actorId: ACTOR, role: 'user', empresas };
   const selected = [];
   const localEntity = new Proxy({}, { get() { throw new Error('Local mirror must not authorize context'); } });
   const hooks = await loadRealHook('../src/components/lib/useContextoGrupoEmpresa.jsx', {
@@ -123,6 +123,7 @@ test('hook real troca Grupo/A/B usando empresas revalidadas sem filtro do cadast
       useMutation: options => { mutations.push(options); return options; } },
     './contextoMultiempresaPolicy': {},
     '@/api/erpHttpSession': { HTTP_CONTEXT_CHANGED: 'test',
+      readErpHttpSession: () => session,
       refreshErpHttpSessionFromServer: async () => session,
       buildHttpSessionUser: () => ({ pode_operar_em_grupo: true }),
       switchErpHttpSessionEmpresa: ({empresaId}) => selected.push(empresaId),
@@ -131,9 +132,52 @@ test('hook real troca Grupo/A/B usando empresas revalidadas sem filtro do cadast
   hooks.useContextoGrupoEmpresa();
   assert.equal((await mutations[0].mutationFn(GROUP)).id, GROUP);
   for (const id of [EMPRESA_A, EMPRESA_B]) assert.equal((await mutations[1].mutationFn(id)).id, id);
-  await assert.rejects(mutations[1].mutationFn(ACTOR), /não autorizada/);
+  await assert.rejects(mutations[1].mutationFn(ACTOR), /nao consta nas autorizacoes/);
   await assert.rejects(mutations[0].mutationFn(ACTOR), /não autorizado/);
   assert.deepEqual(selected, [null, EMPRESA_A, EMPRESA_B]);
+});
+
+test('troca real distingue falha de sessao e descarta contexto antigo, inclusive A-B-A', async () => {
+  const initial = { token: 'synthetic', actorId: ACTOR, groupId: GROUP, empresaId: null, scopeType: 'grupo',
+    role: 'user', empresas: [{ id: EMPRESA_A, group_id: GROUP, status: 'Ativa' }] };
+  let active = initial; let result = initial; let release; let deferred = false;
+  const selected = []; const mutations = []; const listeners = new Set();
+  const hooks = await loadRealHook('../src/components/lib/useContextoGrupoEmpresa.jsx', {
+    react: { useState: value => [typeof value === 'function' ? value() : value, () => {}], useEffect() {}, useRef: value => ({ current: value }) },
+    '@/api/base44Client': { isHttpBackendMode: true, base44: { entities: {} } },
+    '@tanstack/react-query': { useQuery: () => ({}), useQueryClient: () => ({ invalidateQueries() {} }),
+      useMutation: options => { mutations.push(options); return options; } },
+    './contextoMultiempresaPolicy': {},
+    '@/api/erpHttpSession': { HTTP_CONTEXT_CHANGED: 'test', readErpHttpSession: () => active,
+      refreshErpHttpSessionFromServer: () => deferred ? new Promise(resolve => { release = resolve; }) : Promise.resolve(result),
+      buildHttpSessionUser: () => ({ pode_operar_em_grupo: true }),
+      switchErpHttpSessionEmpresa: ({ empresaId }) => selected.push(empresaId) },
+  }, { window: { addEventListener: (_, fn) => listeners.add(fn), removeEventListener: (_, fn) => listeners.delete(fn) } });
+  hooks.useContextoGrupoEmpresa();
+  const mutation = mutations[1];
+  result = null;
+  await assert.rejects(mutation.mutationFn(EMPRESA_A), /revalidar a sessao/);
+  assert.equal(listeners.size, 0);
+  for (const change of ['actorId', 'groupId', 'token', 'empresaId', 'roundtrip']) {
+    active = initial; result = initial; deferred = true;
+    const pending = mutation.mutationFn(EMPRESA_A);
+    if (change === 'roundtrip') { listeners.forEach(fn => fn()); active = { ...initial }; }
+    else active = { ...initial, [change]: 'changed' };
+    release(initial);
+    await assert.rejects(pending, /Contexto alterado/);
+    assert.equal(listeners.size, 0);
+  }
+  deferred = false; active = initial;
+  result = { ...initial, empresas: [] };
+  await assert.rejects(mutation.mutationFn(EMPRESA_A), /nao consta/);
+  result = { ...initial, empresas: [{ ...initial.empresas[0], group_id: ACTOR }] };
+  await assert.rejects(mutation.mutationFn(EMPRESA_A), /fora do Grupo/);
+  result = { ...initial, empresas: [{ ...initial.empresas[0], status: 'Inativa' }] };
+  await assert.rejects(mutation.mutationFn(EMPRESA_A), /indisponivel/);
+  assert.deepEqual(selected, []);
+  result = initial;
+  assert.equal((await mutation.mutationFn(EMPRESA_A)).id, EMPRESA_A);
+  assert.deepEqual(selected, [EMPRESA_A]);
 });
 
 test('hook de Cadastros ignora carregamento antigo após evento de troca Empresa', async () => {

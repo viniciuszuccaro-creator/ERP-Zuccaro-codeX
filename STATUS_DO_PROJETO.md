@@ -1,3 +1,27 @@
+## Troca Grupo/Empresa: correcao em validacao, nao aplicada na HML (2026-11-16)
+
+Dono confirmou lista/contagem Grupo e Codigo sem nome na HML2f, mas relata
+"Empresa nao autorizada para este perfil" ao trocar contexto. Leitura privada
+confirmou mesmo perfil role=user, Organizacional visualizar/editar e duas
+empresas Ativa do proprio Grupo. Logs auth/session HTTP200 nao comprovam o
+payload/contexto da sessao do navegador. Nao atribuir a falta de grant/admin.
+
+Reutilizados hook e seletor existentes: erro de refresh deixa de ser falsa
+negativa de empresa; troca captura ator/token/Grupo/Empresa/escopo e descarta
+resposta obsoleta inclusive A-B-A; lista vazia/revogada nao revive espelho.
+59 testes focados PASS (hook real com fronteiras controladas, sessao real e
+render SSR do seletor; NAO navegador autenticado). Audit/lint/typecheck/build
+PASS, lint com dois avisos preexistentes. Suite completa fica na CI Ubuntu
+pela excecao draft ja autorizada para bloqueio POSIX Windows, sem mudar testes.
+
+Sem alteracao de perfil, grants, dados, schema ou operacional. HML continua2f.
+Proxima acao: CI do SHA publicado e pacote revisado; atualizacao HML depende
+do gate proprio. Diagnostico da sessao concreta continua pendente do navegador.
+WIP distinto do formulario Grupo preservado e conferido por SHA no canal
+central incoming/organizacional-wip-20261116/preserved-code.tar.gz, fora Git.
+CRUD organizacional remoto continua separado; nao liberar salvamento local
+como se fosse persistencia na HML nem promover usuario para ocultar o problema.
+
 ## PerfilHML autorizado aplicado;5000parciais preparados (2026-11-16)
 
 d64b7058/CI7203SUCCESS. Permissao aplicada APENAS ao perfilHML existente do

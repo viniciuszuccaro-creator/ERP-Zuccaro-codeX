@@ -131,9 +131,9 @@ test('EmpresaSwitcher renderiza o nome do Grupo sem prefixo e preserva IDs', asy
       b.onLoad({ filter: /.*/, namespace: 'fixture' }, a => {
         let contents;
         if (a.path.endsWith('useContextoGrupoEmpresa')) contents = 'export default()=>globalThis.__switcherRender;';
-        else if (a.path === '@tanstack/react-query') contents = "export const useQuery=({queryKey})=>({data:queryKey[0]==='grupos-usuario'?[globalThis.__switcherRender.grupoAtual]:[]});";
+        else if (a.path === '@tanstack/react-query') contents = "export const useQuery=options=>{globalThis.__switcherQueries.push(options);return {data:options.queryKey[0]==='grupos-usuario'?[globalThis.__switcherRender.grupoAtual]:[]};};";
         else if (a.path.endsWith('base44Client')) contents = 'export const base44={},isHttpBackendMode=true;';
-        else if (a.path.endsWith('erpHttpSession')) contents = 'export const readErpHttpSession=()=>null;';
+        else if (a.path.endsWith('erpHttpSession')) contents = 'export const readErpHttpSession=()=>globalThis.__switcherSession;';
         else contents = `import React from 'react'; const Box=({children,...p})=>React.createElement('div',{'data-scope':p['data-scope'],'data-group-id':p['data-group-id'],'data-value':p.value},children);
           export {Box as Select,Box as SelectContent,Box as SelectGroup,Box as SelectItem,Box as SelectLabel,Box as SelectTrigger,Box as SelectValue,Box as Badge,Box as Input,Box as Building2,Box as Users,Box as ChevronDown};`;
         return { contents, loader: 'js' };
@@ -144,6 +144,13 @@ test('EmpresaSwitcher renderiza o nome do Grupo sem prefixo e preserva IDs', asy
   new Function('require', 'module', 'exports', result.outputFiles[0].text)(require, module, module.exports);
   try {
     for (const name of ['Grupo CPA', 'Consorcio Teste']) {
+      globalThis.__switcherQueries = [];
+      globalThis.__switcherSession = { actorId: 'actor', groupId: 'same-group-id', empresas: [
+        { id: 'company-a', group_id: 'same-group-id', status: 'Ativa' },
+        { id: 'company-b', group_id: 'same-group-id', status: 'Ativa' },
+        { id: 'foreign', group_id: 'other-group', status: 'Ativa' },
+        { id: 'inactive', group_id: 'same-group-id', status: 'Inativa' },
+      ] };
       globalThis.__switcherRender = { user: { id: 'actor' }, contexto: 'grupo',
         grupoAtual: { id: 'same-group-id', nome_do_grupo: name }, empresasDoGrupo: [],
         podeOperarEmGrupo: true, isLoading: false };
@@ -153,8 +160,17 @@ test('EmpresaSwitcher renderiza o nome do Grupo sem prefixo e preserva IDs', asy
       assert.match(html, /data-group-id="same-group-id"/);
       assert.match(html, /data-value="grupo:same-group-id"/);
       assert.match(html, /Grupo Corporativo/);
+      const companyQuery = globalThis.__switcherQueries.find(q => q.queryKey[0] === 'empresas-usuario');
+      assert.deepEqual((await companyQuery.queryFn()).map(e => e.id), ['company-a', 'company-b']);
+      globalThis.__switcherRender.empresasDoGrupo = [{ id: 'old-mirror', status: 'Ativa' }];
+      globalThis.__switcherSession.empresas = [];
+      assert.deepEqual(await companyQuery.queryFn(), [], 'revogacao nao restaura espelho anterior');
+      globalThis.__switcherSession.actorId = 'another-actor';
+      assert.deepEqual(await companyQuery.queryFn(), [], 'ator alheio nao recebe empresas');
     }
-  } finally { delete globalThis.__switcherRender; }
+  } finally {
+    delete globalThis.__switcherRender; delete globalThis.__switcherQueries; delete globalThis.__switcherSession;
+  }
 });
 
 test('Empresas view expõe origem do CNPJ', async () => {

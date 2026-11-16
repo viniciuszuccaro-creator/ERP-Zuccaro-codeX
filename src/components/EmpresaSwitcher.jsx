@@ -64,17 +64,20 @@ export default function EmpresaSwitcher() {
     enabled: !!user,
   });
 
+  const httpSession = isHttpBackendMode ? readErpHttpSession() : null;
+  const httpGroupId = user?.grupo_atual_id || grupoAtual?.id;
+  const httpBound = Boolean(httpSession && httpSession.actorId === user?.id && httpSession.groupId === httpGroupId);
+  const httpCompaniesKey = JSON.stringify(httpSession?.empresas?.map(e => [e.id, e.group_id, e.status]) || []);
   // Empresas disponíveis: somente empresas_vinculadas do usuario (sem Empresa.list global)
   const { data: empresasDisponiveis = [] } = useQuery({
-    queryKey: ['empresas-usuario', user?.id, user?.grupo_atual_id, empresasDoGrupo],
+    queryKey: ['empresas-usuario', user?.id, user?.grupo_atual_id,
+      isHttpBackendMode ? [httpSession?.actorId, httpSession?.groupId, httpCompaniesKey] : empresasDoGrupo],
     queryFn: async () => {
       if (isHttpBackendMode) {
-        const groupId = user?.grupo_atual_id || grupoAtual?.id;
-        const fromSession = (readErpHttpSession()?.empresas || [])
-          .filter((e) => (!groupId || e.group_id === groupId) && e.status === 'Ativa');
-        // Fallback: espelho/contexto já carregado (profiles[].empresas → sessão → empresasDoGrupo).
-        if (fromSession.length > 0) return fromSession;
-        return (empresasDoGrupo || []).filter((e) => e.status === 'Ativa' || !e.status);
+        const active = readErpHttpSession();
+        if (!active || active.actorId !== user?.id || active.groupId !== httpGroupId) return [];
+        // Empty/revoked server membership must never revive an older mirror.
+        return (active.empresas || []).filter(e => e.group_id === active.groupId && e.status === 'Ativa');
       }
       if (user?.empresas_vinculadas && user.empresas_vinculadas.length > 0) {
         const empresas = [];
@@ -105,7 +108,7 @@ export default function EmpresaSwitcher() {
   });
 
    // Filtro e ordenação local de empresas (UX)
-   const empresasListadas = (empresasDisponiveis || [])
+   const empresasListadas = (isHttpBackendMode && !httpBound ? [] : empresasDisponiveis || [])
      .filter((e) => {
        if (!termo) return true;
        const t = termo.toLowerCase();

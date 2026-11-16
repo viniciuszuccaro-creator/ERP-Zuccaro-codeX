@@ -219,11 +219,29 @@ export function useContextoGrupoEmpresa() {
     /** @param {string} empresaId */
     mutationFn: async (empresaId) => {
       if (isHttpBackendMode) {
-        const session = await refreshErpHttpSessionFromServer({});
-        const empresa = session?.empresas?.find(e => e.id === empresaId && e.group_id === session.groupId && e.status === 'Ativa');
-        if (!empresa) throw new Error('Empresa não autorizada para este perfil');
-        switchErpHttpSessionEmpresa({ empresaId });
-        return empresa;
+        const opened = readErpHttpSession();
+        if (!opened) throw new Error('Sessao ausente, invalida ou expirada. Entre novamente para trocar de empresa.');
+        let changed = false;
+        const invalidate = () => { changed = true; };
+        if (typeof window !== 'undefined') window.addEventListener(HTTP_CONTEXT_CHANGED, invalidate);
+        try {
+          const session = await refreshErpHttpSessionFromServer({});
+          if (!session) throw new Error('Nao foi possivel revalidar a sessao. A troca de empresa nao foi realizada.');
+          const active = readErpHttpSession();
+          if (changed || !active || ['token', 'actorId', 'groupId', 'empresaId', 'scopeType'].some(key => active[key] !== opened[key])
+              || ['token', 'actorId', 'groupId'].some(key => session[key] !== active[key])) {
+            throw new Error('Contexto alterado durante a troca. Selecione a empresa novamente.');
+          }
+          const empresa = session.empresas?.find(e => e.id === empresaId);
+          if (!empresa) throw new Error('Empresa selecionada nao consta nas autorizacoes atuais deste perfil.');
+          if (empresa.group_id !== session.groupId || empresa.status !== 'Ativa') {
+            throw new Error('Empresa fora do Grupo ativo ou indisponivel nesta sessao.');
+          }
+          switchErpHttpSessionEmpresa({ empresaId });
+          return empresa;
+        } finally {
+          if (typeof window !== 'undefined') window.removeEventListener(HTTP_CONTEXT_CHANGED, invalidate);
+        }
       }
       const empresas = await base44.entities.Empresa.filter({ id: empresaId });
       const empresa = empresas[0];
@@ -265,6 +283,12 @@ export function useContextoGrupoEmpresa() {
       return empresa;
     },
     onSuccess: (empresa) => {
+      if (isHttpBackendMode) {
+        const active = readErpHttpSession();
+        const current = active?.empresas?.find(e => e.id === empresa.id && e.group_id === active.groupId && e.status === 'Ativa');
+        if (!current || active.empresaId !== empresa.id || active.groupId !== empresa.group_id) return;
+        empresa = current;
+      }
       setContexto('empresa');
       setEmpresaAtual(empresa);
       setUser((prev) => prev ? { ...prev, contexto_atual: 'empresa', empresa_atual_id: empresa?.id || prev.empresa_atual_id } : prev);

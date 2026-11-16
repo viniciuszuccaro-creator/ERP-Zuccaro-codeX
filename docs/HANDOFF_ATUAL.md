@@ -1,3 +1,20 @@
+## Prioridade vigente: troca Grupo/Empresa (2026-11-16)
+
+Aceite visual do dono para lista Grupo/Codigo2f recebido. Relata negativa ao
+trocar para Empresa, nao pedido de criar perfil admin. Perfil/duas empresas
+conferidos privadamente; logs Auth200 sem payload nao provam sessao navegador.
+Delta atual corrige conflacao refresh-null/permissao e fallback de empresa
+revogada, rejeita contexto alterado durante await. Testes focados59PASS,
+audit/lint/typecheck/build PASS; suite Ubuntu via excecao draft vigente.
+Nao implantado: API/web permanecem2f, sem novo grant/perfil/carga/DDL.
+Proxima acao CI terminal do novo SHA, revisao e gate especifico API/web HML.
+WIP anterior GrupoForm/V24/policy estacionado em arquivo privado central
+incoming/organizacional-wip-20261116/preserved-code.tar.gz (26416bytes,
+SHA e8d647eb626058a3250c5fe4e5ccc4001ef5f0fa8b85bc91fa823c30fa993c91).
+Reaplicar apenas apos conferir base94c374f2 e hunks; nao perder esse WIP nem
+mistura-lo ao pacote contexto. Edicao organizacional ainda tem contratos
+legados e nao deve virar falso sucesso local. Sem controle visual disponivel.
+
 ## API/web HML2f aplicados; dados preservados (2026-11-16)
 
 AUTORIZACAO SIM recebida e executada em16:55UTC/13:55Brasilia. HML serve
