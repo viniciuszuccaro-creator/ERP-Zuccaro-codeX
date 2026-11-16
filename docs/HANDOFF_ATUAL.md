@@ -1,3 +1,10 @@
+## CI da revisao: rotulo dinamico (2026-11-16)
+
+CI b1215ab1 backend/PG/compose PASS; frontend3012PASS/1FAIL por AST de rotulo
+fiscal literal. Assercao atual exige os dois rotulos, opt-in/loading e nenhuma
+ativacao;29focaisPASS/0SKIP. Nao foi defeito do componente montado nem falhaPG.
+Fechar novoSHA pela CI; nenhuma implantacao/carga/ativacao realizada.
+
 ## Entrega: completar revisao sem ativar (2026-11-16)
 
 Empresa implementou opt-in ENTREGA no editor canonico ja usado pelo fiscal.

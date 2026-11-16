@@ -1,3 +1,11 @@
+## Fechamento da assercao de rotulo da revisao (2026-11-16)
+
+b1215ab1: CI passou backend completo/PG/compose, mas frontend3012PASS/1FAIL:
+asserção AST exigia texto fiscal literal, agora renderizado pelo reviewLabel.
+Atualizada SOMENTE essa assercao para exigir fiscal/entrega, opt-in, loading
+fail-closed e activate=false; nenhuma protecao removida ou pin alterado.
+29focaisPASS/0FAIL/0SKIP incluindo React real. NovaCI deve fechar o SHA seguinte.
+
 ## Revisao de entrega inativa e revogacao transacional (2026-11-16)
 
 Lacuna funcional: ENTREGA apenas abria rascunho; agora CadastroClienteCompleto

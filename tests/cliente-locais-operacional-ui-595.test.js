@@ -68,11 +68,14 @@ test('Completo: ENTREGA onOpenDraft + FISCAL allowReviewEdit (sem MASTER)', () =
   assert.match(revisao, /hasPermission\('Cadastros', 'cliente_local', 'visualizar'\)/);
 });
 
-test('Revisão: FISCAL in-place + ENTREGA rascunho; sem Ativar/Excluir', () => {
+test('Revisão: FISCAL/ENTREGA in-place e rascunho preservado; sem Ativar/Excluir', () => {
   assert.match(revisao, /allowReviewEdit/);
   assert.match(revisao, /Abrir rascunho de entrega/);
   assert.match(revisao, /nao grava nem ativa/i);
-  assert.match(revisao, /Salvar revisao fiscal sem ativar/);
+  assert.match(revisao, /reviewLabel = finalidade === 'FISCAL' \? 'fiscal' : 'entrega'/);
+  assert.match(revisao, /Salvar revisao \{reviewLabel\} sem ativar/);
+  assert.match(revisao, /!permissionsLoading && allowReviewEdit && \(finalidade === 'FISCAL' \|\| finalidade === 'ENTREGA'\)/);
+  assert.match(revisao, /activate: false/);
   assert.match(revisao, /onReviewMeta\(\{ finalidade, total: null, error: false \}\)/);
   assert.match(revisao, /Leitura indisponivel neste contexto ou sem permissao/);
   // Casa #6882444389/#6882628864: openDraft congela binding + loaded/epoch/canDraft.
