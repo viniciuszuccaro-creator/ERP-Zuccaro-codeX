@@ -208,6 +208,7 @@ async function mountCompleto(relPath, {
     '@/api/httpApiClient': { createHttpApiClient: () => ({ clientes: { listLocais: async () => [] } }) },
     '@/api/erpHttpSession': { readErpHttpSession: () => null },
     '@/api/clienteHttpPayload': {
+      hydrateClienteHttpRowForUi: localPayload.hydrateClienteHttpRowForUi,
       mapClienteLocalToUiEndereco: (row) => ({
         apelido: row?.nome || '',
         tipo_endereco: 'Entrega',

@@ -1,3 +1,14 @@
+## CPF/CNPJ PR594: commit de validacao autorizado (2026-11-17)
+
+Portrestrito dos hunksCPF da branch preservada paraPR594 REAL(continuidade-591),
+base76dc3832.7c26c3f3/CI7245 pertence a branchcasa,naoPR594;guards falharam.
+Correcoes:hidratar primeirostate e enviarCPF/CNPJ editado em documento canonico.
+17assertsReact real/fronteiras sinteticasPASS;35afetadosguard/reaberturaPASS.
+PeelEXATO dos4hunks,hashesancestrais intactos;testeRG continua negativas.
+SomentevalidacaoUbuntu autorizada,NAO HOMOLOGADO,semmerge/deploy/carga/DDL/grants.
+BasePR594 anterior as capacidadesHML:nao substituir runtimeinteiro por esseport.
+HMLde17088c preservada;proximo:CIexata->parecer->composicao/pacoteHML porgate.
+
 ## Fiscal canonico e callback: pacote de interface em validacao (2026-11-14)
 
 Codigo38b4e1ec remotoPR594 / CI7038/7039SUCCESS. RootUbuntu2974PASS/0FAIL/0SKIP,

@@ -1,3 +1,38 @@
+## CPF/CNPJ: port restrito na PR594 para CI Ubuntu (2026-11-17)
+
+NAO HOMOLOGADO para publicacaoHML. Dono autorizou somente commit validacao/CI,
+sem merge,deploy,carga,DDL ou permissoes. HML continua de17088c,5100ativos/
+1500inativos preservados. Nenhuma escrita ou acesso VPS neste lote de publicacao.
+
+Reconferencia GitHub detectou divergencia do acompanhamento: PR594 aponta para
+codex/continuidade-591-20261111/76dc3832,NAO codex/casa-fechamento-hml-20261114.
+7c26c3f3 foi enviado primeiro na branch de continuidade preservada;CI7245
+identificou guardas historicas nao compostas. Nao atribuir esse SHA aPR594.
+Sem reset/force:portados SOMENTE hunksCPF/testes para a branch existente daPR594,
+sem copiar as outras mudancas posteriores de locais/A1/servicos/repositorios.
+
+Dois defeitos reproduzidos no formulario real montado:primeira abertura nao
+hidratava documento->CPF/CNPJ;save do campo editado mantinha alias documento
+antigo. Reutiliza hydrateClienteHttpRowForUi e torna campoPF/PJ carregado dono
+do documento no save. Limpeza de documento anterior falha fechada,sem wipe.
+17asserts montados sinteticos cobrem PF/PJ,zeros,edicao,rejeicao,fio canonico,
+reabertura e omissao de contatos/locais. NAO e prova de navegador/API/PG real.
+
+Guardas de preservacao:camadaEXATA no helper operacional existente remove apenas
+os4hunks novos;hashes e expectativas ancestrais mantidos. Teste compara TODO
+formulario ao76dc3832 e rejeita omissao/repeticao/adulteracao;edicao externa
+permanece visivel. TesteRG projeta essa camada antes de adulterar o hunk antigo,
+sem remover suas negativas.35afetadosPASS;47adaptador/reabertura/gradePASS nesta
+base. Nao herdar contagem48 da branch mais recente(um teste de codigo nao existe
+nesta base). CIUbuntu do SHAportado deve fechar antes de qualquer aceite.
+FullWindows anterior falhou por Python/getuid e pelos guards corrigidos;nao
+declarar fullPASS local. Fonte/planos privados permanecem naVPS,foraGit.
+
+ATENCAO:PR594 tem base anterior a capacidades ja servidas naHML. CIverde deste
+port NAO autoriza substituir runtimeHML pela branch inteira. Proximaacao:
+conferir CI exata,registrarparecer;compor CPF com runtime aprovado preservando
+demais capacidades antes de preparar/promoverHML por gate especifico.
+
 ## Fiscal canonico e callback: consumidor montado, sem ativacao (2026-11-14)
 
 FECHADO codigo38b4e1ecf5f88499ce4949f3eb4ed87fa731a4e2 remotoPR594,
