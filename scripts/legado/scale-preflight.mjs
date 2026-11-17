@@ -35,6 +35,7 @@ export async function assessPreparedClientScale(db, prepared, authorize) {
         try { await authorize(manifest.context, action, q); permissions[action] = true; }
         catch (error) { if (error?.statusCode !== 403) throw error; permissions[action] = false; }
       }
+      assert.ok(permissions.visualizar, 'LEGACY_VIEW_PERMISSION_REQUIRED');
       const rows = (await q.query(`SELECT id,codigo,codigo_legado,source_system,documento_normalizado,ativo
         FROM clientes WHERE group_id=$1 ORDER BY id`, [manifest.context.groupId])).rows;
       const conflicts = (await q.query(`WITH incoming AS (

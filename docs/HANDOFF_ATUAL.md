@@ -1,5 +1,25 @@
 ## Prioridade legado: escala parcial revalidada, gate especifico solicitado (2026-11-17)
 
+Delta de fechamento:ae6290ab/CI7241 falhou no NOVO fixture restrito deCRM que
+nao tinhaSELECTCliente;nao e falha da HML(concessao existente la confirmada).
+Contraprova mantem42501 ANTES de conceder apenasSELECT/policyGrupo ao role
+descartavel daCI;nenhum grant foi alterado naHML. Auto-revisao acrescentou trava
+visualizar negado ANTES de qualquer SELECTCliente;nao basta registrar false.
+Unitario garante zeroSELECTdados nesse negativo e erroSQL nao vira vazio.
+Preflight realR3:13.598segundos/264MiB;NAO velocidade de carga.
+
+Independente da carga:classifyLegacyAddresses EXISTENTE executado comMESMOS
+5000registrosCSV+join porindice/codigo eSHAoriginais.5000componentesFISCAIS,
+0prontos paraativacao;5000semnumero/pais/nomeDOLOCAL(nao nomecliente),50CEP_FORMAT,
+34cobrancas excluidas pela decisao existente. Sem inferir numero/pais oucriarlocal.
+Proveniencia da finalidade referencia SHA31ffa697 do HANDOFF ae6290ab,explicitamente
+derivada da decisao canonica;NAO relabelada como recibo original do dono.
+6arquivos publicos do mapper foram centralizados por gitarchive/hashfbdba3a9
+(hash completo no recibo privado);sem dado/credencial/GitHub adicional. R1 nao
+leu codigo por diretorio700;R2 mounts de arquivos readonly,sem mudarACL PASS.
+Recibos fiscal-classification(-execution-r2/.receipt) privados;0SQL/0cargas.
+Plano original permanece intacto e pergunta do gate ja enviada;nao repeti-la.
+
 Empresa/Codex assume somente este lote;Cursor semcredito por diretriz do dono.
 Checkout interno/PR594,origem canonica,3098a362 limpo antes;sem reset/outra
 candidata/escritor identificado. CofreA1 fica na fila propria,sem bloquear legado.

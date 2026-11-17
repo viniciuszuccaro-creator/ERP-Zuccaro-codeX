@@ -1,5 +1,12 @@
 ## Legado priorizado: selecao5000 revalidada,0cargas (2026-11-17)
 
+CI7241ae6290ab falhou no fixtureCRM semSELECTCliente;negativo42501 preservado
+antes do grant/policy exclusivo daCI. Nova trava nega leitura se visualizar403.
+Fiscal por mapperexistente:5000componentes,0completos,50CEPem revisao,34cobrancas
+excluidas. Numero/pais/nomeDOLOCAL faltam;nao confundir com nome do cliente.
+13.598s do preflight realNAO e throughputde importacao. Gate5000parciais+indice
+segue aguardandoresposta;nenhuma carga,DDL/grantHML,ativacao ou deploy executado.
+
 Nova ferramenta readonly reusa plano/importador:identidadefisica/RBAC real,
 conflitos set-based,storage/RLS e ROLLBACK. HML tem1600clientes(100ativos,
 1500inativos);0conflitos da selecao5000 noGrupoCPA,0identidadesduplicadas;

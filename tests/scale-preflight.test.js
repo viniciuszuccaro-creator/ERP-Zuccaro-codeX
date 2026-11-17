@@ -20,4 +20,7 @@ test('scale assessment is read-only, rolls back and never promotes applicability
   assert.ok(calls.every(sql=>!/^\s*(INSERT|UPDATE|DELETE|ALTER|CREATE|DROP|GRANT|TRUNCATE)\b/i.test(sql)));
   await assert.rejects(assessPreparedClientScale(db,{...plan,manifest:{...plan.manifest,target:{...target,database:'wrong'}}},async()=>{}),/LEGACY_PHYSICAL_TARGET_MISMATCH/);
   await assert.rejects(assessPreparedClientScale(db,plan,async()=>{throw Error('QUERY_FAILURE');}),/QUERY_FAILURE/);
+  const beforeDenied=calls.length;
+  await assert.rejects(assessPreparedClientScale(db,plan,async()=>{throw Object.assign(Error('DENIED'),{statusCode:403});}),/LEGACY_VIEW_PERMISSION_REQUIRED/);
+  assert.ok(calls.slice(beforeDenied).every(sql=>!sql.includes('FROM clientes')));
 });

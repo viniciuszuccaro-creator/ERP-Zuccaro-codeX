@@ -23,9 +23,15 @@ test('native PostgreSQL scale assessment: restricted login, physical binding, co
       const snapshot=async()=>(await f.admin.query('SELECT to_jsonb(c) AS row FROM clientes c ORDER BY id')).rows;
       const before=await snapshot();
       const authorize=(ctx,action,q)=>deps.rbac.assertAllowed(ctx,'Cadastros','cliente',action,{executor:q,allowGlobalWildcard:false});
+      await assert.rejects(assessPreparedClientScale(db,plan,authorize),{code:'42501'});
+      // CRM's restricted fixture intentionally has no Cliente SELECT grant. Only this disposable role gains it.
+      await f.admin.query(`GRANT SELECT ON clientes TO "${f.role}"`);
+      await f.admin.query(`CREATE POLICY scale_fixture_cliente_read ON clientes FOR SELECT TO "${f.role}"
+        USING(group_id=NULLIF(current_setting('app.group_id',true),'')::uuid)`);
       const result=await assessPreparedClientScale(db,plan,authorize);
       assert.equal(result.selected,3);assert.equal(result.conflictingSelected,0);assert.equal(result.duplicateIdentity,0);
       assert.equal(result.applicable,false);assert.equal(result.businessWrites,0);assert.equal(result.readOnlyRollback,true);
+      assert.ok(result.existing>0);
       assert.deepEqual(await snapshot(),before);
       await assert.rejects(assessPreparedClientScale(db,{...plan,manifest:{...plan.manifest,target:{...plan.manifest.target,schemaOid:1}}},authorize),/LEGACY_PHYSICAL_TARGET_MISMATCH/);
       assert.deepEqual(await snapshot(),before);
