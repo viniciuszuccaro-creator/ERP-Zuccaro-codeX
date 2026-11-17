@@ -1,3 +1,24 @@
+## HML fiscal publicada de17088c / CI7229SUCCESS (2026-11-17)
+
+PR594:de17088cf9337dc71f715b05c56f945d56f7c694 publicado eHML API/webpromovidos
+11:12UTC/08:12Brasilia,HTTPS/marker/assetSHA eanonimo401conferidos.
+Gate do dono aplicado:IE nullableGrupo/Empresa e regimeEmpresa,UPDATE nessas
+trescolunas,semdefaults/backfill/perfis/roles/policies/operacional. Fiscaleditar
+jaexistente preservado;API exige permissao granular+CAS+auditoriaatomica.
+Ensaio SQL/reversa/ROLLBACK16tabelas eensaio canonicogravar/ler/reverter noPGHML
+PASS,semvalores fiscais comprometidos. APP freshpool/3noop saves/reaberturaPASS.
+Auditoria nova somentecapacidadeSchema,semduplicacao;16fingerprints preservados
+na promocao,PG/ERPDEV mesmoscontainers. ReversaAPP854conservadaparada.
+Backup posDDL hml-20261117T111025Z-d9a21eed restaurado/ACKexterno;kit/planos/
+reciboscentralizadosprivados eindiceCASatualizado. Procedimento automaticobackup
+apontaparanovaconfig;backupfinal hml-20261117T111259Z-584be370 restaurado eACK
+externoconferidos,semleasependente. Nao confundir ensaioServicoPG ou Chromiumsyntetico com
+aceiteBearer/browserdono:estepermanecependente. URL:https://hml-erp.cpaferroeaco.com.br/cadastros.
+Cofre conectado no codigo,NAOativado:trust/CRL,chave/backup,schema epermissao
+certificado ainda gatesdistintos. Aguardar apenasnomeemissora,semPFX/senhachat.
+Codigos seisblocos:mapearservidor/consumidores,semrenumerarlegado/DDLindiscriminado.
+Nenhumacarga,reativacao,enderecoativadooualteracaooperacional. DetalhesHANDOFF.
+
 ## Delta fiscal e conexao segura do cofre em validacao (2026-11-17)
 
 Gate do dono recebido para tres colunas fiscais nullable e seus UPDATEs somente

@@ -1,3 +1,48 @@
+## IE/regime APLICADOS; API/web de17088c/CI7229 (2026-11-17)
+
+Publicado na PR594:de17088cf9337dc71f715b05c56f945d56f7c694,CI7229SUCCESS
+(frontend/backend/compose, incluindo PostgreSQL nativo). HML promovida11:12UTC,
+08:12Brasilia:https://hml-erp.cpaferroeaco.com.br/cadastros. API/web/HTTPS/asset
+conferem SHA,anonimoCliente401;16fingerprints preservados;PG eERPDEV mesmosIDs.
+Reversa APP85471730 conservada parada. Sem merge/main ou alteracao operacional.
+
+Gate fiscal SIM EXECUTADO:groups.inscricao_estadual,empresas.inscricao_estadual
+eempresas.regime_tributario nullable,sem defaults/backfill,UPDATE somente essas
+trescolunas ao principalAPP existente. Nenhuma nova policy/role/perfil ou emissao.
+Fiscal.tabelas_fiscais.editar JA existia no formato objeto/_acoes;nao confundir
+com arraydireto. Mantidos codigo001/001/002,vinculos e demaisvalores.
+
+Backup anterior hml-20261117T105947Z-8c0af041 restaurado/ACKexterno. Ensaio SQL
+adicionar/revogar/reverter/ROLLBACK preservou16tabelas/estrutura/policies. Depois
+ensaio servicoOrganizacional REAL no PG HML,helpersemrede/portas/read-only,
+imagemfixada,256MiB/.2CPU:gravar/ler/reverter IE/regime,IDs/codigos preservados,
+tudoROLLBACK. Aplicacao:3colunasvazias e1auditoria canonica;valoresfiscaisZERO.
+Reabertura porpoolAPP real e3noop saves PASS,sem duplicar audit. Isso NAO e
+Bearer/browserautenticado. Aceite visual da sessao do dono permanece PENDENTE.
+
+Backup posDDL hml-20261117T111025Z-d9a21eed restaurado/ACKexterno usado na
+promocao. Tentativa anterior bloqueada DEPLOYMENT_WRITER_ACTIVE durante verify;
+trava respeitada,novo backup somente apos encerrar verify. Backup automatico
+agora aponta para configde17088c;backup pospromocao
+hml-20261117T111259Z-584be370 restaurado/ACKexterno conferidos,semleasependente.
+
+Central imutavel:shared-artifacts/incoming/empresa-de17088c,2220arquivos/
+17928687bytes,hashesconferidos;SQLpin f3ba75207f67abca19c89f37c358c73942a65dd37fef45d0772ee8ec6e2b6c50.
+Recibos schema.rehearsal ecanonical-rehearse/apply/verify privados;promocao em
+promotion-de17088c-20261117-r1/promotion.receipt.private.json. IndicecentralCAS
+atualizado,preservadoinventarioanterior. Transporte parcial detectado peloSHA
+foiquarentenado semextracao;reenviofinalconfere. Nao reutilizar parcial.
+
+Cofre preparado no codigo/painel,NAO operacional:sem a1_certificate_vault nem
+Fiscal.certificado.visualizar no perfil. Falta autoridadeemissora/trust/CRL,
+protecao/backup de chave e gate concreto schema/permissoes. Nao ampliarperfil
+automaticamente,nem coletar arquivo/senha no chat ou persistir no cadastro.
+Nenhum certificado carregado/ativado. Seis blocos continuam mapa de alcance,
+nao anunciar codigos de todas as entidades por catalogo local.
+Proximaacao:aceite visualIE/regime com sessaoexistente;fechar pacote segurocofre
+apos dado da emissora;priorizar lacunas reais doscodigos porentidade semDDLgeral.
+100ativos/1500inativos/4200contatos/217locais preservados,semcargas/ativacoes.
+
 ## IE/regime autorizados; cofre preparado sem ativacao (2026-11-17)
 
 Fotos novas encerram a ambiguidade: Atualizar Grupo/Atualizar Empresa aparecem;
