@@ -142,8 +142,8 @@ test('callback real do painel: duplo clique, commit antes refresh, falha e limpe
     const busy = { current: false }, alive = { current: true }, operation = { current: null };
     let finish, calls = 0, refreshed = 0;
     const errors = [];
-    const run = panelUpload({ file, password, busy, alive, operation, allowed: true, ready: true,
-      scope: expected, metadata, setPending() {}, setError: value => errors.push(value), crypto,
+    const run = panelUpload({ file, password, busy, alive, operation, generation: {current:1}, allowed: true, ready: true,
+      scope: expected, metadata, setPending() {}, setResult() {}, setError: value => errors.push(value), crypto,
       onUploaded: async () => { refreshed++; }, a1CertificateApi: { upload: async () => { calls++; await new Promise(resolve => { finish = resolve; });
         if (reject) throw Error('SECRET'); return metadata; } } });
     const pending = run(); await run();
@@ -154,4 +154,18 @@ test('callback real do painel: duplo clique, commit antes refresh, falha e limpe
     assert.equal(busy.current, false); assert.equal(operation.current, null);
     assert.equal(errors.some(value => value.includes('SECRET')), false);
   }
+});
+
+test('painel descarta conclusao antiga sem apagar arquivo ou senha do novo contexto', async () => {
+  let finish, refreshed=0;
+  const generation={current:1},file={current:{files:[input().file],value:'old.pfx'}},password={current:{value:'old-synthetic'}};
+  const operation={current:null},busy={current:false};
+  const run=panelUpload({file,password,busy,operation,generation,alive:{current:true},allowed:true,ready:true,scope:expected,metadata,
+    setPending(){},setResult(){},setError(){},crypto,onUploaded:async()=>{refreshed++;},
+    a1CertificateApi:{upload:async()=>new Promise(resolve=>{finish=resolve;})}});
+  const pending=run();
+  generation.current++;operation.current.abort();busy.current=false;
+  file.current.value='new.pfx';password.current.value='new-synthetic';
+  finish(metadata);await pending;
+  assert.equal(refreshed,0);assert.equal(file.current.value,'new.pfx');assert.equal(password.current.value,'new-synthetic');
 });

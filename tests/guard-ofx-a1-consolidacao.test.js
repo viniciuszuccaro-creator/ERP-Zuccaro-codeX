@@ -104,11 +104,12 @@ test('A1 panel lifecycle aborts clears refs and removes context listener without
   visit(tree); assert.ok(expression);
   let listener, removed = 0;
   const alive = { current: false }, operation = { current: new AbortController() };
+  const controller=operation.current,generation={current:0},busy={current:true};
   const file = { current: { value: 'synthetic.pfx' } }, password = { current: { value: 'synthetic-only' } };
   const window = { addEventListener: (_name, fn) => { listener = fn; }, removeEventListener: (_name, fn) => { assert.equal(fn, listener); removed++; } };
-  const effect = new Function('window', 'HTTP_CONTEXT_CHANGED', 'alive', 'operation', 'file', 'password', 'setError', `return (${expression});`)(window, 'synthetic-event', alive, operation, file, password, value => assert.ok(!value.includes('synthetic-only')));
+  const effect = new Function('window', 'HTTP_CONTEXT_CHANGED', 'alive', 'operation', 'file', 'password', 'setError', 'generation','busy','allowed','ready','setPending','setResult', `return (${expression});`)(window, 'synthetic-event', alive, operation, file, password, value => assert.ok(!value.includes('synthetic-only')),generation,busy,true,true,()=>{},()=>{});
   const cleanup = effect(); listener();
-  assert.equal(operation.current.signal.aborted, true); assert.equal(file.current.value, ''); assert.equal(password.current.value, '');
+  assert.equal(controller.signal.aborted, true); assert.equal(operation.current,null);assert.equal(busy.current,false);assert.ok(generation.current>1);assert.equal(file.current.value, ''); assert.equal(password.current.value, '');
   cleanup(); assert.equal(alive.current, false); assert.equal(removed, 1);
   assert.doesNotMatch(source, /localStorage|sessionStorage|setPassword|setFile|console\./);
 });

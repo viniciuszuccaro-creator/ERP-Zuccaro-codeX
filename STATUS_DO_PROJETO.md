@@ -1,3 +1,31 @@
+## A1 manual: protecoes e configuracao em fechamento (2026-11-17)
+
+Nao buscar certificados na maquina. Dono anexara pelo EmpresaForm/painel
+existente; nome manual da certificadora nao bloqueia desenvolvimento. Factory
+opt-in liga o cofre canonico no bootstrap HML com arquivos privados limitados,
+hashes, ownership e chave externa, sem criar schema/chaves ou buscar URLs de
+uploads. Painel limpa por perda de permissao/disponibilidade e impede resposta
+antiga de limpar selecao nova; cancelamento nao afirma rollback remoto.
+Metadados e confirmacao de armazenamento nao liberam emissao fiscal.
+
+Schema candidato de uma tabela/RLS/grants minimos preparado, fora do journal.
+Suite nativa PG adicionada obrigatoriamente para persistencia/RLS/CAS/rollback;
+nao equivale ao ciclo completo PKCS12/Auth/browser. Gate especifico de schema,
+visualizar/importar e chave/backup independente solicitado, ainda nao executado.
+Sem ativar cofre, orientar upload real, alterar operacional ou ampliar perfil.
+
+Plano5000 central conferido:5000 parciais/0completos/0importados,1600existentes
+excluidos,987inativos preservados;245emails/0telefones/0celulares escalares.
+Conflitos do snapshot nao substituem reconferencia atual. Auxiliares e relacoes
+pendentes nao serao inventados. Codespace sem novas tentativas. HML continua
+de17088c/CI7229; nenhuma implantacao ou carga neste lote ate este checkpoint.
+Validacoes locais:652PASS/43SKIP/0FAIL backend completo;16 contratos/guardas A1;
+componente real montado em Chromium PASS;3 checks focados bootstrap PASS.
+Audit baseline/lint/typecheck/build web e servidor PASS (2 avisos lint antigos).
+Suite raiz integral e novos testes Linux/PG nativo ficam no SHA exato da CI
+Ubuntu pela excecao draft vigente, sem repetir hang POSIX Windows. Nao homologado
+para A1 real antes desses testes e gates. Detalhes no HANDOFF, sem outro manual.
+
 ## HML fiscal publicada de17088c / CI7229SUCCESS (2026-11-17)
 
 PR594:de17088cf9337dc71f715b05c56f945d56f7c694 publicado eHML API/webpromovidos

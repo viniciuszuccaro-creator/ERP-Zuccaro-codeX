@@ -1,3 +1,71 @@
+## Cofre A1: envio manual, runtime opt-in e gates separados (2026-11-17)
+
+Diretriz atual do dono: NAO procurar certificados locais ou instalados. O dono
+selecionara PFX/P12 no cadastro da Empresa. Nome manual da certificadora NAO e
+dependencia de desenvolvimento nem bloqueio da tela. Identificar cadeia durante
+a validacao do arquivo; confiar apenas em anchors/policies/CRLs configurados,
+nunca em raizes incluidas no upload. Nao orientar envio real antes do aceite.
+
+Reusados A1VaultService, PostgresA1VaultRepository, A1VaultEncryption,
+A1FileProtectionKeys, route e CertificadoA1Panel. Nova configuracao auxiliar
+a1VaultConfiguration.ts e necessaria porque nao havia factory/loader de trust
+e chave no runtime; nao cria outro cofre. Opt-in HML por a1VaultConfigFile em
+mount /run/a1-config. Config ausente nao acessa DB/arquivos; invalida bloqueia
+startup sem expor causa interna. Nenhuma geracao automatica de chave, DDL,
+grants, carga ou fetch de URLs fornecidas pelo certificado.
+
+Loader verifica caminhos explicitos, ownership/ACL, symlink/hardlink, tamanho,
+hashes de roots/CRLs, validade e chave externa. Recusa principal super/BYPASSRLS.
+Validacao criptografica e de revogacao permanece no servico existente por upload.
+Nao confundir loader configurado ou hash valido com cadeia confiavel comprovada.
+Fonte oficial consultada: repositorio AC-Raiz do ITI e arquivo unico de ACs com
+hash SHA-512, em https://www.gov.br/iti/pt-br/assuntos/repositorio/repositorio-ac-raiz
+e https://www.gov.br/iti/pt-br/assuntos/repositorio/certificados-das-acs-da-icp-brasil-arquivo-unico-compactado .
+
+Painel: apagar refs e abortar ao perder permissao/ready, trocar contexto ou
+desmontar; geracao impede finally antigo de apagar nova selecao. Cancelamento
+nao promete rollback remoto. Confirmacao de armazenamento distingue falha de
+refresh dos metadados; fingerprint/validade/situacao/trust version sao publicos,
+nao habilitam emissao. Testes de callback e componente real montado possuem
+fronteiras sinteticas; nao sao browser->Auth->API->PG operacional.
+
+Schema CANDIDATO a1_certificate_vault.sql fora do journal: uma tabela existente
+no contrato do repositorio, FK, checks envelope, operacao unica por tenant,
+indice ACTIVE unico e RLS FORCE por Grupo/Empresa. Grants apenas SELECT,
+INSERT colunas nomeadas e UPDATE state/revision/encrypted_envelope ao principal
+existente. Gate fisico HML; sem DELETE, novo role ou migration geral. Nova suite
+a1-vault.pg.ts obrigatoria no runner nativo prova armazenamento cifrado/RLS/CAS/
+rollback/reabertura; nao se apresenta como aceite PKCS12 ou Auth real.
+
+Autorizacao concreta solicitada: tabela/grants HML, visualizar/importar no perfil
+ja conferido e chave exclusiva readonly com backup independente/recuperacao
+ensaiada ANTES de A1 real. Aguardando resposta; NAO aplicar por inferencia do gate
+IE/regime. Sem usar/emitir, novos usuarios/roles ou operacional. Metodo de guarda
+e recuperacao da chave ainda deve ser comprovado, nao presumir backup do banco
+como backup suficiente. HML continua de17088c/CI7229; cofre NAO operacional.
+
+Legado5000 reconferido pelo plano/recibo central, hash comprimido confere:
+5000 parciais preparados, 0 completos confirmados, 0 importados;1600 existentes
+excluidos,987 inativos segregados. Fonte mestre cobre245 emails,0telefones e
+0celulares escalares. Conflitos0 sao do snapshot do plano, nao do destino atual.
+Auxiliares nativos alem1600, reconciliacao campo/vinculo, indice candidato e gate
+do lote ativo seguem distintos. Nao repetir carga nem tentar Codespace/Billing.
+Artefatos: shared-artifacts/incoming/scale-5000-20261116 (VPS), nao copiar dados
+para fixtures/GitHub. Nao anunciar esses5000 como completos ou importados.
+
+Check local:652PASS/43SKIP/0FAIL backend completo;16contratos/guardas A1,
+componente real montado Chromium e3checks bootstrap PASS. Audit baseline,
+lint/typecheck/build PASS,2avisos lint preexistentes. Suite raiz completa e
+Linux/PG nativo dependem CI Ubuntu do SHA publicado (excecao draft vigente).
+Recibo novo privado:scale-5000-20261116/field-coverage-20261117.private.json:
+5000/5000 pendentes,927IE/245email no payload preparado. Nao mede velocidade
+de importacao completa nem revalida conflitos do destino atual.
+
+Proxima acao: fechar checks/CI do lote; preparar pacote privado de configuracao,
+schema/reversa e recuperacao de chave condicionado ao gate. Ensaio integrado
+com PFX sintetico e trust sintetico isolados ainda necessario antes de orientar
+o dono; trust sintetico nunca sera instalado na HML como ICP-Brasil real.
+
 ## IE/regime APLICADOS; API/web de17088c/CI7229 (2026-11-17)
 
 Publicado na PR594:de17088cf9337dc71f715b05c56f945d56f7c694,CI7229SUCCESS

@@ -2,6 +2,7 @@ import { spawnSync } from 'node:child_process';
 
 if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL is required for test:postgres');
 const suites = [
+  ['A1_VAULT_PERSISTENCE', 'tests/a1-vault.pg.ts'],
   ['ORGANIZACIONAL_CODES', 'tests/organizacional-codes.pg.ts'],
   ['COMMERCIAL_COMPOSITION', 'tests/comercial-expedicao-composicao.test.ts'],
   ['R11_STOCK', 'tests/runtime11-expedicao-persistent-postgres.test.ts'],

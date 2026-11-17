@@ -8,7 +8,7 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 
-test('real mounted Grupo form: linked companies, code, rejection and session cache isolation', { timeout: 120000 }, async () => {
+test('real mounted organizational forms and A1 panel with synthetic API boundaries', { timeout: 120000 }, async () => {
   const cache = path.join(os.homedir(), '.cache/ms-playwright');
   const installed = existsSync(cache) ? readdirSync(cache).filter(n => /^chromium-\d+$/.test(n))
     .flatMap(n => ['chrome-linux/chrome', 'chrome-linux64/chrome'].map(f => path.join(cache, n, f))) : [];
@@ -20,6 +20,7 @@ import React,{act} from 'react';import {createRoot} from 'react-dom/client';
 import {QueryClient,QueryClientProvider} from '@tanstack/react-query';
 import Form from './src/components/cadastros/GrupoEmpresarialForm.jsx';
 import Empresa from './src/components/cadastros/EmpresaForm.jsx';
+import A1Panel from './src/components/fiscal/CertificadoA1Panel.jsx';
 window.IS_REACT_ACT_ENVIRONMENT=true;window.__actor='actor';window.__company=null;window.__pending=[];window.__contextReady=false;
 const client=new QueryClient({defaultOptions:{queries:{retry:false,staleTime:Infinity}}});
 client.setQueryData(['empresas','g'],[]);
@@ -70,6 +71,23 @@ async function run(){
  check('fiscal_rehydration_same_identity_new_version',ie().value==='000987'&&host.querySelector('select').value==='Lucro Real');
  window.__fiscal=false;await renderCompany();await pause();check('fiscal_permission_distinct',ie().disabled&&host.querySelector('select').disabled);
  window.__fiscal=true;company={...company,version:'v3',supported_fields:[]};await renderCompany();await pause();check('fiscal_missing_storage_blocked',ie().disabled&&host.querySelector('select').disabled);
+ window.__fiscal=true;window.__uploads=[];
+ const panelScope={groupId:'g',empresaId:'a',actorId:'actor'};let refreshed=0;
+ const renderPanel=()=>act(async()=>root.render(<A1Panel scope={panelScope} ready={true} onUploaded={async()=>{refreshed++;}}/>));
+ await renderPanel();await pause();
+ const attach=()=>{const dt=new DataTransfer();dt.items.add(new File(['SYNTHETIC NOT CERTIFICATE'],'synthetic.pfx',{type:'application/x-pkcs12'}));host.querySelector('input[type=file]').files=dt.files;host.querySelector('input[type=password]').value='SYNTHETIC ONLY';};
+ attach();await act(async()=>host.querySelector('button').click());await pause();
+ check('a1_manual_upload_single_request',window.__uploads.length===1);
+ check('a1_sensitive_fields_not_echoed',!host.textContent.includes('SYNTHETIC ONLY')&&host.textContent.includes('Validando arquivo'));
+ const oldUpload=window.__uploads[0];window.__fiscal=false;await renderPanel();await pause();
+ check('a1_permission_loss_aborts_and_erases',oldUpload.signal.aborted&&host.querySelector('input[type=file]').files.length===0&&host.querySelector('input[type=password]').value==='');
+ window.__fiscal=true;await renderPanel();await pause();attach();
+ await act(async()=>oldUpload.resolve({}));await pause();
+ check('a1_late_result_cannot_clear_new_selection',host.querySelector('input[type=file]').files.length===1&&host.querySelector('input[type=password]').value==='SYNTHETIC ONLY'&&refreshed===0);
+ await act(async()=>host.querySelector('button').click());await pause();
+ await act(async()=>Array.from(host.querySelectorAll('button')).find(b=>b.textContent.includes('Cancelar')).click());await pause();
+ check('a1_cancel_erases_without_false_rollback',window.__uploads[1].signal.aborted&&host.querySelector('input[type=file]').files.length===0&&host.querySelector('input[type=password]').value===''&&host.textContent.includes('Consulte o cofre'));
+ await act(async()=>window.__uploads[1].resolve({}));await pause();check('a1_cancel_no_success',refreshed===0&&!host.textContent.includes('armazenado no cofre'));
  await act(async()=>root.unmount());return{checks};
 }
 run().then(r=>fetch('/result',{method:'POST',body:JSON.stringify(r)})).catch(e=>fetch('/result',{method:'POST',body:JSON.stringify({error:String(e),checks})}));`;
@@ -86,13 +104,15 @@ run().then(r=>fetch('/result',{method:'POST',body:JSON.stringify(r)})).catch(e=>
       b.onResolve({ filter: /^@\/components\/lib\/useContextoVisual$/ }, () => ({ path: 'context', namespace: 'boundary' }));
       b.onResolve({ filter: /\/useCertificadoA1$/ }, () => ({ path: 'vault', namespace: 'boundary' }));
       b.onResolve({ filter: /^@\/components\/common\/FormWrapper$/ }, () => ({ path: 'wrapper', namespace: 'boundary' }));
+      b.onResolve({ filter: /^@\/api\/httpApiClient$/ }, args => args.importer.endsWith('CertificadoA1Panel.jsx') ? ({path:'a1api',namespace:'boundary'}) : undefined);
       b.onResolve({ filter: /^@\/components\/ui\// }, args => ({ path: args.path.split('/').at(-1), namespace: 'boundary' }));
       b.onLoad({ filter: /.*/, namespace: 'boundary' }, args => ({ contents: args.path === 'mode' ? 'export const isHttpBackendMode=true;'
         : args.path === 'permissions' ? `export default()=>({user:{id:window.__actor},canCreate:()=>false,canEdit:()=>true,canDelete:()=>false,hasPermission:(m)=>m==='Fiscal'?window.__fiscal!==false:true,hasPermissionKey:()=>false,isLoading:false});`
+        : args.path === 'a1api' ? `export const a1CertificateApi={upload:(_scope,_input,{signal})=>new Promise(resolve=>window.__uploads.push({resolve,signal}))};`
         : args.path === 'vault' ? `export default()=>({scopeMatches:false,allowed:false,certificate:null,certificateQuery:{isLoading:false,isSuccess:false,error:null},a1Scope:{},panelKey:'unconfigured',certificateQueryKey:['vault']});`
         : args.path === 'wrapper' ? `import React from 'react';export default({children,onSubmit})=><form onSubmit={e=>{e.preventDefault();onSubmit();}}>{children}</form>;`
         : args.path === 'context' ? `export const useContextoVisual=()=>({grupoAtual:window.__contextReady?{id:'g'}:null,empresaAtual:null,contextoCanonico:{groupId:window.__contextReady?'g':null},isLoading:!window.__contextReady&&!window.__contextFailed,filterInContext:()=>window.__contextReady?new Promise(r=>window.__pending.push(r)):Promise.resolve([])});`
-        : `import React from 'react';const Part=({children,...p})=>React.createElement('${args.path === 'input' ? 'input' : args.path === 'textarea' ? 'textarea' : args.path === 'button' ? 'button' : 'div'}',p,children);const Select=({value,onValueChange,disabled,children})=>React.createElement('select',{value,onChange:e=>onValueChange(e.target.value),disabled},React.createElement('option',{value:''},''),children);const SelectItem=({value,children})=>React.createElement('option',{value},children);const Empty=()=>null;const SelectContent=({children})=>children;export {Part as Input,Part as Textarea,Part as Label,Part as Button,Part as Card,Part as CardContent,Part as Switch,Part as Badge,Part as Alert,Part as AlertDescription,Select,SelectItem,SelectContent,Empty as SelectTrigger,Empty as SelectValue};`, loader: 'jsx', resolveDir: process.cwd() }));
+        : `import React from 'react';const Part=React.forwardRef(({children,...p},ref)=>React.createElement('${args.path === 'input' ? 'input' : args.path === 'textarea' ? 'textarea' : args.path === 'button' ? 'button' : 'div'}',{...p,ref},children));const Select=({value,onValueChange,disabled,children})=>React.createElement('select',{value,onChange:e=>onValueChange(e.target.value),disabled},React.createElement('option',{value:''},''),children);const SelectItem=({value,children})=>React.createElement('option',{value},children);const Empty=()=>null;const SelectContent=({children})=>children;export {Part as Input,Part as Textarea,Part as Label,Part as Button,Part as Card,Part as CardContent,Part as Switch,Part as Badge,Part as Alert,Part as AlertDescription,Select,SelectItem,SelectContent,Empty as SelectTrigger,Empty as SelectValue};`, loader: 'jsx', resolveDir: process.cwd() }));
     } };
     const bundle = await build({ stdin: { contents: entry, loader: 'jsx', resolveDir: process.cwd() }, bundle: true, write: false,
       format: 'iife', platform: 'browser', plugins: [plugin], logLevel: 'silent', define: { 'import.meta.env': '{}' } });

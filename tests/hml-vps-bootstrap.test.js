@@ -253,6 +253,15 @@ test('HML config rejects operational/fallback/privileged provider settings', () 
   assert.throws(() => validateHmlConfig(fixture(), 4102444800001));
 });
 
+test('HML A1 opt-in accepts only explicit dedicated config mount without loosening existing identity',()=>{
+ const value={...fixture(),a1VaultConfigFile:'/run/a1-config/vault.json'};
+ assert.equal(validateHmlConfig(value).a1VaultConfigFile,'/run/a1-config/vault.json');
+ for(const file of ['relative.json','/etc/passwd','/run/a1-config/../secret.json','/run/a1-config/link/config.json',null]){
+  assert.throws(()=>validateHmlConfig({...value,a1VaultConfigFile:file}));
+ }
+ assert.throws(()=>validateHmlConfig({...value,extra:true}));
+});
+
 test('HML private config checks owner, permissions, symlink and real path', () => {
   const file = '/run/hml/config.json';
   const exercise = options => readHmlConfig(file, {
