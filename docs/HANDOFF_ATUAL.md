@@ -1,3 +1,56 @@
+## Fiscal5000 aplicado SOMENTE como revisao inativa na HML (2026-11-17)
+
+Gate especifico do dono AUTORIZADO e EXECUTADO. Mesmos 5000 clientes, sem
+novos mestres, reativacao, entrega presumida ou mudanca operacional. Servico,
+repositorio, RBAC e ledger canonicos c370b55c/CI7248SUCCESS reutilizados;
+perfil nao ampliado. SELECT/INSERT12/UPDATE(state) temporarios no ledger e
+policy limitada a Grupo/coorte/FISCALinativo foram REVOGADOS ao fechar.
+Conferencia final compara ACL e policy anteriores integralmente: iguais.
+
+5000 locais FISCAIS criados INATIVOS/incompletos/principal=false; 90000
+comparacoes de campos PASS, replay5000/0novaslinhas/0novasauditorias;
+5000 auditorias transacionais. Aplicacao676.10s, replay/conferencia1048.20s,
+pico118681600bytes sob512MiB/.25CPU. 13tabelas alheias e o conteudo anterior
+das4tabelas modificadas conferidos por checksum em fluxo, sem jsonb_agg grande.
+6600clientes=5100ativos+1500inativos e todos seus campos preservados, incluindo
+RGs/contatos; locais totais5217, os217anteriores intactos. Nao chamar os5000
+clientes de completos nem os novos locais de operacionais/ativados.
+
+Plano original c6ab6892 imutavel. Derivado fiscal-canonical-plan-r2 apenas
+normaliza imported_at para precisao JS em milissegundos; timestamp original
+permanece no plano original. R1 abortou atomicamente por essa diferenca;
+R3 falhou NO DRIVER ao tentar restaurar uma edicao que alterou updated_at.
+Nao sao PASS. R4 restaurou17tabelas:25apply/replay/reverse PASS,4negativasSQL
+independentes de chave, falha no ledger causa rollback e edicao posterior
+impede replay/reversa. Nenhuma escrita HML nos ensaios; bancos descartaveis
+proprios removidos. Revisao tecnica do executor+harness separado, nao afirmar
+revisao humana externa ou navegador autenticado automatizado.
+
+Backup PRE hml-20261117T190151Z-136df91e:17tabelas/restore/SHA/externoACK PASS.
+Backup POS hml-20261117T194020Z-44752064:18503680bytes/17tabelas,restauracao,
+SHA/copiaexternaEmpresa/ACK PASS; provas das17tabelas iguais ao POS lote.
+API/web permanecem c370b55c/CI7248, helperbackup b46e7f28/CI7249; ambos CIs
+reconfirmados SUCCESS. HTTPS health/marker200,anon401; mesmos IDs de PG,
+API/web HML e operacional. Nenhum deploy/restart/novo recurso neste pacote.
+
+Completude deste plano fiscal:logradouro/bairro/cidade/UF5000,CEP4950.
+Numero/pais/rotulo5000 e CEP50 pendentes no export; complemento sem valor
+comprovado. Nada inferido; raw/procedencia preservados. Endereco Principal
+operacional NAO foi preenchido nem substituido automaticamente por local
+inativo. Ativacao/revisao dependem de campos comprovados e gates proprios.
+
+Privado central:incoming/enrichment-5000-20261117-r1/{owner-authorization-fiscal,
+fiscal-canonical-plan-r2,fiscal-rehearsal-r1/r2/r3/r4,fiscal-review-r1,
+fiscal-capability-applied/revoked,fiscal-before/after-proofs,fiscal-terminal-r1,
+fiscal-final-validation,fiscal-package-completed-r1}. fiscal-application-r1 contem checkpoints100,
+applied/completed/reversal-plan; fiscal-ops-r1 e operadores Python preservados
+na VPS. Nao reaplicar o lote nem rerodar operador com checkpoint existente.
+Reversao futura exige postimage intacta e capacidade temporaria especifica;
+nao foi executada na HML para demonstrar. Contatos/entregasnovos continuam
+dependentes dos auxiliares privados Codespace; nao reiniciar nem aumentar teto.
+Proximo:conferir revisao na aplicacao e completar
+componentes por fonte, sem ativar incompletos ou repetir RG/mestres.
+
 ## HML CPF/RG entregue e aceita; proximo gate fiscal5000 (2026-11-17)
 
 API/web SERVIDOS c370b55c38edc837b14f3ecd4a3b011cc1f0d914/CI7248SUCCESS,

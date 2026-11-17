@@ -1,3 +1,36 @@
+## Fiscal5000 aplicado e reconciliado como revisao INATIVA HML (2026-11-17)
+
+Autorizacao especifica cumprida:5000fiscais/90000comparacoes/replay5000 sem
+novas linhas ou auditorias;5000audits canonicas. Sem novosclientes/reativacao/
+ativacao/entrega presumida/operacional.6600clientes=5100ativos+1500inativos,
+campos/IDs/codigos/RGs/contatos e217locais anteriores preservados;5217locais
+totais.13tabelas alheias e conteudo anterior das4modificadas iguais por prova
+em fluxo. Aplicacao676.10s,replay/conferencia1048.20s,pico118681600bytes.
+
+Capacidade temporaria APENAS ledger SELECT/INSERT12/UPDATEstate+policyFISCAL
+foi revogada. ACL/policies originais comparadas e restauradas exatamente;
+perfil intocado. EnsaioR4 restaurado17tabelas:25apply/replay/reverse,4negativas
+SQL,rollback no erro do ledger e protecao de edicao posterior PASS. R1 falhou
+em imported_at microssegundos vs driver;plano derivadoR2 preserva original e
+usa precisaoJS. R3 foi erro do driver de ensaio ao tentar restaurar postimage
+com updated_at alterado;nao defeito atribuido ao produto. Recibos imutaveis.
+
+Runtime HML permanece c370b55c/CI7248SUCCESS,helperbackup b46e7f28/CI7249SUCCESS;
+HTTPS200/anon401,mesmos containers e operacional saudavel. Nao houve deploy.
+BackupPRE190151-136df91e restore17/externoACKPASS;POS194020-44752064,
+18503680bytes/restore17/SHA/externoACKPASS e17provas iguais ao POS lote.
+Testes focados27PASS;nenhuma alteracao de runtime neste lote,sem repetir
+checks completos ja verdes dos mesmos arquivos. Docs/evidencia:diffcheck.
+
+5000enderecos continuam incompletos/inativos:numero/pais/rotulo nao exportados,
+50CEPpendentes;logradouro/bairro/cidade/UF5000 e CEP4950 comprovados. Nao
+copiar automaticamente para Principal nem declarar cadastro completo.
+Fonte/planos/operadores/checkpoints/reversa/recibos privados centralizados em
+incoming/enrichment-5000-20261117-r1. Nao reaplicar mestres/RGs/fiscais.
+Proximo:conferencia da revisao pelo ERP;componentes ainda
+pendentes por fonte. Contatos/entregasnovos dependemauxiliaresCodespace,sem
+novatentativa/custo. Detalhes e retomada exata no HANDOFF inicial.
+
 ## HML CPF/RG aceita; backup recuperavel; gate fiscal preparado (2026-11-17)
 
 API/web c370b55c/CI7248SUCCESS SERVIDOS naHML,assetHTTPS eversoes iguais,
