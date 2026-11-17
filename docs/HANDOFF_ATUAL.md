@@ -1,3 +1,22 @@
+## CPF/CNPJ PR594 validado em Ubuntu; sem promocao HML (2026-11-17)
+
+351ee09346bd544cd536c3fbb8a8149fcad1c410 / CI7246 SUCCESS,run44135912187.
+PR594 draft confirmada remotamente nesseSHA. Frontend2976PASS/0FAIL/0SKIP;
+auditbaseline/lint/typecheck/buildPASS. Backend testes/build/migrations e suite
+PostgreSQL obrigatoriaPASS,inclusive guard de DBisolado/R07B. ComposePGlite e
+PostgreSQLPASS. Sao3jobs desta branch;nao atribuir aela jobA1 de outra base.
+35testes locais afetadosPASS. Guards historicos mantidos,novo peelEXATO e
+contraprovas de adulteracaoPASS. Nenhum baseline/limite foi relaxado.
+
+Escopo autorizado entregue:commit de validacao eCI. NAO HOMOLOGADO na aplicacao;
+semmerge/deploy/carga/DDL/grants. HML nao foi alterada. Branchcasa e7c26c3f3/
+CI7245FAIL preservados como historico,nao sao o HEAD daPR594 nem prova verde.
+Este checkpoint documental reutiliza CI7246 do codigo351ee093 e diffcheck;
+nao dispara novamente suite intacta. Proximaacao:revisao/composicao com runtime
+HML aprovado preservando capacidades posteriores,antes do gate de publicacao.
+Nao promover a branch594 inteira sobreHML:base76dc anterior a esses pacotes.
+Planos privadosRG/fiscal continuam centrais naVPS e nao foram aplicados aqui.
+
 ## CPF/CNPJ: port restrito na PR594 para CI Ubuntu (2026-11-17)
 
 NAO HOMOLOGADO para publicacaoHML. Dono autorizou somente commit validacao/CI,

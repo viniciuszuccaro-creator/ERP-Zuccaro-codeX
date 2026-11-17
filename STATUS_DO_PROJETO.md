@@ -1,3 +1,13 @@
+## CPF/CNPJ PR594: validacao Linux FECHADA (2026-11-17)
+
+Codigo351ee09346bd544cd536c3fbb8a8149fcad1c410/CI7246 SUCCESS(run44135912187).
+PR594 draft/HEAD confirmado;3jobsPASS:frontend2976/0falhas/0skips,checkscompletos,
+backend/PostgreSQLnativo ecomposePG/PGlite.35afetadoslocalPASS,guardsmantidos.
+Checkpoint so documental comdiffcheck;CI7246 pertence ao codigo351ee093.
+NAO HOMOLOGADO naHML:autorizacao somentecommit/CI executada,semdeploy,merge,
+carga,DDL ou permissoes. HMLpreservada. Proximo:revisao/composicao CPF sobre
+runtime aprovado,nao copiarbranch594 inteira(baseanterior) nemherdarCI7245FAIL.
+
 ## CPF/CNPJ PR594: commit de validacao autorizado (2026-11-17)
 
 Portrestrito dos hunksCPF da branch preservada paraPR594 REAL(continuidade-591),
