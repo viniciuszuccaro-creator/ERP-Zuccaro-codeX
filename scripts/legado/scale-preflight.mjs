@@ -38,15 +38,23 @@ export async function assessPreparedClientScale(db, prepared, authorize) {
       assert.ok(permissions.visualizar, 'LEGACY_VIEW_PERMISSION_REQUIRED');
       const rows = (await q.query(`SELECT id,codigo,codigo_legado,source_system,documento_normalizado,ativo
         FROM clientes WHERE group_id=$1 ORDER BY id`, [manifest.context.groupId])).rows;
-      const conflicts = (await q.query(`WITH incoming AS (
-        SELECT * FROM pg_catalog.jsonb_to_recordset($1::jsonb) AS x(native text,codigo text,documento text)
+      const conflicts = (await q.query(`WITH incoming AS MATERIALIZED (
+        SELECT native,codigo,pg_catalog.regexp_replace(documento,'[^0-9]','','g') AS documento
+        FROM pg_catalog.jsonb_to_recordset($1::jsonb) AS x(native text,codigo text,documento text)
+      ), matches AS (
+        SELECT i.native,c.id FROM incoming i JOIN clientes c ON c.group_id=$2
+          AND c.source_system=$3 AND c.codigo_legado=i.native
+        UNION
+        SELECT i.native,c.id FROM incoming i JOIN clientes c ON c.group_id=$2 AND c.codigo=i.codigo
+        UNION
+        SELECT i.native,c.id FROM incoming i JOIN clientes c ON c.group_id=$2
+          AND c.documento_normalizado=i.documento
+          AND c.documento_normalizado IS NOT NULL AND pg_catalog.btrim(c.documento_normalizado)<>''
       ) SELECT i.native,c.id,c.ativo,
         c.source_system=$3 AND c.codigo_legado=i.native AS same_identity,
         c.codigo=i.codigo AS same_code,
-        c.documento_normalizado=pg_catalog.regexp_replace(i.documento,'[^0-9]','','g') AS same_document
-        FROM incoming i JOIN clientes c ON c.group_id=$2 AND (
-          (c.source_system=$3 AND c.codigo_legado=i.native) OR c.codigo=i.codigo OR
-          c.documento_normalizado=pg_catalog.regexp_replace(i.documento,'[^0-9]','','g'))
+        c.documento_normalizado=i.documento AS same_document
+        FROM matches m JOIN incoming i ON i.native=m.native JOIN clientes c ON c.id=m.id AND c.group_id=$2
         ORDER BY i.native,c.id`, [JSON.stringify(keys),manifest.context.groupId,manifest.sourceSystem])).rows;
       const indexes = (await q.query(`SELECT indexname,indexdef FROM pg_catalog.pg_indexes
         WHERE schemaname=pg_catalog.current_schema() AND tablename='clientes' ORDER BY indexname`)).rows;

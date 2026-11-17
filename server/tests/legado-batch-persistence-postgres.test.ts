@@ -36,6 +36,12 @@ test('native PostgreSQL scale assessment: restricted login, physical binding, co
       assert.deepEqual(await snapshot(),before);
       await assert.rejects(assessPreparedClientScale(db,{...plan,manifest:{...plan.manifest,target:{...plan.manifest.target,schemaOid:1}}},authorize),/LEGACY_PHYSICAL_TARGET_MISMATCH/);
       assert.deepEqual(await snapshot(),before);
+      const adminDeps=batchDependencies(f.admin);
+      for(const batch of plan.batches)for(const item of batch.items)await adminDeps.service.create(plan.manifest.context,item.payload);
+      const matchedSnapshot=await snapshot(),matched=await assessPreparedClientScale(db,plan,authorize);
+      assert.equal(matched.conflictingSelected,3);assert.equal(matched.conflicts.length,3);
+      assert.ok(matched.conflicts.every(row=>row.same_identity&&row.same_code&&row.same_document));
+      assert.deepEqual(await snapshot(),matchedSnapshot);
     }finally{
       await f.admin.query(`REVOKE EXECUTE ON FUNCTION pg_catalog.pg_control_system() FROM "${f.role}"`);
       await f.close();

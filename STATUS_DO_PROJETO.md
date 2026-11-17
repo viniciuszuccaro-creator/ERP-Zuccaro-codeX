@@ -1,3 +1,15 @@
+## Carga real5000 PARCIAIS aplicada naHML (2026-11-17)
+
+94381948/CI7243SUCCESS. Gateexecutado:backuprestore/externo,ensaio eindiceCliente
+unico auditado,5commits canonicos1000cada,0conflitos.6600total=5100ativos+1500
+inativos;5000novosPARCIAIS/0completos.66172comparacoes/0divergencias,1600antigos
+integrais e14tabelas alheias preservados.5007auditsnovas esperadas,antigasintactas.
+Tempo703.44s(aprox7.1mestres/s),pico503MiB;nao mede contatos/enderecos/historicos.
+Semnovosgrants,reativacoes,financeiro,operacional ou deploy. HMLsegue de17088c.
+ReplayR1 BLOCKED57014 no preflight15s,ANTESdeescrita. Patch otimiza3joins/indexes
+comnormalizacaounica/materializacao,dedup eescopo preservados,semampliartimeout.
+Nao reaplicar carga nem chamarreplayPASS antes novaCI/prova. Checkpoint noHANDOFF.
+
 ## Gate5000 PARCIAIS recebido, execucao condicionada (2026-11-17)
 
 Dono autorizou explicitamente indiceCliente+5000mestresPARCIAIS naHML,5x1000,

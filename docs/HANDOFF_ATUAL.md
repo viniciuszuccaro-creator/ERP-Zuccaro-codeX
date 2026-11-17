@@ -1,3 +1,49 @@
+## 5000 PARCIAIS aplicados e reconciliados; replay em correcao de consulta (2026-11-17)
+
+94381948/CI7243SUCCESS,orquestrador canonico. Fonte e plano originais regenerados
+com hashesEXATOS,mesmo runf072ea1b,5x1000. Revisao mostrou classes Cliente/RBAC/
+tenant/repo/audit iguais ao runtimeHMLde17088c. Backupfresh153559/17tabelas,
+restore+ACKexternoPASS;ensaioindiceROLLBACKPASS antes da aplicacao do indice
+ClienteEXATO71164727,unique/valid/ready eSchemaIndexaudit1. Semnovosgrants.
+
+APLICACAO real exit0:5000INSERTED,0conflitos,5commits/checkpointsDB. Controller
+15:51:42->16:03:25UTC(703.44s);orquestracao664.14s,pico527486976bytes(503MiB)
+sob1GiB/.25CPU. TX112.38/101.39/102.06/119.79/105.64s,sem aumentar limite120s.
+Taxa de mestres aproximadamente7.1/s walltime,NAO inclui enriquecimentos.
+HMLagora6600total/5100ativos/1500inativos;novos5000PARCIAIS/0completos.
+
+Conferencia integral privada:66172comparacoes dos camposmapeados/0divergencias;
+5000IDs novos/sourcecodes/batches/Grupo eowner corretos;empresaNULL conforme
+compartilhamentoCPA. Todos1600anteriores iguais emTODOS campos;14tabelas alheias
+inalteradas,auditorias antigas intactas. Novasaudits5007=5000Cliente+5Batch+1Run+
+1SchemaIndex.927IE/245emails/PF4053/PJ947 conferidos. Semfiscal/entregas/contatos
+novos nem titulos/saldos/financeiro/ativacao. Fonte original nao modificada.
+
+ReplayR1 foi BLOCKED57014 ANTES de escrever:preflightOR normalizava documento
+no join e excedeu15s com6600rows/5000matches. NAO e falha/reversao da carga;
+recibos/apply-result exit0 preservados. Corrigir para incomingMATERIALIZED,
+normalizar uma vez e3joins por indice UNION/dedup(native,id),mesmoGrupo/RLS e15s.
+ContraprovaPG testa3matches semtriplicar pela coincidencia das3chaves e conserva
+as linhas;unitario protege materializacao/normalizacao unica e negativos.
+Nao aumentartimeout,relaxar filtros,rodarapply novamente ou declararreplayPASS
+antes da nova prova. NovaCI do patch precisa fechar antes de usar no executor.
+
+Privado central incoming/scale-partial-20261117-r1/:owner-authorization,
+index-rehearsal,execution-protections-ready,before-application,apply-attempt001,
+execution-94381948/{batch-*,apply-result},full-reconciliation,new-client-bindings,
+post-application-table-proofs,replay-attempt001(BLOCKED) e wrappersversionados.
+Publicos source9438 viaarchive9255d6ac,originais imutaveis. DriverR1chown falhou
+antesSQL;R2os.chown apenas diretorio PRIVADO novo de output,sem mudaroriginais.
+RunnerR3 limita memoria/tempo eusa APP real/NOBYPASS,semIdPsintetico/semrede.
+SSHdeapply ficou semEOF apos EXIT0 remoto comprovado;encerrado APENAS cliente
+localPID13524 da propria chamada. Demais canais/processos preservados;novosSSH
+usamServerAliveInterval30/Count3. Nao reinstalar/reiniciar nada para esse evento.
+
+Proximasacoes:CI/querypatch->replay0novaslinhas/audits->servicolista/busca/paginas/
+reabrir->backupPOSrestaurado/externo->aceitevisual daMESMAHMLde17088c,semdeploy.
+Reversa canonica fica por batch/postimage,nao inativar5000 para demonstrar nem
+reativar1500. Depois vincular planosfiscal/RG aos IDs novos sem aplicar fora gate.
+
 ## Gate5000 PARCIAIS autorizado pelo dono (2026-11-17)
 
 Resposta explicita SIM,AUTORIZO ao pacote5000mestresPARCIAIS+indiceCliente,

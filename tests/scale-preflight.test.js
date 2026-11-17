@@ -18,6 +18,10 @@ test('scale assessment is read-only, rolls back and never promotes applicability
   assert.equal(rollback,true);assert.equal(calls[0],'SET TRANSACTION READ ONLY');
   assert.equal(result.applicable,false);assert.equal(result.businessWrites,0);assert.equal(result.permissions.inativar,false);
   assert.ok(calls.every(sql=>!/^\s*(INSERT|UPDATE|DELETE|ALTER|CREATE|DROP|GRANT|TRUNCATE)\b/i.test(sql)));
+  const matching=calls.find(sql=>sql.includes('matches AS'));
+  assert.match(matching,/incoming AS MATERIALIZED/);
+  assert.equal((matching.match(/regexp_replace/g)||[]).length,1);
+  assert.equal((matching.match(/\bUNION\b/g)||[]).length,2);
   await assert.rejects(assessPreparedClientScale(db,{...plan,manifest:{...plan.manifest,target:{...target,database:'wrong'}}},async()=>{}),/LEGACY_PHYSICAL_TARGET_MISMATCH/);
   await assert.rejects(assessPreparedClientScale(db,plan,async()=>{throw Error('QUERY_FAILURE');}),/QUERY_FAILURE/);
   const beforeDenied=calls.length;
