@@ -1,3 +1,12 @@
+## Composicao CPF validada localmente; aguardando CI propria (2026-11-17)
+
+PR594351ee093/CI7246SUCCESS preservada,nao e a branchcasa. CI7245FAIL porguardas
+exatas nao compostas,sem alegar apenaslimitacaoWindows. Port restrito dehelper/
+testes para casa7c26c3f3,sem copiarbranch antiga;35afetadosPASS. Ancora integral
+98ecfb6e desta linha mantém capacidadesatuais/bytes fora dos4hunksCPF.
+NovoSHA/CIobrigatorios. SempublicacaoHML/carga/DDL/grants;RG0aplicados no destino.
+Proximo:CIcomposicao->pacote/revisaoHML;ensaioRGrestaurado e gate4001 emparalelo.
+
 ## WIP CPF primeiro paint e save; RG preparado sem aplicar (2026-11-17)
 
 CadastroClienteCompleto:falha real montada antes,correcao depois. Reutiliza

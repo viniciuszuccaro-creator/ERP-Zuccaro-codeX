@@ -2,11 +2,25 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { build } from 'esbuild';
 import { createServer } from 'node:http';
-import { spawn } from 'node:child_process';
+import { spawn, execFileSync } from 'node:child_process';
 import { mkdtemp, rm } from 'node:fs/promises';
-import { existsSync, readdirSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
+import { clienteDocumentoRemainder, clienteDocumentoHunks } from './helpers/clienteLocalOperationalRemainder.js';
+
+test('document fix retains every ancestral byte and rejects malformed hunks', () => {
+  const file = 'src/components/cadastros/CadastroClienteCompleto.jsx';
+  const source = readFileSync(file, 'utf8').replace(/\r\n/g, '\n');
+  const previous = execFileSync('git', ['show', '98ecfb6e:' + file], { encoding: 'utf8' }).replace(/\r\n/g, '\n');
+  assert.equal(clienteDocumentoRemainder(source), previous);
+  assert.equal(clienteDocumentoRemainder(previous), previous);
+  for (const [after] of clienteDocumentoHunks) {
+    for (const replacement of ['', after + after, after.replace(/\S/, '!')])
+      assert.throws(() => clienteDocumentoRemainder(source.replace(after, replacement)));
+  }
+  assert.notEqual(clienteDocumentoRemainder(source + '\n// OUTSIDE_DOCUMENT_FIX\n'), previous);
+});
 
 // Existing mounted tests cover locais and organizational forms, not Cliente's first paint.
 // Mount the real Cliente and identity hook; only service/context and UI primitives are synthetic.

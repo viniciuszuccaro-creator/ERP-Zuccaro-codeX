@@ -1,3 +1,21 @@
+## Composicao CPF com capacidades atuais: validacao por SHA (2026-11-17)
+
+PR594 REAL econtinuidade-591:codigo351ee093/CI7246SUCCESS,checkpoint69430028.
+CI7245FAIL nao era Windows:guards ancestrais de formulario nao compunham os4
+hunksCPF. Corrigidos compeelEXATO/negativas,sem alterar hashes,35afetadosPASS.
+Nao promover branch594 inteira:base76dc anterior ao runtimeHML/capacidades.
+
+Nesta branchcasa preservada7c26c3f3,portados SOMENTE helperguard/testes aprovados
+daPR594. FormularioCPF ja igual nos hunks;nenhum servico/repo antigo copiado.
+Teste integral ancora98ecfb6e desta linha(antesCPF),nao76dc:desfaz4hunks eexige
+TODOSosbytes anteriores iguais,com omissao/repeticao/adulteracao negativas.
+35focadosPASS. NovoSHA precisaCI propria;nao herdarCI7246 da outra composicao.
+Semdeploy/carga/DDL/grants ou novoCodespace. PrioridadeaposCI:pacoteHMLcompativel
+e revisao dodiff completo(ha tambem mudancasA1 anteriormente preparadas),backup
+restauravel/externo,rollback e gate exato antes da publicacao.
+Em paralelo,ensaioRG privado porservico canonico emrestauracao isolada,semapply
+no destino daHML. Plano4001RG e5000fiscais continuamcentrais e0aplicados.
+
 ## WIP CPF reproduzido e corrigido; publicacao depende de validacao Linux (2026-11-17)
 
 Base98ecfb6e/PR594,mesmo checkout interno,sem outro escritor observado.

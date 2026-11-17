@@ -94,7 +94,7 @@ test('Identidade visual: hunks exatos nao aceitam omissao, repeticao ou adultera
 
 test('RG HTTP: exact peel rejects omission, repetition and changes while retaining the historical whole form', () => {
   // Continuity: Completo já sem MASTER extras UI; guards RG só nos hunks Continuity.
-  const source = read('src/components/cadastros/CadastroClienteCompleto.jsx');
+  const source = clienteDocumentoRemainder(read('src/components/cadastros/CadastroClienteCompleto.jsx'));
   assert.doesNotThrow(() => clienteContactPresenceRemainder(source));
   for (const [after] of rgHttpHunks) {
     for (const replacement of ['', after + after, after.replace('rg', 'rg /* FORGED */')])
@@ -111,7 +111,7 @@ import { createHash } from 'node:crypto';
 import ts from 'typescript';
 import { clienteLocaisReviewRemainder, clienteLocaisReviewHunks, clienteLocaisReviewBaseline } from './helpers/clienteLocaisReviewRemainder.js';
 import { clienteLocaisPurposeRemainder, clienteLocaisPurposeHunks, clienteLocaisPurposeBaseline } from './helpers/clienteLocaisPurposeRemainder.js';
-import { clienteLocalOperationalRemainder } from './helpers/clienteLocalOperationalRemainder.js';
+import { clienteLocalOperationalRemainder, clienteDocumentoRemainder } from './helpers/clienteLocalOperationalRemainder.js';
 import { execFileSync } from 'node:child_process';
 import { clienteConferenciaRemainder } from './helpers/consolidation81Remainder.js';
 
