@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {validateA1KeyMetadata} from '../scripts/vps/sync-a1-protection-key.mjs';
+import {readFileSync} from 'node:fs';
 test('private A1 key backup rejects unsafe metadata and never normalizes a path into a key id',()=>{
  const value={id:'a1-hml',bytes:32,uid:1000,mode:0o400,links:1,directoryMode:0o700,directoryUid:1000,sha256:'a'.repeat(64)};
  assert.equal(validateA1KeyMetadata(value,'a1-hml'),value);
@@ -8,4 +9,10 @@ test('private A1 key backup rejects unsafe metadata and never normalizes a path 
   assert.throws(()=>validateA1KeyMetadata({...value,...patch},'a1-hml'));
  }
  for(const id of ['../key','key/other','','a'.repeat(81)])assert.throws(()=>validateA1KeyMetadata(value,id));
+});
+
+test('Windows private ACL probe does not depend on PowerShell module autoload',()=>{
+ const source=readFileSync(new URL('../scripts/vps/sync-a1-protection-key.mjs',import.meta.url),'utf8');
+ assert.match(source,/\[System\.IO\.File\]::GetAccessControl/);
+ assert.doesNotMatch(source,/Get-Acl|ExecutionPolicy|Bypass/);
 });

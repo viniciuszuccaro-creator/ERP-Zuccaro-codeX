@@ -1,5 +1,12 @@
 ## Gate de capacidade A1 HML autorizado, aplicacao condicionada (2026-11-17)
 
+ce15ba17/CI7234SUCCESS;ensaioSQL+perfilCAS/replayROLLBACK PASS com16tabelas
+preservadas. Backup restaurado/externo hml-20261117T130855Z-1f2c76ac.
+ChaveHML32bytes criada eprotegida,NAO montada naAPI;nao gerar outra. Cópia externa
+parou no autoload Get-Acl;ACLs conferidas privadas,sem segredo em logs. Probe
+.NETsem modulo passou;fixfonte aguardaCI. Nenhuma tabela/grant/perfil aplicado
+ainda,nem A1real aceito. Proximaacao:fecharCI ebackup/recovery,semrepetir chave.
+
 Dono autorizou tabela/RLS/grants minimos, visualizar/importar no perfil atual
 e chaveHML readonly com backup independente/restore antes de A1real. Nao inclui
 usar/emitir, outroGrupo, novosusuarios/roles ou operacional. Wrapper de permissoes

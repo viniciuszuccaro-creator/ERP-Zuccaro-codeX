@@ -44,7 +44,7 @@ finally:os.close(fd)
   const s=fs.lstatSync(target);assert.ok(s.isFile()&&!s.isSymbolicLink()&&s.size===32&&s.nlink===1);
   if(process.platform==='win32'){
    const check='$ErrorActionPreference="Stop";$me=[System.Security.Principal.WindowsIdentity]::GetCurrent().User.Value;'
-    +'foreach($a in (Get-Acl -LiteralPath $env:A1_BACKUP_FILE).Access){if($a.AccessControlType -eq "Allow"){$sid=$a.IdentityReference.Translate([System.Security.Principal.SecurityIdentifier]).Value;if($sid -notin @($me,"S-1-5-18","S-1-5-32-544")){throw "PRIVATE_FILE_ACL"}}};"PRIVATE_FILE_ACL_OK"';
+    +'$acl=[System.IO.File]::GetAccessControl($env:A1_BACKUP_FILE);foreach($a in $acl.Access){if($a.AccessControlType -eq "Allow"){$sid=$a.IdentityReference.Translate([System.Security.Principal.SecurityIdentifier]).Value;if($sid -notin @($me,"S-1-5-18","S-1-5-32-544")){throw "PRIVATE_FILE_ACL"}}};"PRIVATE_FILE_ACL_OK"';
    assert.match(run('powershell.exe',['-NoProfile','-NonInteractive','-EncodedCommand',Buffer.from(check,'utf16le').toString('base64')],undefined,
     {...process.env,A1_BACKUP_FILE:target}),/PRIVATE_FILE_ACL_OK/);
   }else{assert.equal(s.uid,process.getuid());assert.equal(s.mode&0o077,0);}

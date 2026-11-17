@@ -1,5 +1,17 @@
 ## Gate A1 HML AUTORIZADO condicionado (2026-11-17)
 
+ce15ba17/CI7234SUCCESS. Backup fresco hml-20261117T130855Z-1f2c76ac restaurado
+eACKexterno. Ensaio schema+perfilCAS+replay emROLLBACK preservou16tabelas/roles/
+policies. Driver inicial excedeu limiteargv ANTES SQL; tentativa preservada e
+r2 usa stdin pelo helper de backup existente,sem afrouxarCAS. Reciboprivado
+incoming/a1-capability-20261117-r1/rehearse.receipt.private.json.
+ChaveHML nominal criada32bytes,UID1000/0400,dir0700,sem mountAPI ou A1real.
+Backup bloqueado pelo autoload Get-Acl do PowerShell filho,NAO porACL permissiva;
+dois parciais privados preservados,nenhuma finalizacao/recovery declarada.
+Correcao .NET File.GetAccessControl sem modulos/instalacao,probeWindowsreal PASS,
+7checks focados/lint/diffPASS;aguardar novaCI antes de retomar backup/aplicarcapacidade.
+Nao gerar outra chave nem sobrescrever atual;retomar ID hml-a1-20261117-r1.
+
 Dono AUTORIZOU tabela a1_certificate_vault/RLS/grants minimos, somente
 Fiscal.certificado.visualizar/importar no perfil conferido e chave exclusiva
 readonly com backup independente e recuperacao ANTES de A1real. Nao pedir esse
