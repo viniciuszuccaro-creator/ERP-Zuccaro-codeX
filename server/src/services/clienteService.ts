@@ -247,12 +247,20 @@ export class ClienteService {
 
     try {
       return await this.repo.withTransaction(async (executor) => {
-        const created = await this.repo.create(
+        let created = await this.repo.create(
           { groupId: ctx.groupId, empresaId: ctx.empresaId },
           { ...parsed.data, empresa_id: empresaId },
           ctx.actorId,
           executor,
         );
+        if (parsed.data.contatos !== undefined) {
+          const complete = await this.repo.update(
+            { groupId: ctx.groupId, empresaId: ctx.empresaId }, created.id,
+            { contatos: parsed.data.contatos }, executor,
+          );
+          if (!complete) throw new AppError(409, 'CLIENTE_CREATE_INCOMPLETE', 'Initial contacts were not persisted');
+          created = complete;
+        }
         await this.audit.append({
           groupId: ctx.groupId,
           empresaId: created.empresa_id ?? ctx.empresaId,

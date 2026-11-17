@@ -48,6 +48,15 @@ export function selectFunctionalRows(input, { groupId, batch, sourceSystem, clie
         status: r.status, status_fornecedor: r.status_fornecedor, codigo_legado: code,
         legacy_id: code, source_system: sourceSystem, migration_batch: batch,
       };
+      if (entity === 'cliente') {
+        // Preserve only explicit scalar source fields accepted by the canonical master contract.
+        for (const field of ['nome_social', 'inscricao_estadual', 'inscricao_municipal', 'telefone', 'celular', 'observacoes']) {
+          const value = r[field];
+          if (value == null || value === '' || (typeof value === 'string' && !value.trim())) continue;
+          if (schema.safeParse({ ...payload, [field]: value }).success) payload[field] = value;
+          else auxiliary.push({ entity, index, reason: 'CANONICAL_FIELD_REQUIRES_REVIEW', rawField: field, sourcePreserved: true });
+        }
+      }
       if (entity === 'fornecedor' && [r.cpf, r.cnpj].some(x => digits(x) && digits(x) !== doc)) {
         reject('SOURCE_DOCUMENT_FIELDS_CONFLICT'); continue;
       }
@@ -175,31 +184,97 @@ export function resolveNativeProductRules(rows, materials, unitRows, { groupId, 
 }
 
 /** Availability is not completeness. No address-number/country inference or postal lookup. */
-export function classifyLegacyAddresses(input, { validateAddress } = {}) {
+export function classifyLegacyAddresses(input, { validateAddress, ownerPurposeDecision, groupId } = {}) {
+  if (ownerPurposeDecision && (ownerPurposeDecision.version !== 'OWNER_ADDRESS_PURPOSE_20261111'
+      || !/^[a-f0-9]{64}$/.test(ownerPurposeDecision.sha256 || ''))) {
+    throw new Error('LEGACY_ADDRESS_PURPOSE_EVIDENCE_REQUIRED');
+  }
   const entries = [];
   const required = ['nome', 'cep', 'logradouro', 'numero', 'bairro', 'cidade', 'uf', 'pais', 'finalidades'];
-  const add = (entity, index, kind, fields, conflict = []) => {
+  const optional = ['complemento', 'referencia', 'latitude', 'longitude', 'coordinate_source'];
+  const meaningful = value => value != null && (typeof value === 'string' ? value.trim().length > 0
+    : Array.isArray(value) ? value.length > 0 : true);
+  const add = (entity, index, kind, fields, conflict = [], excluded = false, targetPurpose = null) => {
+    fields = { ...fields };
+    if (targetPurpose && !fields.finalidades) fields.finalidades = [{ finalidade: targetPurpose, principal: false }];
+    if (targetPurpose && Array.isArray(fields.finalidades)
+        && fields.finalidades.some(f => f?.finalidade !== targetPurpose)) conflict.push('SOURCE_PURPOSE_CONFLICT');
     const available = required.filter(k => k === 'finalidades' ? Array.isArray(fields[k]) && fields[k].length > 0
       : typeof fields[k] === 'string' && fields[k].trim());
-    if (!available.length && !conflict.length) return;
+    const preservedComponents = [...required, ...optional].filter(k => meaningful(fields[k]));
+    if (!available.length && !conflict.length && !preservedComponents.length) return;
     const missing = required.filter(k => !available.includes(k));
-    if (fields.cep && String(fields.cep).replace(/\D/g, '').length !== 8) conflict.push('CEP_FORMAT');
-    if (fields.uf && !/^[A-Za-z]{2}$/.test(String(fields.uf))) conflict.push('STATE_FORMAT');
-    const checked = !missing.length && !conflict.length && typeof validateAddress === 'function'
+    if (meaningful(fields.cep) && String(fields.cep).replace(/\D/g, '').length !== 8) conflict.push('CEP_FORMAT');
+    if (meaningful(fields.uf) && !/^[A-Za-z]{2}$/.test(String(fields.uf))) conflict.push('STATE_FORMAT');
+    const checked = !excluded && !missing.length && !conflict.length && typeof validateAddress === 'function'
       ? validateAddress(fields) : null;
     entries.push({ entity, index, kind, available, missing, conflicts: [...new Set(conflict)],
-      canonicalReady: Boolean(checked?.success), sourcePreserved: true, fieldsInvented: [] });
+      canonicalReady: Boolean(checked?.success), sourcePreserved: true, fieldsInvented: [],
+      preservedComponents, componentsFingerprint: rowHash(fields), excludedFromActiveMigration: excluded,
+      targetPurpose, purposeEvidenceSha256: targetPurpose || excluded ? ownerPurposeDecision.sha256 : null });
   };
-  for (const [index, row] of input.rows.cliente.entries()) {
+  if (input.nativeCustomers && input.rows.cliente.length) throw new Error('LEGACY_ADDRESS_SOURCE_AMBIGUOUS');
+  const customerRows = input.nativeCustomers || input.rows.cliente;
+  for (const [index, source] of customerRows.entries()) {
+    const row = input.nativeCustomers ? {
+      endereco_logradouro: source.ENDERECO, endereco_complemento: source.COMPLEMENTOENDERECO,
+      endereco_bairro: source.BAIRRO, endereco_cidade: source.CIDADE, endereco_estado: source.CODIGOUF,
+      endereco_cep: source.CEPCLIENTE, cobranca_logradouro: source.ENDERECOCOBRANCA,
+      cobranca_complemento: source.ComplementoEnderecoCobranca, cobranca_bairro: source.BAIRROCOBRANCA,
+      cobranca_cidade: source.CIDADECOBRANCA, cobranca_uf: source.UFCOBRANCA, cobranca_cep: source.CEPCOBRANCA,
+    } : source;
     for (const [kind, prefix] of [['principal', 'endereco_'], ['cobranca', 'cobranca_']]) {
       const fields = Object.fromEntries(required.map(k => [k, row[prefix + k]]));
       const legacyState = row[prefix + 'estado'];
       const conflict = legacyState && fields.uf && String(legacyState).toUpperCase() !== String(fields.uf).toUpperCase()
         ? ['STATE_FIELDS_CONFLICT'] : [];
       fields.uf = fields.uf ?? legacyState;
-      add('cliente', index, kind, fields, conflict);
+      for (const key of optional) fields[key] = row[prefix + key];
+      const present = Object.values(fields).some(meaningful);
+      if (!present) continue;
+      add('cliente', index, kind, fields, conflict, Boolean(ownerPurposeDecision && kind === 'cobranca'),
+        ownerPurposeDecision && kind === 'principal' ? 'FISCAL' : null);
+      if (input.nativeCustomers) Object.assign(entries.at(-1), {
+        sourceIdentity: { table: 'Clientes', CODIGOCLIENTE: source.CODIGOCLIENTE },
+        sourceRowJsonSha256: rowHash(source), nativeBinding: 'SOURCE_ONLY_NOT_TARGET_BINDING',
+      });
     }
   }
+  // Port of the existing 342 native ledger: supplied identity is not a fresh binding proof.
+  const nativeEntries = new Map();
+  if (input.nativeDeliveryRows && input.nativeWorks) throw new Error('LEGACY_ADDRESS_SOURCE_AMBIGUOUS');
+  const works = input.nativeDeliveryRows ? input.nativeDeliveryRows.map(source => ({
+    groupId, clienteId: input.nativeParentBindings?.[String(source.CODIGOCLIENTE)] ?? null,
+    sourceIdentity: { table: 'ClientesObras', CODIGOCLIENTE: source.CODIGOCLIENTE, ITEM: source.ITEM, SEQUENCIA: source.SEQUENCIA },
+    sourceRowJsonSha256: rowHash(source),
+    provenComponents: { logradouro: source.ENDERECO, complemento: source.ComplementoEndereco,
+      bairro: source.BAIRRO, cidade: source.CIDADE, ufNative: source.CODIGOUF, cep: source.CEPCLIENTE, referencia: source.REFERENCIA },
+  })) : input.nativeWorks || [];
+  for (const [index, row] of works.entries()) {
+    const components = row.provenComponents || {}, identity = row.sourceIdentity || {};
+    const conflicts = ownerPurposeDecision ? [] : ['NATIVE_PURPOSE_UNPROVEN'];
+    conflicts.push('NATIVE_BINDING_REVALIDATION_REQUIRED');
+    const uuid = value => typeof value === 'string' && /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(value);
+    if (!uuid(row.clienteId) || !uuid(row.groupId) || (groupId && row.groupId !== groupId)) conflicts.push('NATIVE_BINDING_UNPROVEN');
+    if (!/^(?:dbo\.)?ClientesObras$/.test(identity.table || '')
+        || !['CODIGOCLIENTE', 'ITEM', 'SEQUENCIA'].every(key => identity[key] !== null && identity[key] !== undefined && String(identity[key]).trim())) {
+      conflicts.push('NATIVE_IDENTITY_REQUIRED');
+    }
+    if (!/^[a-f0-9]{64}$/.test(row.sourceRowJsonSha256 || '')) conflicts.push('NATIVE_SOURCE_HASH_REQUIRED');
+    const fields = Object.fromEntries([...required, ...optional].map(key => [key, components[key]]));
+    fields.uf = components.uf ?? components.ufNative;
+    add('cliente', index, 'obra_referencia', fields, conflicts, false, ownerPurposeDecision ? 'ENTREGA' : null);
+    const entry = entries.at(-1);
+    Object.assign(entry, { sourceIdentity: structuredClone(identity),
+      sourceRowJsonSha256: row.sourceRowJsonSha256 ?? null,
+      sourceText: row.sourceText ?? null,
+      clienteId: row.clienteId ?? null, groupId: row.groupId ?? null,
+      pending: [...(row.pending || [])], nativeBinding: 'SUPPLIED_NOT_REVERIFIED', recipientPromoted: false });
+    const key = JSON.stringify([row.groupId, identity.CODIGOCLIENTE, identity.ITEM, identity.SEQUENCIA]);
+    const same = nativeEntries.get(key) || []; same.push(entry); nativeEntries.set(key, same);
+  }
+  for (const same of nativeEntries.values()) if (same.length > 1)
+    for (const entry of same) entry.conflicts.push('NATIVE_IDENTITY_DUPLICATED');
   for (const [index, row] of input.rows.fornecedor.entries()) {
     add('fornecedor', index, 'principal', { logradouro: row.endereco, cep: row.cep,
       bairro: row.bairro, cidade: row.cidade, uf: row.estado });
@@ -221,6 +296,7 @@ export function classifyLegacyAddresses(input, { validateAddress } = {}) {
     group.count++; group.indices.push(entry.index); groups.set(key, group);
   }
   return { addresses: entries.length, ready: entries.filter(e => e.canonicalReady).length,
+    excludedFromActiveMigration: entries.filter(e => e.excludedFromActiveMigration).length,
     missingRequired: entries.filter(e => e.missing.length).length, conflicting: entries.filter(e => e.conflicts.length).length,
     entries, groups: [...groups.values()], fieldsInvented: 0 };
 }

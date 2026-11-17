@@ -5,10 +5,13 @@ import { OWNER_ERP_PERMISSION_TREE } from '../../src/security/ownerPermissionTre
 
 export const ROLE='erp_crm_test_role';
 /** Reference policies here are isolated fixtures, never operational grants. */
-export async function setupCrmFixture(exec:(sql:string)=>Promise<unknown>,role=ROLE) {
+export async function setupCrmFixture(exec:(sql:string)=>Promise<unknown>,role=ROLE,
+  {legacyContactsSchema=false}:{legacyContactsSchema?:boolean}={}) {
   if(!/^[a-z][a-z0-9_]{1,60}$/.test(role))throw new Error('CRM_TEST_ROLE_INVALID');
   const dir=new URL('../../migrations/',import.meta.url);
-  const names=(await readdir(dir)).filter(n=>/^\d+.*\.sql$/.test(n)).sort();
+  // Only the explicit old-schema negative omits 045; normal fixtures retain all migrations.
+  const names=(await readdir(dir)).filter(n=>/^\d+.*\.sql$/.test(n)
+    && !(legacyContactsSchema && n==='045_clientes_contatos_jsonb.sql')).sort();
   for(const name of names){const sql=await readFile(new URL(name,dir),'utf8');await exec(sql.replace('CREATE EXTENSION IF NOT EXISTS pgcrypto;',''));}
   await exec(`CREATE TABLE IF NOT EXISTS schema_migrations(id TEXT PRIMARY KEY);
     INSERT INTO schema_migrations(id) VALUES('040_crm_oportunidades.sql') ON CONFLICT DO NOTHING;`);
@@ -38,9 +41,9 @@ export async function setupCrmFixture(exec:(sql:string)=>Promise<unknown>,role=R
 }
 
 /** Adapts the existing PGlite test engine to the shared DB executor. */
-export async function localCrmFixture() {
+export async function localCrmFixture(options:{legacyContactsSchema?:boolean}={}) {
   const {PGlite}=await import('@electric-sql/pglite');const pg=new PGlite();
-  try {await setupCrmFixture(sql=>pg.exec(sql));}catch(error){await pg.close();throw error;}
+  try {await setupCrmFixture(sql=>pg.exec(sql),ROLE,options);}catch(error){await pg.close();throw error;}
   const query=(engine:any):DbQueryExecutor['query']=>async(sql,params)=>{
     const r=await engine.query(sql,params);return {rows:r.rows,rowCount:r.rows.length,command:'SELECT',oid:0,fields:[]};
   };

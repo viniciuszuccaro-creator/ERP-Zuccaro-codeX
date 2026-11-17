@@ -10,6 +10,26 @@ import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 const read = (p) => fs.readFileSync(p, 'utf8').replace(/\r\n/g, '\n');
 
+test('HTTP MASTER extras preserve loaded values, omission and explicit null without inventing or truncating', async () => {
+  const { toClienteMasterHttpPayload, hydrateClienteHttpRowForUi, CLIENTE_MASTER_EXTRA_KEYS } = await import('../src/api/clienteHttpPayload.js');
+  const fields = { rg: '000123-X', numero_caixa_postal: '00017', cep_caixa_postal: '01234000',
+    caixa_postal_cobranca: '0009', inscricao_produtor_rural: '0000123' };
+  assert.deepEqual(CLIENTE_MASTER_EXTRA_KEYS, Object.keys(fields));
+  const source = { id: 'synthetic', nome: 'SYNTHETIC', ...fields }, before = structuredClone(source);
+  const hydrated = hydrateClienteHttpRowForUi(source);
+  const wire = toClienteMasterHttpPayload(hydrated, { mode: 'update' });
+  for (const [key,value] of Object.entries(fields)) assert.equal(wire[key], value);
+  assert.deepEqual(source,before);
+  for (const key of CLIENTE_MASTER_EXTRA_KEYS) {
+    for (const value of [undefined,'']) assert.equal(Object.hasOwn(toClienteMasterHttpPayload({ [key]: value }),key),false);
+    assert.equal(toClienteMasterHttpPayload({ [key]: '   ' })[key],'   ','explicit invalid whitespace must reach canonical validation, not disappear');
+    assert.equal(toClienteMasterHttpPayload({ [key]: null })[key],null);
+    const invalid='x'.repeat(200);
+    assert.equal(toClienteMasterHttpPayload({ [key]: invalid })[key],invalid,'canonical backend must reject invalid values, never front-end truncation');
+  }
+  assert.throws(()=>toClienteMasterHttpPayload({ vendedor_responsavel_id: 'unproven-link' }),e=>e.status===422);
+});
+
 test('V24 Cliente: banner e empty distinguem fonte local / piloto off / erro', () => {
   const src = read('src/components/cadastros/VisualizadorUniversalEntidadeV24.jsx');
   assert.match(src, /isHttpClienteListMode/);

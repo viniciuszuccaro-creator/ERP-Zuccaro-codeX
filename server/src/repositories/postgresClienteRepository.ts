@@ -1,4 +1,5 @@
 import { AppError } from '../api/errors.js';
+import { assertClienteMasterExtraStorage, clienteMasterExtraWrite, projectClienteMasterExtras } from './clienteMasterExtras.js';
 import type { DbClient, DbQueryExecutor } from '../db/client.js';
 import { normalizeDocumento } from '../db/documentoValidators.js';
 import type { ListOptions, Scope } from '../services/tenantCrudService.js';
@@ -23,6 +24,7 @@ import { foldSearchText, sqlFoldAccentExpr } from '../domain/searchTextNormalize
 
 function mapCliente(row: Record<string, unknown>): Cliente {
   return {
+    ...projectClienteMasterExtras(row),
     // Coluna ausente ≠ []; NULL permanece NULL; storage inválido falha fechado.
     ...(Object.hasOwn(row, 'contatos')
       ? {
@@ -318,15 +320,17 @@ export class PostgresClienteRepository implements ClienteRepository {
         incomingCodigo: data.codigo,
       });
 
+      const extra = clienteMasterExtraWrite(data, 24);
+      await assertClienteMasterExtraStorage(client, extra.columns);
       const insert = await client.query(
         `INSERT INTO clientes (
           group_id, empresa_id, codigo, tipo, documento, documento_normalizado,
           nome, razao_social, nome_fantasia, nome_social,
           inscricao_estadual, inscricao_municipal, email, telefone, celular,
           status, origem, codigo_legado, legacy_id, source_system, migration_batch,
-          observacoes, ativo, created_by, updated_by
+          observacoes, ativo, created_by, updated_by${extra.columns.length ? ', ' + extra.columns.join(', ') : ''}
         ) VALUES (
-          $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$24
+          $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$24${extra.placeholders.length ? ', ' + extra.placeholders.join(', ') : ''}
         ) RETURNING *, to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS cliente_updated_at_canonical`,
         [
           scope.groupId,
@@ -353,6 +357,7 @@ export class PostgresClienteRepository implements ClienteRepository {
           data.observacoes ?? null,
           data.ativo ?? true,
           actorId ?? null,
+          ...extra.values,
         ],
       );
       const created = mapCliente(insert.rows[0] as Record<string, unknown>);
@@ -411,13 +416,15 @@ export class PostgresClienteRepository implements ClienteRepository {
     };
 
     // Omissão de contatos não regrava a coluna; NULL ≠ []; [] = limpeza explícita.
+    const extra = clienteMasterExtraWrite(data, data.contatos === undefined ? 23 : 24);
+    await assertClienteMasterExtraStorage(executor, extra.columns);
     const result = await executor.query(
       `UPDATE clientes SET
         empresa_id=$1, tipo=$2, documento=$3, documento_normalizado=$4,
         nome=$5, razao_social=$6, nome_fantasia=$7, nome_social=$8,
         inscricao_estadual=$9, inscricao_municipal=$10, email=$11, telefone=$12, celular=$13,
         status=$14, origem=$15, codigo_legado=$16, legacy_id=$17, source_system=$18,
-        migration_batch=$19, observacoes=$20, ativo=$21${data.contatos === undefined ? '' : ', contatos=$24::jsonb'}
+        migration_batch=$19, observacoes=$20, ativo=$21${data.contatos === undefined ? '' : ', contatos=$24::jsonb'}${extra.assignments.length ? ', ' + extra.assignments.join(', ') : ''}
        WHERE group_id=$22 AND id=$23
        RETURNING *, to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS cliente_updated_at_canonical`,
       [
@@ -428,6 +435,7 @@ export class PostgresClienteRepository implements ClienteRepository {
         next.migration_batch, next.observacoes, next.ativo,
         scope.groupId, id,
         ...(data.contatos === undefined ? [] : [data.contatos === null ? null : JSON.stringify(data.contatos)]),
+        ...extra.values,
       ],
     );
     const row = result.rows[0] as Record<string, unknown> | undefined;

@@ -2,6 +2,7 @@ import type { DbClient, DbQueryExecutor } from '../db/client.js';
 import {
   buildClienteLocalFingerprint,
   type ClienteLocal,
+  type ClienteLocalPersistenceCreate,
   type ClienteLocalCreate,
   type ClienteLocalFinalidade,
   type ClienteLocalFinalidadeInput,
@@ -29,7 +30,7 @@ function mapLocal(row: Record<string, unknown>): ClienteLocal {
     id: String(row.id),
     group_id: String(row.group_id),
     cliente_id: String(row.cliente_id),
-    nome: String(row.nome),
+    nome: String(row.nome ?? ''),
     cep: String(row.cep ?? ''),
     logradouro: String(row.logradouro ?? ''),
     numero: String(row.numero ?? ''),
@@ -37,7 +38,7 @@ function mapLocal(row: Record<string, unknown>): ClienteLocal {
     bairro: String(row.bairro ?? ''),
     cidade: String(row.cidade ?? ''),
     uf: String(row.uf ?? ''),
-    pais: String(row.pais ?? 'BRASIL'),
+    pais: String(row.pais ?? ''),
     referencia: row.referencia == null ? null : String(row.referencia),
     latitude: row.latitude == null ? null : Number(row.latitude),
     longitude: row.longitude == null ? null : Number(row.longitude),
@@ -94,11 +95,16 @@ const LOCAL_SELECT = `
 export class PostgresClienteLocalRepository implements ClienteLocalRepository {
   constructor(private readonly db: DbClient) {}
 
+  async lockScope(scope: ClienteLocalScope, executor?: DbQueryExecutor) {
+    if (!executor) throw new Error('TRANSACTION_REQUIRED');
+    await this.lockCliente(executor, scope);
+  }
+
   withTransaction<T>(fn: (executor?: DbQueryExecutor) => Promise<T>): Promise<T> {
     return this.db.withTransaction(fn);
   }
 
-  async listPage(filter: ClienteLocalListFilter) {
+  async listPage(filter: ClienteLocalListFilter, executor?: DbQueryExecutor) {
     const params: unknown[] = [filter.groupId, filter.clienteId];
     const where = ['cl.group_id=$1', 'cl.cliente_id=$2'];
     params.push(typeof filter.ativo === 'boolean' ? filter.ativo : true);
@@ -143,14 +149,14 @@ export class PostgresClienteLocalRepository implements ClienteLocalRepository {
       ? 'cl.nome'
       : filter.orderBy === 'cidade' ? 'cl.cidade' : 'cl.created_at';
     const orderDirection = filter.orderDir === 'desc' ? 'DESC' : 'ASC';
-    const count = await this.db.query(
+    const count = await (executor ?? this.db).query(
       `SELECT count(*)::int AS total FROM cliente_locais cl WHERE ${whereSql}`,
       params,
     );
     const limit = Math.min(Math.max(filter.limit ?? 50, 1), 200);
     const offset = Math.max(filter.offset ?? 0, 0);
     params.push(limit, offset);
-    const result = await this.db.query(
+    const result = await (executor ?? this.db).query(
       `${LOCAL_SELECT}
        WHERE ${whereSql}
        GROUP BY cl.id
@@ -181,10 +187,12 @@ export class PostgresClienteLocalRepository implements ClienteLocalRepository {
 
   async create(
     scope: ClienteLocalScope,
-    data: ClienteLocalCreate,
+    data: ClienteLocalPersistenceCreate,
     actorId?: string | null,
     executor?: DbQueryExecutor,
   ): Promise<ClienteLocal> {
+    if (data.endereco_incompleto && (data.ativo !== false || data.origem !== 'MIGRACAO'))
+      throw new Error('MIGRATION_PENDING_MUST_REMAIN_INACTIVE');
     const execute = async (client: DbQueryExecutor) => {
       await this.lockCliente(client, scope);
       const fingerprint = buildClienteLocalFingerprint(scope.groupId, scope.clienteId, data);
@@ -201,7 +209,7 @@ export class PostgresClienteLocalRepository implements ClienteLocalRepository {
           created_by, updated_by
         ) VALUES (
           $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,
-          false,$20,true,$21,$22,$23,$24,$25,$26,$27,$27
+          $28,$20,$29,$21,$22,$23,$24,$25,$26,$27,$27
         ) RETURNING id`,
         [
           scope.groupId, scope.clienteId, data.nome, data.cep, data.logradouro,
@@ -211,6 +219,7 @@ export class PostgresClienteLocalRepository implements ClienteLocalRepository {
           geo.geocodedAt, fingerprint, data.origem, data.legacy_id ?? null,
           data.legacy_code ?? null, data.source_system ?? null,
           data.migration_batch ?? null, data.imported_at ?? null, actorId ?? null,
+          data.endereco_incompleto ?? false, data.ativo ?? true,
         ],
       );
       const id = String(inserted.rows[0].id);
@@ -245,7 +254,8 @@ export class PostgresClienteLocalRepository implements ClienteLocalRepository {
           geocode_status=$14, geocode_source=$15, geocode_precision=$16,
           geocoded_at=$17, endereco_fingerprint=$18,
           origem=$19, legacy_id=$20, legacy_code=$21, source_system=$22,
-          migration_batch=$23, imported_at=$24, updated_by=$25
+          migration_batch=$23, imported_at=$24, updated_by=$25,
+          endereco_incompleto=$29
          WHERE group_id=$26 AND cliente_id=$27 AND id=$28`,
         [
           next.nome, next.cep, next.logradouro, next.numero, next.complemento,
@@ -255,7 +265,7 @@ export class PostgresClienteLocalRepository implements ClienteLocalRepository {
           geo.geocodedAt, fingerprint, next.origem, next.legacy_id,
           next.legacy_code, next.source_system, next.migration_batch,
           next.imported_at, actorId ?? null, scope.groupId, scope.clienteId,
-          localId,
+          localId, next.endereco_incompleto,
         ],
       );
       return this.get(scope, localId, client);
@@ -321,6 +331,8 @@ export class PostgresClienteLocalRepository implements ClienteLocalRepository {
     actorId?: string | null,
     executor?: DbQueryExecutor,
   ): Promise<ClienteLocal | null> {
+    if (!executor) return this.db.withTransaction(q => this.softDelete(scope, localId, actorId, q));
+    await this.lockCliente(executor, scope);
     const result = await (executor ?? this.db).query(
       `UPDATE cliente_locais SET ativo=false, updated_by=$1
        WHERE group_id=$2 AND cliente_id=$3 AND id=$4 AND ativo=true`,
@@ -336,6 +348,8 @@ export class PostgresClienteLocalRepository implements ClienteLocalRepository {
     actorId?: string | null,
     executor?: DbQueryExecutor,
   ): Promise<ClienteLocal | null> {
+    if (!executor) return this.db.withTransaction(q => this.restore(scope, localId, actorId, q));
+    await this.lockCliente(executor, scope);
     const result = await (executor ?? this.db).query(
       `UPDATE cliente_locais SET ativo=true, updated_by=$1
        WHERE group_id=$2 AND cliente_id=$3 AND id=$4 AND ativo=false`,

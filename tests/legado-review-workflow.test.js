@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { prepareAssistedReviewPackage, writeSyntheticAssistedReview } from '../scripts/legado/pilot-functional-review-package.mjs';
-import { createSyntheticAssistedReviewRecords, normalizeReviewField, prepareAssistedReviewProposal,
+import { buildAssistedReviewRecord, createSyntheticAssistedReviewRecords, normalizeReviewField, prepareAssistedReviewProposal,
   collectAssistedReviewProposal, protectReviewValue } from '../scripts/legado/pilot-functional-review-record.mjs';
 import { renderAssistedReview } from '../scripts/legado/pilot-functional-review-view.mjs';
 import { compareOperationalMigrationEvidence, buildOperationalLoadCandidate } from '../scripts/legado/pilot-functional-load-plan.mjs';
@@ -15,6 +15,26 @@ const command = record => ({ operationId: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'
   field: 'cep', proposedValue: '12345678', reason: 'Somente pontuacao comprovada', evidenceRefs: [] });
 const context = record => ({ ...record.context, actorId: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc' });
 const guard = { assertAllowed: async () => {} };
+
+test('revisao de endereco incompleto preserva complemento e referencia sem inventar campos', () => {
+  const base = createSyntheticAssistedReviewRecords()[0];
+  const original = { logradouro: ' RUA SINTETICA 001 ', complemento: ' Bloco 02, sala 003 ', referencia: ' Portao sintetico ',
+    numero: null, token: 'DO_NOT_EXPOSE' };
+  const saved = structuredClone(original);
+  const record = buildAssistedReviewRecord({ entity: 'endereco-cliente', sourceIndex: 0, original,
+    context: base.context, provenance: base.provenance, synthetic: true,
+    evidence: { identityVerified: true, scopeVerified: true, canonicalValidated: false, imported: false, reconciled: false,
+      issues: [{ field: 'numero', reason: 'SOURCE_FIELD_ABSENT', critical: true, blocks: ['endereco.entrega'] }] } });
+  for (const name of ['logradouro', 'complemento', 'referencia']) {
+    const field = record.fields.find(item => item.name === name);
+    assert.ok(field, `${name} preservado na revisao`);
+    assert.equal(field.original, original[name]); assert.equal(field.protected, true);
+  }
+  assert.equal(record.fields.find(item => item.name === 'numero').original, null);
+  for (const name of ['pais', 'finalidades', 'token']) assert.equal(record.fields.some(item => item.name === name), false);
+  assert.equal(record.actions.apply, false); assert.equal(record.operationalLoadAuthorized, false);
+  assert.ok(record.blockedOperations.includes('endereco.entrega')); assert.deepEqual(original, saved);
+});
 
 test('revisao conserva as quatro situacoes, origem e bloqueios, sem conceder operacao', () => {
   const records = createSyntheticAssistedReviewRecords();

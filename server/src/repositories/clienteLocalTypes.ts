@@ -187,7 +187,42 @@ export const clienteLocalUpdateSchema = z.object({
 }).strict().superRefine(validateGeo);
 
 export type ClienteLocalCreate = z.infer<typeof clienteLocalCreateSchema>;
-export type ClienteLocalUpdate = z.infer<typeof clienteLocalUpdateSchema>;
+/** Internal migration review only; public operational create remains strict. */
+const pendingText = (max: number) => z.string().trim().max(max)
+  .refine(value => value === cleanText(value), 'source text requires explicit normalization').default('');
+export const clienteLocalMigrationPendingSchema = z.object({
+  nome: pendingText(160),
+  cep: z.union([z.literal(''), localFields.cep]).default(''),
+  logradouro: pendingText(220),
+  numero: pendingText(40),
+  complemento: localFields.complemento,
+  bairro: pendingText(160),
+  cidade: pendingText(160),
+  uf: z.union([z.literal(''), localFields.uf]).default(''),
+  pais: z.union([z.literal(''), localFields.pais]).default(''),
+  referencia: localFields.referencia,
+  origem: z.literal('MIGRACAO'),
+  legacy_id: z.string().trim().min(1).max(120),
+  legacy_code: localFields.legacy_code,
+  source_system: z.string().trim().min(1).max(80),
+  migration_batch: z.string().trim().min(1).max(80),
+  imported_at: z.string().datetime(),
+  endereco_incompleto: z.literal(true),
+  ativo: z.literal(false),
+  finalidades: z.array(z.object({
+    finalidade: z.enum(['FISCAL', 'ENTREGA']), principal: z.literal(false),
+  }).strict()).length(1),
+}).strict().superRefine((data, ctx) => {
+  const required = ['nome','cep','logradouro','numero','bairro','cidade','uf','pais'] as const;
+  if (required.every(key => data[key] !== '')) ctx.addIssue({code:'custom',message:'complete address requires operational contract'});
+  if (!['logradouro','cidade','cep','referencia'].some(key => Boolean(data[key as keyof typeof data])))
+    ctx.addIssue({code:'custom',message:'source address component required'});
+});
+export type ClienteLocalPersistenceCreate = ClienteLocalCreate & {
+  endereco_incompleto?: boolean; ativo?: boolean;
+};
+// Internal persistence flag only; public update schema remains strict and excludes it.
+export type ClienteLocalUpdate = z.infer<typeof clienteLocalUpdateSchema> & { endereco_incompleto?: false };
 export type ClienteLocalFinalidadeInput = z.infer<typeof clienteLocalFinalidadeSchema>;
 
 export type ClienteLocalFinalidade = {

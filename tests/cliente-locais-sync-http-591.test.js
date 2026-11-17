@@ -5,6 +5,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   mapUiEnderecoToClienteLocalCreate,
+  mapClienteLocalToUiEndereco,
   mapTipoEnderecoToFinalidade,
   syncClienteLocaisViaHttp,
   assertClienteLocalUiExtrasWritable,
@@ -22,12 +23,51 @@ const baseEndereco = {
   bairro: 'Bela Vista',
   cidade: 'São Paulo',
   estado: 'SP',
+  pais: 'BRASIL',
   principal: true,
 };
 
 const uuidA = 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee';
 const uuidB = 'bbbbbbbb-bbbb-4ccc-8ddd-eeeeeeeeeeee';
 const uuidDrop = 'ffffffff-bbbb-4ccc-8ddd-eeeeeeeeeeee';
+
+test('local nao inventa numero, bairro, pais ou finalidade e conserva rascunho',()=>{
+  for(const field of ['numero','bairro','pais'])for(const value of [undefined,null,'']) {
+    const draft={...baseEndereco,[field]:value},before=structuredClone(draft);
+    assert.throws(()=>mapUiEnderecoToClienteLocalCreate(draft),e=>e.status===422&&e.fields.includes(field));
+    assert.deepEqual(draft,before);
+  }
+  assert.throws(()=>mapTipoEnderecoToFinalidade('SEM_PROVA'),e=>e.status===422);
+  assert.throws(()=>mapUiEnderecoToClienteLocalCreate({...baseEndereco,cep:'x01310100'}),e=>e.status===422);
+});
+
+test('local reaberto conserva pais, coordenadas zero, origem e finalidades distintas',()=>{
+  const original={id:uuidA,nome:'Synthetic',cep:'01310100',logradouro:'Rua Sintetica',numero:'0007',bairro:'Bairro',cidade:'Cidade',uf:'SP',pais:'PAIS COMPROVADO',
+    latitude:0,longitude:0,coordinate_source:'GPS',finalidades:[{finalidade:'FISCAL',principal:true},{finalidade:'ENTREGA',principal:false}]};
+  const draft=mapClienteLocalToUiEndereco(original);assert.equal(draft.pais,original.pais);
+  const body=mapUiEnderecoToClienteLocalCreate(draft);
+  assert.equal(body.latitude,0);assert.equal(body.longitude,0);assert.equal(body.coordinate_source,'GPS');
+  assert.equal(body.pais,original.pais);assert.deepEqual(body.finalidades,original.finalidades);
+  assert.throws(()=>mapUiEnderecoToClienteLocalCreate({...baseEndereco,latitude:0}),e=>e.status===422);
+  assert.throws(()=>mapUiEnderecoToClienteLocalCreate({...baseEndereco,latitude:91,longitude:0}),e=>e.status===422);
+});
+
+test('sync rejeita mais de50locais antes de qualquer escrita, sem truncar ou excluir',async()=>{
+  let writes=0;const api=Object.fromEntries(['createLocal','updateLocal','setFinalidades','softDeleteLocal'].map(k=>[k,async()=>{writes++;}]));
+  const draft=Array.from({length:51},(_,i)=>({...baseEndereco,apelido:'Synthetic '+i}));
+  await assert.rejects(syncClienteLocaisViaHttp({clienteId:'synthetic',draft,baselineIds:[uuidDrop],api}),e=>e.status===422);
+  assert.equal(writes,0);assert.equal(draft.length,51);
+});
+
+test('local rejeita truncamento e origem desconhecida de coordenadas reabertas',()=>{
+  for (const [field,max] of Object.entries({apelido:160,logradouro:220,numero:40,bairro:160,cidade:160,pais:80,complemento:160,observacoes:500})) {
+    const draft={...baseEndereco,[field]:'x'.repeat(max+1)},before=structuredClone(draft);
+    assert.throws(()=>mapUiEnderecoToClienteLocalCreate(draft),e=>e.status===422&&e.fields.includes(field));
+    assert.deepEqual(draft,before);
+  }
+  assert.throws(()=>mapUiEnderecoToClienteLocalCreate({...baseEndereco,_fonte:'cliente_locais',latitude:0,longitude:0,coordinate_source:null}),e=>e.status===422&&e.fields.includes('coordinate_source'));
+  assert.equal(mapUiEnderecoToClienteLocalCreate({...baseEndereco,latitude:0,longitude:0,coordinate_source:'MANUAL'}).coordinate_source,'MANUAL');
+});
 
 test('mapTipoEnderecoToFinalidade: entrega ≠ cadastral ≠ cobrança', () => {
   assert.equal(mapTipoEnderecoToFinalidade('Entrega'), 'ENTREGA');

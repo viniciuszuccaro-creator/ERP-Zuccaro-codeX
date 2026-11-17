@@ -11,6 +11,12 @@
 # O arquivo .sql permanece SOMENTE em /opt/erp-zuccaro/backups (nunca no Git).
 set -Eeuo pipefail
 
+# The HML mode reuses this entry point, without the legacy operational defaults.
+if [[ "${1:-}" == '--hml' ]]; then
+  [[ $# == 2 ]] || { echo 'HML_BACKUP_CONFIG_REQUIRED' >&2; exit 2; }
+  exec python3 "$(dirname "$0")/hml-backup.py" --backup "$2"
+fi
+
 # Permissões restritas para qualquer arquivo criado por este processo.
 umask 077
 

@@ -37,11 +37,13 @@ for(const file of Object.keys(hashes))test(`${file}: complete stage60 source pre
 });
 const pdf='src/components/lib/exportacaoPDF.jsx';
 const pedido={numero_pedido:'SYNTHETIC',cliente_nome:'Synthetic',data_pedido:'2026-01-01',status:'Rascunho',valor_total:1};
-function printer(before=false,blocked=false){
+function printer(before=false,blocked=false,now='2026-01-01T12:00:00.000Z'){
  const calls=[],timers=[],popup={opener:{synthetic:true},document:{write:html=>calls.push(['write',html]),close:()=>calls.push(['close'])},print:()=>calls.push(['print'])};
  const window={open:(...args)=>{calls.push(['open',...args]);return blocked?null:popup;}};
  const source=before?consumerWindowRemainder(pdf,read(pdf)):read(pdf);
- const module=load(pdf,{}, {window,setTimeout:(fn,delay)=>timers.push({fn,delay})},source);
+ // Compare both implementations at the same instant, including the complete footer.
+ const Clock=class extends Date {constructor(...args){super(...(args.length?args:[now]));}static now(){return new Date(now).getTime();}};
+ const module=load(pdf,{}, {window,Date:Clock,setTimeout:(fn,delay)=>timers.push({fn,delay})},source);
  return {run:module.gerarPDFPedido,popup,calls,timers};
 }
 test('Pedido print blocked-popup counterproof: no null dereference and false result',()=>{
@@ -71,6 +73,12 @@ test('Pedido print success returns true, severs opener and retains full original
 test('Pedido print write failure propagates instead of returning a success receipt',()=>{
  const current=printer();current.popup.document.write=()=>{throw Error('synthetic failure');};
  assert.throws(()=>current.run(pedido),/synthetic failure/);
+});
+test('Pedido print full comparison still detects a different generation timestamp',()=>{
+ const current=printer(),old=printer(true,false,'2026-01-01T12:00:01.000Z');
+ current.run(pedido);old.run(pedido);
+ assert.notDeepEqual(current.calls,old.calls);
+ assert.throws(()=>assert.deepEqual(current.calls,old.calls),assert.AssertionError);
 });
 test('Cadastro missing arguments/component never calls window manager',()=>{
  let calls=0;const open=()=>{calls++;return 'synthetic-window';};

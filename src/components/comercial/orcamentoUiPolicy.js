@@ -125,7 +125,7 @@ export function mapOrcamentoRowToCreateDraft(row, { clearValidade = true } = {})
 
 /**
  * Revalida itens contra mestres atuais (produto/unidade/condição).
- * Não inventa preço: se o produto existir, atualiza descrição/unidade; preço fica para revisão humana.
+ * Preserva quantidade/unidade/preco historicos; revalidar nao comprova conversao.
  */
 export function revalidateOrcamentoDraftAgainstMasters(draft, masters = {}) {
   const produtos = Array.isArray(masters.produtos) ? masters.produtos : [];
@@ -133,6 +133,7 @@ export function revalidateOrcamentoDraftAgainstMasters(draft, masters = {}) {
   const condicoes = Array.isArray(masters.condicoes) ? masters.condicoes : [];
   const missingProducts = [];
   const missingUnits = [];
+  const differentUnits = [];
   let condicaoOk = true;
   if (draft.condicao_pagamento_id) {
     condicaoOk = condicoes.some((c) => c.id === draft.condicao_pagamento_id);
@@ -140,9 +141,10 @@ export function revalidateOrcamentoDraftAgainstMasters(draft, masters = {}) {
   const itens = (Array.isArray(draft.itens) ? draft.itens : []).map((item) => {
     const produto = produtos.find((p) => p.id === item.produto_id);
     if (item.produto_id && !produto) missingProducts.push(item.produto_id);
-    const unidadeId = produto?.unidade_medida_id || item.unidade_id || '';
+    const unidadeId = item.unidade_id || '';
     const unidade = unidades.find((u) => u.id === unidadeId);
-    if (unidadeId && !unidade) missingUnits.push(unidadeId);
+    if (item.produto_id && (!unidadeId || !unidade)) missingUnits.push(unidadeId || item.produto_id);
+    if (unidadeId && produto?.unidade_medida_id && unidadeId !== produto.unidade_medida_id) differentUnits.push(unidadeId);
     if (!produto) return { ...item };
     return {
       ...item,
@@ -157,6 +159,28 @@ export function revalidateOrcamentoDraftAgainstMasters(draft, masters = {}) {
       condicaoAusente: Boolean(draft.condicao_pagamento_id) && !condicaoOk,
       produtosAusentes: [...new Set(missingProducts)],
       unidadesAusentes: [...new Set(missingUnits)],
+      unidadesDivergentes: [...new Set(differentUnits)],
     },
   };
+}
+
+/** Independent authorized sources; an expired session is never a partial success. */
+export function resolveOrcamentoHistorySources(results) {
+  const data = { pedido: [], orcamento: [] }, unavailableSources = [], errors = [];
+  let available = 0;
+  for (const source of ['pedido', 'orcamento']) {
+    const result = results[source];
+    if (result?.skipped === true) continue;
+    if (result?.status === 'rejected') {
+      if (result.reason?.status === 401) throw result.reason;
+      unavailableSources.push(source); errors.push(result.reason); continue;
+    }
+    const rows = Array.isArray(result?.value) ? result.value : result?.value?.data;
+    if (!Array.isArray(rows)) {
+      unavailableSources.push(source); errors.push(new Error('ORCAMENTO_HISTORY_RESPONSE_INVALID')); continue;
+    }
+    data[source] = rows; available++;
+  }
+  if (!available) throw errors.find(Boolean) || new Error('ORCAMENTO_HISTORY_UNAVAILABLE');
+  return { ...data, unavailableSources };
 }

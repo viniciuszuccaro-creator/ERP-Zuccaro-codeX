@@ -1,8 +1,13 @@
 test('CANAL selected reference preserves previous hashes and rejects mutations inside outside omitted duplicated hunks', async () => {
   const { readFileSync } = await import('node:fs');
+  const { clienteMasterExtrasRemainder } = await import('./helpers/clienteMasterExtrasCompositionRemainder.js');
   const { clienteConferenciaRemainder, clienteSelectedReferenceHunks } = await import('./helpers/consolidation81Remainder.js');
   for (const [file,entry] of Object.entries(clienteSelectedReferenceHunks)) {
-    const source=readFileSync(file,'utf8');
+    const current=readFileSync(file,'utf8');
+    // Validate the full composed file first; only then inspect the unchanged ancestral hunks.
+    assert.doesNotThrow(()=>clienteConferenciaRemainder(file,current));
+    assert.throws(()=>clienteConferenciaRemainder(file,current+'\n// outside composition\n'));
+    const source=clienteMasterExtrasRemainder(file,current);
     assert.doesNotThrow(()=>clienteConferenciaRemainder(file,source));
     assert.throws(()=>clienteConferenciaRemainder(file,source+'\n// outside approved hunk\n'));
     for (const [after,before] of entry.hunks) {

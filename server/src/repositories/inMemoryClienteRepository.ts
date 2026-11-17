@@ -1,4 +1,5 @@
 import { AppError } from '../api/errors.js';
+import { projectClienteMasterExtras } from './clienteMasterExtras.js';
 import { clienteOperacaoLinkSchema } from './clienteTypes.js';
 import { randomUUID } from 'node:crypto';
 import type { ListOptions, Scope, TenantEntityRepository } from '../services/tenantCrudService.js';
@@ -123,6 +124,7 @@ function buildCliente(
   const docNorm = normalizeDocumento(raw) || null;
   return {
     id,
+    ...projectClienteMasterExtras(data),
     group_id: scope.groupId,
     empresa_id: data.empresa_id ?? scope.empresaId ?? null,
     codigo,

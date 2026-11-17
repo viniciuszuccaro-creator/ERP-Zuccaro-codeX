@@ -70,6 +70,9 @@ export async function persistirEnderecoClienteGrupoLegado(source, options = {}) 
       || !source.transformation?.version || !['apply', 'revert'].includes(action)) {
     failure('LEGACY_ADDRESS_SOURCE_INVALID');
   }
+  const reviewOnly = source.payload.endereco_incompleto === true;
+  if (reviewOnly && (options.reviewOnly !== true || source.payload.ativo !== false || source.payload.origem !== 'MIGRACAO'))
+    failure('LEGACY_ADDRESS_REVIEW_SCOPE_REQUIRED');
   return transaction(source, async ({ ctx, service, rbacGuard, registry }) => {
     if (!ctx?.actorId || ctx.groupId !== source.groupId || ctx.empresaId
         || !service || !rbacGuard || !registry) failure('LEGACY_ADDRESS_SCOPE_INVALID');
@@ -83,18 +86,22 @@ export async function persistirEnderecoClienteGrupoLegado(source, options = {}) 
     const payloadHash = fingerprintEnderecoLegado(source.payload);
     if (known) {
       await registry.lockTarget(known.targetId);
-      const current = await service.get(ctx, source.clienteId, known.targetId);
+      const current = reviewOnly
+        ? await service.getMigrationPending(ctx, source.clienteId, known.targetId)
+        : await service.get(ctx, source.clienteId, known.targetId);
       if (fingerprintEnderecoLegado(current) !== fingerprintEnderecoLegado(known.snapshot)) {
         failure('DESTINATION_CHANGED_OUTSIDE_BATCH');
       }
       if (action === 'revert') {
-        await service.softDelete(ctx, source.clienteId, known.targetId);
+        if (reviewOnly) await service.cancelMigrationPending(ctx, source.clienteId, known.targetId);
+        else await service.softDelete(ctx, source.clienteId, known.targetId);
         await registry.markReverted(source.key);
         return { reverted: true };
       }
       if (known.fingerprint === source.fingerprint && known.payloadHash === payloadHash) {
         return { id: known.targetId, created: false, updated: false };
       }
+      if (reviewOnly) failure('LEGACY_ADDRESS_REVIEW_UPDATE_REQUIRES_NEW_APPROVAL');
       if (!options.allowUpdate || options.expectedFingerprint !== known.fingerprint
           || options.expectedSnapshot !== fingerprintEnderecoLegado(known.snapshot)
           || fingerprintEnderecoLegado(source.raw) !== fingerprintEnderecoLegado(known.raw)) {
@@ -111,7 +118,9 @@ export async function persistirEnderecoClienteGrupoLegado(source, options = {}) 
     const candidates = await registry.findByLegacyId(source.payload.legacy_id);
     if (candidates.length > 1) failure('LEGACY_ID_AMBIGUOUS');
     if (candidates.length === 1) failure('UNMAPPED_EXTERNAL_LOCAL');
-    const created = await service.create(ctx, source.clienteId, source.payload);
+    const created = reviewOnly
+      ? await service.createMigrationPending(ctx, source.clienteId, source.payload)
+      : await service.create(ctx, source.clienteId, source.payload);
     reconcile(created, source.payload);
     await registry.insert(source.key, { clienteId: source.clienteId,
       fingerprint: source.fingerprint, payloadHash, payload: source.payload,
@@ -157,10 +166,12 @@ export function criarTransacaoEnderecoPilotoPostgres({ db, ctx, criarServico, rb
     if (source?.groupId !== context.groupId || !uuid(source.clienteId)
         || typeof source.key !== 'string' || !source.key || source.key.length > 512) failure('LEGACY_ADDRESS_SCOPE_INVALID');
     const requiredFields = ['nome', 'cep', 'logradouro', 'numero', 'bairro', 'cidade', 'uf', 'pais'];
-    if (requiredFields.some(k => typeof source.payload?.[k] !== 'string' || !source.payload[k].trim())
+    const reviewOnly = source.payload?.endereco_incompleto === true
+      && source.payload?.ativo === false && source.payload?.origem === 'MIGRACAO';
+    if (requiredFields.some(k => typeof source.payload?.[k] !== 'string' || (!reviewOnly && !source.payload[k].trim()))
         || !Array.isArray(source.payload.finalidades) || source.payload.finalidades.length === 0
-        || !/^(?:[0-9]{8}|[0-9]{5}-[0-9]{3})$/.test(source.payload.cep)
-        || !/^[A-Za-z]{2}$/.test(source.payload.uf)
+        || ((!reviewOnly || source.payload.cep !== '') && !/^(?:[0-9]{8}|[0-9]{5}-[0-9]{3})$/.test(source.payload.cep))
+        || ((!reviewOnly || source.payload.uf !== '') && !/^[A-Za-z]{2}$/.test(source.payload.uf))
         || (Array.isArray(source.conflicts) && source.conflicts.length > 0)) failure('LEGACY_ADDRESS_FIELDS_UNPROVEN');
     return db.withTenantContext(context, () => db.withTransaction(async executor => {
       let active = true, failed = false;

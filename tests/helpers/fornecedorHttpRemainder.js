@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { setorRbacRemainder } from './setorRbacRemainder.js';
+import { clienteContatosRemainder } from './clienteContatosRemainder.js';
 
 const entries = {
   'server/tests/infra-consolidacao.test.ts': {
@@ -38,6 +39,7 @@ const entries = {
 
 /** Remove only this opt-in wiring; verify every byte of the previous source. */
 export function fornecedorHttpRemainder(file, text) {
+  text = clienteContatosRemainder(file, text);
   text = setorRbacRemainder(file, text);
   const entry = entries[file];
   if (!entry) return text;

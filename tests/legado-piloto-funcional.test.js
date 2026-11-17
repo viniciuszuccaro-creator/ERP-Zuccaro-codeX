@@ -33,6 +33,37 @@ test('functional policy quarantines all owners of conflicting identities', () =>
   const result = selectFunctionalRows(input([client, { ...client, nome: 'DIFFERENT' }]), options);
   assert.equal(result.selected.cliente.length, 0); assert.equal(result.quarantine.length, 2);
 });
+
+test('functional policy preserves explicit client scalar evidence without inventing absent fields', () => {
+  const original = { ...client, inscricao_estadual: '001234567', inscricao_municipal: '009',
+    nome_social: 'SYNTHETIC SOCIAL', telefone: '001100000000', celular: '0011999999999', observacoes: 'SYNTHETIC NOTE' };
+  const before = structuredClone(original);
+  const result = selectFunctionalRows(input([original]), options);
+  const payload = result.selected.cliente[0].payload;
+  for (const field of ['inscricao_estadual', 'inscricao_municipal', 'nome_social', 'telefone', 'celular', 'observacoes'])
+    assert.equal(payload[field], original[field]);
+  assert.deepEqual(original, before);
+  assert.equal(Object.hasOwn(payload, 'whatsapp'), false);
+  assert.equal(Object.hasOwn(payload, 'endereco_principal'), false);
+  assert.equal(Object.hasOwn(payload, 'contatos'), false);
+  assert.equal(payload.codigo, original.codigo); assert.equal(payload.codigo_legado, original.codigo_legado);
+});
+
+test('functional policy omits empty scalars and isolates canonical rejection without blocking independent clients', () => {
+  const schema = { safeParse: data => ({ success: typeof data.inscricao_estadual !== 'number'
+    && (data.inscricao_estadual?.length ?? 0) <= 40, data }) };
+  const result = selectFunctionalRows(input([{ ...client, inscricao_estadual: 'X'.repeat(41), telefone: '  ', celular: null },
+    { ...client, codigo: '000124', codigo_legado: '124', cpf: '11144477735', inscricao_estadual: '000001' }]), { ...options, clienteSchema: schema });
+  assert.equal(result.selected.cliente.length, 2); assert.equal(result.quarantine.length, 0);
+  const first = result.selected.cliente[0].payload;
+  for (const field of ['inscricao_estadual', 'telefone', 'celular']) assert.equal(Object.hasOwn(first, field), false);
+  assert.equal(result.selected.cliente[1].payload.inscricao_estadual, '000001');
+  assert.deepEqual(result.auxiliary, [{ entity: 'cliente', index: 0, reason: 'CANONICAL_FIELD_REQUIRES_REVIEW',
+    rawField: 'inscricao_estadual', sourcePreserved: true }]);
+  const missing = selectFunctionalRows(input([{ ...client, inscricao_estadual: '', inscricao_municipal: undefined }]), options);
+  assert.equal(Object.hasOwn(missing.selected.cliente[0].payload, 'inscricao_estadual'), false);
+  assert.equal(Object.hasOwn(missing.selected.cliente[0].payload, 'inscricao_municipal'), false);
+});
 test('functional policy does not bypass canonical rejection or invent address fields', () => {
   const rejected = selectFunctionalRows(input([client]), { ...options, clienteSchema: { safeParse: () => ({ success: false }) } });
   assert.equal(rejected.selected.cliente.length, 0);

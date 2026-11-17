@@ -18,7 +18,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Textarea } from '@/components/ui/textarea';
 import ConfirmDialog from '@/components/ui/confirm-dialog';
 import { toast } from 'sonner';
-import { buildOrcamentoPayload, buildOrcamentoShareText, calculateItem, calculateTotals, canUseOrcamentoAction, createOrcamentoActionGate, mapOrcamentoRowToCreateDraft, microsToDecimal, revalidateOrcamentoDraftAgainstMasters, sameOrcamentoScope } from './orcamentoUiPolicy';
+import { buildOrcamentoPayload, buildOrcamentoShareText, calculateItem, calculateTotals, canUseOrcamentoAction, createOrcamentoActionGate, mapOrcamentoRowToCreateDraft, microsToDecimal, revalidateOrcamentoDraftAgainstMasters, resolveOrcamentoHistorySources, sameOrcamentoScope } from './orcamentoUiPolicy';
 import { explainPedidoPersistenceError } from './pedidoUiPolicy';
 import {
   clienteEmpresaPickerLabel,
@@ -54,6 +54,7 @@ const errorMessage = (error) => {
   if (pedidoSchema) return pedidoSchema;
   if (error?.message === 'COMERCIAL_REFERENCE_PAGINATION_REQUIRED') return 'Catalogo auxiliar incompleto para esta selecao.';
   if (error?.message === 'COMERCIAL_MASTERS_INVALID') return 'Nao foi possivel validar os cadastros vinculados nesta empresa.';
+  if (error?.status === 401) return 'Sua sessao expirou. Entre novamente.';
   if (error?.status === 403) return 'Seu perfil não possui permissão para esta ação.';
   if (error?.status === 404) return 'Orçamento não encontrado neste contexto.';
   if (error?.status === 409) return 'O orçamento foi alterado e não está mais em aberto.';
@@ -483,7 +484,7 @@ export default function OrcamentosTab({
 const convertToPedido = async () => {
     if (proposalMode) return;
     if (!pendingConversion) return;
-    if (!hasPermission('Comercial', 'pedido', 'converter-pedido')) {
+    if (!canConvert || !hasPermission('Comercial', 'pedido', 'converter-pedido')) {
       toast.error('Seu perfil não possui permissão para esta ação.'); return;
     }
     if (!conversion.data_entrega_solicitada) { toast.error('Informe a data solicitada pelo cliente.'); return; }
@@ -529,6 +530,9 @@ const convertToPedido = async () => {
     }
     if (warnings?.produtosAusentes?.length) {
       toast.message(`${warnings.produtosAusentes.length} produto(s) do documento anterior não encontrado(s) nos mestres — revise os itens.`);
+    }
+    if (warnings?.unidadesAusentes?.length || warnings?.unidadesDivergentes?.length) {
+      toast.message('Unidades originais preservadas. Revise unidades e equivalencias no cadastro antes de salvar; nenhuma conversao foi aplicada.');
     }
   };
   const duplicarOrcamentoCentral = async () => {
@@ -576,7 +580,7 @@ const convertToPedido = async () => {
       toast.message('Proposta visual: inclusão de itens anteriores desabilitada.');
       return;
     }
-    if (!canCreate && !canEdit(centralSelected)) {
+    if (!canUseOrcamentoAction(hasPermission, 'criar') && !canEdit(centralSelected)) {
       toast.error('Seu perfil não possui permissão para alterar itens.');
       return;
     }
@@ -591,24 +595,34 @@ const convertToPedido = async () => {
     if (!ticket) return;
     try {
       const opened = { ...renderedScope.current };
-      const [pedidosRes, orcamentosRes] = await Promise.all([
-        pedidosApi.list({ limit: 5, offset: 0, clienteEmpresaId }),
-        api.list({ limit: 5, offset: 0, clienteEmpresaId }),
+      const mayReadPedidos = hasPermission('Comercial', 'pedido', 'visualizar');
+      const mayReadOrcamentos = canUseOrcamentoAction(hasPermission, 'visualizar');
+      if (!mayReadPedidos && !mayReadOrcamentos) { toast.error('Seu perfil nao possui permissao para consultar documentos anteriores.'); return; }
+      const [pedidosRes, orcamentosRes] = await Promise.allSettled([
+        mayReadPedidos ? pedidosApi.list({ limit: 5, offset: 0, clienteEmpresaId }) : Promise.resolve(null),
+        mayReadOrcamentos ? api.list({ limit: 5, offset: 0, clienteEmpresaId }) : Promise.resolve(null),
       ]);
       if (!actionCurrent(ticket) || !sameOrcamentoScope(opened, renderedScope.current, activeScope())) return;
-      const pedidos = Array.isArray(pedidosRes?.data) ? pedidosRes.data : (Array.isArray(pedidosRes) ? pedidosRes : []);
-      const orcs = Array.isArray(orcamentosRes?.data) ? orcamentosRes.data : (Array.isArray(orcamentosRes) ? orcamentosRes : []);
+      const sources = resolveOrcamentoHistorySources({ pedido: mayReadPedidos ? pedidosRes : { skipped: true },
+        orcamento: mayReadOrcamentos ? orcamentosRes : { skipped: true } });
+      if (sources.unavailableSources.length) toast.message('Parte das fontes de documentos esta indisponivel. Somente documentos autorizados e disponiveis serao considerados.');
+      const pedidos = sources.pedido, orcs = sources.orcamento;
       const excludeId = formOpen && editing?.id ? editing.id : centralSelected?.id;
       const candidatos = [
         ...pedidos.map((p) => ({ kind: 'pedido', row: p, at: p.created_at || p.updated_at || '' })),
         ...orcs.filter((o) => o.id !== excludeId).map((o) => ({ kind: 'orcamento', row: o, at: o.created_at || o.updated_at || '' })),
       ].sort((a, b) => String(b.at).localeCompare(String(a.at)));
       if (candidatos.length === 0) {
-        toast.error('Não há pedido/orçamento anterior deste cliente neste contexto.');
+        toast.error(sources.unavailableSources.length
+          ? 'Nao foi possivel localizar documento anterior nas fontes disponiveis; parte do historico esta indisponivel.'
+          : 'Não há pedido/orçamento anterior deste cliente nas fontes autorizadas deste contexto.');
         return;
       }
       const chosen = candidatos[0];
       let source = chosen.row;
+      if (!(chosen.kind === 'pedido' ? hasPermission('Comercial', 'pedido', 'visualizar') : canUseOrcamentoAction(hasPermission, 'visualizar'))) {
+        toast.error('Permissao de leitura alterada. Reabra o documento.'); return;
+      }
       if (chosen.kind === 'pedido' && source?.id) {
         source = await pedidosApi.get(source.id);
       } else if (chosen.kind === 'orcamento' && source?.id) {
@@ -631,7 +645,7 @@ const convertToPedido = async () => {
         setForm(checked.draft);
         setDirty(true);
       } else {
-        if (!canCreate) {
+        if (!canUseOrcamentoAction(hasPermission, 'criar')) {
           toast.error('Seu perfil não possui permissão para criar orçamento.');
           return;
         }
@@ -658,11 +672,10 @@ const convertToPedido = async () => {
       endAction(ticket);
     }
   };
-  const loadCentralDetail = async (row) => {
+  const loadCentralDetail = async (row, ticket) => {
+    if (!actionCurrent(ticket)) return null;
     if (proposalMode) return row;
     if (Array.isArray(row?.itens) && row.itens.length > 0 && row.numero) return row;
-    const ticket = beginAction(renderedScope.current);
-    if (!ticket) return null;
     try {
       const detail = await api.get(row.id);
       if (!actionCurrent(ticket)) return null;
@@ -675,21 +688,26 @@ const convertToPedido = async () => {
     } catch (error) {
       if (actionCurrent(ticket)) toast.error(errorMessage(error));
       return null;
-    } finally {
-      endAction(ticket);
     }
+  };
+  const withCentralDetail = async (row, consume) => {
+    const ticket = beginAction(renderedScope.current);
+    if (!ticket) return;
+    try {
+      const detail = await loadCentralDetail(row, ticket);
+      if (!detail || !actionCurrent(ticket)) return;
+      return await consume(detail, ticket);
+    } finally { endAction(ticket); }
   };
   const imprimirCentral = async () => {
     const row = requireCentralSelection('imprimir');
     if (!row) return;
-    const detail = await loadCentralDetail(row);
-    if (detail) printOrcamento(detail);
+    await withCentralDetail(row, printOrcamento);
   };
   const enviarCentral = async (channel) => {
     const row = requireCentralSelection('enviar');
     if (!row) return;
-    const detail = await loadCentralDetail(row);
-    if (detail) await prepareShare(detail, channel);
+    await withCentralDetail(row, (detail) => prepareShare(detail, channel));
   };
   /**
    * Fechar Orçamento ≠ Cancelar.
@@ -707,21 +725,21 @@ const convertToPedido = async () => {
       toast.error('Somente orçamentos em aberto podem ser fechados.');
       return;
     }
-    if (!canConvert) {
+    if (!canConvert || !hasPermission('Comercial', 'pedido', 'converter-pedido')) {
       toast.error('Seu perfil não possui permissão para fechar o orçamento (converter em pedido).');
       return;
     }
-    const detail = await loadCentralDetail(row);
-    if (!detail) return;
+    await withCentralDetail(row, (detail, ticket) => {
     if (!Array.isArray(detail.itens) || detail.itens.length === 0) {
       toast.error('Orçamento sem itens — não é possível fechar.');
       return;
     }
-    conversionScope.current = renderedScope.current;
+    conversionScope.current = ticket.scope;
     setConversion({ tipo_operacao: 'ENTREGA', data_entrega_solicitada: '' });
     setConversionStockOk(true);
     setPendingConversion(detail);
     toast.message('Fechamento comercial: confirme operação, data e estoque. A conversão só grava após resposta do servidor — Cancelar é ação separada.');
+    });
   };
   const cancelarOrcamentoCentral = () => {
     const row = requireCentralSelection('cancelar');

@@ -1,10 +1,12 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
+import { clienteLocalBatchRemainder } from './clienteLocalBatchRemainder.js';
 
 const wiring = "    authorization: { guard: rbacGuard, moduleName: 'Cadastros', section: 'setor_atividade' },\n";
 
 /** Peel only the Setor authorization wiring, retaining the entire prior app. */
 export function setorRbacRemainder(file, text) {
+  text = clienteLocalBatchRemainder(file, text);
   if (file !== 'server/src/app.ts' || !text.includes('authorization:')) return text;
   const source = text.replace(/\r\n/g, '\n');
   assert.equal(source.split(wiring).length, 2, 'exact Setor RBAC wiring count');

@@ -12,6 +12,14 @@ import { createPageUrl } from "@/utils";
 import { toast } from "sonner";
 import usePermissions from "@/components/lib/usePermissions";
 
+const emptyEndereco = () => ({
+  apelido: "", tipo_endereco: "", cep: "", logradouro: "", numero: "",
+  complemento: "", bairro: "", cidade: "", estado: "", pais: "",
+  latitude: null, longitude: null, coordinate_source: null, mapa_url: "",
+  horario_inicio: "", horario_fim: "", contato_nome: "", contato_telefone: "",
+  observacoes: "", principal: false,
+});
+
 /**
  * V21.1.2 - SUB-DIALOG MANTIDO (usado dentro de forms maiores)
  * Dialogs internos são permitidos quando fazem parte de um fluxo maior.
@@ -28,8 +36,18 @@ export default function GerenciarEnderecosClienteForm({
   persistBusy = false,
   commitMode = "backend",
 }) {
-  const { canEdit } = usePermissions();
-  const podeEditar = canEdit("Cadastros", "Cliente") || canEdit("Cadastros", null);
+  const permissions = usePermissions();
+  const permissionsRef = useRef(permissions);
+  permissionsRef.current = permissions;
+  const localAllowed = (action) => {
+    const current = permissionsRef.current;
+    return (current.canEdit("Cadastros", "Cliente") || current.canEdit("Cadastros", null))
+      && current.hasPermission?.("Cadastros", "cliente_local", action) === true;
+  };
+  const podeAdicionar = localAllowed("criar");
+  const podeEditar = localAllowed("editar");
+  const podeInativar = localAllowed("inativar");
+  const podePrincipal = localAllowed("principal");
   const isDraftCommit = commitMode === "draft";
   const busyLabel = isDraftCommit
     ? "Aguarde a atualização do rascunho de endereços."
@@ -62,53 +80,16 @@ export default function GerenciarEnderecosClienteForm({
     setSalvando(false);
   };
 
-  const [novoEndereco, setNovoEndereco] = useState({
-    apelido: "",
-    tipo_endereco: "Entrega",
-    cep: "",
-    logradouro: "",
-    numero: "",
-    complemento: "",
-    bairro: "",
-    cidade: "",
-    estado: "",
-    latitude: null,
-    longitude: null,
-    mapa_url: "",
-    horario_inicio: "",
-    horario_fim: "",
-    contato_nome: "",
-    contato_telefone: "",
-    observacoes: "",
-    principal: false
-  });
+  const [novoEndereco, setNovoEndereco] = useState(emptyEndereco);
+  const podeSalvarEndereco = enderecoEditando !== null ? podeEditar : podeAdicionar;
 
   const resetForm = () => {
-    setNovoEndereco({
-      apelido: "",
-      tipo_endereco: "Entrega",
-      cep: "",
-      logradouro: "",
-      numero: "",
-      complemento: "",
-      bairro: "",
-      cidade: "",
-      estado: "",
-      latitude: null,
-      longitude: null,
-      mapa_url: "",
-      horario_inicio: "",
-      horario_fim: "",
-      contato_nome: "",
-      contato_telefone: "",
-      observacoes: "",
-      principal: false
-    });
+    setNovoEndereco(emptyEndereco());
     setEnderecoEditando(null);
   };
 
   const abrirNovo = () => {
-    if (!podeEditar) {
+    if (!localAllowed("criar")) {
       toast.error("Sem permissão para editar endereços do cliente.");
       return;
     }
@@ -125,7 +106,7 @@ export default function GerenciarEnderecosClienteForm({
   };
 
   const handleSalvarEndereco = async () => {
-    if (!podeEditar) {
+    if (!localAllowed(enderecoEditando !== null ? "editar" : "criar")) {
       toast.error("Sem permissão para editar endereços do cliente.");
       return;
     }
@@ -141,6 +122,13 @@ export default function GerenciarEnderecosClienteForm({
       toast.error("Preencha logradouro e número");
       return;
     }
+    const before = enderecoEditando !== null ? enderecos[enderecoEditando] : null;
+    const principalChanged = before ? Boolean(before.principal) !== Boolean(novoEndereco.principal)
+      || before.tipo_endereco !== novoEndereco.tipo_endereco : novoEndereco.principal === true;
+    if (principalChanged && !localAllowed('principal')) {
+      toast.error('Sem permissao para alterar finalidade ou endereco principal.');
+      return;
+    }
 
     // Tipo Outro é único por cliente (evidência HML #591) — editar o existente ou escolher outro tipo.
     const tipoAtual = String(novoEndereco.tipo_endereco || "");
@@ -154,20 +142,8 @@ export default function GerenciarEnderecosClienteForm({
       }
     }
 
-    // Gerar URL do Google Maps se tiver coordenadas ou CEP
-    let mapaUrl = novoEndereco.mapa_url;
-    if (!mapaUrl) {
-      if (novoEndereco.latitude && novoEndereco.longitude) {
-        mapaUrl = `https://www.google.com/maps?q=${novoEndereco.latitude},${novoEndereco.longitude}`;
-      } else if (novoEndereco.cep) {
-        mapaUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-          `${novoEndereco.logradouro}, ${novoEndereco.numero}, ${novoEndereco.bairro}, ${novoEndereco.cidade}, ${novoEndereco.estado}, ${novoEndereco.cep}`
-        )}`;
-      }
-    }
-
-    const enderecosAtualizados = [...enderecos];
-    const enderecoComMapa = { ...novoEndereco, mapa_url: mapaUrl };
+    const enderecosAtualizados = enderecos.map(end => ({ ...end }));
+    const enderecoComMapa = { ...novoEndereco };
 
     if (enderecoEditando !== null) {
       enderecosAtualizados[enderecoEditando] = enderecoComMapa;
@@ -176,8 +152,9 @@ export default function GerenciarEnderecosClienteForm({
     }
 
     if (novoEndereco.principal) {
+      const selectedIndex = enderecoEditando !== null ? enderecoEditando : enderecosAtualizados.length - 1;
       enderecosAtualizados.forEach((end, idx) => {
-        if (idx !== enderecoEditando) {
+        if (idx !== selectedIndex && end.tipo_endereco === novoEndereco.tipo_endereco) {
           end.principal = false;
         }
       });
@@ -200,7 +177,7 @@ export default function GerenciarEnderecosClienteForm({
   };
 
   const handleEditarEndereco = (index) => {
-    if (!podeEditar) {
+    if (!localAllowed("editar")) {
       toast.error("Sem permissão para editar endereços do cliente.");
       return;
     }
@@ -218,7 +195,7 @@ export default function GerenciarEnderecosClienteForm({
   };
 
   const handleExcluirEndereco = async (index) => {
-    if (!podeEditar) {
+    if (!localAllowed("inativar")) {
       toast.error("Sem permissão para editar endereços do cliente.");
       return;
     }
@@ -251,8 +228,8 @@ export default function GerenciarEnderecosClienteForm({
         <Button
           onClick={abrirNovo}
           size="sm"
-          disabled={bloqueado || !podeEditar}
-          data-permission="Cadastros.Cliente.editar"
+          disabled={bloqueado || !podeAdicionar}
+          data-permission="Cadastros.cliente_local.criar"
           data-action="Cadastros.Cliente.endereco.adicionar"
           data-commit-mode={commitMode}
         >
@@ -325,7 +302,7 @@ export default function GerenciarEnderecosClienteForm({
                     size="icon"
                     onClick={() => handleEditarEndereco(idx)}
                     disabled={bloqueado || !podeEditar}
-                    data-permission="Cadastros.Cliente.editar"
+                    data-permission="Cadastros.cliente_local.editar"
                     data-action="Cadastros.Cliente.endereco.editar"
                   >
                     <Edit className="w-4 h-4 text-blue-600" />
@@ -334,8 +311,8 @@ export default function GerenciarEnderecosClienteForm({
                     variant="ghost"
                     size="icon"
                     onClick={() => handleExcluirEndereco(idx)}
-                    disabled={bloqueado || !podeEditar}
-                    data-permission="Cadastros.Cliente.editar"
+                    disabled={bloqueado || !podeInativar}
+                    data-permission="Cadastros.cliente_local.inativar"
                     data-action="Cadastros.Cliente.endereco.excluir"
                   >
                     <Trash2 className="w-4 h-4 text-red-600" />
@@ -354,8 +331,8 @@ export default function GerenciarEnderecosClienteForm({
             variant="outline"
             size="sm"
             className="mt-3"
-            disabled={bloqueado || !podeEditar}
-            data-permission="Cadastros.Cliente.editar"
+            disabled={bloqueado || !podeAdicionar}
+            data-permission="Cadastros.cliente_local.criar"
             data-action="Cadastros.Cliente.endereco.adicionar"
           >
             <Plus className="w-4 h-4 mr-2" />
@@ -380,7 +357,7 @@ export default function GerenciarEnderecosClienteForm({
           </DialogHeader>
 
           <fieldset
-            disabled={bloqueado || !podeEditar}
+            disabled={bloqueado || !podeSalvarEndereco}
             className="space-y-4 border-0 p-0 m-0 min-w-0 disabled:opacity-70"
             data-block="endereco-dialog-fields"
           >
@@ -397,7 +374,8 @@ export default function GerenciarEnderecosClienteForm({
               <div>
                 <Label>Tipo de Endereço</Label>
                 <Select
-                  value={novoEndereco.tipo_endereco || "Entrega"}
+                  value={novoEndereco.tipo_endereco || ""}
+                  disabled={enderecoEditando !== null && !podePrincipal}
                   onValueChange={(value) => setNovoEndereco({ ...novoEndereco, tipo_endereco: value })}
                 >
                   <SelectTrigger data-action="endereco-tipo"><SelectValue /></SelectTrigger>
@@ -482,6 +460,15 @@ export default function GerenciarEnderecosClienteForm({
                   placeholder="SP"
                 />
               </div>
+              <div>
+                <Label>Pais</Label>
+                <Input
+                  value={novoEndereco.pais ?? ""}
+                  onChange={(e) => setNovoEndereco({ ...novoEndereco, pais: e.target.value })}
+                  maxLength={80}
+                  data-action="endereco-pais"
+                />
+              </div>
             </div>
 
             <div>
@@ -499,8 +486,8 @@ export default function GerenciarEnderecosClienteForm({
                 <Input
                   type="number"
                   step="0.000001"
-                  value={novoEndereco.latitude || ""}
-                  onChange={(e) => setNovoEndereco({ ...novoEndereco, latitude: parseFloat(e.target.value) || null })}
+                  value={novoEndereco.latitude ?? ""}
+                  onChange={(e) => setNovoEndereco({ ...novoEndereco, latitude: e.target.value.trim() === "" ? null : Number(e.target.value), coordinate_source: "MANUAL" })}
                   placeholder="-23.550520"
                 />
               </div>
@@ -509,8 +496,8 @@ export default function GerenciarEnderecosClienteForm({
                 <Input
                   type="number"
                   step="0.000001"
-                  value={novoEndereco.longitude || ""}
-                  onChange={(e) => setNovoEndereco({ ...novoEndereco, longitude: parseFloat(e.target.value) || null })}
+                  value={novoEndereco.longitude ?? ""}
+                  onChange={(e) => setNovoEndereco({ ...novoEndereco, longitude: e.target.value.trim() === "" ? null : Number(e.target.value), coordinate_source: "MANUAL" })}
                   placeholder="-46.633308"
                 />
               </div>
@@ -579,6 +566,7 @@ export default function GerenciarEnderecosClienteForm({
               <input
                 type="checkbox"
                 checked={novoEndereco.principal}
+                disabled={!podePrincipal}
                 onChange={(e) => setNovoEndereco({ ...novoEndereco, principal: e.target.checked })}
                 className="w-4 h-4"
               />
@@ -592,8 +580,8 @@ export default function GerenciarEnderecosClienteForm({
               </Button>
               <Button
                 onClick={handleSalvarEndereco}
-                disabled={bloqueado || !podeEditar}
-                data-permission="Cadastros.Cliente.editar"
+                disabled={bloqueado || !podeSalvarEndereco}
+                data-permission={`Cadastros.cliente_local.${enderecoEditando !== null ? 'editar' : 'criar'}`}
                 data-action="Cadastros.Cliente.endereco.salvar"
               >
                 <Check className="w-4 h-4 mr-2" />
