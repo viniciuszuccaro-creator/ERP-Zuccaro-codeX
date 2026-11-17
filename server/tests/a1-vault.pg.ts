@@ -11,6 +11,7 @@ import express, {type ErrorRequestHandler} from 'express';
 import {A1VaultService} from '../src/services/a1VaultService.ts';
 import {mountA1VaultRoutes} from '../src/api/a1VaultRoute.ts';
 import {AppError} from '../src/api/errors.ts';
+import {PostgresAuditRepository} from '../src/audit/auditRepository.ts';
 import {runSyntheticA1Smoke} from './helpers/a1RuntimeSmoke.mjs';
 
 test('native PG A1 repository: encrypted persistence, RLS, CAS, rollback and reopen (not PKCS12 acceptance)',async()=>{
@@ -55,12 +56,13 @@ test('native PG A1 repository: encrypted persistence, RLS, CAS, rollback and reo
   // One continuous HTTP -> parser/trust -> encrypted PG -> reopen proof. Auth state is explicitly synthetic.
   const tmp=process.env.TMPDIR;process.env.TMPDIR='/dev/shm';
   try {await runSyntheticA1Smoke(async ({certificate,password,validation})=>{
-   await db.query(`CREATE TABLE synthetic_a1_audit(entry jsonb NOT NULL);GRANT INSERT,SELECT ON synthetic_a1_audit TO ${role}`);
+   await db.query(`CREATE TABLE audit_logs(group_id uuid,empresa_id uuid,actor_id uuid,actor_email text,entity text,entity_id uuid,action text,before_data jsonb,after_data jsonb,request_id uuid,ip_address text,created_at timestamptz DEFAULT now());GRANT INSERT,SELECT ON audit_logs TO ${role}`);
    const scoped={...db,withTransaction:<T>(fn:Parameters<typeof db.withTransaction<T>>[0])=>db.withTransaction(async q=>{await q.query(`SET LOCAL ROLE ${role}`);return fn(q);})};
    let auditFails=false;
+   const audit=new PostgresAuditRepository(scoped);
    const service=new A1VaultService(scoped,{async assertAllowed(c,m,s,action){
     if(c.actorId!==actor||c.groupId!==group||!['visualizar','importar'].includes(action))throw new AppError(403,'DENIED','Denied');
-   }},{async append(entry,q){if(auditFails)throw Error('SYNTHETIC_AUDIT_FAILURE');await q!.query('INSERT INTO synthetic_a1_audit VALUES($1)',[JSON.stringify(entry)]);},async listByEntity(){return[];}},repo,encryption,async()=>validation.trust);
+   }},{async append(entry,q){if(auditFails)throw Error('SYNTHETIC_AUDIT_FAILURE');await audit.append(entry,q);},listByEntity:audit.listByEntity.bind(audit)},repo,encryption,async()=>validation.trust);
    const app=express();app.use((req,_res,next)=>{
     req.groupId=group;req.empresaId=req.header('x-synthetic-company')??a;req.requestId=randomUUID();
     if(req.header('x-synthetic-verified')==='yes'){req.actorId=actor;req.authVerified=true;}next();
@@ -82,10 +84,11 @@ test('native PG A1 repository: encrypted persistence, RLS, CAS, rollback and reo
     auditFails=true;assert.equal((await fetch(endpoint,{method:'POST',headers,body:body(randomUUID(),{id:first.id,revision:first.revision})})).status,503);auditFails=false;
     assert.equal((await db.query<{count:string}>('SELECT count(*) FROM a1_certificate_vault')).rows[0].count,count.rows[0].count);
     assert.deepEqual(await (await fetch(endpoint,{headers})).json(),first);
-    const replaced=await fetch(endpoint,{method:'POST',headers,body:body(randomUUID(),{id:first.id,revision:first.revision})});assert.equal(replaced.status,200);
+    const attempts=await Promise.all([1,2].map(()=>fetch(endpoint,{method:'POST',headers,body:body(randomUUID(),{id:first.id,revision:first.revision})})));
+    assert.deepEqual(attempts.map(r=>r.status).sort(),[200,409]);const replaced=attempts.find(r=>r.status===200)!;
     const next=await replaced.json();assert.notEqual(next.id,first.id);assert.deepEqual(await (await fetch(endpoint,{headers})).json(),next);
     const stored=await db.query<{encrypted_envelope:unknown}>('SELECT encrypted_envelope FROM a1_certificate_vault');assert.ok(!JSON.stringify(stored.rows).includes(password.toString()));
-    assert.ok(!(await db.query<{entry:unknown}>('SELECT entry FROM synthetic_a1_audit')).rows.some(row=>JSON.stringify(row).includes(password.toString())));
+    const audited=await db.query('SELECT * FROM audit_logs');assert.ok(audited.rows.length>=4);assert.ok(!JSON.stringify(audited.rows).includes(password.toString()));
    }finally{listener.closeAllConnections();await new Promise<void>((resolve,reject)=>listener.close(error=>error?reject(error):resolve()));}
   },new URL('../src/',import.meta.url));}finally{if(tmp===undefined)delete process.env.TMPDIR;else process.env.TMPDIR=tmp;}
  }finally{
