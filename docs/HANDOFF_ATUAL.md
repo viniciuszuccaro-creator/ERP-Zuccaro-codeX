@@ -1,3 +1,54 @@
+## HML CPF/RG entregue e aceita; proximo gate fiscal5000 (2026-11-17)
+
+API/web SERVIDOS c370b55c38edc837b14f3ecd4a3b011cc1f0d914/CI7248SUCCESS,
+mesmaURL https://hml-erp.cpaferroeaco.com.br/cadastros . Atualizacao pelo
+procedimento existente autorizada na instrucao consolidada,item3;nao emproducao.
+HMLhelperbackup b46e7f2882fdf9e47eec3a33e232baa85255a705/CI7249SUCCESS,
+frontend3039PASS/0FAIL/0SKIP;backend/PG/composePASS. Helperinstalado atomicamente
+apospin/12unitariosLinux/contraprovaSQL/CI,com copia anterior privada preservada.
+Timer/servico/retencao/limites intactos,semrestart ou aumento de recursos.
+
+BackupPOSRG182219-24a73bc3:17tabelas restauradas/ACKexternoPASS antespromocao.
+Promocao18:25:47UTC:API/web mesmoSHA,assetexternoSHAigual,anon401;TODAS17tabelas
+iguais antes/depois. PG/operacional mesmosIDs/saudaveis;API/webde17088c conservados
+PARADOS para rollback. Configbackup agoraaponta api-published-c370b55c-config.
+SemDDL/grants/carga/ativacao/endereco ou configA1 na promocao. A1continua SEM
+configuracao ativa,nenhum certificado real lido. Nao usar helperantigo agregado.
+BackupPOSpromocao hml-20261117T182854Z-fd9d0b44:14407680bytes/17tabelas,
+restore+SHA+copiaexternaEmpresa+ACKPASS. Snapshot nao promete conter edicoes
+posteriores;novo apply sempre revalida estado e backup pertinente.
+
+ACEITE MANUAL: dono respondeu CORRETO ao roteiroPF/PJ/documento/RG/salvar sem
+mudar valores oficiais/reabrir. Registrar como confirmacao do dono,NAO automacao
+de navegador nem aceite de cadastro completo. 4001RG enriquecidos/replay0novas
+linhas,224400campos conferidos/0divergencias;6600total=5100ativos+1500inativos,
+4200contatos e217locais anteriores preservados. Clientesnovoscompletos:0;os5000
+continuamPARCIAIS enquanto outras informacoes/relacoes faltam.
+
+Fiscal:5000candidatos validados PENDING,0aplicados/ativados. Numero/pais/rotulo
+nao exportados5000,CEP50pendentes;raw/procedencia preservados. Preflightreal:
+0locais nessa populacao5000,ledger existenteFORCERLS,APP semSELECT/INSERT(12)/
+UPDATE(state). Policyatual atende outroprincipal;nao tratarcomo problema do
+perfil:RBAC real importarCliente+visualizar/criar/editar/inativarLocal PASS,
+semnovos perfis/grants. Novo gate necessario APENAS SQLledger e lote5000.
+Pacoteprivado efetivo fiscal-decision-package-r3.private.json/SHA2ea583bf...
+no incoming/enrichment-5000-20261117-r1,mesmo planoFISCALc6ab6892/mesmosIDs.
+R1/R2 preparados eNAOEXECUTADOS,superados por tipagemTEXT correta nasDUAS
+expressoesUSING/WITHCHECK;ambas identicas eEXPLAIN READONLY PASS. Nao chamarisso
+ensaio DCL/aplicacao. SQLproposto:uma policytemporaria paraAPP/GrupoCPA/mesmos
+5batches/FISCALinativo;SELECT/INSERT12colunas/UPDATEstate noledger,semAuth/perfil.
+Revogacao/ACLpreimage preparadas. Pedido condicional enviado ao dono;aguardar
+resposta antes de qualquercapacidade/aplicacao fiscal. Depoisensaio restaurado,
+negativas/replay/reversa/capacidade/backupfresh e lotesmedidos,sem ativacao.
+
+Privado central:promotion-c370b55c-20261117-r1/{before-specs,before/after-table-
+proofs,promotion.receipt,backup-config-*};incoming/empresa-c370b55c/{runtime-
+complete.tar.gz,package-verified,runtime-rehearsal,operadores};incoming/backup-
+streaming-20261117-r1/{publicados/tests/helper-update/rollback};incoming/
+enrichment-5000-20261117-r1/{application-r1/*,fiscal-*,owner-authorization-rg}.
+Nao depender de copia exclusiva daEmpresa. Contatos/entregasdosnovos5000 ainda
+dependemauxiliaresCodespace,sem novatentativa antes da renovacao. Semproddeploy.
+
 ## 4001RG aplicados/reconciliados; backup em fluxo antes da promocao (2026-11-17)
 
 c370b55c38edc837b14f3ecd4a3b011cc1f0d914/CI7248SUCCESS:4jobs,frontend3038PASS/

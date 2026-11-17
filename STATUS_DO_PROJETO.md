@@ -1,3 +1,24 @@
+## HML CPF/RG aceita; backup recuperavel; gate fiscal preparado (2026-11-17)
+
+API/web c370b55c/CI7248SUCCESS SERVIDOS naHML,assetHTTPS eversoes iguais,
+anon401,17tabelas preservadas,operacional/PGmesmosIDs. Dono CORRETO no roteiro
+PF/PJ/documento/RG/salvar/reabrir:aceiteMANUAL,nao testeautonomo de navegador.
+4001RG aplicados/reconciliados/replayPASS;224400comparacoes/0divergencias,
+6600=5100ativos+1500inativos,4200contatos/217locais preservados.0clientesnovos
+completos:5000continuamPARCIAIS. Semreetivar/cargas repetidas/operacional.
+Backuphelper b46e7f28/CI7249SUCCESS,3039root/0fail/0skip:streaming compativel
+com MD5historico,semjsonb_agg de tabelas grandes. Corrigiu OOM do verificador;
+recoveryautomatico e dadosduraveis conferidos,semrestartmanual/aumentoRAM.
+Backup182219restaurado/externoantespromocao;182854-fd9d0b44 POSpromocao,
+14407680bytes/17tabelas restauradas/copiaEmpresa/ACKPASS. Retencao/timeriguais.
+RollbackAPI/webde17088c guardadosparados ehelperantigo privado;A1naohabilitado.
+Fiscal5000PENDING preparado,0aplicados;50CEPpendentes e5000numero/pais/rotulo
+naoexportados,sem inventar. LedgerAPPsem SELECT/INSERT12/UPDATEstate e sempolicy
+aplicavel;perfil ja possuiacoesgranulares. PacoteR3privadoSHA2ea583bf... propõe
+capacidadeTEMPORARIA limitadaGrupoCPA/batchFISCAL/mesmosclientes e revogacao.
+Pedido enviado,naoexecutar ate resposta;depoisensaio/replay/reversa/backup/capacidade.
+Proximo:fiscal5000 porgate;contatos/entregasnovos dependemauxiliaresCodespace.
+
 ## LoteRG fechado; backup agregado requer streaming (2026-11-17)
 
 c370b55c/CI7248SUCCESS,frontend3038/0fail/0skip ebackend/PG/composePASS.
