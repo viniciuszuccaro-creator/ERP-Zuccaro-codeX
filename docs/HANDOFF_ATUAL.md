@@ -1,4 +1,48 @@
-## Gate codigos AUTORIZADO e formulario ainda com falha (2026-11-17)
+## Codigos APLICADOS HML854; aceite visual pendente (2026-11-17)
+
+API/web 854717308e6a2cf046185e2ca8660901b80fbb8d / CI7226SUCCESS aplicados
+em09:41UTC/06:41Brasilia. HTTPS/API/web/assetSHA e anonimo401 conferidos;
+PG/ERPDEV mesmosIDs/saudaveis. Recibo promotion-85471730-20261117-r1.
+fb1 preservado parado para reversao de APP;nao usar sua reversa interna antiga
+para os codigos. Kit2220arquivos/17923661bytes,TAR3980710bytes/SHA
+6cd810597381883ec6f17fc65cdacc837a98ae1286203c99898941d2a5894e48,
+central incoming/empresa-85471730. Nenhuma nova candidata ou merge/main.
+
+Gate SIM do dono EXECUTADO:groups.codigo eempresas.codigo textNULL,2indices
+unicidade;3codigos porServicoOrganizacional/funcaocanonica,IDs/vinculos/nomes
+preservados. GrupoCPA001,3Z001,CPA002;ordem das empresas pelaIDENTIDADE/DOC
+aprovados,nao ordemdalista ou similaridade. SeqGrupo proximo2,Empresa proximo3.
+DDL+3assign+3audits na MESMAtransacao de manutencao administrativa existente;
+semnovosgrants/roles/policies/perfil. APPnaopodeUPDATEcodigo e APIrejeita422.
+Manutencao privilegiada NAO e leitor estrito;credencial reutilizada apenas em
+memoria/pipedo canal existente,sem novoarquivo/env/segredo no pacote.
+
+Ensaio assign/replay/reversa canonica +reversaSchema seguidoROLLBACK comprovou
+16tabelas/estrutura iguais antesAPPLY. Aplicacao09:43UTC passou:12tabelasalheias
+inteiras iguais,sequenciasanteriores e auditoriasanteriores preservadas,3audits
+novos somente. Replay depoiscommit alteraZEROdados/audits. APP real,preflight,
+perfil/RBAC/tenant epoolnovo:3savessemalteracoes+reabrir,2vinculos,codeimmutable.
+NAO equivale navegadorBearer/aceitevisual. Recibosimuteveis completos em
+organizacional-codes-20261117-r1/{before,applied,after,receipt,reversal}.private.json,
+rehearsal.receipt.private.json e recovery-after.receipt.private.json.
+Reversa futura exige requestId original+postimage exata;naorecuar highwater ou
+restaurarbanco inteiro para desfazer3codigos. Nao reaplicarDDL/assign.
+
+BackupANTES hml-20261117T092211Z-b337947d eDEPOIS
+hml-20261117T094455Z-42ea66db restaurados/conferidos,externoACK;7copiasprivadas
+retidas pelo mecanismo existente. Indiceprivado central aponta854 e gatefechado.
+0clientesimportados/0reativacoes/0enderecosativados/0operacional;100ativos,
+1500inativos,4200contatos e217locais preservados porconferenciadoscampos.
+
+CorridaCTX foi reproduzida emReactmontado comfronteirassinteticas e corrigida:
+registro podechegar antescontexto;consultaagora aguarda contextocanonico valido,
+naocacheia[] prematuro;errocontexto nao e vazio/carregamentoinfinito.
+Controlevisual foi tentadouma vez:kernel assets erro3,semrestart/reinstalacao;
+naousar bloqueio para parar DB/codigo. Donosolicitado recarregar854 e conferir
+2empresas e codigos/salvar/reabrir. Proximaacao:aceitevisual na854;sefalhar,
+reproduzir o consumidor/estado atual,NAOreaplicarDDL/codigos/grants/carga100.
+
+## Historico do gate autorizado e da nova corrida (2026-11-17)
 
 Dono respondeuSIM ao gate HML:2colunas nullable/indicesunicidade/3codigos,
 backuprestauravel/CI/revisao/replay/reversa,semnovosgrants/roles/operacional.

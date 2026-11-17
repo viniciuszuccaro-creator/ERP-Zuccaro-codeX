@@ -1,4 +1,27 @@
-## Codigos autorizados; nova contraprova dos vinculos (2026-11-17)
+## HML854: codigos aplicados, dados preservados (2026-11-17)
+
+854717308e6a2cf046185e2ca8660901b80fbb8d/CI7226SUCCESS aplicadoAPI/webHML,
+mesmaURLHTTPS;marcadores/assetSHA/anonimo401PASS,ERPDEV/PGprotegidos saudaveis
+e mesmosIDs. GateSIMexecutado SOMENTEHML:2colunas nullable+2indicesunicidade,
+3codigos canonicos e3audits atomicos. Grupo001,3Z001,CPA002 porID/doccomprovados.
+Semgrants/roles/policies/perfil novos. APPcodigo readonly/PATCH422.
+
+EnsaioDDL/assign/replay/reversa/reversaSchema+ROLLBACKPASS. APPLY e replay
+persistidoPASS;12tabelasalheias e auditorias/seq anteriores preservadas.
+APP real/preflight/RBAC/tenant:3savesnoop/reabrirpoolnovo e2vinculosPASS.
+Nao afirmar browserBearer. Recibos/reversa no rootprivado existente,
+organizacional-codes-20261117-r1;indicecentralatualizado,naoreexecutar gate.
+BackupsANTES092211Z-b337947d/DEPOIS094455Z-42ea66db restaurados eexternoACK;
+7copiasretidas. ManutencaoDBadministrativa existente,naoleitorrestrito;
+credencial soempipememoria,sem novosarquivos/configdecredenciais.
+
+CorridaCTX doformulario reproduzida e corrigida:aguardagrupocanonicoantes
+consulta;sem[] prematuro ou errovirandozero.6focados/CIcompletaPASS. Aceite
+VISUAL da854 solicitado ependente;controlekernelassets3,naoreiniciado.
+0importacoes/0reativacoes/0enderecosativados/0operacional. Proximaacao:
+conferir form854/codigos/2vinculos;qualquerfalhaUInaoautoriza reaplicarDDL.
+
+## Historico: codigos autorizados e contraprova dos vinculos (2026-11-17)
 
 Gateespecifico SIM recebido:2colunas/indices e3codigos somenteHML,semgrants/
 roles/cargas/operacional. Dono confirma empresasnaoaparecem;aceitevisualNAO
