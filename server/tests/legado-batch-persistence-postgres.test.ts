@@ -9,8 +9,31 @@ import {createPoolDbClient} from '../src/db/client.ts';
 import {realCrmFixture} from './helpers/crmPostgresFixture.ts';
 import {batchDependencies,syntheticBatch} from './helpers/legadoBatchFixture.ts';
 import {persistirLoteClientesLegado,reverterLoteClientesLegado,prepararPersistenciaClientesLegado} from '../../scripts/legado/staging-persistence.mjs';
+import {assessPreparedClientScale} from '../../scripts/legado/scale-preflight.mjs';
 
 const url=process.env.DATABASE_URL;
+
+test('native PostgreSQL scale assessment: restricted login, physical binding, conflicts and rollback without writes',
+  {skip:!url},async()=>{
+    const f=await realCrmFixture(url!,{restrictedLogin:true});
+    try{
+      await f.admin.query(`GRANT EXECUTE ON FUNCTION pg_catalog.pg_control_system() TO "${f.role}"`);
+      const db=createPoolDbClient(f.data.pool!),deps=batchDependencies(db);
+      const input=await syntheticBatch(deps,3,9000),plan=prepararPersistenciaClientesLegado(input,deps.schemas);
+      const snapshot=async()=>(await f.admin.query('SELECT to_jsonb(c) AS row FROM clientes c ORDER BY id')).rows;
+      const before=await snapshot();
+      const authorize=(ctx,action,q)=>deps.rbac.assertAllowed(ctx,'Cadastros','cliente',action,{executor:q,allowGlobalWildcard:false});
+      const result=await assessPreparedClientScale(db,plan,authorize);
+      assert.equal(result.selected,3);assert.equal(result.conflictingSelected,0);assert.equal(result.duplicateIdentity,0);
+      assert.equal(result.applicable,false);assert.equal(result.businessWrites,0);assert.equal(result.readOnlyRollback,true);
+      assert.deepEqual(await snapshot(),before);
+      await assert.rejects(assessPreparedClientScale(db,{...plan,manifest:{...plan.manifest,target:{...plan.manifest.target,schemaOid:1}}},authorize),/LEGACY_PHYSICAL_TARGET_MISMATCH/);
+      assert.deepEqual(await snapshot(),before);
+    }finally{
+      await f.admin.query(`REVOKE EXECUTE ON FUNCTION pg_catalog.pg_control_system() FROM "${f.role}"`);
+      await f.close();
+    }
+  });
 
 test('PostgreSQL Cliente-only identity candidate refuses unknown index and duplicates without changing rows',
   {skip:!url},async()=>{

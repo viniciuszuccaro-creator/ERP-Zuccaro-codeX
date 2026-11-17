@@ -1,3 +1,19 @@
+## Legado priorizado: selecao5000 revalidada,0cargas (2026-11-17)
+
+Nova ferramenta readonly reusa plano/importador:identidadefisica/RBAC real,
+conflitos set-based,storage/RLS e ROLLBACK. HML tem1600clientes(100ativos,
+1500inativos);0conflitos da selecao5000 noGrupoCPA,0identidadesduplicadas;
+permissoescanonicas atuais PASS,semBYPASS. Pico264MiB sob limite512MiB/.25CPU.
+TesteunitarioPASS;contraprovaPGrestrito naCI. Nao confundir READONLY comcarga.
+IndiceCliente ainda ausente;gate agrupado solicitado uma vez para indice+
+5000mestresPARCIAIS em5x1000,aposCI/revisao/backuprestaurado/preflight fresco.
+0completos/0importados;1500naoseraoreativados,planooriginal intacto/false.
+CSV pinado tem5000componentesfiscais e4001RGnaoplaceholder:pendencia de mapeamento,
+NAO dependem todosdoCodespace.927IE/245emails no payload;contatos/telefonia e
+entregas dependem dos5exports semnovatentativa. Vinculos porcodigo nao resolvidos,
+placeholders nao viramcondicao. Matriz/proposta/recibos privados centralVPS,
+SHA e proximaacao noHANDOFF. HMLcontinua de17088c;operacional intocado.
+
 ## A1: upload sintetico integrado PASS / real ainda bloqueado (2026-11-17)
 
 d3a0b271108243cf0c43a6497c7076757cba2626/CI7240SUCCESS,PR594,push confirmado.

@@ -1,3 +1,64 @@
+## Prioridade legado: escala parcial revalidada, gate especifico solicitado (2026-11-17)
+
+Empresa/Codex assume somente este lote;Cursor semcredito por diretriz do dono.
+Checkout interno/PR594,origem canonica,3098a362 limpo antes;sem reset/outra
+candidata/escritor identificado. CofreA1 fica na fila propria,sem bloquear legado.
+
+Entrega:preflight reutilizavel scripts/legado/scale-preflight.mjs,sem endpoint,
+DDL ou conexao automatica. Complementa metadados estaticos e o importador
+staging-persistence existente:mede conflitos SET-BASED da selecao preparada,
+identidade fisica/principal semBYPASS,permissoes reais e privilegios/RLS.
+READONLY+timeout15s/lock2s+ROLLBACK obrigatorio,zero escritas. Catalogos qualificados
+pg_catalog contra shadow. Nao transforma applicable=false em autorizacao.
+Teste unitario cobre rollback,erro nao vira vazio,perfilnegado e destinoerrado;
+contraprovaPG restrita adicionada ao teste nativo existente,sem criar outra suite.
+
+HML atual revalidada:mesmoDB/schema/OIDs/cluster/Grupo do plano;1600existentes,
+100ativos/1500inativos;0duplicidades de identidade e0conflitos entre os5000 e os
+registros visiveis doGrupoCPA,inclusive inativos. NAO afirmar ausencia emoutros
+Grupos fora desse principal. visualizar/criar/importar/inativar explicitos PASS.
+clientes/sequence INSERT/UPDATE eaudit INSERT presentes;3tabelas FORCE RLS.
+Indiceclientes_legacy_identity_uidx continua AUSENTE:nao aplicar043inteira.
+Helper limitado512MiB/.25CPU,UID1000,semrede/portas/readonly/socketexistente;
+pico medido276357120bytes(264MiB). R1negado ao ler arquivo600,nadaSQL;R2stdin
+pinado semalterarACL PASS;R3catalogosqualificados+storagePASS. Recibos imutaveis.
+
+Fonte/selecaopreservadas:18458exportados/17471elegiveis/987inativosfonte;
+4437foraexport semcausacomprovada;1600existentes excluidos. Os5000 daMESMA
+selecao ficamPARCIAIS,0completos confirmados,0novosimportados.5transacoespropostas
+de1000,semreativar1500. Plano originalgzipc43a9d23/manifestdc9d9547 intactos,
+summary.applicable=false. Nao promover por haver0conflitos/RBAC.
+
+Quadro executavel:
+- Mestres:5000identidades/codigos/documentos/nomes/status/procedencia;927IE,
+  245emails aprovados no payload;fonte tem248emails,3em revisao no mapper.
+- Fiscal:5000logradouros/bairros/cidades/UF/CEP presentes noCSV original pinado;
+  complemento5000vazios. Numero/pais nao segregados,nao inferir. Ainda0aplicados.
+- RG:4001naovazios nao-placeholder,52placeholders,947vazios;disponivel noCSV,
+  PENDENTE mapeamento/validacao/enriquecimento,NAO depende dos5exports.
+- Vinculos:5000codigos vendedor/regiao/tabela,1572condicoes naoplaceholder e3428
+  placeholders. Identidade/escopo/crosswalk pendentes;nao configurar credito/preco.
+- Contatos/telefones/WhatsApp/entregas fora1600 dependem dos5exports naoacessiveis;
+  isso NAO e ausencia nativa.2295Obras conhecidas cobrem0novos5000;nao replicar117.
+- Cobranca dispensada da migracao ativa;raw/manual preservados. Historicos e
+  pagamentos separados,nenhum titulo/saldo/pagamento sera criado neste lote.
+
+Proposta privada central incoming/scale-partial-20261117-r1/:
+partial-load-proposal.private.json SHA14ef7334584fe356480e7aab20330ce3c10606bfba38db0c6854d24e8fdc1481,
+preflight-execution(R1,R2,R3),destination-preflight(-r3),source-coverage.
+Gate solicitado UMAvez:indiceCliente exato + ate5000mestresPARCIAIS ativos,
+5x1000,no mesmo destino,apenas campos listados,semgrants/operacional. Impacto
+maximo5100ativos+1500inativos;completude0,reversa inativa apenas proprioslotes
+compostimageCAS. Nao alterar plano antigo nem ignorar falta de auxiliares.
+Condicoes:CI/revisao,backupfreshrestaurado/ACKexterno,ensaioindice,novoconflitos
+eexecutorcanonico. Benchmark500/1000PG ja valido so de mestres sinteticos;
+nao anunciar prazo de importacao completa. Medir primeirobatchHML,pausar por
+integridade/escopo/autorizacao/capacidade;retomar do reciboDB,nao do arquivo.
+Proximaacao:fecharCI/revisao,aguardar resposta do gate e compor executor canonico;
+enquanto aguarda,preparar mapeamento fiscal/RG e crosswalk sem carga adicional.
+HMLsegue de17088c;CodigoA1d3a0b271/CI7240 preservado. Sem Codespace/Billing,
+novo backup/chave/DDL,carga,ativacao ou deploy neste preflight.
+
 ## Checkpoint A1 d3a0b271 / CI7240 SUCCESS (2026-11-17)
 
 PR594,branch preservada. d3a0b271108243cf0c43a6497c7076757cba2626 passou os4jobs
