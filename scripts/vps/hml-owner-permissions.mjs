@@ -113,8 +113,34 @@ function isSubset(before, after) {
     Object.hasOwn(after, key) && isSubset(child, after[key]));
 }
 
-export function prepareHmlOwnerPermissions({ before, expected, requestId, approvalRef,
-  direction = 'grant', restorePermissions, originalRequestId }) {
+export function prepareHmlOwnerPermissions(input) {
+  return preparePermissionDelta(input, catalog, /^OWNER_AUTHORIZED_HML_FULL_[A-Z0-9_-]{8,100}$/,
+    'OWNER_AUTHORIZED_HML_FULL_EXPLICIT_CATALOG', 'HML_OWNER_PERMISSION_PLAN_NOT_EXECUTED');
+}
+
+function a1Permissions(tree) {
+  validateTree(tree);
+  const next = structuredClone(tree);
+  next.Fiscal ??= {};
+  assert.ok(!Array.isArray(next.Fiscal), 'FISCAL_PERMISSION_SHAPE_REQUIRED');
+  const leaf = next.Fiscal.certificado ?? { _acoes: [] };
+  const actions = Array.isArray(leaf) ? leaf : (leaf._acoes ?? []);
+  assert.ok(Array.isArray(actions), 'A1_PERMISSION_SHAPE_REQUIRED');
+  const updated = [...new Set([...actions, 'visualizar', 'importar'])];
+  next.Fiscal.certificado = Array.isArray(leaf) ? updated : { ...leaf, _acoes: updated };
+  return next;
+}
+
+/** Add only vault read/upload; never signing, issuing, role or another catalog. */
+export function prepareHmlA1Permissions(input) {
+  const next = input.direction === 'reverse' ? input.restorePermissions : a1Permissions(input.before?.permissoes);
+  if (input.direction === 'reverse') assert.deepEqual(a1Permissions(next), input.before?.permissoes, 'A1_REVERSAL_SCOPE_MISMATCH');
+  return preparePermissionDelta(input, next, /^OWNER_AUTHORIZED_HML_A1_[A-Z0-9_-]{8,100}$/,
+    'OWNER_AUTHORIZED_HML_A1_READ_UPLOAD_ONLY', 'HML_A1_PERMISSION_PLAN_NOT_EXECUTED');
+}
+
+function preparePermissionDelta({ before, expected, requestId, approvalRef,
+  direction = 'grant', restorePermissions, originalRequestId }, desired, approvalPattern, reason, kind) {
   assert.ok(expected && /^hml[a-z0-9_]+$/.test(expected.database)
     && /^hml[a-z0-9_]+$/.test(expected.schema) && /^\d+$/.test(expected.schemaOid)
     && /^\d+$/.test(expected.clusterIdentifier), 'HML_TARGET_REQUIRED');
@@ -123,10 +149,10 @@ export function prepareHmlOwnerPermissions({ before, expected, requestId, approv
     && before.group_id === expected.groupId && before.empresa_id === null
     && before.role === 'user' && before.ativo === true, 'PROFILE_BINDING_REQUIRED');
   assert.match(requestId, /^HML-owner-(grant|reverse)-[a-zA-Z0-9-]{8,100}$/);
-  assert.match(approvalRef, /^OWNER_AUTHORIZED_HML_FULL_[A-Z0-9_-]{8,100}$/);
+  assert.match(approvalRef, approvalPattern);
   assert.ok(['grant', 'reverse'].includes(direction) && requestId.startsWith(`HML-owner-${direction}-`));
-  validateTree(before.permissoes); validateTree(catalog);
-  const next = direction === 'grant' ? structuredClone(catalog) : structuredClone(restorePermissions);
+  validateTree(before.permissoes); validateTree(desired);
+  const next = direction === 'grant' ? structuredClone(desired) : structuredClone(restorePermissions);
   validateTree(next);
   if (direction === 'grant') assert.ok(isSubset(before.permissoes, next), 'EXISTING_CAPABILITY_WOULD_BE_LOST');
   else assert.match(originalRequestId, /^HML-owner-grant-[a-zA-Z0-9-]{8,100}$/);
@@ -164,11 +190,11 @@ BEGIN
   INSERT INTO ${schema}.audit_logs(group_id,empresa_id,actor_id,entity,entity_id,action,before_data,after_data,request_id)
   VALUES(p.group_id,NULL,p.id,'Profile',p.id::text,'update',pg_catalog.jsonb_build_object('profile',pg_catalog.to_jsonb(p)),
     pg_catalog.jsonb_build_object('profile',pg_catalog.to_jsonb(changed),'approval',${literal(approvalRef)},
-      'reason','OWNER_AUTHORIZED_HML_FULL_EXPLICIT_CATALOG','direction',${literal(direction)},
+      'reason',${literal(reason)},'direction',${literal(direction)},
       'database_executor',current_user,'execution_origin','EXISTING_HML_ADMIN_CHANNEL'),${literal(requestId)});
 END ${tag};`;
-  return { kind: 'HML_OWNER_PERMISSION_PLAN_NOT_EXECUTED', beforeSha256: digest(before),
-    catalogSha256: digest(catalog), nextPermissions: next, sql, sqlSha256: digest(sql),
+  return { kind, beforeSha256: digest(before),
+    catalogSha256: digest(desired), nextPermissions: next, sql, sqlSha256: digest(sql),
     direction, requestId, approvalRef, target: structuredClone(expected),
     changesRole: false, changesSqlGrants: false, operationalAuthorized: false };
 }

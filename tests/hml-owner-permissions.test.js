@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { prepareHmlOwnerPermissions, prepareHmlOrganizacionalFiscalSchema } from '../scripts/vps/hml-owner-permissions.mjs';
+import { prepareHmlOwnerPermissions, prepareHmlOrganizacionalFiscalSchema, prepareHmlA1Permissions } from '../scripts/vps/hml-owner-permissions.mjs';
 
 const expected = { database: 'hml_fixture', schema: 'hml_fixture', schemaOid: '1234', clusterIdentifier: '987654',
   profileId: '11111111-1111-4111-8111-111111111111', authUserId: '22222222-2222-4222-8222-222222222222',
@@ -69,4 +69,18 @@ test('HML reverse requires original audited receipt and uses CAS without role or
   assert.match(reverse.sql, /before_data->'profile'->'permissoes'=/);
   assert.doesNotMatch(reverse.sql, /SET role=|SET group_id=|SET auth_user_id=/);
   assert.throws(() => prepareHmlOwnerPermissions({ ...reverseInput, originalRequestId: undefined }));
+});
+
+test('A1 permission delta adds only read/upload and reversal refuses unrelated changes', () => {
+  const a1={...input(),approvalRef:'OWNER_AUTHORIZED_HML_A1_CONDITIONAL_20261117'};
+  const plan=prepareHmlA1Permissions(a1);
+  assert.deepEqual(plan.nextPermissions,{...before.permissoes,Fiscal:{certificado:{_acoes:['visualizar','importar']}}});
+  assert.match(plan.sql,/HML_PROFILE_CAS_CONFLICT/);assert.match(plan.sql,/A1_READ_UPLOAD_ONLY/);
+  assert.doesNotMatch(plan.sql,/CREATE ROLE|GRANT|ALTER ROLE/);
+  assert.equal(plan.changesRole,false);assert.equal(plan.changesSqlGrants,false);
+  const reverse={...a1,before:{...before,permissoes:plan.nextPermissions},direction:'reverse',
+    requestId:'HML-owner-reverse-a1-fixture0001',originalRequestId:plan.requestId,restorePermissions:before.permissoes};
+  assert.deepEqual(prepareHmlA1Permissions(reverse).nextPermissions,before.permissoes);
+  assert.throws(()=>prepareHmlA1Permissions({...reverse,restorePermissions:{}}));
+  assert.throws(()=>prepareHmlA1Permissions({...a1,approvalRef:'OWNER_AUTHORIZED_HML_FULL_FIXTURE_20261116'}));
 });

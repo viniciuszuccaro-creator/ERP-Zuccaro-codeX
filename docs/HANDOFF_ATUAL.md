@@ -1,3 +1,27 @@
+## Gate A1 HML AUTORIZADO condicionado (2026-11-17)
+
+Dono AUTORIZOU tabela a1_certificate_vault/RLS/grants minimos, somente
+Fiscal.certificado.visualizar/importar no perfil conferido e chave exclusiva
+readonly com backup independente e recuperacao ANTES de A1real. Nao pedir esse
+gate novamente. Sem usar/emitir, outros Grupos, novos usuarios/roles ou operacional.
+
+Reusado gerador CAS/auditoria/reversa HML de permissoes. Novo wrapper A1 adiciona
+APENAS duas acoes, preserva catalogo/role e recusa reversa que altere outra folha.
+Novo sync-a1-protection-key reutiliza secureRoot/SSH existentes, copia somente
+o arquivo32bytes nomeado explicitamente, valida UID1000/0400/0700/hardlink e
+hash, guarda fora dos tars de banco e nunca imprime chave. Nao procura A1s.
+ACL do destino externo atual na Empresa ja conferida. Protecao em repouso e
+ACL do SO; NAO declarar essa copia cifrada em repouso sem evidencia adicional.
+Resta conferir replay/copia de retorno e decrypt de envelope sintetico antesuso.
+
+Checks focados6PASS;baseline/lint/typecheck/buildPASS,2avisoslintanteriores.
+Runtime servidor/app nao alterados, provas CI7232 reutilizadas no alcance exato;
+nova CI raiz Ubuntu pendente para o script. Nenhuma chave/tabela/permissao
+aplicada ate estecheckpoint. Backup fresco da HML em andamento por rotinaexistente.
+Proximaacao:fecharCI,backup/restore externo,gerar uma chaveHML sem sobrescrita,
+backup privado/replay/restore/decrypt sintetico;ensaio schema+CASperfil emROLLBACK,
+entao aplicar somentecapacidade autorizada,sem habilitar upload real antestrust/E2E.
+
 ## Cofre A1: envio manual, runtime opt-in e gates separados (2026-11-17)
 
 FECHAMENTO:ff9dfdd7a816b1e0710255fcd4e4d16833967622 / CI7232 SUCCESS,

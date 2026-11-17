@@ -1,3 +1,14 @@
+## Gate de capacidade A1 HML autorizado, aplicacao condicionada (2026-11-17)
+
+Dono autorizou tabela/RLS/grants minimos, visualizar/importar no perfil atual
+e chaveHML readonly com backup independente/restore antes de A1real. Nao inclui
+usar/emitir, outroGrupo, novosusuarios/roles ou operacional. Wrapper de permissoes
+reusa CAS/auditoria/reversa e so adiciona as duas acoes. Sync de chave nominal
+reusa SSH/ACL privados e nao imprime conteudo nem busca certificados. Backup
+separado do banco, protegido por ACL (nao presumir cifragem em repouso).
+6checks focados/baseline/lint/typecheck/buildPASS. CI/scripts, backup fresco,
+recuperacao da chave eensaioSQL ainda em fechamento; sem nova aplicacao ate aqui.
+
 ## A1 manual: protecoes e configuracao em fechamento (2026-11-17)
 
 Codigo publicado:ff9dfdd7a816b1e0710255fcd4e4d16833967622 / CI7232 SUCCESS
