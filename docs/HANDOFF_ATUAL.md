@@ -1,4 +1,33 @@
-## Codigos APLICADOS HML854; aceite visual pendente (2026-11-17)
+## Dono confirma codigos/vinculos; edicao e certificado continuam abertos (2026-11-17)
+
+Retorno visual do dono na854:codigo de registro e empresas vinculadas APARECEM.
+Encerrar apenasaceite da EXIBICAO,nao declarar edicao/salvar/reabrir visualmente
+aceitos. Novo relato:Acesso negado ao editarGrupo/Empresa,sem botaoEmpresa e
+certificado inacessivel. Solicitado print/mensagem/local exatos;nao repetir
+DDL/assign/grants doscodigos para tratar esse sintoma.
+IDtecnico explicado:chave imutavel de vinculos/historico,distinta docodigo.
+
+Contratos reais atuais:Grupo/Empresa PATCH Organizacional.editar tem9colunas
+permitidas/testadas;inativar/excluir/vinculos/configfiscal/certificado sao
+acoes distintas e nao habilitadas pelo gate anterior. Negativa visual ainda
+precisa diferenciar campos/acoes/grade,nao presumir perfilerrado ou concederadmin.
+EmpresaForm desabilita certificado explicitamente emHTTP (!isHttpBackendMode),
+mensagem atual conflita indisponibilidade com permissao. Reusar CertificadoA1Panel
+e A1VaultService/mountA1VaultRoutes existentes;router/app nao os conectam hoje.
+Antesuso real:cofre criptografado/trust/revogacao/schema/RBAC/contextoempresa e
+backup/gates verificados. NAO coletar PFX/senha no chat nem persistir emEmpresa.
+Nao montar/ativar cofre ou autorizar emissao por esta analise.
+
+Requisito novo:codigo de negocio emtodos oscadastros dos6blocos e registros
+internos. Confirmacao dos6blocos solicitada. Reusar MASTER_CODE_SPECS e
+reserveEntityCodigo/reserve_entity_codigo;localmirror nao comprova servidor/HML.
+Mapear entidade/campo/escopo/persistencia/consumidor antesDDL,semfrontcount+1,
+renumerarlegado/IDs ou substituir numeros de documentos/operacoes existentes.
+Proximaacao:reproduzir negativa porprint e consumidor atual;correcoes UI dentro
+do contrato liberado,preparar cofre pelo caminho canonico e delta de codigos
+porentidade sem qualquer liberacao geral depermissoes/DDL/operacional.
+
+## Codigos APLICADOS HML854: provas e historico do aceite (2026-11-17)
 
 API/web 854717308e6a2cf046185e2ca8660901b80fbb8d / CI7226SUCCESS aplicados
 em09:41UTC/06:41Brasilia. HTTPS/API/web/assetSHA e anonimo401 conferidos;

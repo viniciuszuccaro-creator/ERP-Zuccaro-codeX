@@ -1,3 +1,15 @@
+## Exibicao aceita; negativa de edicao e cofre ainda pendentes (2026-11-17)
+
+Dono confirmoucodigo eempresasvinculadas visiveis na854. Nao reabrir esse gate
+nem repetirDDL/atribuicao. Ainda relata Acesso negado e faltabotaoEmpresa;
+print/local exatos solicitados para reproduzirsem atribuir falha deoutraacao.
+Certificado: bloqueio HTTPexplicito emEmpresaForm,naoapenasRBAC;cofre/painel
+canonicos existentes nao conectados ao app/routerHML. Preparar integracaosegura
+comgatescriptografia/trust/schema/RBAC,sem armazenararquivo/senha emEmpresa.
+Codigo emtodoscadastros dos6blocos e suasentidades e novo requisito;mapear
+contratospersistentes existentes,sem renumeracao emmassa ou IDsconvertidosemcodigo.
+Sem mudanca runtime/DDL/grants/dados nesta reconciliaçao,apenasreceipt do retorno.
+
 ## HML854: codigos aplicados, dados preservados (2026-11-17)
 
 854717308e6a2cf046185e2ca8660901b80fbb8d/CI7226SUCCESS aplicadoAPI/webHML,
