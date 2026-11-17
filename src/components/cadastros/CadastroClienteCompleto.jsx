@@ -15,6 +15,7 @@ import {
   CLIENTE_LOCAIS_SYNC_PARTIAL,
   isContatoCanalCanonico,
   partitionContatosByCanal,
+  hydrateClienteHttpRowForUi,
 } from "@/api/clienteHttpPayload";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -271,7 +272,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     };
   }, [contextKey, groupId, empresaAtual?.id]);
 
-  const [formData, setFormData] = useState(cliente || {
+  const [formData, setFormData] = useState(() => (cliente ? /** @type {typeof cliente} */ (hydrateClienteHttpRowForUi(cliente)) : {
     tipo: "Pessoa Física",
     status: "Prospect",
     nome: "",
@@ -320,7 +321,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     observacoes: "",
     empresa_id: empresaAtual?.id,
     group_id: groupId
-  });
+  }));
 
   const buildPayload = (data = formData) => ({
     ...data,
@@ -562,6 +563,12 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
 
       const payload = buildPayload(data);
       if (isHttpBackendMode) {
+        const documentField = data.tipo === 'Pessoa Física' ? 'cpf' : data.tipo === 'Pessoa Jurídica' ? 'cnpj' : null;
+        // The visible edited field owns the document; the hydrated alias may be stale.
+        if (documentField && typeof data[documentField] === 'string') {
+          if (data[documentField].trim()) payload.documento = data[documentField];
+          else if (data.documento) throw new Error('CPF/CNPJ vazio: documento anterior preservado. Corrija antes de salvar.');
+        }
         if (data.rg !== undefined) payload.rg = data.rg;
         else delete payload.rg;
       }

@@ -1,3 +1,40 @@
+## WIP CPF reproduzido e corrigido; publicacao depende de validacao Linux (2026-11-17)
+
+Base98ecfb6e/PR594,mesmo checkout interno,sem outro escritor observado.
+NAO servido naHML: de17088c continua vigente. Dois defeitos reproduzidos no
+CadastroClienteCompleto REAL montado:primeiro useState recebia documento bruto
+sem projetarCPF/CNPJ;apos editar,o alias documento antigo prevalecia no fio.
+Reutiliza hydrateClienteHttpRowForUi na inicializacao e faz o campo PF/PJ editado
+ser dono do documento no save. Limpeza de documento preexistente falha fechada,
+sem sucesso falso. Nao altera dados/IDs/RBAC ou precedencia global do adaptador.
+Teste novo justificado:montados existentes cobriam locais/organizacional,nao o
+primeiro paint de Cliente.17asserts PF/PJ/zeros/edicao/erro/reabertura/omitPASS,
+com fronteiras sinteticas;NAO e navegador autenticado/API/PG real. Stub do ensaio
+comportamental antigo passou a usar a hidratacao REAL importada,sem remover guards.
+48focadosPASS;auditbaselinePASS;lintPASS(2warnings antigos),typecheck/buildPASS.
+Full npm test Windows NAO PASSOU:Python ausente/aliasStore,process.getuid Linux;
+o stub antigo sem novo export tambem falhou e foi corrigido/contraprovado nos48.
+Nao afrouxar baseline nem declarar fullPASS. Dono AUTORIZOU somente commit de
+validacao NAO HOMOLOGADO naPR594 e CIUbuntu. Excecao ao gate local Windows,
+nao autoriza merge,deploy,carga,DDL ou permissoes. Conferir CI do SHA exato;
+HML permanece intacta ate revisao e gate proprio de publicacao.
+
+Independente:READ ONLY/ROLLBACK atual6600clientes. Plano privado4001RG preparado
+com clienteBulkSnapshotSchema+legacyContactsFingerprint reais do runtime,
+0conflitos de RGpreexistente,0escritas. Projecao strict concluida em arquivo
+rg-strict-commands.private.json(4001comandos/3052400bytes/SHAe758f0b1),separando
+sourceRowSha256 emprovenanceBindings;plano original imutavel. NDJSON derivado
+inclui hash da linhaCSV original,com manifesto/pin preservados.
+Fonte central incoming/enrichment-5000-20261117-r1/{rg-canonical-plan.private.json,
+rg-source-derived.private.ndjson,preparation-receipt.private.json},0600/dir0700.
+Nao usar esses fingerprints sem nova leitura/lock no apply. Ainda faltam revisao,
+backuprestore/externo,ensaio/replay/reversa e confirmacao do escopo4001RG;0aplicados.
+5000candidatos fiscais continuam no plano vinculado anterior;numero/pais ausentes
+nao inventados. Auxiliares de contatos/entrega continuam dependenciaCodespace,
+sem tentar reabrir antes da renovacao. Nao duplicar117Obras em outros clientes.
+Proximaacao exata:CIUbuntu snapshotCPF->revisao/pacoteHML;em paralelo fechar
+ensaio do pacoteRG e aplicacao fiscal incremental pelos contratos.
+
 ## Replay fechado; cadastro completo ainda NAO aceito (2026-11-17)
 
 8903b091/CI7244 SUCCESS fecha a consulta de replay sem ampliar timeout/RBAC.

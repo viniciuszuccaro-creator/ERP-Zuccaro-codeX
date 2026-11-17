@@ -1,3 +1,19 @@
+## WIP CPF primeiro paint e save; RG preparado sem aplicar (2026-11-17)
+
+CadastroClienteCompleto:falha real montada antes,correcao depois. Reutiliza
+hidratar documento na inicializacao;CPF/CNPJ editado substitui alias antigo no
+payload,limpeza falha fechada.17asserts montados sinteticosPASS,48focadosPASS,
+auditbaseline/lint/typecheck/buildPASS.FullWindows falhou por Python/getuid e
+stub antigo corrigido;CIUbuntu ainda naoexecutada,publicacao NAO HOMOLOGADA
+AUTORIZADA como excecao especifica pelo dono:commit validacao/CIUbuntu somente,
+NAO HOMOLOGADO,sem merge/deploy/carga/DDL/permissoes. Conferir SHA/CI exatos.
+4001RG com snapshot/fingerprint canonicos preparados privadamente naVPS;
+0aplicados,0conflitosRG,5000fiscais vinculados ainda pendentes. Projecao strict
+4001concluida/SHAe758f0b1,procedencia separada;exige nova CAS/lock,backup,ensaio
+e revisao antes da escrita.
+0clientes completos adicionais;5100ativos/1500inativos preservados.
+HMLsegue de17088c. Proximaacao:validacaoLinux/pacoteCPF e ensaioRG/fiscal.
+
 ## Fechamento replay5000 e queixa de completude (2026-11-17)
 
 8903b091/CI7244 SUCCESS. Replay realR2:5batches/0novos registros ou auditorias;
