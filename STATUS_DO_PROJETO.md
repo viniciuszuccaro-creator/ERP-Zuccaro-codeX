@@ -1,4 +1,15 @@
-## HMLfb1: vinculos e salvar/reabrir validados; codigos condicionados (2026-11-16)
+## Codigos autorizados; nova contraprova dos vinculos (2026-11-17)
+
+Gateespecifico SIM recebido:2colunas/indices e3codigos somenteHML,semgrants/
+roles/cargas/operacional. Dono confirma empresasnaoaparecem;aceitevisualNAO
+encerrado. Codigoaindanaoatribuido atepreparo destaexecucao.
+Reactmontado reproduziu corrida:registroIDdisponivel antescontextocanonico,
+consulta prematura cacheia[]. Corrigido guardpronto+chavecanonica,loading/erro
+distintos;6focadosPASS/checksraizPASS. Pipelineprivado canonical combackup,
+preimagemlockada,DDL/3assign/audit atomicos,replay eensaio reversaROLLBACK
+preparado;CI/kit/promo/aplicacao ainda seguem antesdeclararesse gate concluido.
+
+## HMLfb1: historico dos vinculos e codigos (2026-11-16)
 
 Sucessor de codigos266a12ae/CI7224SUCCESS:checksLinuxcompletos,PGnativo
 concorrencia/reciboreversaPASS. Kit2220arquivos recebido/conferido privado

@@ -19,7 +19,7 @@ test('real mounted Grupo form: linked companies, code, rejection and session cac
 import React,{act} from 'react';import {createRoot} from 'react-dom/client';
 import {QueryClient,QueryClientProvider} from '@tanstack/react-query';
 import Form from './src/components/cadastros/GrupoEmpresarialForm.jsx';
-window.IS_REACT_ACT_ENVIRONMENT=true;window.__actor='actor';window.__company=null;window.__pending=[];
+window.IS_REACT_ACT_ENVIRONMENT=true;window.__actor='actor';window.__company=null;window.__pending=[];window.__contextReady=false;
 const client=new QueryClient({defaultOptions:{queries:{retry:false,staleTime:Infinity}}});
 client.setQueryData(['empresas','g'],[]);
 const host=document.getElementById('root'),root=createRoot(host),checks=[];let calls=0,fail=false,payload;
@@ -31,7 +31,8 @@ const check=(name,value)=>{checks.push({name,pass:!!value});if(!value)throw Erro
 const companies=[{id:'a',group_id:'g',razao_social:'Synthetic A'},{id:'b',group_id:'g',razao_social:'Synthetic B'}];
 async function run(){
  await render();await pause();check('loading_not_false_empty',host.textContent.includes('Carregando empresas vinculadas'));
- check('new_lookup_not_poisoned_by_filial_cache',window.__pending.length===1);
+ check('no_lookup_before_context_ready',window.__pending.length===0);
+ window.__contextReady=true;await render();await pause();check('new_lookup_not_poisoned_by_filial_cache',window.__pending.length===1);
  await act(async()=>window.__pending.shift()(companies));await pause();
  check('both_existing_links_visible',host.textContent.includes('Synthetic A')&&host.textContent.includes('Synthetic B'));
  check('checked_links_readonly',Array.from(host.querySelectorAll('input[type=checkbox]')).filter(i=>i.checked&&i.disabled).length===2);
@@ -50,14 +51,18 @@ async function run(){
  check('read_failure_not_empty',host.textContent.includes('indisponível')&&!host.textContent.includes('Nenhuma empresa cadastrada'));
  window.dispatchEvent(new Event('erp-http-context-changed'));await pause();check('same_actor_session_renewal_refetch',window.__pending.length===1);
  await act(async()=>window.__pending.shift()(companies));await pause();check('renewed_session_links_visible',host.textContent.includes('Synthetic B'));
+ window.__contextReady=false;window.__contextFailed=true;await render();await pause();
+ check('missing_context_not_empty_or_infinite_loading',host.textContent.includes('Contexto de Grupo indisponivel')&&!host.textContent.includes('Synthetic B')&&!host.textContent.includes('Nenhuma empresa cadastrada'));
  await act(async()=>root.unmount());return{checks};
 }
 run().then(r=>fetch('/result',{method:'POST',body:JSON.stringify(r)})).catch(e=>fetch('/result',{method:'POST',body:JSON.stringify({error:String(e),checks})}));`;
-  for (const reverseCacheFix of [true, false]) {
+  for (const [reverseCacheFix, reverseContextFix] of [[true, false], [false, true], [false, false]]) {
     const plugin = { name: 'organizacional-synthetic-boundaries', setup(b) {
-      if (reverseCacheFix) b.onLoad({ filter: /GrupoEmpresarialForm\.jsx$/ }, args => {
-        const source = readFileSync(args.path, 'utf8');
-        return { contents: source.replace(/queryKey: \["grupo-empresas-vinculadas"[^\n]+/, 'queryKey: ["empresas", groupId],'), loader: 'jsx', resolveDir: path.dirname(args.path) };
+      if (reverseCacheFix || reverseContextFix) b.onLoad({ filter: /GrupoEmpresarialForm\.jsx$/ }, args => {
+        let source = readFileSync(args.path, 'utf8');
+        if (reverseCacheFix) source = source.replace(/queryKey: \["grupo-empresas-vinculadas"[^\n]+/, 'queryKey: ["empresas", groupId],');
+        if (reverseContextFix) source = source.replace('enabled: contextoValido && empresasContextReady', 'enabled: contextoValido').replace(', contextoCanonico?.groupId]', ']');
+        return { contents: source, loader: 'jsx', resolveDir: path.dirname(args.path) };
       });
       b.onResolve({ filter: /^@\/api\/base44Client$/ }, () => ({ path: 'mode', namespace: 'boundary' }));
       b.onResolve({ filter: /^@\/components\/lib\/usePermissions$/ }, () => ({ path: 'permissions', namespace: 'boundary' }));
@@ -65,7 +70,7 @@ run().then(r=>fetch('/result',{method:'POST',body:JSON.stringify(r)})).catch(e=>
       b.onResolve({ filter: /^@\/components\/ui\// }, args => ({ path: args.path.split('/').at(-1), namespace: 'boundary' }));
       b.onLoad({ filter: /.*/, namespace: 'boundary' }, args => ({ contents: args.path === 'mode' ? 'export const isHttpBackendMode=true;'
         : args.path === 'permissions' ? `export default()=>({user:{id:window.__actor},canCreate:()=>false,canEdit:()=>true,canDelete:()=>false,hasPermission:()=>true,isLoading:false});`
-        : args.path === 'context' ? `export const useContextoVisual=()=>({grupoAtual:{id:'g'},empresaAtual:null,filterInContext:()=>new Promise(r=>window.__pending.push(r))});`
+        : args.path === 'context' ? `export const useContextoVisual=()=>({grupoAtual:window.__contextReady?{id:'g'}:null,empresaAtual:null,contextoCanonico:{groupId:window.__contextReady?'g':null},isLoading:!window.__contextReady&&!window.__contextFailed,filterInContext:()=>window.__contextReady?new Promise(r=>window.__pending.push(r)):Promise.resolve([])});`
         : `import React from 'react';const Part=({children,...p})=>React.createElement('${args.path === 'input' ? 'input' : args.path === 'textarea' ? 'textarea' : args.path === 'button' ? 'button' : 'div'}',p,children);export {Part as Input,Part as Textarea,Part as Label,Part as Button,Part as Card,Part as CardContent,Part as Switch,Part as Badge};`, loader: 'js', resolveDir: process.cwd() }));
     } };
     const bundle = await build({ stdin: { contents: entry, loader: 'jsx', resolveDir: process.cwd() }, bundle: true, write: false,
@@ -84,7 +89,7 @@ run().then(r=>fetch('/result',{method:'POST',body:JSON.stringify(r)})).catch(e=>
     const timer = setTimeout(() => finish({ error: 'MOUNTED_ORG_TIMEOUT' }), 45000);
     try {
       const report = await result;
-      if (reverseCacheFix) assert.match(report.error, /loading_not_false_empty|new_lookup_not_poisoned_by_filial_cache/);
+      if (reverseCacheFix || reverseContextFix) assert.match(report.error, /loading_not_false_empty|new_lookup_not_poisoned_by_filial_cache|no_lookup_before_context_ready/);
       else { assert.equal(report.error, undefined, JSON.stringify(report)); assert.ok(report.checks.length >= 11); }
     } finally {
       clearTimeout(timer); child.kill();

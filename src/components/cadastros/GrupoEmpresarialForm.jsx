@@ -35,9 +35,10 @@ export default function GrupoEmpresarialForm({ grupo, item, data, initialData, d
 
   const dadosIniciais = normalize(item || data || initialData || defaultValues || grupo);
   const { canCreate, canEdit, canDelete, hasPermission, user, isLoading: permissionsLoading } = usePermissions();
-  const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const { empresaAtual, grupoAtual, filterInContext, contextoCanonico, isLoading: contextLoading } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || dadosIniciais?.id || null;
   const contextoValido = Boolean(groupId || dadosIniciais?.id);
+  const empresasContextReady = !contextLoading && Boolean(contextoCanonico?.groupId && contextoCanonico.groupId === groupId);
   const checkers = { canCreate, canEdit, canDelete, hasPermission };
   const podeCriar = !permissionsLoading && !isHttpBackendMode && hasCadastroEntityPermission('GrupoEmpresarial', 'criar', checkers);
   const podeEditar = !permissionsLoading && hasCadastroEntityPermission('GrupoEmpresarial', 'editar', checkers);
@@ -66,16 +67,16 @@ export default function GrupoEmpresarialForm({ grupo, item, data, initialData, d
   // Escopo multiempresa: Empresa via filterInContext (group_id). Sem list unscoped.
   // enabled exige contexto; erro ≠ zero KPI fabricado.
   const { data: empresas = [], isError: isErrorEmpresas, isPending: empresasLoading } = useQuery({
-    queryKey: ["grupo-empresas-vinculadas", user?.id, user?.perfil_acesso_id, groupId, empresaAtual?.id, dadosIniciais?.version, sessionEpoch, editorInstance],
+    queryKey: ["grupo-empresas-vinculadas", user?.id, user?.perfil_acesso_id, groupId, empresaAtual?.id, dadosIniciais?.version, sessionEpoch, editorInstance, contextoCanonico?.groupId],
     gcTime: 0,
     queryFn: () => filterInContext('Empresa', groupId ? { group_id: groupId } : {}, 'razao_social', 500),
-    enabled: contextoValido,
+    enabled: contextoValido && empresasContextReady,
   });
 
-  const empresasDoGrupo = useMemo(() => empresas.filter((empresa) => {
+  const empresasDoGrupo = useMemo(() => (empresasContextReady ? empresas : []).filter((empresa) => {
     if (!groupId) return true;
     return empresa.group_id === groupId || empresa.grupo_id === groupId || (formData.empresas_ids || []).includes(empresa.id);
-  }), [empresas, formData.empresas_ids, groupId]);
+  }), [empresas, formData.empresas_ids, groupId, empresasContextReady]);
 
   const buildPayload = (extra = {}) => {
     const empresasIds = Array.isArray(formData.empresas_ids) ? formData.empresas_ids.map((id) => sanitizeText(id, 120)).filter(Boolean) : [];
@@ -203,7 +204,7 @@ export default function GrupoEmpresarialForm({ grupo, item, data, initialData, d
 
             {(empresasLoading || isErrorEmpresas || empresasDoGrupo.length === 0) && (
               <p className="text-sm text-slate-500 text-center py-4">
-                {empresasLoading ? 'Carregando empresas vinculadas...' : isErrorEmpresas
+                {!contextLoading && !empresasContextReady ? 'Contexto de Grupo indisponivel. Reabra o cadastro.' : empresasLoading ? 'Carregando empresas vinculadas...' : isErrorEmpresas
                   ? 'Contagem de empresas indisponível (erro de carga ≠ zero).'
                   : 'Nenhuma empresa cadastrada'}
               </p>

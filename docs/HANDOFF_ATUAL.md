@@ -1,4 +1,28 @@
-## HMLfb1 aplicada: vinculos testados; codigo aguarda gate (2026-11-16)
+## Gate codigos AUTORIZADO e formulario ainda com falha (2026-11-17)
+
+Dono respondeuSIM ao gate HML:2colunas nullable/indicesunicidade/3codigos,
+backuprestauravel/CI/revisao/replay/reversa,semnovosgrants/roles/operacional.
+NAO pedir novamente. Relato visual especificado: empresasnaoexibidas e codigo
+naoiniciaem1. Codigo ainda nao aplicado ateestepreparo;naoreabrir carga100.
+HMLfb1 reconfirmadaHTTPS200,semlease/escritorativo,checkouta88d13b6limpo.
+
+Nova contraprovaReactmontado reproduz registrocomgroupId antescontexto pronto:
+filterInContext retorna[] e guardacache semrefetch quando grupoAtual chega.
+Formulario agora exige canonicalGroupId carregado/igualaoeditor,querykey
+incluicanonico,erro decontextonaovira vazioouloadingperpetuo. Contexto anterior
+naoreaparece.6focadosPASS(Reactmontado+HTTP+scope),checksraizPASS;goldenhunks
+EXATOS estendidos,hashancestralinalterado. Nao atribuir aprovacaovisual a isso.
+
+Pipeline privado preparado emshared-artifacts/incoming/codes-20261117:
+reusaSQLplano b09c,sequenciacanonica eServicoOrganizacional do266/reversa
+comreciboexato. Manutencao usa canaladmin JAEXISTENTE soemmemoria,APPtestado
+separadamente;naodescrevermanutencao comoAPP/read-only. Transacao externa
+incluiDDL+3codigos+3audits;ensaioassign/replay/reverse/schemaREVERSE+ROLLBACK
+antesdoapply,preimagemlockada,reaberturapeloAPP e12tabelasalheias protegidas.
+SemnovoAuth/grants. Proximo:CI/kitSHAatual,promocaoAPIwebHML,executar pipeline
+combackupfresco+restore+externoACK;conferirrecibos antesqualquerretomada.
+
+## HMLfb1 aplicada: historico do gate e dos vinculos (2026-11-16)
 
 Fechamento: sucessor266a12ae88205d68d51d02ea05f1707f82f3d2b8/CI7224SUCCESS
 em todasfrentes, incluindo PGnativo comrecibolotealheio/codigoexterno negados.
