@@ -1,3 +1,22 @@
+## A1 HML: capacidade aplicada e recuperacao da chave PASS (2026-11-17)
+
+79a104b48c19729aed04f12511a67f3c3a63419e/CI7235SUCCESS,PR594. Aplicados somente
+na HML:tabela vazia+3policies/grants minimos evisualizar/importar no perfil
+verificado. Nenhum novo role/usuario,usar/emitir ouoperacional. IDs,dados e14
+tabelas alheias preservados;2auditorias novas,replay0. APP real consulta vazio
+nas2empresas e nega assinatura/Grupo/ator alheios;NAO eBearer/browserE2E.
+ChaveHML criada1vez,protegida0400/0700. Backup separado externo privado/replay e
+restorede envelope sintetico/cross-empresa negado PASS. Protecao externa eACL,
+nao presumir cifragem em repouso. Nao gerar outra chave. Mountreadonly sohelper,
+aindaNAO API. Reversa perfilCAS/grantsROLLBACK preservou17tabelas/historicos.
+Backupfinal hml-20261117T133212Z-95dfdb0f restaurado17tabelas/ACKexterno.
+5containers originais saudaveis einalterados. Sem deploy;HMLsegue de17088c/CI7229.
+Zero clientes oucertificados importados;100ativos/1500inativos/4200contatos/
+217locais preservados. Gate aplicado nao sera solicitado novamente.
+Uploadreal continua bloqueado portrust/CRLs,ensaiointegrado econfig/promocaoHML.
+Temporarias de chave protegidas retidas apos bloqueio de limpeza pela ferramenta,
+sem contorno. Recibos/planos/indiceprivado centralizados;detalhes eproximaacao noHANDOFF.
+
 ## Gate de capacidade A1 HML autorizado, aplicacao condicionada (2026-11-17)
 
 ce15ba17/CI7234SUCCESS;ensaioSQL+perfilCAS/replayROLLBACK PASS com16tabelas

@@ -1,3 +1,54 @@
+## Capacidade A1 APLICADA HML; chave recuperada; upload ainda bloqueado (2026-11-17)
+
+Codigo de manutencao79a104b48c19729aed04f12511a67f3c3a63419e/CI7235SUCCESS
+(ce15ba17/CI7234 validou gerador CAS e escopo). PR594/branch existente. Gate do
+dono EXECUTADO no alcance de capacidade; NAO pedir novamente nem repetir DDL/keygen.
+HML API/web continuam de17088c/CI7229:nenhum deploy/restart API/web neste lote.
+
+Aplicados na MESMA HML:uma tabela a1_certificate_vault VAZIA,3policies FORCE RLS,
+grants SELECT/INSERT(colunas nomeadas)/UPDATE(state,revision,encrypted_envelope)
+ao principal existente, e somente Fiscal.certificado.visualizar/importar no
+perfil verificado. Sem novo role/usuario,usar/emitir ou alteracao operacional.
+14tabelas alheias inalteradas;perfilCAS e2auditorias novas (perfil/schema),audits
+anteriores preservados. Replay alteraZEROdados/audits. Roles/policies existentes
+preservados. Manutencao administrativa privilegiada NAO e leitor estrito.
+
+Ensaio previo schema+perfil+replayROLLBACK16tabelas PASS. Aplicacao16->17tabelas.
+APP real/NOBYPASS:metadadosvazios nas2empresas PASS;assinatura,Grupo eator alheios
+negados,0leituras de chave. Isso e prova de servico/PG,NAO Bearer/browserE2E.
+Reversa canonica de perfil porpostimageCAS+revogacao dos grants ensaiada em
+ROLLBACK preservou17tabelas/historico;reversa NAO apaga tabela,chaves ouauditoria.
+
+Chave nominal hml-a1-20261117-r1 criadaUMA vez,32bytes,UID1000/0400,dir0700.
+Backup externo independente no destino privado existente da Empresa,arquivo
+separado dos tars de banco,ACL SO conferida (NAO afirmar cifragem em repouso).
+Replay backupPASS. Copia externa recuperada em area isolada,abriu envelope
+SINTETICO pelo A1FileProtectionKeys/A1VaultEncryption reais e negou empresa
+trocada. Helper semrede/portas/DB,readonly,128MiB/.2CPU;nenhum A1real lido.
+Mountreadonly comprovado no helper;NAO configurado ainda na API viva.
+Recibos imutaveis:incoming/a1-capability-20261117-r1,com sourceR1/ARGV eR2/stdin,
+apply/replay,APPcheck,key-created,key-recovery,reversal-rehearsal. IndiceCAS central
+atualizado. Nao reescrever recibo antigo false como se tivesse comprovado antes.
+
+Backup ANTES hml-20261117T130855Z-1f2c76ac eDEPOIS
+hml-20261117T133212Z-95dfdb0f (17tabelas) restaurados/ACKexternos conferidos.
+Rotina de backup inclui nova tabela automaticamente,NAO inclui chave no dump.
+Retencao de banco ignora pasta das chaves.5containers HML/PG/ERPDEV mesmosIDs e
+saudaveis. 100ativos/1500inativos/4200contatos/217locais preservados;novascargas0.
+
+Tentativa de remover apenas copias temporarias do ensaio foi bloqueada pela
+politica da ferramenta;NAO contornada.2parciais locais e1copia de restore VPS
+permanecem protegidos/sem usoAPI. Originais/finalexterna preservados. Recibo
+temporary-key-retention.private.json descreve pendencia,sem segredo/log de chave.
+
+Referencia ITI oficial:186certificados/SHA512 conferido,5raizes com caminho
+criptografico e185/186cadeias verificadas SEM CRL;v7 ainda nao verificada pelo
+criterio atual,quarentenada sem afrouxar validacao. NAO instalado como trustHML.
+Proximaacao exata:resolver snapshot/selecaoporemissor eCRLs oficiais atualizados,
+ensaio integrado sintetico HTTP/Auth/upload/reabrir/substituir emisolamento;
+depois promover runtime/config/keymountHML eaceitevisual. Nao pedir nome manual
+da certificadora,nem procurar arquivos locais,nem orientar envioA1real ainda.
+
 ## Gate A1 HML AUTORIZADO condicionado (2026-11-17)
 
 ce15ba17/CI7234SUCCESS. Backup fresco hml-20261117T130855Z-1f2c76ac restaurado
