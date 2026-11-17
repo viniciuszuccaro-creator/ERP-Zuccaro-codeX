@@ -1,5 +1,14 @@
 ## A1 manual: protecoes e configuracao em fechamento (2026-11-17)
 
+Codigo publicado:ff9dfdd7a816b1e0710255fcd4e4d16833967622 / CI7232 SUCCESS
+na PR594;frontend/backend/Linux/PG/compose do mesmoSHA passaram. Kit2222arquivos
+centralizado e conferido naVPS incoming/empresa-ff9dfdd7. Plano privado de
+capacidade/perfilCAS/reversa preparado,nao executado. Nenhum deploy neste lote:
+HML continua de17088c/CI7229. Zero clientes importados;zero novas chaves/grants/
+perfis/tabelas. Gate do cofre solicitado ependente;nao orientar A1real ainda.
+Ensaio completo sintetico autenticado ekeybackup/restore/trust/CRLs seguem gates
+distintos das provas de montagem/repositorioPG. Proxima acao exata noHANDOFF.
+
 be4dd0b4/CI7231: primeira CI identificou fixture adaptada fora dos hunks
 historicos registrados. Registro exato corrigido preservando hash ancestral e
 assertions;3contraprovas PASS. Nao homologar esse SHA por relato ou CI posterior.

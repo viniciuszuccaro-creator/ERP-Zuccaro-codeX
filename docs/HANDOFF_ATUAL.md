@@ -1,5 +1,21 @@
 ## Cofre A1: envio manual, runtime opt-in e gates separados (2026-11-17)
 
+FECHAMENTO:ff9dfdd7a816b1e0710255fcd4e4d16833967622 / CI7232 SUCCESS,
+PR594,branch codex/casa-fechamento-hml-20261114. Frontend integral,backend,
+Linux/configuracao/chaves,PostgreSQL nativo ecompose PASS no mesmoSHA.
+Kit atual publicado limpo centralizado:incoming/empresa-ff9dfdd7,
+2222arquivos/17935877bytes,conferidos todos os hashes do manifesto novo.
+Transporte somente do delta permitido:manifesto eweb/.well-known/erp-version.json;
+demais2221arquivos identicos conferidos,nao trocar pin cegamente. Kitbe4dd imutavel
+permanece NAO homologado no alcance daCI7231;naoatribuirCI7232 aele.
+Plano privado de capacidade/reversa eCAS deperfil preparado em
+incoming/empresa-be4dd0b4/capability.plan.private.json,execucaoFALSE. Indicecentral
+atualizadoCAS. Nenhuma chave criada,tabela/grant/perfil aplicado oudeployHML.
+HML permanece de17088c/CI7229. Carga novaZERO. Gate concreto solicitado pendente;
+seguir com backup independente/restore de chave,trust/CRLs oficiais eensaio
+integrado sintetico antes de orientar A1real. Provas de callback,montagem,
+repositorioPG eOpenSSL separado NAO sao somadas como E2E autenticado.
+
 Primeira publicacao be4dd0b4/CI7231 NAO homologada: guarda de integridade do
 arquivo guard-ofx-a1-consolidacao detectou a adaptacao da fixture para refs/geracao
 do painel. Correcao limitada ao registro dos hunks exatos em organizacionalRemainder;
