@@ -22,6 +22,7 @@ const configuration = z.object({ version: z.literal(1), keyDirectory: absolute,
     rootFingerprints: z.array(digest).min(1).max(16),
     allowedPolicies: z.array(z.string().regex(/^2\.16\.76\.1\.2\.1\.\d+(?:\.\d+)*$/)).min(1).max(32),
     validUntil: z.string().datetime(), maxCrlAgeMs: z.number().int().positive().max(7*86400000),
+    retrievedAt: z.string().datetime().optional(), maxSnapshotAgeMs: z.number().int().positive().max(86400000).optional(),
   }).strict() }).strict();
 const unavailable = () => new AppError(503, 'A1_CONFIGURATION_UNAVAILABLE', 'Certificate vault configuration unavailable');
 
@@ -61,11 +62,15 @@ export async function createConfiguredA1Vault(db: DbClient, file?: string) {
       const roots=await boundedFile(config.trust.roots.file,131072);
       const crls=await boundedFile(config.trust.crls.file,4000000);
       if (Date.parse(config.trust.validUntil)<=Date.now()
+        || ((config.trust.retrievedAt===undefined)!==(config.trust.maxSnapshotAgeMs===undefined))
+        || (config.trust.retrievedAt!==undefined && (Date.parse(config.trust.retrievedAt)>Date.now()
+          || Date.now()-Date.parse(config.trust.retrievedAt)>config.trust.maxSnapshotAgeMs!))
         || createHash('sha256').update(roots).digest('hex')!==config.trust.roots.sha256
         || createHash('sha256').update(crls).digest('hex')!==config.trust.crls.sha256) throw unavailable();
       return {version:config.trust.version,rootsPem:roots,crlsPem:crls,
         rootFingerprints:config.trust.rootFingerprints,allowedPolicies:config.trust.allowedPolicies,
-        validUntil:config.trust.validUntil,maxCrlAgeMs:config.trust.maxCrlAgeMs};
+        validUntil:config.trust.validUntil,maxCrlAgeMs:config.trust.maxCrlAgeMs,
+        retrievedAt:config.trust.retrievedAt,maxSnapshotAgeMs:config.trust.maxSnapshotAgeMs};
     };
     await loadTrust();
     // Read-only physical probe; starting the API must never create or import anything.

@@ -1,3 +1,26 @@
+## Delta A1: runtime nativo e prazo das CRLs de raiz (2026-11-17)
+
+Imagem HML atual nao contem /usr/bin/openssl; API readonly tambem nao tem tmpfs.
+Diagnostico por container descartavel da mesma imagem e inspect, sem restart ou
+alteracao do operacional. Trust/config sozinhos NAO liberam upload.
+CI passa a construir Dockerfile canonico e ensaiar A1 sintetico em Linux sem
+rede, readonly e tmpfs limitado; exporta somente binario/libs/licencas publicos,
+manifesto SHA/tamanhos/imagem e artefato de retencao 1 dia. Nao ha deploy na CI.
+Antes de usar overlay: conferir hashes e repetir smoke na imagem HML fixada.
+
+DOC-ICP-01 v6 4.9.7.1 admite publicacao de CRL da raiz em ate 90 dias:
+https://repositorio.iti.gov.br/resolucoes/Resolucao192_DOC-ICP-01.htm
+Excecao restrita a raiz ancorada, assinatura verificada, this/nextUpdate validos
+e snapshot recuperado ha no maximo24h; demais CRLs continuam maximo7dias.
+Sem snapshot fresco ou CRL oficial verificavel, falha fechada. Nao autoriza
+seguir URLs arbitrarias de certificado enviado nem confiar em raiz do upload.
+Regressao pura cobre prazos/papel; smoke nativo cobre CRL assinada de30dias e
+snapshot vencido. Isso NAO substitui HTTP/upload/PG/reabertura ou Auth real.
+
+Ainda pendentes: selecao de cadeia/CRLs oficiais por emissor, ensaio integrado,
+config/mounts e promocao HML. Nao procurar A1 do dono, nao orientar upload real
+antes desses gates, nao repetir tabela/chave/carga/ensaios intactos.
+
 ## Capacidade A1 APLICADA HML; chave recuperada; upload ainda bloqueado (2026-11-17)
 
 Codigo de manutencao79a104b48c19729aed04f12511a67f3c3a63419e/CI7235SUCCESS

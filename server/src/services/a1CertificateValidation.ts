@@ -2,7 +2,7 @@ import { createHash, X509Certificate } from 'node:crypto';
 import { chmod, mkdtemp, rm, statfs, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { AsnParser } from '@peculiar/asn1-schema';
+import { AsnParser, AsnSerializer } from '@peculiar/asn1-schema';
 import { Certificate, CertificateList, CertificatePolicies, KeyUsage, SubjectAlternativeName } from '@peculiar/asn1-x509';
 import { fromBER, OctetString, PrintableString } from 'asn1js';
 import { z } from 'zod';
@@ -21,6 +21,8 @@ export type A1CertificateValidation = {
     allowedPolicies: string[];
     validUntil: string;
     maxCrlAgeMs: number;
+    retrievedAt?: string;
+    maxSnapshotAgeMs?: number;
   };
 };
 const schema = z.object({ issuerCnpj: z.string().regex(/^\d{14}$/), trust: z.object({
@@ -30,10 +32,23 @@ const schema = z.object({ issuerCnpj: z.string().regex(/^\d{14}$/), trust: z.obj
   crlsPem: z.instanceof(Buffer).refine(value => value.length > 0 && value.length <= 4000000),
   allowedPolicies: z.array(z.string().regex(/^2\.16\.76\.1\.2\.1\.\d+(?:\.\d+)*$/)).min(1).max(32),
   validUntil: z.string().datetime(), maxCrlAgeMs: z.number().int().min(1).max(7 * 86400000),
+  retrievedAt: z.string().datetime().optional(), maxSnapshotAgeMs: z.number().int().positive().max(86400000).optional(),
 }).strict() }).strict();
 const parserOptions = { berOptions: { maxDepth: 32, maxNodes: 20000, maxContentLength: 4000000 } };
 function rejected(): never { throw new AppError(422, 'A1_CERTIFICATE_REJECTED', 'Certificate identity or trust validation failed'); }
 function missingTrust(): never { throw new AppError(503, 'A1_TRUST_UNAVAILABLE', 'Certificate trust configuration unavailable'); }
+
+/** Root publication may span 90 days (DOC-ICP-01 4.9.7.1); a recent pinned fetch is also mandatory. */
+export function assertA1CrlFreshness(start: number, end: number | undefined, now: number,
+  rootIssuer: boolean, trust: A1CertificateValidation['trust']) {
+  if (!Number.isFinite(start) || end === undefined || !Number.isFinite(end) || start > now
+    || end <= now || end <= start) return missingTrust();
+  if (now - start <= trust.maxCrlAgeMs) return;
+  const fetched = trust.retrievedAt ? Date.parse(trust.retrievedAt) : NaN;
+  if (!rootIssuer || end - start > 90 * 86400000 || !Number.isFinite(fetched) || fetched > now
+    || !trust.maxSnapshotAgeMs || trust.maxSnapshotAgeMs > 86400000
+    || now - fetched > trust.maxSnapshotAgeMs) return missingTrust();
+}
 function pemBlocks(bytes: Buffer, label: string, max: number) {
   const text = bytes.toString('ascii');
   const pattern = new RegExp(`-----BEGIN ${label}-----[\\sA-Za-z0-9+/=]+-----END ${label}-----`, 'g');
@@ -86,6 +101,9 @@ export async function validateA1Certificate(leaf: X509Certificate, chain: X509Ce
   if (!policy.success || !Number.isSafeInteger(now) || now <= 0) return missingTrust();
   const { issuerCnpj, trust } = policy.data;
   if (Date.parse(trust.validUntil) <= now) return missingTrust();
+  if ((trust.retrievedAt === undefined) !== (trust.maxSnapshotAgeMs === undefined)) return missingTrust();
+  if (trust.retrievedAt !== undefined && (Date.parse(trust.retrievedAt) > now
+    || now - Date.parse(trust.retrievedAt) > trust.maxSnapshotAgeMs!)) return missingTrust();
   const roots = Buffer.from(trust.rootsPem), crls = Buffer.from(trust.crlsPem);
   let verification: Awaited<ReturnType<typeof runA1Native>> | undefined;
   let directory: string | undefined;
@@ -95,12 +113,17 @@ export async function validateA1Certificate(leaf: X509Certificate, chain: X509Ce
     if (new Set(fingerprints).size !== anchors.length || fingerprints.length !== trust.rootFingerprints.length
       || fingerprints.some(hash => !trust.rootFingerprints.includes(hash))
       || anchors.some(cert => !cert.ca || !cert.checkIssued(cert) || !cert.verify(cert.publicKey))) return missingTrust();
+    const rootSubjects = anchors.map(cert => Buffer.from(AsnSerializer.serialize(
+      AsnParser.parse(cert.raw, Certificate, parserOptions).tbsCertificate.subject)));
+    const olderRootCrls: Buffer[] = [];
     for (const pem of pemBlocks(crls, 'X509 CRL', 32)) {
       const der = Buffer.from(pem.replace(/-----[^\n]+-----|\s/g, ''), 'base64');
       const list = AsnParser.parse(der, CertificateList, parserOptions).tbsCertList;
       const start = list.thisUpdate.getTime().getTime(), end = list.nextUpdate?.getTime().getTime();
-      if (!Number.isFinite(start) || end === undefined || !Number.isFinite(end) || start > now
-        || end <= now || end <= start || now - start > trust.maxCrlAgeMs) return missingTrust();
+      const issuer = Buffer.from(AsnSerializer.serialize(list.issuer));
+      const rootIssuer = rootSubjects.some(subject => subject.equals(issuer));
+      assertA1CrlFreshness(start, end, now, rootIssuer, trust);
+      if (now - start > trust.maxCrlAgeMs) olderRootCrls.push(Buffer.from(pem));
     }
     assertA1CnpjIdentity(leaf, issuerCnpj, trust.allowedPolicies);
     const intermediates = Buffer.from(chain.map(cert => cert.toString()).join('\n'));
@@ -112,6 +135,11 @@ export async function validateA1Certificate(leaf: X509Certificate, chain: X509Ce
     const rootPath = join(directory, 'roots.pem'), crlPath = join(directory, 'crls.pem');
     await writeFile(rootPath, roots, { flag: 'wx', mode: 0o600 });
     await writeFile(crlPath, crls, { flag: 'wx', mode: 0o600 });
+    // A matching issuer name is insufficient: verify every longer-lived root CRL against pinned anchors.
+    for (const rootCrl of olderRootCrls) {
+      const checked = await runA1Native(['crl', '-verify', '-noout', '-no-CAfile', '-no-CApath', '-no-CAstore', '-CAfile', rootPath], rootCrl, [], runtime, signal);
+      checked.output.fill(0); checked.diagnostics.fill(0);
+    }
     const args = ['verify', '-no-CAfile', '-no-CApath', '-no-CAstore', '-trusted', rootPath,
       '-CRLfile', crlPath, '-crl_check_all', '-x509_strict', '-check_ss_sig', '-purpose', 'sslclient',
       '-auth_level', '2', '-verify_depth', '8', '-attime', String(Math.floor(now / 1000))];
@@ -123,7 +151,8 @@ export async function validateA1Certificate(leaf: X509Certificate, chain: X509Ce
     verification = await runA1Native(args, Buffer.from(leaf.toString()), [], runtime, signal);
     const trustSnapshotSha256 = createHash('sha256').update(JSON.stringify({ version: trust.version,
       roots: createHash('sha256').update(roots).digest('hex'), crls: createHash('sha256').update(crls).digest('hex'),
-      pins: trust.rootFingerprints, policies: trust.allowedPolicies, until: trust.validUntil, maxAge: trust.maxCrlAgeMs })).digest('hex');
+      pins: trust.rootFingerprints, policies: trust.allowedPolicies, until: trust.validUntil, maxAge: trust.maxCrlAgeMs,
+      retrievedAt: trust.retrievedAt, maxSnapshotAgeMs: trust.maxSnapshotAgeMs })).digest('hex');
     return { identityVerified: true, trustVerified: true, revocationVerified: true, trustStoreVersion: trust.version, trustSnapshotSha256 };
   } catch (error) {
     if (error instanceof AppError && error.statusCode !== 422) throw error;

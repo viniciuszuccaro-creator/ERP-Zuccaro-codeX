@@ -69,6 +69,17 @@ async function main() {
       validUntil: new Date(Date.now() + 86400000).toISOString(), maxCrlAgeMs: 86400000 } };
     const checked = await inspectA1Pkcs12(pfx, password, { validation });
     assert.ok(checked.identityVerified && checked.trustVerified && checked.revocationVerified);
+    const asOpenSslTime = date => date.toISOString().replace(/[-:]/g, '').replace('T', '').replace(/\.\d{3}Z$/, 'Z');
+    run(['ca', '-config', join(directory, 'ca.cnf'), '-gencrl',
+      '-crl_lastupdate', asOpenSslTime(new Date(Date.now() - 30 * 86400000)),
+      '-crl_nextupdate', asOpenSslTime(new Date(Date.now() + 30 * 86400000)),
+      '-out', join(directory, 'long-root.crl')]);
+    const rootPublication = { ...validation, trust: { ...validation.trust,
+      crlsPem: readFileSync(join(directory, 'long-root.crl')),
+      retrievedAt: new Date().toISOString(), maxSnapshotAgeMs: 86400000 } };
+    assert.ok((await inspectA1Pkcs12(pfx, password, { validation: rootPublication })).revocationVerified);
+    await assert.rejects(inspectA1Pkcs12(pfx, password, { validation: { ...rootPublication,
+      trust: { ...rootPublication.trust, retrievedAt: new Date(Date.now() - 2 * 86400000).toISOString() } } }));
     const payload = Buffer.from('SYNTHETIC-SIGNED-DOCUMENT');
     const signed = await signValidatedA1Pkcs12(pfx, password, payload, { validation });
     assert.ok(verify('RSA-SHA256', payload, new X509Certificate(readFileSync(join(directory, 'leaf.pem'))).publicKey, signed.signature));

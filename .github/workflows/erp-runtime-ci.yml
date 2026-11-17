@@ -6,6 +6,48 @@ on:
   pull_request:
 
 jobs:
+  a1-native-runtime:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Detect native capability changes without rebuilding on documentation-only commits
+        id: native
+        env:
+          BASE_SHA: ${{ github.event.before || github.event.pull_request.base.sha }}
+        run: |
+          if git cat-file -e "$BASE_SHA^{commit}" 2>/dev/null && git diff --quiet "$BASE_SHA" "$GITHUB_SHA" -- server/Dockerfile 'server/package*.json' 'server/src/services/a1*' 'server/tests/a1*' server/tests/helpers/a1RuntimeSmoke.mjs scripts/vps/package-a1-native.sh .github/workflows/erp-runtime-ci.yml; then
+            echo 'required=false' >> "$GITHUB_OUTPUT"
+          else
+            echo 'required=true' >> "$GITHUB_OUTPUT"
+          fi
+      - name: Build canonical A1 runtime without private configuration
+        if: steps.native.outputs.required == 'true'
+        run: docker build --tag erp-a1-ci:${{ github.sha }} --file server/Dockerfile server
+      - name: Prove native parser, chain, CRL, encryption and protected files
+        if: steps.native.outputs.required == 'true'
+        run: >-
+          docker run --rm --network none --read-only --cap-drop ALL
+          --security-opt no-new-privileges --memory 512m --cpus 1
+          --tmpfs /tmp:rw,noexec,nosuid,size=64m,mode=1777
+          --mount type=bind,src=${{ github.workspace }}/server/tests/helpers/a1RuntimeSmoke.mjs,dst=/run/a1-smoke.mjs,readonly
+          erp-a1-ci:${{ github.sha }} node /run/a1-smoke.mjs
+      - name: Export Linux-only native overlay
+        if: steps.native.outputs.required == 'true'
+        run: |
+          image="$(docker image inspect --format '{{.Id}}' erp-a1-ci:${{ github.sha }})"
+          bash scripts/vps/package-a1-native.sh "$image" "$RUNNER_TEMP/a1-native"
+      - uses: actions/upload-artifact@v4
+        if: steps.native.outputs.required == 'true'
+        with:
+          name: a1-native-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/a1-native/native-a1.tar.gz
+            ${{ runner.temp }}/a1-native/native-a1.sha256
+          retention-days: 1
+          compression-level: 0
+          if-no-files-found: error
   frontend:
     runs-on: ubuntu-latest
     steps:

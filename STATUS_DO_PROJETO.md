@@ -1,3 +1,15 @@
+## A1: corrigir capacidade nativa antes de liberar anexo (2026-11-17)
+
+Identificada imagem atual sem OpenSSL e API readonly sem tmpfs. Novo job CI
+usa Dockerfile existente, smoke sintetico Linux e pacote publico minimo com
+hashes/licencas, sem deploy/segredos. Excecao de frescor somente CRL de raiz
+assinada/ancorada, intervalo maximo90dias e snapshot maximo24h conforme ITI;
+expiracao/revogacao e demais CRLs maximo7dias preservadas. Testes de contrato
+e regressao adicionados; resultado CI deve ser conferido no SHA publicado.
+HML permanece de17088c, uploadreal bloqueado; nenhum banco/cliente/A1 alterado.
+Proximo: validar smoke/overlay, fechar CRLs oficiais por emissor e ensaio
+HTTP/upload/PG antes de promover HML. Detalhe no HANDOFF existente.
+
 ## A1 HML: capacidade aplicada e recuperacao da chave PASS (2026-11-17)
 
 79a104b48c19729aed04f12511a67f3c3a63419e/CI7235SUCCESS,PR594. Aplicados somente
