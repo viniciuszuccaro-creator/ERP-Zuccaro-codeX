@@ -1,3 +1,37 @@
+## Checkpoint A1 d3a0b271 / CI7240 SUCCESS (2026-11-17)
+
+PR594,branch preservada. d3a0b271108243cf0c43a6497c7076757cba2626 passou os4jobs
+CI7240 (run44101450820),incluindo frontend completo,backend/nativePG,composicao e
+smoke nativo. Upload sintetico CONTINUO HTTP->parser/trust->servico->cifragem->PG
+->reabertura/substituicao PASS,com2concorrentes(200/409),replay sem duplicata,
+falha de auditoria503 comrollback eempresaB sem acesso. Auditoria usa repositorio
+canonico. Auth/RBAC desta prova sao fixtures declaradas,NAO IdP real/navegador.
+CI7238/7239 anteriores falharam no defeito multipart ja corrigido;nao sao aceites.
+Checks locais:baseline,lint(2warnings preexistentes),typecheck ebuild PASS;
+backend653PASS/43SKIP locais antes do delta,rotas focadas5PASS depois;LinuxCI
+e quem fecha as provas especificas de SO/PG e a suite completa atual.
+
+Kit API/web MESMO SHA central:incoming/empresa-d3a0b271/runtime-d3a0b271-candidate,
+2222arquivos/17938960bytes,manifesto3e6664a413d2bf8f29a98a5c36fc9aa33e75bf0e24ff9413a0291a59acdf4662;
+tar36d8bb825d94058a3adef85595f169f464780bf0c74dd2cf4f6db6abd7995abd.
+SHA/tamanhos origem/destino conferidos,recibo privado receipt.private.json.
+Sem segredos/dados/migrations executadas. Casa/Empresa nao dependem da copia local.
+Extracao inicialmente parou ANTES de extrair por guard que nao admitia entrada
+da propria pasta raiz;guard corrigido mantendo prefixo/path traversal/tipos.
+Nao houve retransporte nem alteracao do kit/manifesto.
+
+NAO LIBERADO A1real:5CRLs de raiz verificadas NAO cobrem as emissoras finais.
+Proximaacao:fechar mapa oficial por emissor e CRLs intermediarias/finais usando
+inventario42URLs ja preservado,com assinatura/validade e selecao por identidade;
+nao seguir AIA/CDP arbitrario do upload. Raizv7 permanece fora dos anchors:
+OID1.3.6.1.4.1.44588.2.1 nao suportado no runtime,sem afrouxar crypto.
+Depois:ensaio isolado do config/keymount/overlay+tmpfs,backup fresco/reversao,
+promocaoHML e sessao real/navegador. Nenhuma nova decisao do dono solicitada.
+HMLcontinua de17088c(API/web confirmados via marcadorHTTPS),5containers mesmosIDs
+running/restart0. Nao houve deployHML,SQL,carga,grants,leitura de A1real ou mudanca
+operacional neste lote.100/1500/4200/217 e backup/chave anteriores preservados.
+Este fechamento documental reutiliza CI7240:nenhum runtime alterado nele.
+
 ## Delta A1: runtime nativo e prazo das CRLs de raiz (2026-11-17)
 
 b5503628/CI7237SUCCESS. Ensaio integrado novo6a2b8e7a/CI7238 revelou defeito

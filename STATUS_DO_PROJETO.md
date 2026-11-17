@@ -1,3 +1,17 @@
+## A1: upload sintetico integrado PASS / real ainda bloqueado (2026-11-17)
+
+d3a0b271108243cf0c43a6497c7076757cba2626/CI7240SUCCESS,PR594,push confirmado.
+4jobs verdes. Contraprova revelou e corrigiu defeito multipart;rejeicoes extras
+preservadas. HTTP->parser/trust->servico/envelope->PG->reabrir/substituir passou,
+inclusive concorrencia200/409,semduplicata,cross-empresa negado eauditrollback503.
+Auth/RBAC sao fixtures explicitas,NAO navegador/IdP real.5CRLs oficiais de raiz
+verificadas eoverlay nativo comprovado na imagem fixada,semrede/DB/portas.
+Kit2222arquivos/17938960bytes centralVPS incoming/empresa-d3a0b271,hashes PASS.
+Uploadreal NAO liberado:pendem mapa/CRLs das emissoras,config/mounts/promocao e
+aceite da sessao real. HMLsegue de17088c,5containers semrestart;nenhum SQL/carga,
+certificado real,privilegio ou operacional alterado. Checkpoint exato noHANDOFF.
+Fechamento abaixo apenas documental,reutilizando CI7240 sem repetir runtime.
+
 ## A1: corrigir capacidade nativa antes de liberar anexo (2026-11-17)
 
 CI7237SUCCESS b5503628. CI7238 falhou objetivamente no multipart de substituicao,
