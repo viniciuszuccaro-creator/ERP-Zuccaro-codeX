@@ -10,6 +10,7 @@ import {realCrmFixture} from './helpers/crmPostgresFixture.ts';
 import {batchDependencies,syntheticBatch} from './helpers/legadoBatchFixture.ts';
 import {persistirLoteClientesLegado,reverterLoteClientesLegado,prepararPersistenciaClientesLegado} from '../../scripts/legado/staging-persistence.mjs';
 import {assessPreparedClientScale} from '../../scripts/legado/scale-preflight.mjs';
+import {persistirPlanoClientesLegado} from '../../scripts/legado/staging-checkpoint.mjs';
 
 const url=process.env.DATABASE_URL;
 
@@ -173,13 +174,16 @@ test('PostgreSQL canonical 500 then 1000: commit-gap replay, full postimages, re
       const plan=prepararPersistenciaClientesLegado(raw,deps.schemas);
       assert.deepEqual(plan.batches.map(batch=>batch.items.length),[500,500,1]);
       const input={...raw,manifestSha256:plan.manifestSha256};
-      const applied=[];
-      for(const batch of plan.batches) {
-        const request={...input,batchIndex:batch.index};
-        const receipt=await persistirLoteClientesLegado(request,deps);
-        assert.equal(receipt.items.length,batch.items.length);applied.push(receipt);
-        assert.equal((await persistirLoteClientesLegado(request,deps)).replayed,true);
-      }
+      const approval={partialMastersOnly:true,manifestSha256:plan.manifestSha256,sourceSha256:plan.manifest.sourceSha256,maxRecords:1001};
+      const beforeApproval=(await f.admin.query('SELECT count(*)::int AS n FROM clientes')).rows[0].n;
+      await assert.rejects(persistirPlanoClientesLegado(input,deps,{...approval,maxRecords:1000}),/LEGACY_APPROVED_SCALE_REQUIRED/);
+      await assert.rejects(persistirPlanoClientesLegado(input,deps,{...approval,partialMastersOnly:false}),/LEGACY_APPROVED_SCALE_REQUIRED/);
+      assert.equal((await f.admin.query('SELECT count(*)::int AS n FROM clientes')).rows[0].n,beforeApproval);
+      const composed=await persistirPlanoClientesLegado(input,deps,approval),applied=composed.receipts;
+      assert.equal(composed.inserted,1001);assert.equal(composed.partialMastersOnly,true);
+      const replayed=await persistirPlanoClientesLegado(input,deps,approval);
+      assert.ok(replayed.receipts.every(receipt=>receipt.replayed));
+      assert.equal(replayed.newlyInserted,0);assert.equal(replayed.replayedBatches,3);
       assert.equal(new Set(applied.flatMap(receipt=>receipt.items.map(item=>item.id))).size,1001);
       for(const batch of [...plan.batches].reverse())await reverterLoteClientesLegado({...input,batchIndex:batch.index},deps);
       assert.equal((await f.admin.query('SELECT count(*)::int AS n FROM clientes WHERE migration_batch=ANY($1::text[]) AND ativo',

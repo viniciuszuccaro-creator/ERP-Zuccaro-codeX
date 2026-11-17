@@ -2,8 +2,33 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { consumirLoteStagingLegado } from './consumir-lote-staging.mjs';
+import { prepararPersistenciaClientesLegado, persistirLoteClientesLegado } from './staging-persistence.mjs';
 export { prepararPersistenciaClientesLegado, persistirLoteClientesLegado,
   reverterLoteClientesLegado } from './staging-persistence.mjs';
+
+/** Explicitly approved SQL composition; each canonical batch owns its transaction and DB receipt. */
+export async function persistirPlanoClientesLegado(input, deps, approval) {
+  const plan = prepararPersistenciaClientesLegado(input, deps.schemas);
+  const count = plan.batches.reduce((n,b) => n + b.items.length, 0);
+  if (approval?.partialMastersOnly !== true || approval.manifestSha256 !== plan.manifestSha256
+    || approval.sourceSha256 !== plan.manifest.sourceSha256
+    || !Number.isSafeInteger(approval.maxRecords) || approval.maxRecords < count
+    || approval.maxRecords > 5000 || plan.batches.some(b => b.items.length > 1000)
+    || input.manifestSha256 !== plan.manifestSha256) throw new Error('LEGACY_APPROVED_SCALE_REQUIRED');
+  const receipts = [];
+  for (const batch of plan.batches) {
+    const receipt = await persistirLoteClientesLegado({ ...input, batchIndex: batch.index }, deps);
+    if (receipt.manifestSha256 !== plan.manifestSha256 || receipt.batchId !== batch.id
+      || receipt.items.length !== batch.items.length) throw new Error('LEGACY_BATCH_RECEIPT_MISMATCH');
+    receipts.push(receipt);
+  }
+  return { runId: plan.manifest.runId, manifestSha256: plan.manifestSha256, partialMastersOnly: true,
+    batches: receipts.length, selected: count, receipts,
+    inserted: receipts.reduce((n,r) => n + r.items.filter(i => i.outcome === 'INSERTED').length, 0),
+    newlyInserted: receipts.filter(r => !r.replayed).reduce((n,r) => n + r.items.filter(i => i.outcome === 'INSERTED').length, 0),
+    replayedBatches: receipts.filter(r => r.replayed).length,
+    conflicts: receipts.reduce((n,r) => n + r.items.filter(i => i.outcome === 'TARGET_CONFLICT').length, 0) };
+}
 
 // Orchestration only: retain the protected mapper/consumer and all its existing callers.
 export const consumirLotesStagingRetomavel = options => processStagingBatches({

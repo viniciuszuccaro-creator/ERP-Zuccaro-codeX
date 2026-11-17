@@ -1,3 +1,20 @@
+## Gate5000 PARCIAIS autorizado pelo dono (2026-11-17)
+
+Resposta explicita SIM,AUTORIZO ao pacote5000mestresPARCIAIS+indiceCliente,
+somenteHML. Nao pedir novamente;mantem CI/revisao/backuprestore/preflight eensaio.
+Autorizacao central owner-authorization.private.json dentrodo incoming/scale-
+partial-20261117-r1,referencia proposta14ef7334. Semreativar1500,grants,contatos/
+enderecos nao provados,financeiro ouoperacional. Aplicacao ainda0nestecheckpoint.
+
+Backupfresh hml-20261117T153559Z-1fb26e36,17tabelas/restauracaoPASS;sync externo
+existente confirmou7copias privadas. ACKfresh deve ser conferido antesDDL.
+Composicao SQL aditiva no staging-checkpoint EXISTENTE:loop de batchescanonicos,
+aprova manifest/source/max5000/parcial,maxTX1000;sem outroimportador/endpoint.
+Preserva receiptsDB/checkpoint/replay,paraerrose distingue totalreconciliado de
+newlyInserted/replayedBatches. NativePG1001/3batches existente passa a cobrir esse
+mesmo orquestrador,negando teto1000/partialfalse antes de escrever. CI do novoSHA
+necessaria antes de executar a composicao;provasanteriores500/1000 preservadas.
+
 ## Checkpoint legado 9cfee34d / CI7242 SUCCESS (2026-11-17)
 
 9cfee34d046df989c2bf00f1267a3a4bd98e751c publicado PR594,4jobs verdes;teste

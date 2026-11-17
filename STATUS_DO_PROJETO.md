@@ -1,3 +1,11 @@
+## Gate5000 PARCIAIS recebido, execucao condicionada (2026-11-17)
+
+Dono autorizou explicitamente indiceCliente+5000mestresPARCIAIS naHML,5x1000,
+semreativar1500 ou ampliargrants.0aplicados ate aqui. Backupfresh153559/restaurado
+17tabelas e sync externo7copias PASS. Orquestracao aditiva reutiliza ocheckpoint
+e as transacoes/recibos canonicos;CI/review,ACK/ensaioindice epreflightfresco
+antes de aplicar. Nao repetir pergunta,DDL,cargasouoriginais. Detalhes noHANDOFF.
+
 ## Escala: preflight e classificacoes concluidos / carga aguardando gate (2026-11-17)
 
 9cfee34d/CI7242SUCCESS,PR594/push confirmado. Novo testePG nativo restrito PASS
