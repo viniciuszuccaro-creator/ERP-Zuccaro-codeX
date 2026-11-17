@@ -108,3 +108,15 @@ unittest.main()
   assert.equal(result.status, 0, `${result.error?.message || ''}\n${result.stdout}\n${result.stderr}`);
   assert.match(result.stderr, /Ran 8 tests/);
 });
+
+test('HML streaming proofs preserve historic checksums without loading the table', () => {
+  const helper = fs.readFileSync('scripts/vps/hml-backup.py', 'utf8');
+  assert.match(helper, /snapshot\.table_proof\(schema, t\)/);
+  assert.match(helper, /restored\.table_proof\(schema, table\)/);
+  assert.doesNotMatch(helper, /snapshot\.query\(table_query/);
+  const result = spawnSync(process.env.TEST_PYTHON_EXECUTABLE || 'python3', ['-B', 'tests/hml-backup-streaming.test.py'], {
+    cwd: process.cwd(), encoding: 'utf8', windowsHide: true, timeout: 20000,
+  });
+  assert.equal(result.status, 0, `${result.error?.message || ''}\n${result.stdout}\n${result.stderr}`);
+  assert.match(result.stderr, /Ran 4 tests/);
+});

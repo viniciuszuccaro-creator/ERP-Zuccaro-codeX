@@ -1,3 +1,49 @@
+## 4001RG aplicados/reconciliados; backup em fluxo antes da promocao (2026-11-17)
+
+c370b55c38edc837b14f3ecd4a3b011cc1f0d914/CI7248SUCCESS:4jobs,frontend3038PASS/
+0FAIL/0SKIP;backend/PostgreSQL/composePASS. JobA1 apenasdetectou semmudanca,
+nao refez native smoke. PacotePUBLISHED_CLEAN2222arquivos/17939219bytes,
+arquivo3984377/SHA11c1051f4cfd... integralmente conferido naVPS. API/web ainda
+de17088c:publicacaoNAOexecutada. Ensaio runtime restaurado17tabelasPASS,
+health/ready200,anon401,Authreal configurado,semBearernavegador comprovado.
+A1permanece SEMconfig/mountnovo;nao habilitar upload nesta atualizacaoCPF.
+
+Gate4001RG AUTORIZADO eEXECUTADO,usando servico/repo/audit canonicosde17088c,
+APPNOBYPASS/identidadefisicavalidada/CAS/lock porregistro. Backupfresh174042,
+restore17PASS/ACKexternoPASS antes. SCPinterrompeu com4325376bytes;prefixoSHA
+comparado e restante retomado emchunks privados ate12963840bytes/SHAintegral,
+semretransferirbackupinteiro ou apagarpartial sem conferir.
+4001enriquecidos/0conflitos/4001audits;replay4001/0novaslinhas. Apply349.20s,
+replay338.69s,pico137797632bytes sob512MiB/.25CPU.6600total=5100ativos+1500
+inativos;0novosclientes,0reativados. Reversa porpostimage/opID preparada,
+ensaio previo20apply/replay/reverse emrestauracaoPASS. Nao reverter lote real
+para demonstrar nem reaplicar RG. Campos/IDs/codigos e4200contatos preservados.
+
+INCIDENTE verificadorPOS:table_query jsonb_agg da auditoria excedeu limitePG1GiB.
+Logs18:04:54/18:05:18UTC:backend signal9,recoveryautomatico/ready;nao houve
+restart manual. VerifyR1 e backupPOSfalharam,sem chamarbackupvalido. HMLready e
+operacionalhealth200 aposrecovery. Nao aumentar recursos nem repetir carga.
+Correcao no helperbackupEXISTENTE:leitura ordenada porlinha/checksum incremental,
+sem arrayintegral noPG;exportedsnapshot/readonly/tempos/retencao/pins mantidos.
+MD5historico seguecompativel,inclusive vazio='null';arquivo continuaSHA256.
+Decoderbinario guarda buffer,marcadorEOF e limites:erro/partial nunca vira vazio.
+8unitariosantigos+4novosLinuxsinteticosPASS;semDB/credenciais nessasfixtures.
+IntegracaoREADONLY real VerifyR2:224400campos/6600clientes/0divergencias,
+15tabelas alheias iguais eTODOauditantigo com checksumhistorico igual;novas4001
+auditscanonicas. ProvaSQLsinteticaUnicode/null/duplicata compara agregacaoantiga
+pequena e streamingPASS. AguardarCIexata antes de trocarhelper emuso e repetir
+backupPOS/restauracao/copiaexterna. Nao usar jsonb_agg emtabelareal grande.
+
+Privado central:incoming/enrichment-5000-20261117-r1/{owner-authorization-rg,
+rehearsal-r1,application-r1/*,application-r1-terminal}. Applicationinclui before,
+checkpoints100,applied,completed,reversal-plan,full-reconciliation epost-rg-table-
+proofs. Fiscal5000 agora valida no contratoPENDINGexistente:0excecoesglobais,
+nome/numero/pais5000pendentes eCEP50omitidoscomraw/procedencia;0aplicados/ativados,
+0fiscais operacionais completos. Plano7928176bytes/SHA c6ab6892... privado.
+Contatos/entregasnovos seguemauxiliaresCodespace indisponiveis,nao ausenciafonte.
+Proximasacoes:CIhelper->backupPOSstream/restore/externo->publicacaoCPF por
+procedimento existente->aceitePF/PJ naHML;fiscal exigeensaio/gateproprio.
+
 ## Composicao CPF com capacidades atuais: validacao por SHA (2026-11-17)
 
 PR594 REAL econtinuidade-591:codigo351ee093/CI7246SUCCESS,checkpoint69430028.

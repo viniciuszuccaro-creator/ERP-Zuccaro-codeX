@@ -1,3 +1,20 @@
+## LoteRG fechado; backup agregado requer streaming (2026-11-17)
+
+c370b55c/CI7248SUCCESS,frontend3038/0fail/0skip ebackend/PG/composePASS.
+PacoteCPF2222arquivos conferidoVPS;canaryrestauradoPASS,NAOpublicadoHML.
+4001RG AUTORIZADOS/APLICADOS/REPLAYPASS;0conflitos/4001audits/0novosclientes.
+6600=5100ativos+1500inativos;4200contatospreservados.224400comparacoes/0divergencias,
+15tabelas alheias eauditorias antigas iguais,conferidasREADONLY porstreaming.
+Apply349.20s/replay338.69s/pico131.4MiB.0clientes novoscompletos porenriquecimentoRG.
+BackupPRE174042restaurado/externoPASS;retomadaparcial porprefixoSHA eguardas.
+BackupPOS eVerifyR1 falharam:jsonb_agg auditoria causou signal9 noPG limitado,
+recoveryautomatico,semrestartmanual;HMLready/operacionalhealth200 aposevento.
+Fixhelperbackup:stream ordenado/MD5historico identico,semarray naRAM doPG.
+12unitariosLinuxsinteticosPASS,contraprovaSQL/MD5archivado realPASS. CIpendente
+antesde instalarhelper ebackupPOS/restore/externo. SemampliarRAM/grants/schema.
+Fiscal5000validadoscomoINATIVOSpendentes,0aplicados;numero/pais5000 eCEP50pendentes.
+Proximo:CIbackup->recuperacaoPOS->publicacaoCPF HML eaceite.Operacionalintacto.
+
 ## Composicao CPF validada localmente; aguardando CI propria (2026-11-17)
 
 PR594351ee093/CI7246SUCCESS preservada,nao e a branchcasa. CI7245FAIL porguardas

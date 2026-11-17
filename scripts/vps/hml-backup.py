@@ -115,12 +115,13 @@ class Database:
 
 
 class Snapshot:
-    def __init__(self, db):
+    def __init__(self, db, database=None):
         self.process = subprocess.Popen(db.args('psql', ['-X', '-q', '-At', '-v', 'ON_ERROR_STOP=1',
-            '-d', db.c['database']]), stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-            stderr=subprocess.DEVNULL, text=True)
+            '-d', database or db.c['database']]), stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL, bufsize=0)
+        self.buffer = bytearray()
         try:
-            self.process.stdin.write(db.password + '\n')
+            self.process.stdin.write((db.password + '\n').encode())
             self.token = self.query('BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY; '
                                    "SET LOCAL statement_timeout='30s'; SELECT pg_export_snapshot()")
             require(re.fullmatch('[A-F0-9]+-[A-F0-9]+-[0-9]+', self.token), 'SNAPSHOT_TOKEN')
@@ -129,14 +130,39 @@ class Snapshot:
             raise
 
     def query(self, sql):
-        self.process.stdin.write(sql + ';\n')
+        self.process.stdin.write((sql + ';\n').encode())
         self.process.stdin.flush()
-        with selectors.DefaultSelector() as selector:
-            selector.register(self.process.stdout, selectors.EVENT_READ)
-            require(selector.select(35), 'SNAPSHOT_READ_TIMEOUT')
-        line = self.process.stdout.readline().strip()
+        line = self.line().decode('utf-8').strip()
         require(line, 'SNAPSHOT_READ_FAILED')
         return line
+
+    def line(self):
+        while b'\n' not in self.buffer:
+            with selectors.DefaultSelector() as selector:
+                selector.register(self.process.stdout, selectors.EVENT_READ)
+                require(selector.select(35), 'SNAPSHOT_READ_TIMEOUT')
+            chunk = os.read(self.process.stdout.fileno(), 65536)
+            require(chunk, 'SNAPSHOT_READ_FAILED')
+            self.buffer.extend(chunk)
+            require(len(self.buffer) <= 16 * 1024**2, 'SNAPSHOT_ROW_LIMIT')
+        end = self.buffer.index(b'\n')
+        line = bytes(self.buffer[:end]).removesuffix(b'\r')
+        del self.buffer[:end + 1]
+        return line
+
+    def rows(self, sql):
+        marker = ('ERP_PROOF_' + uuid.uuid4().hex).encode()
+        self.process.stdin.write((sql + ';\n\\echo ' + marker.decode() + '\n').encode())
+        self.process.stdin.flush()
+        while True:
+            line = self.line()
+            if line == marker:
+                return
+            require(line.startswith(b'{') and line.endswith(b'}'), 'SNAPSHOT_ROW_INVALID')
+            yield line
+
+    def table_proof(self, schema, table):
+        return row_proof(self.rows(table_rows_query(schema, table)))
 
     def close(self):
         self.process.stdin.close()
@@ -153,6 +179,24 @@ def table_query(schema, table):
     return ("SELECT json_build_object('count',count(*),'content',md5(COALESCE("
             "jsonb_agg(to_jsonb(t) ORDER BY to_jsonb(t)::text)::text,'null'))) "
             f'FROM "{schema}"."{table}" t')
+
+
+def table_rows_query(schema, table):
+    require(IDENT.fullmatch(schema) and IDENT.fullmatch(table), 'TABLE_IDENTIFIER')
+    return f'SELECT to_jsonb(t)::text FROM "{schema}"."{table}" t ORDER BY to_jsonb(t)::text'
+
+
+def row_proof(rows):
+    # Preserve the historical jsonb array text checksum, without materializing its array.
+    digest = hashlib.md5(usedforsecurity=False)
+    count = 0
+    for row in rows:
+        require(isinstance(row, bytes) and row.startswith(b'{') and row.endswith(b'}'), 'SNAPSHOT_ROW_INVALID')
+        digest.update(b'[' if count == 0 else b', ')
+        digest.update(row)
+        count += 1
+    digest.update(b']' if count else b'null')
+    return {'count': count, 'content': digest.hexdigest()}
 
 
 def verify_comparison(expected, actual):
@@ -214,7 +258,7 @@ def backup(c):
                 tables = json.loads(snapshot.query("SELECT COALESCE(json_agg(table_name ORDER BY table_name),'[]') "
                     f"FROM information_schema.tables WHERE table_schema='{schema}' AND table_type='BASE TABLE'"))
                 require(tables, 'NO_HML_TABLES')
-                proofs = {t: json.loads(snapshot.query(table_query(schema, t))) for t in tables}
+                proofs = {t: snapshot.table_proof(schema, t) for t in tables}
                 with open(temp / 'database.dump', 'xb') as out:
                     db.run('pg_dump', ['-d', c['database'], '-Fc', '--lock-wait-timeout=5000',
                                       '--snapshot=' + snapshot.token], output=out)
@@ -225,8 +269,9 @@ def backup(c):
             # Restore only a database just created by this run in the pinned isolated PG.
             db.run('pg_restore', ['-d', verify_db, '--single-transaction', '--exit-on-error'],
                    (temp / 'database.dump').read_bytes())
-            for table, proof in proofs.items():
-                verify_comparison(proof, json.loads(db.sql(verify_db, table_query(schema, table))))
+            with contextlib.closing(Snapshot(db, database=verify_db)) as restored:
+                for table, proof in proofs.items():
+                    verify_comparison(proof, restored.table_proof(schema, table))
             require(db.sql(c['database'], roles_query) == roles_before, 'GLOBAL_ROLES_CHANGED')
             db.run('dropdb', [verify_db])
             write_json(temp / 'recovery.private.json', {'database': c['database'], 'schema': schema,
