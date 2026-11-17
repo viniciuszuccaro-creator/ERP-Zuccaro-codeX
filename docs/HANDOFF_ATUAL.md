@@ -1,5 +1,18 @@
 ## Delta A1: runtime nativo e prazo das CRLs de raiz (2026-11-17)
 
+b5503628/CI7237SUCCESS. Ensaio integrado novo6a2b8e7a/CI7238 revelou defeito
+REAL no multipart de substituicao:Busboy emite partsLimit ao atingir4partes
+validas(password,operationId,replaces,arquivo),respondendo422 antes da auditoria.
+Contraprova focada RED422!=200 reproduzida no Windows tambem. Corrigido limite
+tecnico para5;allowlists continuam maximo3campos/1arquivo,qualquer quinta parte
+extra/duplicada negada. Mesma contraprova GREEN,5testes de rota PASS. Nao alterar
+expectativa de rollback503 para mascarar422. NovaCI precisa comprovar PG completo.
+6557950d acrescenta concorrencia2substituicoes(1sucesso/1conflito) e repositorio
+canonico PostgresAuditRepository;Auth/RBAC continuam fixtures declaradas.
+Inventory dirigido catalog-crl-distribution-points.private.json centralizou42
+URLs assinadas pelas CAs do catalogo;NAO comprova cobertura das CRLs de emissores
+finais.5containers protegidos mesmosIDs,running,restartCount0. Sem promocaoHML.
+
 Resultado posterior:5/5CRLs oficiais ITI(v5/v6/v10/v11/v12) recuperadas porHTTPS
 sem redirect, tamanho/hash/issuer/assinatura e this/nextUpdate conferidos contra
 catalogo oficial pinado. Recibo privado root-crls-r1 dentro de a1-trust-reference

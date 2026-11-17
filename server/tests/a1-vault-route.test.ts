@@ -53,6 +53,18 @@ function form(options: { duplicate?: boolean; password?: string; mime?: string; 
   return body;
 }
 
+test('A1 replacement accepts four canonical parts but rejects any fifth part before the service', async () => fixture(async (url,state) => {
+  const headers = { 'x-synthetic-verified': 'yes' };
+  const replacement = () => { const body = form(); body.set('replaces', JSON.stringify({id:randomUUID(),revision:'1'})); return body; };
+  const valid = await fetch(url + base, { method:'POST',headers,body:replacement() });
+  assert.equal(valid.status,200);assert.equal(state.calls,1);
+  for (const name of ['extra','password']) {
+    const body = replacement();body.append(name,'SYNTHETIC EXTRA');
+    assert.equal((await fetch(url + base,{method:'POST',headers,body})).status,422);
+  }
+  assert.equal(state.calls,1);
+}));
+
 test('unconfigured A1 vault fails closed after auth and before parsing secret bodies', async () => fixture(async (url, state) => {
   const denied = await fetch(url + base, { method: 'POST', body: 'not multipart' });
   assert.equal(denied.status, 401);

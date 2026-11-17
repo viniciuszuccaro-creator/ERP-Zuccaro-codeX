@@ -1,5 +1,11 @@
 ## A1: corrigir capacidade nativa antes de liberar anexo (2026-11-17)
 
+CI7237SUCCESS b5503628. CI7238 falhou objetivamente no multipart de substituicao,
+nao na criptografia:4partes validas atingiam partsLimit do Busboy. Defeito foi
+reproduzido RED e corrigido GREEN preservando rejeicao de quinta parte extra.
+Nao homologar6a2b8e7a/6557950d pela CI ancestral. NovoSHA deve fechar provaPG.
+Teste ampliado cobre auditoria canonica e concorrencia real;nenhuma mudanca HML.
+
 b5503628 publicado;job nativo da CI7237 PASS.5CRLs ITI de raiz conferidas com
 assinatura/validade(0rejeicoes),nao ativadas. Overlay central hash/tamanhos PASS;
 smokeR3 na imagem existente PASS,semrede/DB/portas. Acrescentado ensaio continuo

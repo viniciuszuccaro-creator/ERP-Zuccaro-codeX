@@ -14,7 +14,9 @@ async function receive(req: Request) {
   return new Promise<{ certificate: Buffer; password: Buffer; operationId: string; replaces?: unknown }>((resolve, reject) => {
     let parser: ReturnType<typeof busboy>;
     try { parser = busboy({ headers: req.headers, limits: { fileSize: 5000000, files: 1, fieldSize: 4096,
-      fields: 3, parts: 4, fieldNameSize: 40, headerPairs: 50 } }); } catch { reject(uploadError()); return; }
+      // Busboy emits partsLimit upon reaching the limit, including valid parts.
+      // Four canonical parts are allowed; field/file allowlists reject a fifth.
+      fields: 3, parts: 5, fieldNameSize: 40, headerPairs: 50 } }); } catch { reject(uploadError()); return; }
     const chunks: Buffer[] = [], fields = new Map<string,string>();
     let fileCount = 0, done = false;
     const cleanup = () => { clearTimeout(timer); req.removeListener('aborted', abort); req.removeListener('error', fail); };
