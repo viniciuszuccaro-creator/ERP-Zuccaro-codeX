@@ -1,3 +1,16 @@
+## Escala: preflight e classificacoes concluidos / carga aguardando gate (2026-11-17)
+
+9cfee34d/CI7242SUCCESS,PR594/push confirmado. Novo testePG nativo restrito PASS
+com negacao semgrant,escopo fisico eROLLBACK;4jobs verdes. 0novosimportados,
+0completos;HML segue100ativos/1500inativos emde17088c. Plano5000 intacto/false.
+0conflitos noGrupoCPA atual;preflight13.598s/264MiB nao e taxa de migracao.
+Fonte fiscal5000componentes/0ativaveis/50CEPpararevisao/34cobrancas excluidas.
+RG4001validos no schema,52placeholders,947vaziosnoexport;0aplicados,nao prova
+autenticidade doRG. Candidatos/recibos centralizados foraGitHub e dobuild.
+Gate especifico dos5000mestresPARCIAIS+indice ja solicitado,aguardandoresposta;
+review/backuprestore/preflight/executor ainda condicionam execucao. SemDDL/grants,
+reativacao,carga,deployoperacional ou tentativaCodespace. Checkpoint noHANDOFF.
+
 ## Legado priorizado: selecao5000 revalidada,0cargas (2026-11-17)
 
 CI7241ae6290ab falhou no fixtureCRM semSELECTCliente;negativo42501 preservado

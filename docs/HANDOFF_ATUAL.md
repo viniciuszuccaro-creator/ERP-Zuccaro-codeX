@@ -1,3 +1,38 @@
+## Checkpoint legado 9cfee34d / CI7242 SUCCESS (2026-11-17)
+
+9cfee34d046df989c2bf00f1267a3a4bd98e751c publicado PR594,4jobs verdes;teste
+native PostgreSQL scale assessment PASS no step test:postgres (nao o SKIP do
+npmtest semDATABASE_URL). Runner LEGACY_BATCH_PERSISTENCE4testes;negativo42501
+semgrant preservado,SELECT/policy apenasroleCI descartavel,econservacao de linhas
+emROLLBACK. Negativa visualizar encerra ANTES deSELECTclientes. CI7241 anterior
+continua falha historica,nao foi relabelada ou afrouxada.
+
+Entrega real deste lote:preflight privado atual e classificacao de fontes,
+ZERO importados/reativados/ativados,0completos confirmados. MesmaHML100ativos+
+1500inativos,sourceplan5000unchanged/false. Pergunta do gate5000parciais+indice
+ja enviada,AGUARDANDO resposta especifica;nao pedir novamente nem executarporCI.
+Faltam antesdaaplicacao:aceite desse escopo parcial,review,backupfreshrestaurado/
+ACKexterno,ensaioindice epreflightfresco,composicao doexecutorcanonico existente.
+Nao afirmar que apenas o aceite automaticamente conclui essas condicoes.
+
+VPS central incoming/scale-partial-20261117-r1/checkpoint-9cfee34d.private.json
+indexa hashes/tamanhos eproximaacao. config-plan-binding prova actor/Grupo/DB/
+schema/principal/cluster da configuracao atual;NAO eBearer/browser. Preflight
+13.598s/264MiB NAO e benchmark de carga.0conflitos do recorteCPA na leitura.
+Fiscal source-only:5000componentes,0ativaveis,50CEP_FORMAT,34cobrancas excluidas.
+RG schema-only:4001candidatos canonicos,0invalidos de formato,52placeholders e
+947vaziosnoexport;autenticidade documental e bindingdestino nao declarados.
+rg-validation-candidates.private.json guarda valores/apenasnaVPS,semSQL/importe.
+Esses avanços nao dependem dos5exports;contatos/telefonia/entregas novas seguem
+dependencia parcial,semCodespace/Billing/novo leitor ou transferencia dobackup.
+
+HMLAPI/web continuam de17088c;nenhum deploy/DDL/grant/carga foi executado.
+Proximaacao apos o gate:fechar pacote executavel e protecoes,aplicar indice
+EXATO e5lotescanonicos ate1000,conferircampos/IDs/audits/replay,sem tocar1600
+existentes;so entao anunciar ate5100ativosPARCIAIS e medir taxareal. FuturoRG/
+fiscal exige enriquecimentoproprioCAS,nao altera o escopo da pergunta ja enviada.
+Fechamento seguinte apenas documental,diffcheck,reutilizaCI7242 semnovo runtime.
+
 ## Prioridade legado: escala parcial revalidada, gate especifico solicitado (2026-11-17)
 
 Delta de fechamento:ae6290ab/CI7241 falhou no NOVO fixture restrito deCRM que
