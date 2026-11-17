@@ -1,5 +1,16 @@
 ## Cofre A1: envio manual, runtime opt-in e gates separados (2026-11-17)
 
+Primeira publicacao be4dd0b4/CI7231 NAO homologada: guarda de integridade do
+arquivo guard-ofx-a1-consolidacao detectou a adaptacao da fixture para refs/geracao
+do painel. Correcao limitada ao registro dos hunks exatos em organizacionalRemainder;
+hash ancestral9bec e contraprovas de adulteracao preservados,3checks focados PASS.
+Nao mudar hash/base/assertion para ocultar mudanca. Testes semanticos novos usam
+fonte atual e painel montado. Kit be4dd privado permanece imutavel PREPARADO,
+nao citar CI de sucessor como homologacao dele nem promover por engano.
+Referencia ITI baixada na VPS:incoming/a1-trust-reference-20261117,
+186certificados/364113bytes, SHA512 oficial conferido. Nao extraido/instalado,
+nao atesta CRL nem emissor de arquivo do dono. Nenhum certificado local buscado.
+
 Diretriz atual do dono: NAO procurar certificados locais ou instalados. O dono
 selecionara PFX/P12 no cadastro da Empresa. Nome manual da certificadora NAO e
 dependencia de desenvolvimento nem bloqueio da tela. Identificar cadeia durante

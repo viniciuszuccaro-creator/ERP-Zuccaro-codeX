@@ -1,5 +1,11 @@
 ## A1 manual: protecoes e configuracao em fechamento (2026-11-17)
 
+be4dd0b4/CI7231: primeira CI identificou fixture adaptada fora dos hunks
+historicos registrados. Registro exato corrigido preservando hash ancestral e
+assertions;3contraprovas PASS. Nao homologar esse SHA por relato ou CI posterior.
+Kit correspondente centralizado e imutavel, sem deploy. Referencia publica ITI
+centralizada (186certificados/SHA512 oficial conferido), sem ativar trust/CRLs.
+
 Nao buscar certificados na maquina. Dono anexara pelo EmpresaForm/painel
 existente; nome manual da certificadora nao bloqueia desenvolvimento. Factory
 opt-in liga o cofre canonico no bootstrap HML com arquivos privados limitados,
