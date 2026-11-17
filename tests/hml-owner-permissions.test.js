@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { prepareHmlOwnerPermissions } from '../scripts/vps/hml-owner-permissions.mjs';
+import { prepareHmlOwnerPermissions, prepareHmlOrganizacionalFiscalSchema } from '../scripts/vps/hml-owner-permissions.mjs';
 
 const expected = { database: 'hml_fixture', schema: 'hml_fixture', schemaOid: '1234', clusterIdentifier: '987654',
   profileId: '11111111-1111-4111-8111-111111111111', authUserId: '22222222-2222-4222-8222-222222222222',
@@ -10,6 +10,22 @@ const before = { id: expected.profileId, auth_user_id: expected.authUserId, grou
   empresa_id: null, role: 'user', ativo: true, permissoes: { Cadastros: { cliente_local: ['visualizar'] } } };
 const input = () => ({ before: structuredClone(before), expected: { ...expected },
   requestId: 'HML-owner-grant-fixture0001', approvalRef: 'OWNER_AUTHORIZED_HML_FULL_FIXTURE_20261116' });
+
+test('fiscal capability plan is HML-only, nullable, three columns and no population or new policy', () => {
+  const target = { ...expected, role: 'hml_app_fixture' };
+  const companies = ['44444444-4444-4444-8444-444444444444', '55555555-5555-4555-8555-555555555555'];
+  const plan = prepareHmlOrganizacionalFiscalSchema(target, companies);
+  assert.equal(plan.operationalAuthorized, false);
+  assert.equal(plan.populatesValues, false);
+  assert.equal(plan.createsRolesOrPolicies, false);
+  assert.equal((plan.sql.match(/ADD COLUMN/g) || []).length, 3);
+  assert.match(plan.sql, /NOT rolsuper AND NOT rolbypassrls/);
+  assert.match(plan.sql, /GRANT UPDATE \(inscricao_estadual,regime_tributario\)/);
+  assert.doesNotMatch(plan.sql, /DEFAULT|CREATE POLICY|ALTER ROLE|INSERT INTO|UPDATE .* SET/);
+  assert.match(plan.reverseSql, /FISCAL_VALUES_REQUIRE_AUDITED_CAS_REVERSAL_FIRST/);
+  assert.match(plan.reverseSql, /REVOKE UPDATE/);
+  assert.throws(() => prepareHmlOrganizacionalFiscalSchema({ ...target, schema: 'public' }, companies));
+});
 
 test('HML owner plan reuses exact canonical catalog, retains role and does not execute', () => {
   const result = prepareHmlOwnerPermissions(input());

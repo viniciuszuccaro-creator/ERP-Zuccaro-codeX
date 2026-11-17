@@ -3,6 +3,8 @@ import type { TenantScope } from '../audit/types.js';
 export type Empresa = {
   id: string;
   codigo?: string | null;
+  inscricao_estadual?: string | null;
+  regime_tributario?: string | null;
   group_id: string;
   razao_social: string;
   nome_fantasia: string | null;

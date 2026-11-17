@@ -12,8 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/components/ui/use-toast";
 import { useUser } from "@/components/lib/UserContext";
-import { a1CertificateApi, central360SessionKey } from "@/api/httpApiClient";
-import { readErpHttpSession } from "@/api/erpHttpSession";
+import useCertificadoA1 from './useCertificadoA1';
 import { sanitizeAuditPayload } from "@/components/lib/sanitizeOnWrite";
 import CertificadoA1Panel from "./CertificadoA1Panel";
 import {
@@ -56,18 +55,8 @@ export default function ConfigFiscalAutomatica({ empresaId, groupId }) {
     enabled: !!empresaId,
   });
 
-  const a1Scope = { groupId: groupId || empresa?.group_id || empresa?.grupo_id, empresaId, actorId: user?.id };
-  const certificateQueryKey = ['a1-certificate', a1Scope.groupId, empresaId, user?.id,
-    central360SessionKey(readErpHttpSession()?.token)];
-  const certificateQuery = useQuery({
-    queryKey: certificateQueryKey,
-    queryFn: ({ signal }) => a1CertificateApi.metadata(a1Scope, { signal }),
-    enabled: !!a1Scope.groupId && !!empresaId && !!user?.id,
-    staleTime: 0,
-    gcTime: 0,
-    retry: false,
-  });
-  const certificate = certificateQuery.data;
+  const { a1Scope, certificateQueryKey, certificateQuery, certificate, panelKey } = useCertificadoA1({
+    groupId: groupId || empresa?.group_id || empresa?.grupo_id, empresaId });
 
   const [fiscalFormData, setFormData] = useState({
     ambiente_nfe: config?.ambiente || "Homologação",
@@ -438,7 +427,7 @@ export default function ConfigFiscalAutomatica({ empresaId, groupId }) {
               </div>
 
               {formData.certificado_tipo === "A1" && <>
-                <CertificadoA1Panel key={`${a1Scope.groupId}:${empresaId}:${user?.id}`}
+                <CertificadoA1Panel key={panelKey}
                   scope={a1Scope} metadata={certificate} ready={certificateQuery.isSuccess && !certificateQuery.isFetching}
                   onUploaded={() => queryClient.invalidateQueries({ queryKey: certificateQueryKey })} />
                 {certificateQuery.isError && <p role="alert" className="text-sm text-red-700">Cofre A1 indisponivel. Nenhum envio ou validade foi confirmado.</p>}

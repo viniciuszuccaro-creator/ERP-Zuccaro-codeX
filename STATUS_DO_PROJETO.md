@@ -1,3 +1,31 @@
+## Delta fiscal e conexao segura do cofre em validacao (2026-11-17)
+
+Gate do dono recebido para tres colunas fiscais nullable e seus UPDATEs somente
+na HML, apos revisao/CI/backup/ensaio. Sem backfill/perfis/roles/emissao/operacional.
+Runtime ainda85471730/CI7226; nenhum DDL/grant/carga executado neste lote.
+Servico Organizacional exige Fiscal.tabelas_fiscais.editar alem de editar cadastro,
+CAS e auditoria atomica. Projecao anuncia somente campos fisicamente existentes;
+UI nao inventa regime, preserva omissao e atualiza por version. Plano/reversa
+minimos em scripts/vps/hml-owner-permissions.mjs; sem nova migration geral.
+
+Reusados cofre/painel/route A1 existentes: DI opcional e hook comum, sem credenciais
+no cadastro. Configuracao ausente responde503 antes do parser apos auth/contexto.
+Preparacao NAO equivale a certificado utilizavel: trust/CRL, chave protegida e backup,
+schema e permissoes granulares continuam gates distintos, sem ampliacao automatica.
+Fotos confirmam botoes de atualizacao, codigo001/001/002 e vinculos; negativas de
+outras acoes nao justificam liberar sistema inteiro. Seis blocos confirmados;
+catalogo local nao e prova de persistencia de todos os codigos no servidor.
+
+Provas locais focadas:12backend,23contratos/guardas,formularios reais montados em
+Chromium com fronteiras sinteticas; nativo PG ampliado para CI. Audit baseline,
+typecheck servidor e build web passaram; lint sem erros,2avisos preexistentes.
+Suite backend completa:651PASS/42SKIP/0FAIL (Windows, PG nativo e OpenSSL Linux
+nao comprovados por esse resultado); build servidor PASS. CI do SHA ainda em
+fechamento. Suite raiz integral fica no Ubuntu pela excecao draft vigente,
+sem repetir o travamento POSIX conhecido no Windows. Proxima acao: publicar lote draft
+sanitizado apos checks locais e fechar Ubuntu exato; depois ensaio/backup fiscal.
+Detalhes e gates em docs/HANDOFF_ATUAL.md, sem novo manual/candidata.
+
 ## Exibicao aceita; negativa de edicao e cofre ainda pendentes (2026-11-17)
 
 Dono confirmoucodigo eempresasvinculadas visiveis na854. Nao reabrir esse gate

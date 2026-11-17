@@ -72,6 +72,32 @@ ALTER TABLE ${schema}.groups DROP COLUMN codigo;`;
     changesGrants: false, automaticBackfill: false, operationalAuthorized: false,
     requiresAbsentColumnsBackupRestoreReview: true };
 }
+
+/** Nullable declarations only; no defaults, population, tax activation or new policy. */
+export function prepareHmlOrganizacionalFiscalSchema(expected, empresaIds) {
+  const { guardSql } = prepareHmlOrganizacionalSqlPermissions(expected, empresaIds);
+  const s = `"${expected.schema}"`, role = `"${expected.role}"`;
+  const sql = `${guardSql}
+ALTER TABLE ${s}.groups ADD COLUMN inscricao_estadual text NULL CHECK (char_length(inscricao_estadual)<=40);
+ALTER TABLE ${s}.empresas ADD COLUMN inscricao_estadual text NULL CHECK (char_length(inscricao_estadual)<=40);
+ALTER TABLE ${s}.empresas ADD COLUMN regime_tributario text NULL CHECK (regime_tributario IN ('Simples Nacional','Lucro Presumido','Lucro Real','MEI'));
+GRANT UPDATE (inscricao_estadual) ON ${s}.groups TO ${role};
+GRANT UPDATE (inscricao_estadual,regime_tributario) ON ${s}.empresas TO ${role};`;
+  const reverseSql = `${guardSql}
+DO $hml_fiscal_reverse$ BEGIN
+ IF EXISTS(SELECT 1 FROM ${s}.groups WHERE inscricao_estadual IS NOT NULL)
+ OR EXISTS(SELECT 1 FROM ${s}.empresas WHERE inscricao_estadual IS NOT NULL OR regime_tributario IS NOT NULL)
+ THEN RAISE EXCEPTION 'FISCAL_VALUES_REQUIRE_AUDITED_CAS_REVERSAL_FIRST'; END IF;
+END $hml_fiscal_reverse$;
+REVOKE UPDATE (inscricao_estadual) ON ${s}.groups FROM ${role};
+REVOKE UPDATE (inscricao_estadual,regime_tributario) ON ${s}.empresas FROM ${role};
+ALTER TABLE ${s}.empresas DROP COLUMN regime_tributario,DROP COLUMN inscricao_estadual;
+ALTER TABLE ${s}.groups DROP COLUMN inscricao_estadual;`;
+  return { kind: 'HML_ORGANIZACIONAL_FISCAL_SCHEMA_NOT_EXECUTED', sql, reverseSql,
+    sqlSha256: digest(sql), target: { ...expected }, empresaIds: [...empresaIds],
+    columns: { groups: ['inscricao_estadual'], empresas: ['inscricao_estadual', 'regime_tributario'] },
+    createsRolesOrPolicies: false, populatesValues: false, operationalAuthorized: false };
+}
 function validateTree(value) {
   assert.ok(value && typeof value === 'object', 'PERMISSION_TREE_REQUIRED');
   if (Array.isArray(value)) {

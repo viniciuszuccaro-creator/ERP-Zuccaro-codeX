@@ -6,6 +6,8 @@ function mapRow(row: Record<string, unknown>): Empresa {
   return {
     id: String(row.id),
     codigo: row.codigo == null ? null : String(row.codigo),
+    ...(Object.hasOwn(row, 'inscricao_estadual') ? { inscricao_estadual: row.inscricao_estadual == null ? null : String(row.inscricao_estadual) } : {}),
+    ...(Object.hasOwn(row, 'regime_tributario') ? { regime_tributario: row.regime_tributario == null ? null : String(row.regime_tributario) } : {}),
     group_id: String(row.group_id),
     razao_social: String(row.razao_social),
     nome_fantasia: row.nome_fantasia == null ? null : String(row.nome_fantasia),

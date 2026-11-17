@@ -57,11 +57,15 @@ async function receive(req: Request) {
 }
 
 /** Prepared canonical router extraction. Does NOT mount itself in app/router or expose a download/signing endpoint. */
-export function mountA1VaultRoutes(router: Router, service: Pick<A1VaultService, 'upload' | 'metadata' | 'revoke' | 'rotate'>,
+export function mountA1VaultRoutes(router: Router, service: Pick<A1VaultService, 'upload' | 'metadata' | 'revoke' | 'rotate'> | undefined,
   context: (req: Request) => RequestContext) {
   const base = '/api/v1/fiscal/certificados-a1';
   const contexts = new WeakMap<Request, RequestContext>();
   let pending = 0;
+  const configured = () => {
+    if (!service) throw new AppError(503, 'A1_VAULT_UNAVAILABLE', 'Certificate vault is not configured');
+    return service;
+  };
   const parseJson = json({ limit: '4kb' });
   const safeJson: RequestHandler = (req,res,next) => parseJson(req,res,(error?: unknown) => next(error ? uploadError() : undefined));
   const verified: RequestHandler = (req, res, next) => {
@@ -85,16 +89,17 @@ export function mountA1VaultRoutes(router: Router, service: Pick<A1VaultService,
       next(error instanceof AppError ? error : new AppError(503, 'A1_VAULT_UNAVAILABLE', 'Certificate vault unavailable'));
     } finally { contexts.delete(req); }
   };
-  router.get(base, requireTenantScope, verified, handler((_req,ctx) => service.metadata(ctx)));
-  router.post(base, requireTenantScope, verified, handler(async (req,ctx) => {
+  const available: RequestHandler = (_req, _res, next) => { try { configured(); next(); } catch (error) { next(error); } };
+  router.get(base, requireTenantScope, verified, available, handler((_req,ctx) => configured().metadata(ctx)));
+  router.post(base, requireTenantScope, verified, available, handler(async (req,ctx) => {
     if (pending >= 2) throw new AppError(429, 'A1_UPLOAD_BUSY', 'Certificate upload busy');
     pending++;
     let request: Awaited<ReturnType<typeof receive>> | undefined;
-    try { request = await receive(req); return await service.upload(ctx, request); }
+    try { request = await receive(req); return await configured().upload(ctx, request); }
     finally { pending--; request?.certificate.fill(0); request?.password.fill(0); }
   }));
-  router.post(`${base}/:id/revogar`, requireTenantScope, verified, safeJson,
-    handler((req,ctx) => service.revoke(ctx, { ...req.body, id: req.params.id })));
-  router.post(`${base}/:id/rotacionar`, requireTenantScope, verified, safeJson,
-    handler((req,ctx) => service.rotate(ctx, { ...req.body, id: req.params.id })));
+  router.post(`${base}/:id/revogar`, requireTenantScope, verified, available, safeJson,
+    handler((req,ctx) => configured().revoke(ctx, { ...req.body, id: req.params.id })));
+  router.post(`${base}/:id/rotacionar`, requireTenantScope, verified, available, safeJson,
+    handler((req,ctx) => configured().rotate(ctx, { ...req.body, id: req.params.id })));
 }

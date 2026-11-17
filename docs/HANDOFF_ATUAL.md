@@ -1,3 +1,46 @@
+## IE/regime autorizados; cofre preparado sem ativacao (2026-11-17)
+
+Fotos novas encerram a ambiguidade: Atualizar Grupo/Atualizar Empresa aparecem;
+os dois Acesso negado do Grupo nao sao o botao salvar. Codigos e duas empresas
+vinculadas continuam aceitos. Nao repetir atribuicao de codigos ou ampliar perfil.
+
+Gate SIM recebido: somente HML, apos CI/revisao/backup/ensaio, IE nullable em
+groups/empresas e regime nullable em empresas, UPDATE apenas nessas tres colunas,
+policies atuais, adicional Fiscal.tabelas_fiscais.editar no backend. Sem preencher
+valores, emitir, alterar perfil/roles ou operacional. Plano/reversa preparados em
+hml-owner-permissions.mjs; reversa recusa valores nao nulos sem CAS auditado previo.
+DDL/grants ainda NAO executados neste lote. HML permanece85471730/CI7226.
+
+WIP: servico/projecao/adapter/formularios preservam ausencia versus NULL, zeros
+iniciais, campos omitidos e regime desconhecido (sem Simples presumido). Resposta
+com nova version reidrata o formulario. Escrita requer RBAC, CAS e auditoria atomica.
+Testes locais:12backend focados;23contratos/guardas;Grupo/Empresa reais montados
+em Chromium com fronteiras sinteticas (nao Bearer/PG/browser E2E). Ensaio PostgreSQL
+nativo acrescido na suite obrigatoria CI; resultado remoto ainda pendente.
+Helper golden atualizado somente por hunks exatos; hashes ancestrais preservados.
+
+Cofre: reuso A1VaultService/route/CertificadoA1Panel, DI opcional app/router e hook
+comum Empresa/ConfigFiscalAutomatica. Ausente retorna503 APOS auth/contexto e ANTES
+de consumir multipart/JSON; nao inventar disponibilidade. Sem senha/PFX no PATCH
+Empresa. Troca/renovacao de sessao remonta painel e invalida metadados. Ativacao
+real depende de trust/CRL autoritativos, chave externa protegida, schema/repo,
+backup independente da chave e permissao granular Fiscal.certificado. Nenhum
+desses requisitos vira permissao geral por esta preparacao. Pergunta pendente:
+nome da autoridade emissora A1 de cada empresa; nunca pedir arquivo/senha no chat.
+
+Seis blocos CONFIRMADOS pelo dono. Reusar MASTER_CODE_SPECS e reserveEntityCodigo.
+Servidor tem reserva canonica em Cliente, Produto, TabelaPreco e repositorios de
+cadastros auxiliares, alem do Organizacional ja aplicado. Catalogo local de codigos
+NAO comprova schema/API/HML de todas as entidades. Proximo recorte: comparar os
+consumidores dos seis blocos com entidades suportadas no router/repositorios e
+preparar apenas lacunas comprovadas, sem renumerar legado ou documentos.
+
+Proxima execucao: fechar checks/CI do SHA deste lote; somente depois backup
+restauravel externo e ensaio transacional do delta fiscal na MESMA HML. Aplicar
+tres colunas sem backfill e validar principal APP/NOBYPASS, negativas e noop real.
+Promocao de API/web exige pacote/versao/reversa identificados. Sem reimportacao,
+Codespace, cobranca, alteracao operacional ou ativacao de endereco/certificado.
+
 ## Dono confirma codigos/vinculos; edicao e certificado continuam abertos (2026-11-17)
 
 Retorno visual do dono na854:codigo de registro e empresas vinculadas APARECEM.

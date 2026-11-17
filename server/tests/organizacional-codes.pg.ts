@@ -58,6 +58,23 @@ test('native PostgreSQL: concurrent organizational codes, rollback, replay and p
     const external = await service.get(ctx, 'Empresa', b);
     await assert.rejects(service.reverseAssignedCodigo(ctx, 'Empresa', b, String(external.version), '900', ctx.requestId), { code: 'ASSIGNMENT_RECEIPT_REQUIRED' });
     assert.deepEqual(await service.get(ctx, 'Empresa', b), external);
+    await assert.rejects(service.update(ctx, 'Empresa', a, { expected_version: changed.version, inscricao_estadual: '00123' }), { statusCode: 403 });
+    rbac.link({ actorId: actor, groupId: group, permissions: { Cadastros: { organizacional: ['visualizar', 'editar'] }, Fiscal: { tabelas_fiscais: ['editar'] } } });
+    await assert.rejects(service.update(ctx, 'Empresa', a, { expected_version: changed.version, inscricao_estadual: '00123' }), { code: 'FIELD_PERSISTENCE_UNAVAILABLE' });
+    await db.query('ALTER TABLE groups ADD COLUMN inscricao_estadual text; ALTER TABLE empresas ADD COLUMN inscricao_estadual text, ADD COLUMN regime_tributario text');
+    const fiscalBefore = await service.get(ctx, 'Empresa', a);
+    assert.equal(fiscalBefore.regime_tributario, null);
+    const fiscal = await service.update(ctx, 'Empresa', a, { expected_version: fiscalBefore.version, inscricao_estadual: '00123', regime_tributario: 'Lucro Real' });
+    assert.equal(fiscal.inscricao_estadual, '00123');
+    assert.equal(fiscal.codigo, assigned[0].codigo);
+    assert.deepEqual(await service.get(ctx, 'Empresa', a), fiscal);
+    await assert.rejects(service.update(ctx, 'Empresa', a, { expected_version: fiscalBefore.version, regime_tributario: 'MEI' }), { code: 'VERSION_CONFLICT' });
+    await assert.rejects(failure.update(ctx, 'Empresa', a, { expected_version: fiscal.version, inscricao_estadual: null, regime_tributario: null }), /AUDIT_FAILURE/);
+    assert.deepEqual(await service.get(ctx, 'Empresa', a), fiscal);
+    const cleared = await service.update(ctx, 'Empresa', a, { expected_version: fiscal.version, regime_tributario: null });
+    assert.equal(cleared.regime_tributario, null);
+    assert.equal(cleared.inscricao_estadual, '00123');
+    assert.equal(cleared.id, a);
   } finally {
     await db.end();
     if (created) { assert.match(schema, /^org_[a-f0-9]{32}$/); await admin.query(`DROP SCHEMA ${schema} CASCADE`); }

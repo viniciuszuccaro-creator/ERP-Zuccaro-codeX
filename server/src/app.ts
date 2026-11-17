@@ -50,6 +50,7 @@ import { MarcaService } from './services/marcaService.js';
 import { ProdutoService } from './services/produtoService.js';
 import { TenantCrudService } from './services/tenantCrudService.js';
 import { OrganizacionalService } from './services/organizacionalService.js';
+import type { A1VaultService } from './services/a1VaultService.js';
 import { createApiRouter } from './api/router.js';
 import { InMemoryTabelaPrecoRepository } from './repositories/inMemoryTabelaPrecoRepository.js';
 import { PostgresTabelaPrecoRepository } from './repositories/postgresTabelaPrecoRepository.js';
@@ -77,6 +78,7 @@ import type { ComercialAlcadaConfigPort } from './services/comercialCondicaoAvis
 import type { MalwareScanPort, StoragePort } from './services/storagePort.js';
 
 export type CreateAppOptions = {
+  a1VaultService?: Pick<A1VaultService, 'upload' | 'metadata' | 'revoke' | 'rotate'>;
   expedicaoPedidoPort?: ExpedicaoPedidoSideEffectPort;
   expedicaoEstoquePort?: ExpedicaoEstoquePort;
   expedicaoPedidoReader?: Pick<PedidoRepository, "getForExpedicao">;
@@ -288,6 +290,7 @@ export function createApp(options: CreateAppOptions) {
     });
   }
   app.use(createApiRouter({
+    a1VaultService: options.a1VaultService,
     organizacionalService: useMemory ? undefined : new OrganizacionalService(db, auditRepo, rbacGuard, tenantGuard),
     fornecedorService,
     config,

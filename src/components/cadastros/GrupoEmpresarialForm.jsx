@@ -44,6 +44,7 @@ export default function GrupoEmpresarialForm({ grupo, item, data, initialData, d
   const podeEditar = !permissionsLoading && hasCadastroEntityPermission('GrupoEmpresarial', 'editar', checkers);
   const podeExcluir = !isHttpBackendMode && hasCadastroEntityPermission('GrupoEmpresarial', 'excluir', checkers);
   const podeSalvar = !loadIncomplete && !isLoadingRecord && (dadosIniciais?.id ? podeEditar : podeCriar);
+  const podeEditarIE = podeSalvar && (!isHttpBackendMode || (hasPermission('Fiscal', 'tabelas_fiscais', 'editar') && dadosIniciais?.supported_fields?.includes('inscricao_estadual')));
   const busy = useRef(false);
   const [sessionEpoch, setSessionEpoch] = useState(0);
   const editorInstance = useId();
@@ -62,7 +63,7 @@ export default function GrupoEmpresarialForm({ grupo, item, data, initialData, d
     status: "Ativo",
     governanca_consolidada: false,
     score_integracao_erp: 0
-  }, JSON.stringify([dadosIniciais?.id ?? null, dadosIniciais?.updated_at ?? dadosIniciais?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null]));
+  }, JSON.stringify([dadosIniciais?.id ?? null, dadosIniciais?.version ?? dadosIniciais?.updated_at ?? dadosIniciais?.updated_date ?? null, dadosIniciais?.inscricao_estadual, dadosIniciais?.supported_fields, grupoAtual?.id ?? null, empresaAtual?.id ?? null]));
 
   // Escopo multiempresa: Empresa via filterInContext (group_id). Sem list unscoped.
   // enabled exige contexto; erro ≠ zero KPI fabricado.
@@ -88,7 +89,8 @@ export default function GrupoEmpresarialForm({ grupo, item, data, initialData, d
       cnpj: sanitizeDocument(formData.cnpj, 32),
       cnpj_opcional: sanitizeDocument(formData.cnpj, 32),
       descricao: sanitizeText(formData.descricao, 1000),
-      inscricao_estadual: sanitizeDocument(formData.inscricao_estadual, 32),
+      inscricao_estadual: formData.inscricao_estadual === dadosIniciais?.inscricao_estadual
+        ? dadosIniciais?.inscricao_estadual : sanitizeDocument(formData.inscricao_estadual, 40),
       empresas_ids: empresasIds,
       status: sanitizeText(formData.status || "Ativo", 40),
       score_integracao_erp: toNumber(formData.score_integracao_erp, 0),
@@ -179,7 +181,7 @@ export default function GrupoEmpresarialForm({ grupo, item, data, initialData, d
 
         <div>
           <Label>Inscricao Estadual</Label>
-          <Input value={formData.inscricao_estadual} onChange={(e) => setFormData({ ...formData, inscricao_estadual: e.target.value })} disabled={!podeSalvar || isHttpBackendMode} data-permission="Cadastros.Organizacional.editar" data-action="editar-inscricao-grupo" data-sensitive />
+          <Input value={formData.inscricao_estadual || ''} onChange={(e) => setFormData({ ...formData, inscricao_estadual: e.target.value })} disabled={!podeEditarIE} data-permission={isHttpBackendMode ? 'Fiscal.tabelas_fiscais.editar' : 'Cadastros.Organizacional.editar'} data-action="editar-inscricao-grupo" data-sensitive />
         </div>
       </div>
 

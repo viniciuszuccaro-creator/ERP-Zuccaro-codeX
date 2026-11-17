@@ -4,6 +4,9 @@ import { useRef } from 'react';
 import { isHttpBackendMode } from '@/api/base44Client';
 import useCadastroRecordState from './useCadastroRecordState';
 import CadastroCodigoRegistroField from './CadastroCodigoRegistroField';
+import CertificadoA1Panel from '../fiscal/CertificadoA1Panel';
+import useCertificadoA1 from '../fiscal/useCertificadoA1';
+import { useQueryClient } from '@tanstack/react-query';
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -47,8 +50,8 @@ function mergeEmpresaFormData(partial) {
   return {
     ...EMPRESA_FORM_DEFAULTS,
     ...src,
-    regime_tributario: Array.isArray(src.supported_fields) && !Object.hasOwn(src, 'regime_tributario')
-      ? '' : (src.regime_tributario ?? EMPRESA_FORM_DEFAULTS.regime_tributario),
+    regime_tributario: Array.isArray(src.supported_fields)
+      ? (src.regime_tributario ?? '') : (src.regime_tributario ?? EMPRESA_FORM_DEFAULTS.regime_tributario),
     certificado_digital: {
       ...EMPRESA_FORM_DEFAULTS.certificado_digital,
       ...(src.certificado_digital && typeof src.certificado_digital === "object" ? src.certificado_digital : {}),
@@ -80,6 +83,8 @@ export default function EmpresaForm({
   const { canCreate, canEdit, hasPermission, hasPermissionKey } = usePermissions();
   const { empresaAtual, grupoAtual } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || null;
+  const queryClient = useQueryClient();
+  const vault = useCertificadoA1({ groupId, empresaId: dadosIniciais?.id });
   const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciais?.empresa_id || dadosIniciais?.group_id);
   const permCheckers = { hasPermission, canCreate, canEdit };
   const podeCriar = hasCadastroEntityPermission("Empresa", "criar", permCheckers);
@@ -91,9 +96,14 @@ export default function EmpresaForm({
   const permissaoCertificado = "Cadastros.Empresa.Certificado.editar";
   const podeEditarCertificado = !isHttpBackendMode && podeSalvar && hasPermissionKey(permissaoCertificado);
   const saveBlocked = Boolean(isLoadingRecord || loadIncomplete);
+  const podeEditarFiscal = podeSalvar && (!isHttpBackendMode || hasPermission('Fiscal', 'tabelas_fiscais', 'editar'));
+  const fiscalPermission = isHttpBackendMode ? 'Fiscal.tabelas_fiscais.editar' : permissaoFormulario;
+  const supportsIE = !isHttpBackendMode || dadosIniciais?.supported_fields?.includes('inscricao_estadual');
+  const supportsRegime = !isHttpBackendMode || dadosIniciais?.supported_fields?.includes('regime_tributario');
   const persistBusy = useRef(false);
   const [formData, setFormData] = useCadastroRecordState(mergeEmpresaFormData(dadosIniciais), JSON.stringify([
-    dadosIniciais?.id ?? null, dadosIniciais?.updated_date ?? null,
+    dadosIniciais?.id ?? null, dadosIniciais?.version ?? dadosIniciais?.updated_at ?? dadosIniciais?.updated_date ?? null,
+    dadosIniciais?.inscricao_estadual, dadosIniciais?.regime_tributario, dadosIniciais?.supported_fields,
     dadosIniciais?.razao_social, dadosIniciais?.cnpj, dadosIniciais?.nome_fantasia,
     grupoAtual?.id ?? null, empresaAtual?.id ?? null,
   ]));
@@ -137,7 +147,8 @@ export default function EmpresaForm({
       nome_fantasia: sanitizeText(formData.nome_fantasia, 180),
       nome: sanitizeText(formData.nome_fantasia || formData.razao_social, 180),
       cnpj: sanitizeDocument(formData.cnpj, 32),
-      inscricao_estadual: sanitizeDocument(formData.inscricao_estadual, 32),
+      inscricao_estadual: formData.inscricao_estadual === dadosIniciais?.inscricao_estadual
+        ? dadosIniciais?.inscricao_estadual : sanitizeDocument(formData.inscricao_estadual, 40),
       regime_tributario: sanitizeText(formData.regime_tributario, 80),
       tipo: sanitizeText(formData.tipo, 40),
       status: sanitizeText(formData.status, 40),
@@ -241,14 +252,14 @@ export default function EmpresaForm({
 
         <div>
           <Label>Inscricao Estadual</Label>
-          <Input value={formData.inscricao_estadual} onChange={(e) => setFormData({ ...formData, inscricao_estadual: e.target.value })} disabled={!podeSalvar || saveBlocked || isHttpBackendMode} data-permission={permissaoFormulario} data-action="editar-inscricao-estadual-empresa" data-sensitive />
+          <Input value={formData.inscricao_estadual || ''} onChange={(e) => setFormData({ ...formData, inscricao_estadual: e.target.value })} disabled={!podeEditarFiscal || saveBlocked || !supportsIE} data-permission={fiscalPermission} data-action="editar-inscricao-estadual-empresa" data-sensitive />
         </div>
       </div>
 
       <div>
         <Label>Regime Tributario</Label>
-        <Select value={formData.regime_tributario} onValueChange={(v) => setFormData({ ...formData, regime_tributario: v })} disabled={!podeSalvar || saveBlocked || isHttpBackendMode}>
-          <SelectTrigger data-permission={permissaoFormulario} data-action="selecionar-regime-tributario-empresa" data-sensitive>
+        <Select value={formData.regime_tributario} onValueChange={(v) => setFormData({ ...formData, regime_tributario: v })} disabled={!podeEditarFiscal || saveBlocked || !supportsRegime}>
+          <SelectTrigger data-permission={fiscalPermission} data-action="selecionar-regime-tributario-empresa" data-sensitive>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -262,6 +273,14 @@ export default function EmpresaForm({
 
       <div className="p-4 bg-amber-50 rounded border border-amber-200">
         <h4 className="font-semibold mb-3">Certificado Digital</h4>
+        {isHttpBackendMode ? <>
+          <CertificadoA1Panel key={vault.panelKey} scope={vault.a1Scope} metadata={vault.certificate}
+            ready={vault.certificateQuery.isSuccess && !vault.certificateQuery.isFetching}
+            onUploaded={() => queryClient.invalidateQueries({ queryKey: vault.certificateQueryKey })} />
+          {!vault.scopeMatches && <p role="status" className="text-xs text-amber-800">Contexto da empresa indisponivel para o certificado.</p>}
+          {vault.scopeMatches && !vault.allowed && <p role="status" className="text-xs text-amber-800">Sem permissao para certificados.</p>}
+          {vault.scopeMatches && vault.allowed && vault.certificateQuery.isError && <p role="alert" className="text-xs text-red-700">Cofre A1 indisponivel. Nenhum envio confirmado.</p>}
+        </> : <>
         {!podeEditarCertificado && (
           <p className="text-xs text-amber-800 mb-3">
             Edicao de certificado exige permissao especifica. Alteracoes nesta secao estao bloqueadas.
@@ -296,6 +315,7 @@ export default function EmpresaForm({
             </AlertDescription>
           </Alert>
         )}
+        </>}
       </div>
 
       <div className="flex justify-end gap-3 pt-4 border-t">

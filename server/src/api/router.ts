@@ -1,6 +1,8 @@
 import { Router, type Request } from 'express';
 import { mountOrganizacionalRoutes } from './organizacionalRoutes.js';
 import type { OrganizacionalService } from '../services/organizacionalService.js';
+import type { A1VaultService } from '../services/a1VaultService.js';
+import { mountA1VaultRoutes } from './a1VaultRoute.js';
 import { z } from 'zod';
 import { AppError } from './errors.js';
 import type { AppConfig } from '../config/env.js';
@@ -35,6 +37,7 @@ type CrudLike = {
 };
 
 export type ApiDeps = {
+  a1VaultService?: Pick<A1VaultService, 'upload' | 'metadata' | 'revoke' | 'rotate'>;
   organizacionalService?: OrganizacionalService;
   config: AppConfig;
   db: DbClient;
@@ -1241,6 +1244,7 @@ function mountPedidoRoutes(router: Router, service: PedidoService) {
 }
 export function createApiRouter(deps: ApiDeps) {
   const router = Router();
+  mountA1VaultRoutes(router, deps.a1VaultService, ctxFromReq);
   if (deps.organizacionalService) mountOrganizacionalRoutes(router, deps.organizacionalService);
 
   router.get('/health', (_req, res) => {

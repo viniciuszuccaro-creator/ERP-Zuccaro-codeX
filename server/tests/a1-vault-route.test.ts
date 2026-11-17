@@ -8,7 +8,7 @@ import type { A1VaultService } from '../src/services/a1VaultService.ts';
 
 const base = '/api/v1/fiscal/certificados-a1';
 type State = { fail: boolean; held?: Buffer; calls: number; pause?: Promise<void>; entered?: () => void };
-async function fixture(run: (url: string, state: State) => Promise<void>) {
+async function fixture(run: (url: string, state: State) => Promise<void>, configured = true) {
   const state: State = { fail: false, calls: 0 };
   const app = express();
   app.use((req,_res,next) => {
@@ -21,7 +21,7 @@ async function fixture(run: (url: string, state: State) => Promise<void>) {
   });
   const metadata: Awaited<ReturnType<A1VaultService['upload']>> = { id: '44444444-4444-4444-8444-444444444444', fingerprint: '0'.repeat(64), validFrom: '2026-10-01',
     validTo: '2026-12-01', state: 'ACTIVE', revision: '1', trustStoreVersion: 'synthetic' };
-  mountA1VaultRoutes(app, {
+  mountA1VaultRoutes(app, configured ? {
     async upload(ctx, input) {
       state.calls++;
       assert.notEqual(ctx.requestId, 'SYNTHETIC-ARBITRARY-REQUEST-ID');
@@ -32,7 +32,7 @@ async function fixture(run: (url: string, state: State) => Promise<void>) {
       return metadata;
     },
     async metadata() { return metadata; }, async revoke() { return metadata; }, async rotate() { return metadata; },
-  }, req => ({ groupId: req.groupId!, empresaId: req.empresaId, actorId: req.actorId, requestId: req.requestId }));
+  } : undefined, req => ({ groupId: req.groupId!, empresaId: req.empresaId, actorId: req.actorId, requestId: req.requestId }));
   const errors: ErrorRequestHandler = (error,_req,res,_next) => {
     assert.ok(error instanceof AppError);
     res.status(error.statusCode).json({ code: error.code, message: error.message });
@@ -52,6 +52,18 @@ function form(options: { duplicate?: boolean; password?: string; mime?: string; 
   if (options.duplicate) body.append('certificate', new Blob(['another']), 'another.p12');
   return body;
 }
+
+test('unconfigured A1 vault fails closed after auth and before parsing secret bodies', async () => fixture(async (url, state) => {
+  const denied = await fetch(url + base, { method: 'POST', body: 'not multipart' });
+  assert.equal(denied.status, 401);
+  for (const path of ['', '/44444444-4444-4444-8444-444444444444/revogar']) {
+    const unavailable = await fetch(url + base + path, { method: 'POST', body: '{PRIVATE_INVALID_BODY',
+      headers: { 'x-synthetic-verified': 'yes', 'content-type': 'application/json' } });
+    assert.equal(unavailable.status, 503);
+    assert.equal((await unavailable.json()).code, 'A1_VAULT_UNAVAILABLE');
+  }
+  assert.equal(state.calls, 0);
+}, false));
 
 test('A1 HTTP rejects unverified state before consuming multipart and offers no download endpoint', async () => fixture(async url => {
   const denied = await fetch(url + base, { method: 'POST', body: 'not multipart', headers: { 'content-type': 'text/plain' } });

@@ -124,6 +124,41 @@ test('organizacional: real persistence, CAS, audit atomicity and tenant/RBAC neg
       assert.equal(otherCoded.codigo, '002');
       rbac.link({ actorId: U, groupId: G, permissions });
     });
+    await t.test('IE/regime require actual columns and Fiscal permission, preserve omission and null', async () => {
+      const full = { ...permissions, Fiscal: { tabelas_fiscais: ['editar'] } };
+      rbac.link({ actorId: U, groupId: G, permissions: full });
+      const old = await service.get(ctx, 'Empresa', A);
+      assert.equal((old.supported_fields as string[]).includes('regime_tributario'), false);
+      await assert.rejects(service.update(ctx, 'Empresa', A, { expected_version: old.version, regime_tributario: 'MEI' }), { code: 'FIELD_PERSISTENCE_UNAVAILABLE' });
+      await pg.exec('ALTER TABLE groups ADD COLUMN inscricao_estadual text; ALTER TABLE empresas ADD COLUMN inscricao_estadual text; ALTER TABLE empresas ADD COLUMN regime_tributario text;');
+      const before = await service.get(ctx, 'Empresa', A);
+      assert.equal(before.regime_tributario, null);
+      assert.ok((before.supported_fields as string[]).includes('regime_tributario'));
+      rbac.link({ actorId: U, groupId: G, permissions });
+      await assert.rejects(service.update(ctx, 'Empresa', A, { expected_version: before.version, regime_tributario: 'MEI' }), { code: 'PERMISSION_DENIED' });
+      rbac.link({ actorId: U, groupId: G, permissions: full });
+      for (const patch of [{ regime_tributario: 'inventado' }, { inscricao_estadual: '<script>' }, { inscricao_estadual: 'x'.repeat(41) }, { inscricao_estadual: {} }]) {
+        await assert.rejects(service.update(ctx, 'Empresa', A, { expected_version: before.version, ...patch }), { code: 'VALIDATION_ERROR' });
+      }
+      const saved = await service.update(ctx, 'Empresa', A, { expected_version: before.version, inscricao_estadual: '001.002.003', regime_tributario: 'Lucro Real' });
+      assert.equal(saved.inscricao_estadual, '001.002.003'); assert.equal(saved.regime_tributario, 'Lucro Real');
+      assert.equal(saved.codigo, before.codigo); assert.equal(saved.id, before.id);
+      assert.deepEqual(await service.get(ctx, 'Empresa', A), saved);
+      await assert.rejects(service.update(ctx, 'Empresa', A, { expected_version: before.version, inscricao_estadual: null }), { code: 'VERSION_CONFLICT' });
+      const changed = await service.update(ctx, 'Empresa', A, { expected_version: saved.version, regime_tributario: null, inscricao_estadual: undefined });
+      assert.equal(changed.regime_tributario, null); assert.equal(changed.inscricao_estadual, saved.inscricao_estadual);
+      const n = (await audits()).length;
+      await service.update(ctx, 'Empresa', A, { expected_version: changed.version, inscricao_estadual: undefined });
+      assert.equal((await audits()).length, n);
+      const fail = new OrganizacionalService(db, { append: async () => { throw Error('AUDIT_FAILED'); }, listByEntity: async () => [] }, rbac, tenants);
+      await assert.rejects(fail.update(ctx, 'Empresa', A, { expected_version: changed.version, inscricao_estadual: null, regime_tributario: 'MEI' }), /AUDIT_FAILED/);
+      assert.deepEqual(await service.get(ctx, 'Empresa', A), changed);
+      const groupBefore = await service.get(ctx, 'GrupoEmpresarial', G);
+      const group = await service.update(ctx, 'GrupoEmpresarial', G, { expected_version: groupBefore.version, inscricao_estadual: 'ISENTO' });
+      assert.equal(group.inscricao_estadual, 'ISENTO'); assert.equal(group.codigo, groupBefore.codigo);
+      assert.deepEqual(await service.get(ctx, 'GrupoEmpresarial', G), group);
+      rbac.link({ actorId: U, groupId: G, permissions });
+    });
     assert.equal((await service.list(ctx, 'Empresa')).length, 2);
     assert.equal((await service.list({ ...ctx, empresaId: A }, 'Empresa')).length, 1);
   } finally { await pg.close(); }

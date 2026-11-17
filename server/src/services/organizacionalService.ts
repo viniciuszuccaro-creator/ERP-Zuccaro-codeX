@@ -8,15 +8,19 @@ import type { TenantGuard } from '../db/tenantGuard.js';
 import { PostgresEmpresaRepository } from '../repositories/postgresEmpresaRepository.js';
 import { isValidCnpj } from '../db/documentoValidators.js';
 import { reserveEntityCodigo } from '../repositories/reserveEntityCodigo.js';
+import { clienteUpdateSchema } from '../repositories/clienteTypes.js';
 
 type Kind = 'GrupoEmpresarial' | 'Empresa';
 const uuid = z.string().uuid();
 const text = z.string().trim().min(1).max(180).refine(v => !/[<>\u0000-\u001f]/.test(v));
 const nullableText = z.string().trim().max(1000).refine(v => !/[<>\u0000-\u0008]/.test(v)).nullable();
 const document = z.string().regex(/^\d{14}$/).refine(isValidCnpj);
+const ie = clienteUpdateSchema.innerType().shape.inscricao_estadual.refine(value => value == null || !/[<>\u0000-\u001f]/.test(value))
+  .transform(value => value === '' ? null : value);
+const regime = z.enum(['Simples Nacional', 'Lucro Presumido', 'Lucro Real', 'MEI']).nullable();
 const fields = {
-  GrupoEmpresarial: { nome_do_grupo: text, razao_social_grupo: text.nullable(), cnpj_grupo: document.nullable(), observacoes: nullableText },
-  Empresa: { razao_social: text, nome_fantasia: text.nullable(), cnpj: document },
+  GrupoEmpresarial: { nome_do_grupo: text, razao_social_grupo: text.nullable(), cnpj_grupo: document.nullable(), observacoes: nullableText, inscricao_estadual: ie },
+  Empresa: { razao_social: text, nome_fantasia: text.nullable(), cnpj: document, inscricao_estadual: ie, regime_tributario: regime },
 };
 const tables = { GrupoEmpresarial: 'groups', Empresa: 'empresas' } as const;
 const version = (row: object) => createHash('sha256').update(JSON.stringify(row)).digest('hex');
@@ -29,11 +33,12 @@ export class OrganizacionalService {
     this.empresas = new PostgresEmpresaRepository(db);
   }
 
-  private async authorize(ctx: RequestContext, kind: Kind, action: 'visualizar' | 'editar', q: DbQueryExecutor) {
+  private async authorize(ctx: RequestContext, kind: Kind, action: 'visualizar' | 'editar', q: DbQueryExecutor, fiscal = false) {
     if (!uuid.safeParse(ctx.groupId).success || !uuid.safeParse(ctx.actorId).success) {
       throw new AppError(403, 'ACTOR_SCOPE_DENIED', 'Authenticated tenant profile required');
     }
     await this.rbac.assertAllowed(ctx, 'Cadastros', 'organizacional', action, { executor: q, allowGlobalWildcard: false });
+    if (fiscal) await this.rbac.assertAllowed(ctx, 'Fiscal', 'tabelas_fiscais', 'editar', { executor: q, allowGlobalWildcard: false });
     await this.tenants.assertEmpresaInGroup(ctx.groupId, ctx.empresaId, q);
     if (kind === 'GrupoEmpresarial' && action === 'editar' && ctx.empresaId) {
       throw new AppError(403, 'GROUP_SCOPE_REQUIRED', 'Select group context to edit its master');
@@ -47,10 +52,12 @@ export class OrganizacionalService {
       if (ctx.empresaId && ctx.empresaId !== id) throw new AppError(403, 'COMPANY_SCOPE_DENIED', 'Company outside active context');
       row = await this.empresas.getById({ groupId: ctx.groupId }, id, q, lock) as Record<string, unknown> | undefined;
     } else {
-      const result = await q.query(`SELECT id,(to_jsonb(groups)->>'codigo') AS codigo,nome_do_grupo,razao_social_grupo,cnpj_grupo,status,observacoes,created_at,updated_at
+      const result = await q.query(`SELECT id,(to_jsonb(groups)->>'codigo') AS codigo,nome_do_grupo,razao_social_grupo,cnpj_grupo,status,observacoes,created_at,updated_at,to_jsonb(groups) AS source_fields
         FROM groups WHERE id=$1 AND id=$2${lock ? ' FOR UPDATE' : ''}`, [ctx.groupId, id]);
       if (result.rows[0]) {
         row = { ...result.rows[0], created_at: new Date(result.rows[0].created_at).toISOString(), updated_at: new Date(result.rows[0].updated_at).toISOString() };
+        if (Object.hasOwn(result.rows[0].source_fields, 'inscricao_estadual')) row.inscricao_estadual = result.rows[0].source_fields.inscricao_estadual;
+        delete row.source_fields;
       }
     }
     if (!row) throw new AppError(404, 'NOT_FOUND', 'Master not found in tenant scope');
@@ -61,7 +68,7 @@ export class OrganizacionalService {
     const links = kind === 'GrupoEmpresarial' ? { empresas_ids: ctx.empresaId ? [ctx.empresaId]
       : (await this.empresas.list({ groupId: ctx.groupId }, q)).map(e => e.id) } : {};
     return { ...row, group_id: kind === 'GrupoEmpresarial' ? row.id : row.group_id,
-      ...links, version: version(row), supported_fields: Object.keys(fields[kind]) };
+      ...links, version: version(row), supported_fields: Object.keys(fields[kind]).filter(field => Object.hasOwn(row, field)) };
   }
 
   async get(ctx: RequestContext, kind: Kind, id: string) {
@@ -143,14 +150,17 @@ export class OrganizacionalService {
       .required({ expected_version: true }).strict();
     const parsed = schema.safeParse(payload);
     if (!parsed.success) throw new AppError(422, 'VALIDATION_ERROR', 'Unsupported or invalid organizational fields');
-    const { expected_version, ...patch } = parsed.data;
+    const { expected_version, ...rawPatch } = parsed.data;
+    const patch = Object.fromEntries(Object.entries(rawPatch).filter(([, value]) => value !== undefined));
+    const fiscal = Object.keys(patch).some(key => ['inscricao_estadual', 'regime_tributario'].includes(key));
     return this.db.withTransaction(async q => {
-      await this.authorize(ctx, kind, 'editar', q);
+      await this.authorize(ctx, kind, 'editar', q, fiscal);
       const before = await this.read(ctx, kind, id, q, true);
+      if (Object.keys(patch).some(key => !Object.hasOwn(before, key))) throw new AppError(503, 'FIELD_PERSISTENCE_UNAVAILABLE', 'Field storage is not available in this environment');
       if (expected_version !== version(before)) throw new AppError(409, 'VERSION_CONFLICT', 'Master changed; reopen before saving');
       const keys = Object.keys(patch).filter(k => Reflect.get(patch, k) !== before[k]);
       if (!keys.length) {
-        await this.authorize(ctx, kind, 'editar', q);
+        await this.authorize(ctx, kind, 'editar', q, fiscal);
         return this.dto(kind, before, ctx, q);
       }
       if (kind === 'Empresa' && keys.includes('cnpj')) {
@@ -169,7 +179,7 @@ export class OrganizacionalService {
       await this.audit.append({ groupId: ctx.groupId, empresaId: kind === 'Empresa' ? id : null,
         actorId: ctx.actorId, actorEmail: ctx.actorEmail, entity: kind, entityId: id, action: 'update',
         beforeData: before, afterData: after, requestId: ctx.requestId, ipAddress: ctx.ipAddress }, q);
-      await this.authorize(ctx, kind, 'editar', q);
+      await this.authorize(ctx, kind, 'editar', q, fiscal);
       return this.dto(kind, after, ctx, q);
     });
   }

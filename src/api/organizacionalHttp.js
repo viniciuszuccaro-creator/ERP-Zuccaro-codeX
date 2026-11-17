@@ -1,8 +1,8 @@
 import { HTTP_CONTEXT_CHANGED } from './erpHttpSession.js';
 
 const fields = {
-  GrupoEmpresarial: { nome: 'nome_do_grupo', descricao: 'observacoes', cnpj: 'cnpj_grupo' },
-  Empresa: { razao_social: 'razao_social', nome_fantasia: 'nome_fantasia', cnpj: 'cnpj' },
+  GrupoEmpresarial: { nome: 'nome_do_grupo', descricao: 'observacoes', cnpj: 'cnpj_grupo', inscricao_estadual: 'inscricao_estadual' },
+  Empresa: { razao_social: 'razao_social', nome_fantasia: 'nome_fantasia', cnpj: 'cnpj', inscricao_estadual: 'inscricao_estadual', regime_tributario: 'regime_tributario' },
 };
 
 export function hydrateOrganizacional(kind, row) {
@@ -22,6 +22,7 @@ export function buildOrganizacionalPatch(kind, before, draft) {
   for (const [ui, column] of Object.entries(fields[kind] || {})) {
     if (!Object.hasOwn(draft, ui)) continue;
     let value = draft[ui];
+    if (value === undefined) continue;
     if (value === before[ui] || (value === '' && before[ui] == null)) continue;
     if (!before.supported_fields.includes(column)) throw new Error('Campo sem persistencia neste contrato.');
     if (ui === 'cnpj') value = value ? String(value).replace(/\D/g, '') : null;

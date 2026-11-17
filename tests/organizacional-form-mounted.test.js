@@ -19,6 +19,7 @@ test('real mounted Grupo form: linked companies, code, rejection and session cac
 import React,{act} from 'react';import {createRoot} from 'react-dom/client';
 import {QueryClient,QueryClientProvider} from '@tanstack/react-query';
 import Form from './src/components/cadastros/GrupoEmpresarialForm.jsx';
+import Empresa from './src/components/cadastros/EmpresaForm.jsx';
 window.IS_REACT_ACT_ENVIRONMENT=true;window.__actor='actor';window.__company=null;window.__pending=[];window.__contextReady=false;
 const client=new QueryClient({defaultOptions:{queries:{retry:false,staleTime:Infinity}}});
 client.setQueryData(['empresas','g'],[]);
@@ -53,6 +54,22 @@ async function run(){
  await act(async()=>window.__pending.shift()(companies));await pause();check('renewed_session_links_visible',host.textContent.includes('Synthetic B'));
  window.__contextReady=false;window.__contextFailed=true;await render();await pause();
  check('missing_context_not_empty_or_infinite_loading',host.textContent.includes('Contexto de Grupo indisponivel')&&!host.textContent.includes('Synthetic B')&&!host.textContent.includes('Nenhuma empresa cadastrada'));
+ window.__contextReady=true;window.__fiscal=true;calls=0;fail=false;
+ let company={id:'a',group_id:'g',razao_social:'Synthetic A',cnpj:'00000000000191',codigo:'001',version:'v1',inscricao_estadual:null,regime_tributario:null,supported_fields:['inscricao_estadual','regime_tributario']};
+ const renderCompany=()=>act(async()=>root.render(<QueryClientProvider client={client}><Empresa item={company} onSubmit={submit}/></QueryClientProvider>));
+ await renderCompany();await pause();
+ const ie=()=>host.querySelector('[data-action="editar-inscricao-estadual-empresa"]');
+ check('fiscal_loaded_null_not_default',!ie().disabled&&ie().value===''&&host.querySelector('select').value==='');
+ const setInput=(el,value)=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(el,value);el.dispatchEvent(new Event('input',{bubbles:true}));};
+ await act(async()=>setInput(ie(),'001.002.003'));
+ fail=true;await act(async()=>host.querySelector('form').requestSubmit());await pause();
+ check('fiscal_rejection_preserves_draft',calls===1&&ie().value==='001.002.003');
+ check('fiscal_payload_no_vault_secrets',payload.id==='a'&&payload.codigo==='001'&&payload.inscricao_estadual==='001.002.003'&&!('certificado_digital' in payload));
+ fail=false;await act(async()=>host.querySelector('form').requestSubmit());await pause();check('fiscal_retry_one_call',calls===2);
+ company={...company,version:'v2',inscricao_estadual:'000987',regime_tributario:'Lucro Real'};await renderCompany();await pause();
+ check('fiscal_rehydration_same_identity_new_version',ie().value==='000987'&&host.querySelector('select').value==='Lucro Real');
+ window.__fiscal=false;await renderCompany();await pause();check('fiscal_permission_distinct',ie().disabled&&host.querySelector('select').disabled);
+ window.__fiscal=true;company={...company,version:'v3',supported_fields:[]};await renderCompany();await pause();check('fiscal_missing_storage_blocked',ie().disabled&&host.querySelector('select').disabled);
  await act(async()=>root.unmount());return{checks};
 }
 run().then(r=>fetch('/result',{method:'POST',body:JSON.stringify(r)})).catch(e=>fetch('/result',{method:'POST',body:JSON.stringify({error:String(e),checks})}));`;
@@ -67,11 +84,15 @@ run().then(r=>fetch('/result',{method:'POST',body:JSON.stringify(r)})).catch(e=>
       b.onResolve({ filter: /^@\/api\/base44Client$/ }, () => ({ path: 'mode', namespace: 'boundary' }));
       b.onResolve({ filter: /^@\/components\/lib\/usePermissions$/ }, () => ({ path: 'permissions', namespace: 'boundary' }));
       b.onResolve({ filter: /^@\/components\/lib\/useContextoVisual$/ }, () => ({ path: 'context', namespace: 'boundary' }));
+      b.onResolve({ filter: /\/useCertificadoA1$/ }, () => ({ path: 'vault', namespace: 'boundary' }));
+      b.onResolve({ filter: /^@\/components\/common\/FormWrapper$/ }, () => ({ path: 'wrapper', namespace: 'boundary' }));
       b.onResolve({ filter: /^@\/components\/ui\// }, args => ({ path: args.path.split('/').at(-1), namespace: 'boundary' }));
       b.onLoad({ filter: /.*/, namespace: 'boundary' }, args => ({ contents: args.path === 'mode' ? 'export const isHttpBackendMode=true;'
-        : args.path === 'permissions' ? `export default()=>({user:{id:window.__actor},canCreate:()=>false,canEdit:()=>true,canDelete:()=>false,hasPermission:()=>true,isLoading:false});`
+        : args.path === 'permissions' ? `export default()=>({user:{id:window.__actor},canCreate:()=>false,canEdit:()=>true,canDelete:()=>false,hasPermission:(m)=>m==='Fiscal'?window.__fiscal!==false:true,hasPermissionKey:()=>false,isLoading:false});`
+        : args.path === 'vault' ? `export default()=>({scopeMatches:false,allowed:false,certificate:null,certificateQuery:{isLoading:false,isSuccess:false,error:null},a1Scope:{},panelKey:'unconfigured',certificateQueryKey:['vault']});`
+        : args.path === 'wrapper' ? `import React from 'react';export default({children,onSubmit})=><form onSubmit={e=>{e.preventDefault();onSubmit();}}>{children}</form>;`
         : args.path === 'context' ? `export const useContextoVisual=()=>({grupoAtual:window.__contextReady?{id:'g'}:null,empresaAtual:null,contextoCanonico:{groupId:window.__contextReady?'g':null},isLoading:!window.__contextReady&&!window.__contextFailed,filterInContext:()=>window.__contextReady?new Promise(r=>window.__pending.push(r)):Promise.resolve([])});`
-        : `import React from 'react';const Part=({children,...p})=>React.createElement('${args.path === 'input' ? 'input' : args.path === 'textarea' ? 'textarea' : args.path === 'button' ? 'button' : 'div'}',p,children);export {Part as Input,Part as Textarea,Part as Label,Part as Button,Part as Card,Part as CardContent,Part as Switch,Part as Badge};`, loader: 'js', resolveDir: process.cwd() }));
+        : `import React from 'react';const Part=({children,...p})=>React.createElement('${args.path === 'input' ? 'input' : args.path === 'textarea' ? 'textarea' : args.path === 'button' ? 'button' : 'div'}',p,children);const Select=({value,onValueChange,disabled,children})=>React.createElement('select',{value,onChange:e=>onValueChange(e.target.value),disabled},React.createElement('option',{value:''},''),children);const SelectItem=({value,children})=>React.createElement('option',{value},children);const Empty=()=>null;const SelectContent=({children})=>children;export {Part as Input,Part as Textarea,Part as Label,Part as Button,Part as Card,Part as CardContent,Part as Switch,Part as Badge,Part as Alert,Part as AlertDescription,Select,SelectItem,SelectContent,Empty as SelectTrigger,Empty as SelectValue};`, loader: 'jsx', resolveDir: process.cwd() }));
     } };
     const bundle = await build({ stdin: { contents: entry, loader: 'jsx', resolveDir: process.cwd() }, bundle: true, write: false,
       format: 'iife', platform: 'browser', plugins: [plugin], logLevel: 'silent', define: { 'import.meta.env': '{}' } });
