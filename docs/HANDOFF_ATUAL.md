@@ -1,5 +1,22 @@
 ## Delta A1: runtime nativo e prazo das CRLs de raiz (2026-11-17)
 
+Resultado posterior:5/5CRLs oficiais ITI(v5/v6/v10/v11/v12) recuperadas porHTTPS
+sem redirect, tamanho/hash/issuer/assinatura e this/nextUpdate conferidos contra
+catalogo oficial pinado. Recibo privado root-crls-r1 dentro de a1-trust-reference
+central;activated=false. NAO comprova CRLs das intermediarias/emissoras finais.
+Verificador canonico verify-a1-root-crls.py possui self-test offline sintetico
+PASS(pin incorreto,expiracao eassinatura adulterada negados),sem ativar trust.
+Overlay b5503628:5arquivos/6411806bytes,tarSHA256
+de73ce4e9546f1d5a84a5d722eef62cefac7cf03f3e4bf9757b032ef5c084884,
+central incoming/a1-native-b5503628. Smoke na imagem HML fixada PASS(R3),semrede,
+semDB/portas,readonly/tmpfs64MiB,256MiB/.3CPU. R1/R2 falharam no gerador sintetico
+que dependia do openssl.cnf ausente;R3 declara config/dev/null SOMENTE para gerar
+fixtures com extensoes explicitas. NAO afrouxa a validacao dos uploads.
+Ensaio PG passa a usar mesmo gerador e percurso HTTP/parser/servico/envelope/PG,
+reabertura/substituicao e rollback de auditoria; identidade/RBAC sao fixtures
+explicitamente sinteticas,NAO prova da sessao real ou navegador. Aguardar resultado
+do novoSHA antes de considerar essa extensao aprovada.
+
 Imagem HML atual nao contem /usr/bin/openssl; API readonly tambem nao tem tmpfs.
 Diagnostico por container descartavel da mesma imagem e inspect, sem restart ou
 alteracao do operacional. Trust/config sozinhos NAO liberam upload.

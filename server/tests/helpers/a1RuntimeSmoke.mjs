@@ -4,16 +4,14 @@ import { chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync 
 import { tmpdir } from 'node:os';
 import { join, resolve, sep } from 'node:path';
 import { randomBytes, verify, X509Certificate } from 'node:crypto';
+import { pathToFileURL } from 'node:url';
 
 // Run only in a disposable canonical runtime image: no database, Auth secrets, ports or real certificate.
-async function main() {
+export async function runSyntheticA1Smoke(onTrusted, modulesBase = new URL('file:///app/dist/')) {
   assert.equal(process.platform, 'linux');
-  assert.equal(process.getuid(), 1000);
-  assert.equal(process.env.DATABASE_URL, undefined);
-  assert.equal(process.env.AUTH_DATABASE_URL, undefined);
-  const { inspectA1Pkcs12, signValidatedA1Pkcs12 } = await import('/app/dist/services/a1Pkcs12Inspection.js');
-  const { A1VaultEncryption } = await import('/app/dist/services/a1VaultEncryption.js');
-  const { A1FileProtectionKeys } = await import('/app/dist/services/a1FileProtectionKeys.js');
+  const { inspectA1Pkcs12, signValidatedA1Pkcs12 } = await import(new URL('services/a1Pkcs12Inspection.js', modulesBase));
+  const { A1VaultEncryption } = await import(new URL('services/a1VaultEncryption.js', modulesBase));
+  const { A1FileProtectionKeys } = await import(new URL('services/a1FileProtectionKeys.js', modulesBase));
   const directory = mkdtempSync(join(tmpdir(), 'erp-a1-runtime-synthetic-'));
   const password = Buffer.from('SYNTHETIC-RUNTIME-ONLY');
   const key = randomBytes(32);
@@ -24,7 +22,7 @@ async function main() {
       assert.equal(result.error, undefined);
       assert.equal(result.status, 0);
     };
-    run(['req', '-x509', '-newkey', 'rsa:2048', '-noenc', '-days', '1',
+    run(['req', '-config', '/dev/null', '-x509', '-newkey', 'rsa:2048', '-noenc', '-days', '1',
       '-subj', '/CN=SYNTHETIC-NOT-ICP-BRASIL', '-addext', 'basicConstraints=critical,CA:FALSE',
       '-keyout', join(directory, 'key.pem'), '-out', join(directory, 'cert.pem')]);
     run(['pkcs12', '-export', '-inkey', join(directory, 'key.pem'), '-in', join(directory, 'cert.pem'),
@@ -51,10 +49,10 @@ async function main() {
     mkdirSync(join(directory, 'issued'));
     writeFileSync(join(directory, 'index'), ''); writeFileSync(join(directory, 'serial'), '1000\n');
     writeFileSync(join(directory, 'ca.cnf'), `[ca]\ndefault_ca=authority\n[authority]\ndatabase=${directory}/index\nnew_certs_dir=${directory}/issued\ncertificate=${directory}/root.pem\nprivate_key=${directory}/root.key\nserial=${directory}/serial\ndefault_md=sha256\ndefault_days=1\ndefault_crl_days=1\npolicy=subject\n[subject]\ncommonName=supplied\n`);
-    run(['req', '-x509', '-newkey', 'rsa:2048', '-noenc', '-days', '1', '-subj', '/CN=SYNTHETIC-TRUST-NOT-ICP-BRASIL',
+    run(['req', '-config', '/dev/null', '-x509', '-newkey', 'rsa:2048', '-noenc', '-days', '1', '-subj', '/CN=SYNTHETIC-TRUST-NOT-ICP-BRASIL',
       '-addext', 'basicConstraints=critical,CA:TRUE', '-addext', 'keyUsage=critical,keyCertSign,cRLSign',
       '-addext', 'subjectKeyIdentifier=hash', '-keyout', join(directory, 'root.key'), '-out', join(directory, 'root.pem')]);
-    run(['req', '-new', '-key', join(directory, 'key.pem'), '-subj', '/CN=SYNTHETIC-LEGAL-ENTITY', '-out', join(directory, 'leaf.csr')]);
+    run(['req', '-config', '/dev/null', '-new', '-key', join(directory, 'key.pem'), '-subj', '/CN=SYNTHETIC-LEGAL-ENTITY', '-out', join(directory, 'leaf.csr')]);
     writeFileSync(join(directory, 'leaf.ext'), '[leaf]\nbasicConstraints=critical,CA:FALSE\nkeyUsage=critical,digitalSignature\nextendedKeyUsage=clientAuth\nsubjectKeyIdentifier=hash\nauthorityKeyIdentifier=keyid:always\nsubjectAltName=otherName:2.16.76.1.3.3;PRINTABLESTRING:11222333000181\ncertificatePolicies=2.16.76.1.2.1.999999\n');
     run(['ca', '-batch', '-config', join(directory, 'ca.cnf'), '-in', join(directory, 'leaf.csr'), '-out', join(directory, 'leaf.pem'),
       '-notext', '-extfile', join(directory, 'leaf.ext'), '-extensions', 'leaf']);
@@ -80,6 +78,7 @@ async function main() {
     assert.ok((await inspectA1Pkcs12(pfx, password, { validation: rootPublication })).revocationVerified);
     await assert.rejects(inspectA1Pkcs12(pfx, password, { validation: { ...rootPublication,
       trust: { ...rootPublication.trust, retrievedAt: new Date(Date.now() - 2 * 86400000).toISOString() } } }));
+    if (onTrusted) await onTrusted({ certificate: pfx, password, validation });
     const payload = Buffer.from('SYNTHETIC-SIGNED-DOCUMENT');
     const signed = await signValidatedA1Pkcs12(pfx, password, payload, { validation });
     assert.ok(verify('RSA-SHA256', payload, new X509Certificate(readFileSync(join(directory, 'leaf.pem'))).publicKey, signed.signature));
@@ -95,4 +94,13 @@ async function main() {
     rmSync(directory, { recursive: true });
   }
 }
-main().catch(() => { console.error('A1_RUNTIME_SMOKE_FAILED'); process.exitCode = 1; });
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) Promise.resolve().then(() => {
+  assert.equal(process.getuid(), 1000);
+  assert.equal(process.env.DATABASE_URL, undefined);
+  assert.equal(process.env.AUTH_DATABASE_URL, undefined);
+  return runSyntheticA1Smoke();
+}).catch(error => {
+  const location = error.stack?.split('\n').find(line => /a1RuntimeSmoke|a1-smoke/.test(line) && /:\d+:\d+/.test(line));
+  console.error('A1_RUNTIME_SMOKE_FAILED', JSON.stringify({ name: error.name, code: error.code, location }));
+  process.exitCode = 1;
+});

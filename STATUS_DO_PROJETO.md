@@ -1,5 +1,12 @@
 ## A1: corrigir capacidade nativa antes de liberar anexo (2026-11-17)
 
+b5503628 publicado;job nativo da CI7237 PASS.5CRLs ITI de raiz conferidas com
+assinatura/validade(0rejeicoes),nao ativadas. Overlay central hash/tamanhos PASS;
+smokeR3 na imagem existente PASS,semrede/DB/portas. Acrescentado ensaio continuo
+HTTP/parser/trust/envelope/PG ao fixture isolado existente:Auth/RBAC sinteticos,
+resultado ainda depende da CI do novoSHA. Uploadreal permanece bloqueado ate
+CRLs das emissoras,config/promocao e aceite real;nao confundir com5raizes.
+
 Identificada imagem atual sem OpenSSL e API readonly sem tmpfs. Novo job CI
 usa Dockerfile existente, smoke sintetico Linux e pacote publico minimo com
 hashes/licencas, sem deploy/segredos. Excecao de frescor somente CRL de raiz
