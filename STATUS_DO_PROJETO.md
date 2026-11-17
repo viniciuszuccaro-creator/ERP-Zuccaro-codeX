@@ -1,3 +1,19 @@
+## Fechamento replay5000 e queixa de completude (2026-11-17)
+
+8903b091/CI7244 SUCCESS. Replay realR2:5batches/0novos registros ou auditorias;
+17tabelas conservadas. BackupPOS161433 restaurado/6600clientes/ACKexternoPASS.
+Servico/PG real lista,busca,paginacao,reabertura e negativasPASS;nao navegador.
+Dono confirmou chegada,NAO completude:CPF/contatos/fiscal/entrega reportados.
+READ ONLY atual dos5000:4053PF documento11+947PJ documento14,0vazios.
+36testes adaptador/mapeamento/gradePASS,sem alegar montagem ou aceite visual.
+Nao reimportarCPF: localizar perda API/consumidor/sessao antes de corrigir.
+5000candidatos fiscais/4001RG ligados privadamente aos novosIDs,0enriquecidos
+nestecheckpoint;exigem CAS canonico/gate/auditoria/reversao,sem sobrescrevermanual.
+Contatos/entregas dependem auxiliares;ausencia noCSV nao prova ausencia na fonte.
+RuntimeHML de17088c preservado,5100ativos/1500inativos;operacional intacto.
+Lote documental:diffcheck eprovas focadas;checks runtime herdados CI7244.
+Proximaacao:CPF formulario real->enriquecimento porcampo sem duplicarclientes.
+
 ## Carga real5000 PARCIAIS aplicada naHML (2026-11-17)
 
 94381948/CI7243SUCCESS. Gateexecutado:backuprestore/externo,ensaio eindiceCliente

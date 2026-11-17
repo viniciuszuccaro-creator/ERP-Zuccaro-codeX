@@ -1,3 +1,30 @@
+## Replay fechado; cadastro completo ainda NAO aceito (2026-11-17)
+
+8903b091/CI7244 SUCCESS fecha a consulta de replay sem ampliar timeout/RBAC.
+Contraprova real:5000 matches unicos em214.286ms; replay canonicoR2 exit0,
+5batches reapresentados/0novos clientes. Todas17tabelas iguais ao pos-carga,
+incluindo auditoria:0novas linhas. Nao repetir apply por causa do antigo57014.
+Servico canonico/PG passou lista5100ativos/1500inativos,paginas,busca,reabertura,
+duas empresas e negativas403; NAO e prova navegador/Bearer autenticado.
+BackupPOS hml-20261117T161433Z-7ec5f4ec restaurado17tabelas/6600clientes,
+ACKexterno confirmado. Recibos centrais no mesmo incoming/scale-partial-20261117-r1.
+
+Dono reconheceu chegada dos clientes, mas informou falta de CPF/contatos/
+enderecos; NAO houve aceite de completude. Nova leitura READ ONLY/ROLLBACK:
+5000novos=4053PF com documento11digitos+947PJ com14;0documentos vazios.
+36testes focados de adaptador/mapeamento/grade PASS; nao equivalem a React
+montado nem provam a sessao do dono. Investigar CPF no consumidor servido,
+sem reimportar ou concluir que a queixa visual foi resolvida.
+
+Enrichment-bindings-5000 privado liga5000candidatos fiscais e4001RG aos IDs
+reais/sourceRowSHA. Nenhuma aplicacao/ativacao adicional. Hash de postimageSQL
+NAO substitui CAS canonico: revalidar versao/campos e preservar alteracao manual.
+Numero/pais ausentes impedem chamar fiscal completo; contatos/entregas novos
+dependem dos auxiliares privados, nao clonar117Obras nem confundir celular/WhatsApp.
+Proxima acao: reproduzir CPF no formulario real e preparar enriquecimento por
+campo/identidade, com auditoria/replay/reversao e gate especifico antes da escrita.
+HML segue de17088c,mesmaURLHTTPS;sem deploy ou alteracao operacional neste lote.
+
 ## 5000 PARCIAIS aplicados e reconciliados; replay em correcao de consulta (2026-11-17)
 
 94381948/CI7243SUCCESS,orquestrador canonico. Fonte e plano originais regenerados
