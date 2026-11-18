@@ -1,3 +1,14 @@
+## Obras: encerrada a classificacao dos rotulos do historico
+
+Os 49 eventos antes nao classificados sao Cidade - UF (44),
+Contato (4) e Regiao de Entrega (1). O historico nao oferece
+tipo dedicado a numero de imovel. Isso nao exclui texto com
+numero, mas nao o torna prova de campo estruturado. Proxima
+etapa: fonte independente vinculada pela chave de origem,
+sem repetir leitura do dicionario. Leitor parado, sem escrita.
+HML nao estava em janela selecionavel para o aceite visual;
+nenhuma recarga de contatos.
+
 ## Obras: classificacao parcial dos tipos de ajuste
 
 Leitor isolado consultado e parado. Sem modulos, dependencias,

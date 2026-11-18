@@ -1,3 +1,10 @@
+## Obras: oito rotulos do historico identificados
+
+Leitura dirigida confirmou Cidade - UF (44), Contato (4) e
+Regiao de Entrega (1). Os oito rotulos somam 3096 eventos; nao
+ha tipo dedicado a numero de imovel. Sem promocao de texto a
+campo estruturado. Fonte independente ainda necessaria.
+
 ## Obras: tipos de ajuste e limites da fonte
 
 Catalogo SQL sem modulos, dependencias, gatilhos ou propriedades
