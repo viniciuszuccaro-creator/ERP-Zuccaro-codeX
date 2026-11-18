@@ -1,3 +1,15 @@
+## Catalogo: grade e reabertura comprovadas no navegador
+
+25dda114 / CI7285 SUCCESS. Chrome real no clone Linux, com Auth
+sintetico, API real e PostgreSQL isolado. Apos hidratar o contexto,
+listagem e detalhe de GrupoProduto responderam HTTP 200. O perfil
+com visualizar/editar abriu o formulario, viu campos e salvar
+habilitados e reabriu o mesmo registro com o nome esperado.
+A acao separada excluir-grupo-produto nao foi renderizada; o
+controle de status do rascunho continuou visivel. Nao houve escrita.
+HML e operacional intocados. Proximo: ensaiar salvar/reabrir com
+fixture sintetica e acesso restrito antes de propor publicacao HML.
+
 ## Catalogo: aceite de navegador pendente de contexto no clone
 
 25dda114 / CI7285 SUCCESS. Chrome com Auth sintetico, API real e
