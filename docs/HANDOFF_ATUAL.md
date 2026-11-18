@@ -1,3 +1,38 @@
+## Contatos: 32 grupos reconciliados no clone e decisao da HML
+
+19d1828e CI7269 SUCCESS. Hashes integrais verificados do manifesto,
+executor r2 e recibo; repositorio e servico do clone conferem com
+0beade64. Launcher integral e recibo em incoming/erp344-reader-20261118T170353Z/
+contacts-toolkit-r3, SHA do launcher d25992cb, exclusivamente clone.
+
+PostgreSQL restaurado: 32 grupos/15870 processados; 1500 divergencias
+preexistentes de outros ensaios separadas; 14370 aplicados (inclui
+um replay), 14370 recibos distintos, 37888 canais conciliados contra
+os comandos. Parada depois do primeiro commit do grupo 4, antes
+do checkpoint; retomada 178.550s, RSS pico 418524 KiB no clone.
+Segunda execucao e checkpoint truncado bloqueados. Falha sistemica
+para; conflito isolado segue. Tabela de IDs restrita, UPDATE nome
+e DELETE de auditoria negados; NOLOGIN conferido por nova conexao.
+Total de 17471 clientes preservado; cluster parado.
+
+HML READ ONLY: erp-hml-pg / hml344_restore_20261104 /
+hml344_cpa_20261104, API a305a143. 15870 preimages conferiram,
+zero alterado/ausente, 1600 clientes com contatos ficam fora.
+Zero escrita. Decisao unica: autorizar papel temporario escopado
+e ate 15870 clientes/41737 canais em 32 grupos, so na HML. Usar
+runtime 0beade64 em executor separado, nunca role ampla/API servida.
+Antes da primeira escrita: fixar runner no canal privado, verificar
+identidade/ACL no destino, backup fresco restaurado e preimages.
+Uma transacao/cliente, sem paralelismo; limite de lock 1s e de
+statement 5s ensaiados. Parar por falha sistemica, desvio, perda
+de capacidade ou limite de recursos; reversao por recibo/postimage
+preserva edicoes posteriores. Retirar acesso ao encerrar.
+
+Obras: inventario confirma ClientesObrasHistoricoAjustes (3096
+linhas), candidato a leitura dirigida para numero estruturado
+por chave nativa. Nao usar sufixos como evidencia. Zero novas
+entregas, catalogo operacional ou aceite da Central na VPS.
+
 ## Contatos: executor r2 comprovado no grupo 3 do clone
 
 7d30f3ea CI7268 SUCCESS. HML a305a143 nao modificada. Executor

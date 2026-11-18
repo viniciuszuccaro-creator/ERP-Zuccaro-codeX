@@ -1,3 +1,13 @@
+## Contatos: rodada integral concluida no PostgreSQL isolado
+
+19d1828e CI7269 SUCCESS. Executor r2 com launcher integral r3:
+32 grupos, 14370 clientes/37888 canais gravados e conciliados no
+clone, 1500 divergencias de ensaios anteriores preservadas. Replay
+na abertura do grupo 4; exclusao mutua e checkpoint truncado
+comprovados. Role desligada e nova conexao negada.
+HML a305a143: 15870 candidatos conformes em leitura, 1600 com
+contatos fora da rodada, zero escrita. Decisao unica pendente.
+
 ## Contatos: executor retomavel no clone e pacote privado centralizado
 
 7d30f3ea CI7268 SUCCESS; HML a305a143, zero escrita. Executor r2
