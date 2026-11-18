@@ -1,3 +1,18 @@
+## Catalogo: capacidade de backup sem descarte comprovado
+
+Somente leitura na VPS: HML e overlays Docker usam /dev/sda1;
+sem montagem de dados separada (boot/EFI nao sao destino). Livre
+22473523200 bytes. Busca dirigida em incoming: 237 arquivos >=1 MiB,
+um SHA duplicado em 3 inodes, no maximo 7823360 bytes redundantes;
+consumo nao comprovado, nenhum arquivo removido. Nome/hash privados.
+Limiar anterior 22705722437 bytes; ainda faltam 232199237 bytes.
+Meta de planejamento com 512 MiB de folga: 23242593349 bytes livres
+(mais 769070149 na leitura), recalcular com pg_database_size atual.
+Nao reduzir guard, usar boot, limpar Docker nem mover fonte central.
+Proximo: decidir capacidade adicional sem alterar cobranca ou comprovar
+artefato reconstruivel com esse ganho; so depois backup/restauro/ack.
+Sem escrita na HML ou operacional.
+
 ## Catalogo: recorte HML aprovado no clone, sem publicacao
 
 Base a305a143 mais quatro arquivos de GrupoProduto, sem contatos
