@@ -1,4 +1,22 @@
-## Rodada HML de 10871: autorizada, ainda nao aplicada (2026-11-18)
+## Rodada HML de 10871 aplicada e reconciliada (2026-11-18)
+
+Manifesto 45385950f651366656909e840ce5ef8201bc800b615a7aecfa4360ac976046fb:
+22 checkpoints, 21x500 + 371; 10871 insercoes, zero conflitos, zero clientes
+novos completos. 1933.61s de execucao, pico RSS 733978624 bytes. Total 17471,
+15971 ativos e 1500 inativos; 5217 locais intactos. Reconciliados todos os
+IDs e 144099 campos; conteudo anterior preservado. Somente sequencia Cliente
+do Grupo CPA mudou, com high-water comprovado. Sem carga de relacoes, DDL,
+grants, deploy ou alteracao operacional.
+Backup POS hml-20261118T121955Z-171446bd: 22466560 bytes, restauracao de
+17 tabelas, SHA e copia externa Empresa com ACK verificados.
+
+Orquestrador a305a143, CI7250 SUCCESS; Linux local 3039 testes gerais,
+4 nativos PostgreSQL, 13 de locais, lint/typecheck/build PASS. Preflight
+otimizado sem escrita, zero conflitos, timeout preservado. Nao repetir carga.
+Enderecos cbf8770c contidos em a305a143; pacote limpo conferido 2222 arquivos,
+aguardando promocao HML e teste autenticado. Runtime servido c370b55c.
+
+## Gate anterior da rodada HML de 10871 (historico)
 
 Manifesto 45385950f651366656909e840ce5ef8201bc800b615a7aecfa4360ac976046fb:
 21 lotes de 500 e um de 371, mestres parciais, somente HML. Recibo privado

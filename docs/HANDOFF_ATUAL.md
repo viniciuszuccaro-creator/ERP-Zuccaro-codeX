@@ -1,3 +1,31 @@
+## Mestres10871 HML aplicados, nao repetir (2026-11-18)
+
+Manifesto 45385950f651366656909e840ce5ef8201bc800b615a7aecfa4360ac976046fb,
+aprovado pelo dono; 22 lotes confirmados (21x500+371), 10871 inseridos,
+0 conflitos/0 completos, 1933.61s, pico RSS 733978624 bytes. 17471 clientes
+(15971 ativos,1500 inativos),5217 locais. Todos IDs/144099 campos conciliados,
+6600 clientes anteriores/auditoria anterior e relacoes conservados. Unico
+delta de prova anterior: sequencia Cliente Grupo CPA, high-water conferido.
+Sem RG extra, contatos extras, locais, comerciais ou historicos nesta carga.
+Sem DDL, grants, promocao de runtime, producao ou Codespace.
+
+Orquestrador a305a143883d497e5d54c996dd711d6ed674d19b, CI7250 SUCCESS;
+validacao Linux local 3039 root,4 PostgreSQL nativo,13 locais,lint/typecheck/
+build PASS. Preflight antigo estourou timeout (sem escrita); preflight
+otimizado 8903b091 passou 10871/0 conflitos no mesmo limite.
+PRE hml-20261118T112057Z-39604bbc restaurou17/externoACK e coincidiu com
+provas atuais antes de iniciar sob trava.
+POS hml-20261118T121955Z-171446bd: 22466560 bytes, restore17/SHA/externoACK.
+Privado central em incoming/scale-partial-20261117-r1: next-round-10871-
+a305a143-apply-r1/preflight guarda checkpoints e apply-result; provas
+full-reconciliation e sequence-reconciliation no diretorio da rodada.
+Nao reaplicar. Em futura reversao, validar postimages e obter gate proprio.
+
+Endereco parcial cbf8770c incluso no SHA a305a143/CI7250. Pacote privado
+incoming/empresa-a305a143/runtime-complete.tar.gz, SHA124a64a033a2b92942cf5b533a543f812340aec7940a38a012cd5111ebc23d5d,
+2222 arquivos verificados. HML ainda c370b55c. Proximo: ensaio de promocao
+do pacote, gate de deploy HML, verificar salvar/reabrir autenticado sem ativar.
+
 ## Fiscal5000 aplicado SOMENTE como revisao inativa na HML (2026-11-17)
 
 Gate especifico do dono AUTORIZADO e EXECUTADO. Mesmos 5000 clientes, sem
