@@ -1,3 +1,21 @@
+## Formulario real: salvamento e alcada da edicao comprovados
+
+Base bd48b754 / CI7257 success no SHA exato. Clone POS e proxy /api
+same-origin, Chrome com login real contra IdP sintetico, sessoes separadas.
+Salvar estava desabilitado pelo erro de masters: listagem operacional
+de Produtos requer ENABLE_PRODUTO_EMPRESA. Flag habilitada somente no
+ensaio; os cinco masters responderam 200. Edicao sem desconto persistiu
+24.691356. Criador sem alcada: desconto 2 gerou PATCH403 e banco intacto.
+Aprovador: desconto 1 gerou PATCH200/GET200, reabertura mostrou 23.69;
+PG guardou 23.691356 e audit_logs confirmou o ator distinto no update.
+Nao prova alcada do fechamento, troca de cliente/entrega ou novo pedido
+pela tela. Proximo: fechar um orcamento sintetico ainda nao convertido
+e conferir seletor, pedido reaberto e repeticao. Sem mudar runtime/HML.
+Catalogo: fonte14, 3857 bytes, unicidade de ID/codigo/sigla; 14 IDs
+nativos nao UUID, um grupo de origem, 14 fatores 1 com conversao marcada
+mas nenhuma base informada. Sem mapeamento de identidade/Grupo e sem
+conversao aprovada. 870 produtos revisao, 1 historico, 0 precos aptos.
+
 ## Login real do ERP e contexto comercial retomados no clone POS
 
 Base 7726438e. Chrome limpo, formulario real de login e IdP sintetico

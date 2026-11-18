@@ -1,3 +1,10 @@
+## Comercial: salvar, reabrir e alcada da edicao passaram nas telas
+
+CI7257 success em bd48b754. Flag de Produtos operacional somente no
+clone restaurou masters e Salvar. Criador PATCH403 sem efeito; aprovador
+PATCH200, reabertura e auditoria conferidas. Falta fechar novo orcamento
+e provar entrega/pedido nas telas. Nenhuma carga ou alteracao HML.
+
 ## Comercial: login e empresa confirmados pela interface no clone POS
 
 Chrome e login real com Auth sintetico. Proxy /api same-origin no
