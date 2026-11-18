@@ -1,3 +1,20 @@
+## Catalogo: ACL de GrupoProduto validada pela API no clone
+
+Clone restaurado com Auth sintetico e papel restrito, blobs do
+servico/repositorio iguais a 02f3fc14. SELECT e UPDATE nas colunas
+usadas pelo repositorio; Grupo fixo e Empresa igual a da linha
+na visao empresarial. API lista registro proprio, outra Empresa
+recebe 404 e outro Grupo 403. Criar/excluir negados (403).
+Registro compartilhado acessivel na visao Grupo, nao listado em
+Empresa: a proposta de SELECT foi estreitada ao filtro existente.
+Policy temporaria restritiva recusou auditoria para a fixture:
+HTTP 500 e nome preservado. Com exigencia de Grupo/ator pinados,
+HTTP 200, auditoria unica antes/depois e GET com mesmo ID atualizado.
+Fixtures e policies removidas, clone parado. Sem DDL, carga, ACL
+ou deploy na HML. CI7289 ainda em andamento na ultima consulta.
+Proximo: fechar manifesto de objetos, principals, backup e reversao;
+tratar schema/ACL e publicacao da HML como gates separados.
+
 ## Catalogo: recorte SQL e ACL de GrupoProduto ensaiados
 
 Clone restaurado erp_sale_pos85, namespace descartavel, mesmo PG.
