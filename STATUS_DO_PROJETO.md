@@ -1,3 +1,10 @@
+## Comercial: troca de cliente limpa entrega e obra
+
+Base 22e26cce CI7259 success. A-B-A conferido no formulario de Pedido
+no POS; payload sem local anterior coberto. Pendente atraso forcado e
+salvar/reabrir com entrega B. 14 unidades ainda sem crosswalk de Grupo.
+Nenhuma mudanca na HML servida, no operacional ou nas cargas anteriores.
+
 ## Comercial: venda com entrega fechada e reaberta pelas telas
 
 7fcbc4aa CI7258 success. Clone POS: criador 403, aprovador 201, retry

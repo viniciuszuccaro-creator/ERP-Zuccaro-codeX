@@ -22,6 +22,15 @@ export const componentContractHunks = {
     ]),
   ],
   'src/components/comercial/pedidoUiPolicy.js': [
+    // Preserve the historical hash outside the client-scoped draft reset.
+    [`export function changePedidoFormField(form, key, value) {
+  if (key === 'cliente_empresa_id' && value !== form.cliente_empresa_id) {
+    return { ...form, cliente_empresa_id: value, cliente_local_id: '', obra_id: '' };
+  }
+  return { ...form, [key]: value };
+}
+
+`, '', 1],
     // Reabertura de Pedido convertido: preservar somente a origem canônica.
     ["  return {\n    orcamento_id: row.orcamento_id || '',\n    cliente_empresa_id: row.cliente_empresa_id || '',", "  return {\n    cliente_empresa_id: row.cliente_empresa_id || '',", 1],
     [

@@ -322,6 +322,7 @@ test('Central 360 compoe identidade + blocos com PII revelado quando autorizado'
   assert.equal(result.body.data.blocks.pedidos.status, 'ok');
   assert.equal(result.body.data.blocks.crm.status, 'skipped');
   assert.equal(result.body.data.blocks.locais.data[0].id, seeded.localId);
+  assert.equal(result.body.data.blocks.locais.data[0].endereco_incompleto, false);
   assert.equal(result.body.data.blocks.obras.data[0].id, seeded.obraId);
   assert.ok(!JSON.stringify(result.body).includes('Item sintetico'));
 });

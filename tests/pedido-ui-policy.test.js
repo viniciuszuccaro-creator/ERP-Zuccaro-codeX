@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import {
   buildPedidoPayload,
+  changePedidoFormField,
   buildPedidoShareText,
   calculatePedidoTotals,
   canUsePedidoAction,
@@ -28,6 +29,25 @@ import {
 } from '../src/components/comercial/pedidoUiPolicy.js';
 
 const item = { produto_id:'p', unidade_id:'u', descricao:'Produto', unidade_sigla:'UN', quantidade:'2', preco_unitario:'10', desconto:'1', requer_producao:true };
+
+test('troca de cliente A-B-A nao restaura local ou obra da selecao anterior', () => {
+  const a = {
+    cliente_empresa_id: 'a', cliente_local_id: 'entrega-a', obra_id: 'obra-a', condicao_pagamento_id: 'avista',
+    tipo_operacao: 'ENTREGA', data_entrega_solicitada: '2027-11-19', itens: [item],
+  };
+  assert.equal(changePedidoFormField(a, 'cliente_empresa_id', 'a').cliente_local_id, 'entrega-a');
+  const b = changePedidoFormField(a, 'cliente_empresa_id', 'b');
+  assert.equal(b.cliente_local_id, '');
+  assert.equal(b.obra_id, '');
+  assert.equal(b.itens, a.itens);
+  assert.equal(buildPedidoPayload(b).cliente_local_id, undefined);
+  const selectedB = changePedidoFormField(b, 'cliente_local_id', 'entrega-b');
+  assert.equal(buildPedidoPayload(selectedB).cliente_local_id, 'entrega-b');
+  const back = changePedidoFormField(selectedB, 'cliente_empresa_id', 'a');
+  assert.equal(back.cliente_local_id, '');
+  assert.equal(back.obra_id, '');
+  assert.equal(a.cliente_local_id, 'entrega-a');
+});
 
 test('detalhe/histórico de Pedido ignoram resposta tardia após troca de escopo ou seleção', async()=>{
   const gate=createPedidoDetailGate();

@@ -1,3 +1,26 @@
+## Troca de cliente limpa entrega e obra no Pedido
+
+Base 22e26cce / CI7259 success. O handler anterior conservava IDs
+do outro cliente no rascunho; a guarda de envio ja exigia local valido
+do catalogo atual. Atualizacao atomica limpa local e obra ao trocar
+cliente, preserva itens e mantem selecao ao repetir o mesmo cliente.
+Cliente360 agora projeta endereco_incompleto sem alterar filtros; o
+Pedido requer false explicito. Para Pedido convertido o seletor de
+cliente respeita a imutabilidade do backend (origem Orcamento).
+Chrome no clone POS abriu edicao do Pedido EM_ABERTO e confirmou
+selecao vazia apos A-B-A. Pedido direto: entrega A hidratada, troca
+limpou o local e exibiu entrega B, mas a tentativa nao enviou PATCH.
+Regressao do payload passou; resposta tardia forcada e salvar/reabrir
+com entrega B ainda nao comprovados na UI.
+Clone POS, papel restrito: FOR UPDATE do cliente no proprio escopo 1,
+outro Grupo 0, UPDATE(id=id) negado pela policy. Sem acesso HML.
+Catalogo: sem mapa autoritativo entre Grupo Base44 e destino; 14
+pendentes, 0 gravadas. 870 produtos em revisao/1 historico, 0 precos
+aptos. Nao ha lote apto para medir ou permissao certificada para HML.
+Checks WSL: 3040 raiz na primeira correcao, 59 regressao/contratos,
+7 HTTP Cliente360 no delta de projecao; audit/lint/typecheck/build da
+UI e build do backend passaram. Nenhum gate de deploy solicitado.
+
 ## Venda com entrega fechada e reaberta nas telas reais
 
 Base 7fcbc4aa / CI7258 success no SHA exato. Chrome, login sintetico

@@ -334,6 +334,13 @@ export function mapPedidoRowToForm(row) {
   };
 }
 
+export function changePedidoFormField(form, key, value) {
+  if (key === 'cliente_empresa_id' && value !== form.cliente_empresa_id) {
+    return { ...form, cliente_empresa_id: value, cliente_local_id: '', obra_id: '' };
+  }
+  return { ...form, [key]: value };
+}
+
 export function buildPedidoPayload(form, idempotencyKey) {
   if (!form.cliente_empresa_id || !form.condicao_pagamento_id || !form.tipo_operacao || !form.data_entrega_solicitada) throw new Error('Preencha cliente, condição, operação e data de entrega.');
   if (!Array.isArray(form.itens) || form.itens.length === 0) throw new Error('Inclua pelo menos um item.');

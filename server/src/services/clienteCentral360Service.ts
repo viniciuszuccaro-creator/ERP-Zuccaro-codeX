@@ -117,6 +117,7 @@ export type ClienteCentral360LocalProjection = {
   uf: string;
   pais: string;
   ativo: boolean;
+  endereco_incompleto: boolean;
   origem: string;
   finalidades: Array<{ finalidade: string; principal: boolean; ativo: boolean }>;
   created_at: string;
@@ -273,6 +274,7 @@ function projectLocal(row: {
   uf: string;
   pais: string;
   ativo: boolean;
+  endereco_incompleto: boolean;
   origem: string;
   created_at: string;
   updated_at: string;
@@ -286,6 +288,7 @@ function projectLocal(row: {
     uf: row.uf,
     pais: row.pais,
     ativo: row.ativo,
+    endereco_incompleto: row.endereco_incompleto,
     origem: row.origem,
     finalidades: row.finalidades
       .filter((item) => item.ativo)
