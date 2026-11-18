@@ -17,6 +17,10 @@ const entries = {
     "baseline": "696acc2f603c866168e904ee68c327874be84ddf973de488b0635666faa57fd2",
     "hunks": [
       {
+        "before": "    entityName: 'GrupoProduto',\n    notFoundCode: 'GRUPO_PRODUTO_NOT_FOUND',\n",
+        "after": "    entityName: 'GrupoProduto',\n    authorization: { guard: rbacGuard, moduleName: 'Cadastros', section: 'grupo_produto' },\n    notFoundCode: 'GRUPO_PRODUTO_NOT_FOUND',\n"
+      },
+      {
         "before": "import { MarcaService } from './services/marcaService.js';\nimport { ProdutoService } from './services/produtoService.js';\nimport { TenantCrudService } from './services/tenantCrudService.js';\nimport { createApiRouter } from './api/router.js';\nimport { InMemoryTabelaPrecoRepository } from './repositories/inMemoryTabelaPrecoRepository.js';\nimport { PostgresTabelaPrecoRepository } from './repositories/postgresTabelaPrecoRepository.js';\n",
         "after": "import { MarcaService } from './services/marcaService.js';\nimport { ProdutoService } from './services/produtoService.js';\nimport { TenantCrudService } from './services/tenantCrudService.js';\nimport { OrganizacionalService } from './services/organizacionalService.js';\nimport type { A1VaultService } from './services/a1VaultService.js';\nimport { createApiRouter } from './api/router.js';\nimport { InMemoryTabelaPrecoRepository } from './repositories/inMemoryTabelaPrecoRepository.js';\nimport { PostgresTabelaPrecoRepository } from './repositories/postgresTabelaPrecoRepository.js';\n"
       },

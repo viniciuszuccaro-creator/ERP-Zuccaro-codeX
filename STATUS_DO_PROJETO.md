@@ -1,3 +1,12 @@
+## Catalogo: RBAC granular de GrupoProduto corrigido
+
+TenantCrudService usa Cadastros.grupo_produto no wiring do app.
+HTTP sintetico confirma leitura explicita e 403 sem permissao;
+visualizar nao permite criar, editar ou inativar. Baseline
+historico preservado. Linux: 3040/3040 raiz, backend 668 passam
+e 31 pulados, zero falhas; auditoria, lint, typecheck e builds
+passaram. Sem ACL, schema ou deploy na HML.
+
 ## Catalogo: aceite HTTP restrito e bloqueio de GrupoProduto
 
 API real com Auth sintetico e PGlite: Marca e Setor validaram

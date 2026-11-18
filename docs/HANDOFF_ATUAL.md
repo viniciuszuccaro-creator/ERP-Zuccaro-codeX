@@ -1,3 +1,19 @@
+## Catalogo: guarda de GrupoProduto ligada e validada
+
+Wiring reaproveita TenantCrudService e Cadastros.grupo_produto.
+Na fixture HTTP real, lista/detalhe negam permissao de outra
+entidade e wildcard global; leitura explicita passa; perfil de
+leitura nao cria, edita nem inativa. Runtime02 preserva auditoria
+das mutacoes autorizadas. Projecao exata preserva hashes historicos.
+Suite raiz 3040/3040; backend 668 aprovados, 31 pulados, zero
+falhas. Auditoria, lint, typecheck e builds passaram.
+
+Leitura agregada na HML confirmou a chave canonica em um perfil
+ativo; nenhum perfil foi modificado. Proximo: alinhar as acoes do
+formulario, que ainda tem fallback de Produto, com o contrato HTTP
+granular e provar no fluxo real antes de propor deploy/ACL HML.
+Sem alteracao de schema, runtime servido ou ERP operacional.
+
 ## Catalogo: contraprova HTTP dos cadastros auxiliares
 
 App real em loopback isolado, Auth sintetico e PGlite. Com
