@@ -1,3 +1,17 @@
+## Catalogo: recorte HML aprovado no clone, sem publicacao
+
+Base a305a143 mais quatro arquivos de GrupoProduto, sem contatos
+ou Pedido. API real no clone restaurado, Auth sintetico e papel
+restrito: lista/detalhe no escopo, Empresa alheia 404, Grupo alheio
+403, criar/excluir 403. Auditoria negada: PATCH 500 e rollback.
+Autorizada para a fixture: PATCH 200, auditoria unica e GET com
+mesmo ID e novo nome. Chrome: payload alterado, persistencia e
+reabertura confirmadas. Fixtures/policies limpas; clone parado.
+Sem branch, artefato de deploy, DDL/ACL HML ou alteracao operacional.
+Proximo: obter margem comprovada para backup fresco/restauro/ack
+e revisar gates separados de schema/ACL e runtime; nao ampliar
+o pacote nem usar o clone como aceite de HML.
+
 ## Catalogo: recorte sobre runtime servido e reserva preservada
 
 VPS READ ONLY: 22473408512 bytes livres no filesystem comum de
