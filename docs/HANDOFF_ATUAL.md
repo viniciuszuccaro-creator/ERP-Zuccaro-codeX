@@ -1,3 +1,21 @@
+## Venda restrita e negativas em navegador sintetico
+
+Base 90965996; banco sintetico descartavel separado, listener local WSL.
+Login de migracao/admin separado do login SQL da API (sem superusuario
+ou BYPASSRLS); contexto fixo da fixture, headers de teste, sem Auth real.
+Grants SELECT para referencias e leituras, INSERT para documentos/itens/
+historico/auditoria, UPDATE de campos do orcamento e DELETE dos itens na
+edicao. Locks FOR SHARE/FOR UPDATE exigiram privilegio UPDATE de coluna;
+policies de lock nos mestres vetaram gravacao. Escopo por Grupo/Empresa;
+matriz ensaiada nao e prova de minimalidade para promocao nem validacao
+no POS com as ACL originais.
+Browser Chrome com harness HTTP (nao telas ERP): 201,403,200,403,422,
+201,200,409. Criador nao aplica desconto nem converte com alcada;
+aprovador distinto edita e converte; entrega ativa de outro cliente do
+mesmo Grupo rejeitada por PEDIDO_LOCAL_INVALIDO. Pedido reaberto com
+local correto e total 23.691356; auditoria de aprovacao atribuida ao
+aprovador distinto. Ensaio local parado, sem publicacao/carga na HML.
+
 ## Delta comercial: prova restrita parcial, promocao bloqueada
 
 Checkpoint 8ce11360; sem delta de server/src, migrations ou src desde

@@ -1,3 +1,12 @@
+## Comercial: venda e alcada com login SQL restrito em copia sintetica
+
+Orcamento e Pedido com entrega passaram via API e PostgreSQL com login
+NOSUPERUSER/NOBYPASSRLS. Harness no Chrome validou alcada, entrega de
+outro cliente do mesmo Grupo, reabertura e repeticao sem duplicacao.
+Nao equivale a teste das telas ERP ou do Auth HML. Sem escrita na HML.
+Proximo: reduzir a matriz a ACL/policies revisadas e ensaiar no POS
+restaurado com contexto autenticado por requisicao.
+
 ## Comercial: prova restrita de Unidade passou; venda bloqueada
 
 Papel restrito no WSL: SELECT exige grant e policy. Policy de teste deixou
