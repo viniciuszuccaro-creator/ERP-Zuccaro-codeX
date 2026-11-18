@@ -1,3 +1,17 @@
+## Enderecos ensaiados e inventario dos 10871 (2026-11-18)
+
+Pacote a305a143/CI7250 ensaiado em restauracao do backup pos-carga:
+17 tabelas conservadas, health/ready 200, anonimo 401, sem portas ou
+escritas na HML. Runtime servido ainda c370b55c. Publicacao e prova
+autenticada de salvar/reabrir dependem do gate de troca HML.
+10871 IDs ligados ao CSV/recibos, 10871 documentos, 1879 IEs e 897
+emails confirmados. 8677 comandos RG candidatos, 168 pendentes de
+validacao e 2026 vazios no export. Nao houve enriquecimento aplicado.
+10871 componentes fiscais na fonte, 1334 sufixos ambiguos; nao
+inferir numero. Contatos, entregas e historicos seguem sem prova.
+Artefatos privados em enrichment-10871-20261118-r1. RG ainda precisa
+de ensaio isolado, revalidacao, backup e gate especifico.
+
 ## Rodada HML de 10871 aplicada e reconciliada (2026-11-18)
 
 Manifesto 45385950f651366656909e840ce5ef8201bc800b615a7aecfa4360ac976046fb:

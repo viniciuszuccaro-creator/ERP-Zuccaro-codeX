@@ -1,3 +1,21 @@
+## Canary a305a143 e candidatos de enriquecimento (2026-11-18)
+
+Canary restaurado do POS121955-171446bd:17 tabelas preservadas antes/depois,
+health/ready200 e anon401, sem porta, sem escrita HML ou troca de container.
+Recibo incoming/empresa-a305a143/runtime-rehearsal.private.json. Teste
+autenticado ainda nao executado. Trocar apenas API/web HML apos gate e
+backup pertinente; manter retorno c370b55c. Conferir Dados Gerais > Revisar
+fiscal e relacao de locais para entrega, mesmo ID/omissoes/inativo.
+
+Inventario privado enrichment-10871-20261118-r1/binding-inventory.private.json,
+SHA d4dfe6fd4e35f2898accb3e6050922235c5eb019f13f24bd3fa9dd925fa2b6fa.
+10871 IDs reconciliados com recibos e fonte. RG candidatos canonicos 8677,
+168 separados, 2026 vazios no export. Plano privado SHA
+006c6e59659067a214ac1d62be48e3da76d335a311c113e9f872f3ecf10604db.
+Sem writes, aguarda ensaio isolado/replay/reversao/gate; nao aplicar por
+inferencia. Fiscal tem 10871 componentes e 1334 sufixos ambiguos, nao
+preencher numero automaticamente. Nao repetir mestres ou fiscais anteriores.
+
 ## Mestres10871 HML aplicados, nao repetir (2026-11-18)
 
 Manifesto 45385950f651366656909e840ce5ef8201bc800b615a7aecfa4360ac976046fb,
