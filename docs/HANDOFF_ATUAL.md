@@ -1,3 +1,20 @@
+## Legado: procura de fonte alternativa e chaves de catalogo
+
+Busca dirigida por campos de numero de endereco e chaves nativas
+na copia SQL nao achou candidato. Alem do historico ja avaliado,
+ClientesOportunidadesContatos, ClientesOportunidadesObras,
+ClientesOportunidadesObrasProfissionais, PropostaComercial e
+VendaExterna tem chaves candidatas mas zero linhas no inventario.
+Nao repetir essa busca sem outra copia/export comprovado; nao
+promover sufixos nem liberar entregas incompletas.
+
+Catalogo: ClasseMateriais e GruposClasseMateriais compartilham
+CODIGOCLASSE (46/24 linhas); TabelaPrecosSCI e TabelaPrecosItensSCI
+compartilham CODIGOTABELA (6/5162), itens tem CODIGOMATERIAL.
+Proxima prova: cruzar chaves com o recorte atual e confirmar
+unidade, Grupo/Empresa e vigencia. Nenhum preco habilitado.
+Leitor isolado parado; nenhuma escrita em HML ou no operacional.
+
 ## Obras: encerrada a classificacao dos rotulos do historico
 
 Os 49 eventos antes nao classificados sao Cidade - UF (44),

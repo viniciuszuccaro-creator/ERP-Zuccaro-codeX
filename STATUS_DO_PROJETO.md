@@ -1,3 +1,11 @@
+## Legado: fontes alternativas de numero e chaves de catalogo
+
+Busca dirigida no catalogo da copia SQL: nenhuma coluna candidata
+de numero de imovel com vinculo localizado. As cinco tabelas
+alternativas com chaves candidatas de Obra estao vazias no inventario.
+Numero segue pendente. Catalogo: chaves de classes/grupos e de
+tabelas/itens de preco identificadas; sem vinculo HML ou carga.
+
 ## Obras: oito rotulos do historico identificados
 
 Leitura dirigida confirmou Cidade - UF (44), Contato (4) e
