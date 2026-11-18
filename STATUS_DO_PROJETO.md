@@ -1,3 +1,11 @@
+## Legado: plano de 15870 clientes e ensaio de 500 contatos
+
+58be3d0e CI7263 SUCCESS. Mapeamento canonico de 41737 canais,
+32 grupos ate 500; plano, toolkit e recibo centralizados no canal
+privado. POS500 aplicou 1296 canais em 4.225s; replay20 e reversao499,
+uma edicao posterior protegida. Falta papel SQL restrito, retomada
+duravel e UI. API HML a305a143, zero gravacoes ou ativacoes.
+
 ## Legado VPS: cinco auxiliares e ClientesObras extraidos
 
 8b80bfbc CI7262 SUCCESS. Leitor temporario isolado; seis exports

@@ -1,3 +1,32 @@
+## Contatos em escala: plano preparado e POS500 ensaiado
+
+Base 58be3d0e, CI7263 SUCCESS. Sem reextracao SQL. Conferidos pins
+dos seis exports, mestre CSV, Grupo CPA e os 17471 clientes existentes.
+Mapa canonico mapLegadoClienteContatos + clienteContatoSchema,
+documento e codigo nativo comprovados. Sem inferir WhatsApp.
+15870 candidatos validados, 41737 canais novos, 32 grupos ate 500.
+1600 clientes com contatos preservados; 1 sem canal mapeavel,
+205 canais invalidos, 33 ocorrencias sem canal e 4 metadados invalidos
+separados. Nao misturar ocorrencias com pessoas unicas.
+
+Privado incoming/erp344-reader-20261118T170353Z:
+contacts-plan-20261118T171542Z.private.ndjson SHA
+92848c8fe498d5acd86568e645da14c82037aed926cbb50f59d41db9eed84dcc,
+receipt, contacts-toolkit-r1 verificado e contacts-rehearsal-pos500.
+Plano conserva preimage e postimage esperados, nao autoriza gravacao.
+POS isolado: 500 clientes/1296 canais em 4.225s, p95 11ms por cliente,
+RSS app 254400 KiB. Uma transacao canonica por cliente, nao uma unica
+transacao de 500. Replay20, reversao499 (4.332s), uma reversao bloqueada
+apos edicao posterior; linha posterior preservada. Aplicacao RBAC
+granular, conexao postgres socket local. Proxima prova: papel SQL
+restrito, checkpoint duravel/reinicio, espera de locks e navegador antes
+de pedir uma unica rodada HML. Nao extrapolar tempo para VPS.
+
+Obras: 27648 em revisao, 27639 com logradouro/cidade/bairro/UF brutos,
+27358 CEP em formato candidato; sem numero/pais comprovados ou ativacao.
+HML API a305a143 e ProdutoEmpresa desabilitado; zero cargas, zero novas
+entregas operacionais. Codigo da Central e prova isolada preservados.
+
 ## VPS: seis exports SQL centralizados e vinculacao CPA revisada
 
 Base 8b80bfbc / CI7262 SUCCESS. VPS 2 vCPU, 7940 MiB RAM, 5687 MiB
