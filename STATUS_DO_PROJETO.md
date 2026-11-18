@@ -1,3 +1,16 @@
+## Fiscal dos 10871 novos: 10870 locais inativos, 1 excecao (2026-11-18)
+
+Plano 961d936e autorizado e aplicado somente na HML. R1 confirmou 4945;
+guard do importador rejeitou 1 UF fora de duas letras, sem corrigi-la por
+suposicao. Permissao revogada na parada. Apos backup parcial restaurado
+com externo ACK, prefixo de 4945 conferido contra ledger; R2 aplicou os
+5925 restantes validos sem replay dos gravados. 10870 locais inativos e
+incompletos,0 ativados,10870 auditorias,195660 campos reconciliados.
+5000 fiscais anteriores intactos; 17471 clientes e 16087 locais totais.
+ACL/policy temporaria removidas e preimage comparada; operacional intocado.
+POS134922Z-0fc1a1d0 restore17/SHA/externoACK, 17 provas iguais ao fim do lote.
+Quando houver UF comprovada, tratar a excecao separadamente. Nao repetir.
+
 ## Fiscal dos 10871 novos: preparado e ensaiado, sem carga (2026-11-18)
 
 Plano fiscal SHA 961d936e8f0a404a814aed0ce5014d0e7950a8ce2c5043683cb03f05b441723f:

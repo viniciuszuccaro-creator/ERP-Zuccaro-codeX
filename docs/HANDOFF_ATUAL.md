@@ -1,3 +1,23 @@
+## Fiscal10871 autorizado: 10870 reconciliados, 1 UF pendente (2026-11-18)
+
+Plano 961d936e8f0a404a814aed0ce5014d0e7950a8ce2c5043683cb03f05b441723f.
+PRE131413Z-41b4ebe8 restore17/SHA/externo. R1 parou em guard de UF nao
+alfabetica, 4945 commits e ACL/policy revogadas. Nenhum valor inventado.
+Backup intermediario133225Z-6c22a42d restore17/SHA/externoACK, prefixo
+comprovado pelo ledger. R2 apenas 5925 validos restantes; 688.95s,
+replay20 sem duplicacao. 1 excluido documentado, sem ajuste na fonte.
+Conferencia integral 10870 locais/195660 campos/10870 auditorias,0 ativos,
+sem principal, 5000 anteriores intactos, 17471 clientes/16087 locais.
+ACL e policies anteriores iguais. Sem novos clientes, perfil ou operacional.
+POS hml-20261118T134922Z-0fc1a1d0, 34508800 bytes, restore17/SHA/externoACK
+e 17 provas iguais ao POS lote. 109 CEPs pendentes entre os aplicados.
+
+Privado incoming/enrichment-10871-20261118-r1: fiscal-application-r1-stop,
+fiscal-application-r2/{full-reconciliation,full-reversal-bindings,applied,
+completed}, fiscal-terminal-r1-resume e fiscal-capability-revoked-resume.
+Reversa completa por postimage preparada, nao executada. Nao repetir
+aplicacao. Corrigir 1 UF somente com prova e novo plano; nao ativar.
+
 ## Fiscal10871 ensaiado; gate de aplicacao pendente (2026-11-18)
 
 Disponivel em incoming/enrichment-10871-20261118-r1: fiscal-canonical-plan,
