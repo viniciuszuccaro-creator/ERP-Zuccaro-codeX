@@ -1,3 +1,18 @@
+## Fiscal dos 10871 novos: preparado e ensaiado, sem carga (2026-11-18)
+
+Plano fiscal SHA 961d936e8f0a404a814aed0ce5014d0e7950a8ce2c5043683cb03f05b441723f:
+10871 IDs reais dos 22 lotes, sem locais existentes no recorte, 0 excecoes
+de schema; 109 CEPs pendentes, numero/pais/rotulo pendentes em todos.
+Preserva texto bruto, sem inferir numero, entrega ou principal. Locais
+inativos e incompletos. Nao repetir 5000 anteriores ou ativar.
+Ensaio restaurado a305a143: 25 apply/replay/reverse, 4 negativas SQL,
+outro Grupo, rollback de ledger e protecao de edicao posterior PASS.
+17471 clientes conservados, zero escrita HML. Preflight live em leitura:
+FORCE RLS e ACL originais; exige gate explicito para capacidade temporaria
+SELECT/INSERT12/UPDATE(state) apenas ledger e policy dos 22 lotes.
+Proximo: autorizacao do pacote, backup fresco/externo, revalidacao e
+execucao canonica com checkpoints e revogacao exata. Sem operacional.
+
 ## HML: endereco aceito, 8677 RGs aplicados (2026-11-18)
 
 Aceite manual do dono: salvou e reabriu o mesmo fiscal em a305a143,

@@ -1,3 +1,19 @@
+## Fiscal10871 ensaiado; gate de aplicacao pendente (2026-11-18)
+
+Disponivel em incoming/enrichment-10871-20261118-r1: fiscal-canonical-plan,
+fiscal-canonical-plan-r2 (normalizacao ISO ms), fiscal-decision-package-r1,
+fiscal-live-readonly-preflight e fiscal-rehearsal-r4 (todos privados).
+Plano original SHA 961d936e8f0a404a814aed0ce5014d0e7950a8ce2c5043683cb03f05b441723f.
+IDs vinculados e rechecados, nenhum local no recorte. 10871 candidatos/
+0 excecoes, 109 CEPs pendentes, numero/pais/rotulo ausentes neste export;
+raw preservado. Sem ativacao, local principal, entrega ou lote anterior.
+Restore17 do POS RG, a305a143:25 apply/replay/reverse,4 negativas SQL,
+negativa outro Grupo, rollback no ledger e edicao posterior protegida.
+Apply amostra4.17s/pico RSS119128064bytes, sem medicao integral do lote.
+FORCE RLS e preimage ACL/policies capturados; ao aplicar exigir CAS fresco,
+backup restauravel externo, policy temporaria restrita aos 22 batches e
+revogacao exata. Zero escrita HML/operacional. Nao reaplicar mestres/RG/fiscais.
+
 ## HML a305a143 aceita no fiscal; lote RG8677 concluido (2026-11-18)
 
 Dono confirmou salvar/reabrir mesmo fiscal, sem ativar e sem perda de
