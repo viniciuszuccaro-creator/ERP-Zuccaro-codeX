@@ -1,3 +1,35 @@
+## Contatos: executor r2 comprovado no grupo 3 do clone
+
+7d30f3ea CI7268 SUCCESS. HML a305a143 nao modificada. Executor
+congela o CAS completo apos conferir preimage do plano; identidade
+fixa por manifest/run/ator/cliente. Bundle vinculado por SHA, journal
+sincronizado por entrada e processo protegido por flock no ensaio.
+Checkpoint truncado e erro sistemico param; divergencia individual
+vai a reconciliacao, sem sobrescrever. Reversao usa o servico
+canonico e o postimage da auditoria, preservando edicoes posteriores.
+
+Manifesto completo validado: 32 grupos, 15870 clientes, 41737 canais.
+Grupo 3 (500 clientes) ensaiado sob papel restrito, com parada apos o
+11o commit e 10 checkpoints. Segundo processo reconheceu um replay,
+finalizou o grupo e confirmou 500 recibos unicos. Retomada 8.655s,
+RSS 158236 KiB no clone; sem estimativa de VPS por extrapolacao.
+Papel NOLOGIN e PostgreSQL do ensaio parado ao fim.
+
+Privado: incoming/erp344-reader-20261118T170353Z/contacts-toolkit-r2/
+contatos executor e recibo com SHA verificado (codigo 823bcb1d).
+Proximo: validar o launcher e provisionamento/retirada da role para
+todo o manifesto no destino escolhido, com limites e reconciliacao
+por recibo. Uma unica autorizacao HML para os 32 grupos, restrita ao
+Grupo CPA; preservar os 1600 fora da rodada. Backup fresco restaurado
+e revalidacao imediatamente antes da primeira escrita. Zero grupos
+gravados na HML; nao usar a role ampla da API.
+
+Obras: varredura integral encontrou 22894 textos com sufixo candidato
+(inclui primeira linha); 19253 com hifen/barra, 11 com zeros e 257
+com marcadores de complemento/localizacao. Categorias sobrepostas;
+nao comprovam numero nem pais. Sem ativacao. Catalogo/Central sem
+novas gravacoes nem aceite na VPS.
+
 ## Contatos: aceite no Chrome do clone e pin da rodada integral
 
 e80cbfcd CI7267 SUCCESS; API HML a305a143. Chrome com login real da

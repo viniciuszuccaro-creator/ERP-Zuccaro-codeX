@@ -1,3 +1,14 @@
+## Contatos: executor retomavel no clone e pacote privado centralizado
+
+7d30f3ea CI7268 SUCCESS; HML a305a143, zero escrita. Executor r2
+validou o manifesto integral e congelou o grupo 3 no clone:
+500 clientes, 10 checkpoints antes da interrupcao apos commit,
+499 aplicacoes contabilizadas e um replay na retomada, 500 recibos
+unicos. Acesso do clone novamente desabilitado. Codigo e recibo
+privados centralizados e verificados. Sem prova de execucao dos 32
+grupos na VPS: falta provisionar e validar o papel/launcher finais
+com o gate HML, backup fresco e reconciliacao antes da primeira escrita.
+
 ## Contatos: aceite de edicao e reabertura no navegador do clone
 
 e80cbfcd CI7267 SUCCESS; API HML a305a143, zero escrita. Chrome real
