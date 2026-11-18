@@ -1,3 +1,10 @@
+## Comercial: venda com entrega fechada e reaberta pelas telas
+
+7fcbc4aa CI7258 success. Clone POS: criador 403, aprovador 201, retry
+409 e reabertura GET200. Entrega correta e auditoria conferidas.
+Troca de cliente ainda pendente. 14 unidades passam schema sem conversao;
+sem crosswalk do Grupo, nenhum lote escrito. Sem alteracao da HML.
+
 ## Comercial: salvar, reabrir e alcada da edicao passaram nas telas
 
 CI7257 success em bd48b754. Flag de Produtos operacional somente no

@@ -1,3 +1,25 @@
+## Venda com entrega fechada e reaberta nas telas reais
+
+Base 7fcbc4aa / CI7258 success no SHA exato. Chrome, login sintetico
+em sessoes distintas, API same-origin e PG POS isolado com papel restrito.
+Orcamento sintetico novo ainda sem pedido, selecionado pela Central360.
+Seletor depende de lock FOR UPDATE em clientes; ensaio usou UPDATE(id)
+com policy por Grupo e WITH CHECK(false), apenas no clone. Duas entregas
+operacionais do cliente no seletor; fiscal e entrega alheia ausentes.
+Criador confirmou e recebeu 403, zero pedidos. Aprovador confirmou e
+recebeu 201; entrega correta, vinculo e auditoria conferidos. Retry
+pela tela retornou 409, total de um pedido. Abrir pelo Cliente360
+renderizou pedido e GET200; PG confirmou item KG x2, unitario 12.345678,
+total 23.691356 e uma linha de historico. Tela R$23,69. Sem testar
+troca de cliente num pedido em edicao. 422 alheio e prova anterior API.
+Hashes preexistentes de clientes/locais/finalidades/vinculos iguais.
+Sem HML, operacional ou cargas. Matriz SQL nao certificada minima.
+Unidades: 14/14 passam schema de cadastro com conversao desabilitada.
+Destino atual sem tabela; grupo de origem nao UUID, sem crosswalk
+comprovado. Nenhuma escrita, sem lote cronometrado; 870 produtos
+em revisao, 1 historico, 0 precos aptos. Proximo: crosswalk autoritativo
+e teste de troca de cliente com entrega selecionada.
+
 ## Formulario real: salvamento e alcada da edicao comprovados
 
 Base bd48b754 / CI7257 success no SHA exato. Clone POS e proxy /api
