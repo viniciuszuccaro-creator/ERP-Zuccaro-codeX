@@ -1,3 +1,11 @@
+## Catalogo: leitura minima dos cadastros auxiliares no clone
+
+Marcas, grupos de produto e setores: SELECT temporario com RLS
+forcada no clone. Registro proprio e compartilhado visiveis na
+Empresa correta; outra Empresa apenas compartilhado; outro Grupo
+zero. UPDATE negado nos tres. ROLLBACK removeu fixtures e ACL.
+Sem aplicacao na HML ou no ERP operacional.
+
 ## Catalogo: estrutura e leitura restrita no clone
 
 HML sem relacoes de produto, unidades e precos; clone tem RLS

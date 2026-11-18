@@ -1,3 +1,20 @@
+## Catalogo: tres cadastros auxiliares com leitura minima ensaiada
+
+Clone erp_sale_pos85, socket, papel restrito trial_sale85 por
+SET SESSION AUTHORIZATION. Fixtures sinteticas e policies
+transacionais de SELECT para marcas, grupos_produto e
+setores_atividade: Grupo indicado e linha compartilhada ou da
+Empresa indicada. Empresa correta leu 2 por entidade; outra
+Empresa leu so a compartilhada; outro Grupo viu zero.
+UPDATE negado nos tres, sem grants de escrita. ROLLBACK e
+ausencia das policies de ensaio conferidos. Clone parado.
+
+Proximo: prover o mesmo contrato pelas rotas/consumidores reais
+com RBAC por entidade e contexto autorizado, entao fechar o
+delta HML por objeto. Nao transportar fixtures, liberar escrita
+ou tratar cadastro legado como unit/preco apto sem crosswalk.
+HML e ERP operacional intocados.
+
 ## Catalogo: contraste do schema HML e prova de leitura no clone
 
 HML tem grupos/empresas/perfis, clientes, cliente_empresas,
