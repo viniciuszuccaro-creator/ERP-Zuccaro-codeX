@@ -1,3 +1,32 @@
+## Contatos HML: rodada 92848c8f concluida
+
+e0909515 CI7271 SUCCESS. Limpeza restrita a 73 indices/cache APT
+regeneraveis, com locks; 335577088 bytes recuperados. Backup fresco
+hml-20261118T185525Z-a48ae4a2, 34508800 bytes, SHA 081c22a0,
+17 tabelas restauradas e conferidas. Execucao manual sem retencao;
+sete backups anteriores preservados. Timer nao alterado.
+
+HML erp-hml-pg / hml344_restore_20261104 / hml344_cpa_20261104.
+API a305a143 preservada; runtime 0beade64 em executor separado,
+launcher r2 19af40cf. ACL confirmou os 15870 IDs, sem nome, DELETE
+de auditoria ou contexto Empresa. Freeze sem divergencias.
+32/32, 15870 clientes atualizados, 41737 canais, 15870 auditorias
+unicas, todos os arrays de contatos conferidos com os recibos.
+Zero conflitos no journal, total 17471; 1600 com contatos fora
+do manifesto. Janela medida do journal: 456s. Sem deploy.
+
+O launcher nao publicou o recibo final; reconciliacao independente
+confirmou gravacao e guardou reconciled-execution.private.receipt.json
+no stage privado, com journal, SHA e dados para reversao canonica
+por postimage. Papel NOLOGIN, senha nula, ator inativo, zero conexoes
+e arquivo proprio de credencial removido. Nao reexecutar a carga.
+
+Proximo: aceite autenticado no navegador HML, sem recarregar.
+Depois da carga, banco 410295319 bytes; 22478647296 livres na
+medicao, abaixo da reserva recalculada 22705722437 para o proximo
+backup. Recuperar folga sem apagar backups, volumes ou reversoes.
+Enderecos, catalogo, Central e ERP operacional sem alteracao.
+
 ## Contatos HML: gate concedido; reserva impede backup fresco
 
 a9ae6245 CI7270 SUCCESS. Proprietario autorizou 92848c8f na HML,
