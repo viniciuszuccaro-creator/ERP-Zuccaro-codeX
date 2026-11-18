@@ -1,3 +1,11 @@
+## Catalogo: datas e escopo das tabelas de preco
+
+Seis tabelas com datas inteiras de cinco digitos; AAAAMMDD
+descartado. Clarion gera inicio entre 2024-08-26 e 2026-06-01
+e fim 2030-12-01, ainda candidato. HistoricoMaterial nao confirmou
+conversao. Sem coluna direta de empresa/filial/CNPJ com chave da
+tabela. Zero precos liberados e zero escrita.
+
 ## Catalogo: itens de preco conciliados na origem nativa
 
 7bcfec85 CI7277 SUCCESS. 5162 itens / 1040 materiais / 6 tabelas,

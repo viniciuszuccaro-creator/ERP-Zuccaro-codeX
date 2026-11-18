@@ -1,3 +1,20 @@
+## Catalogo: vigencia candidata, sem binding empresarial
+
+Leitor isolado e consultas agregadas. DATAINICIAL 81691..82335,
+DATAFINAL 83979 em todas as seis tabelas; zero AAAAMMDD valido.
+Com base Clarion 1800-12-28, conversao candidata 2024-08-26 a
+2026-06-01 para inicio e 2030-12-01 para fim. Nao declarar
+vigencia comprovada. Nos itens, 660 pares promocionais zerados,
+4502 com pelo menos um nulo e nenhum positivo.
+
+HistoricoMaterial foi o unico modulo que referencia as tabelas,
+sem marcador DATEADD/DATEDIFF/1800. Sua mencao a empresa nao
+prova escopo do preco. Nenhuma tabela com CODIGOTABELA e coluna
+direta de empresa/filial/CNPJ no catalogo consultado. Proxima
+prova: identificar a clausula/consumidor que aplica a tabela,
+comprovar calendario e crosswalk de material/unidade. Sem carga,
+sem preco habilitado. Leitor parado, operacional intacto.
+
 ## Catalogo: conciliacao nativa de precos e materiais
 
 Leitor isolado: CadastroMateriais 2360 chaves distintas. Os 5162
