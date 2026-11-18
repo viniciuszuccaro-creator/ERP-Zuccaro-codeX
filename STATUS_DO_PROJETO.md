@@ -1,3 +1,23 @@
+## Catalogo: recorte sobre runtime servido e reserva preservada
+
+VPS READ ONLY: 22473408512 bytes livres no filesystem comum de
+HML, /tmp e /var/tmp. Limiar anterior 22705722437 bytes, deficit
+232313925 sem margem. /var/cache 47 MiB; /tmp e /var/tmp ~1 MiB
+cada. BuildKit indica 1.107 GB compartilhados, 0 B privados;
+reclaimable de metadados nao comprova blocos liberados. Incoming
+contem insumos/recibos de legado e runtimes; nenhum descarte seguro
+suficiente comprovado. Zero limpeza, backup novo, DDL ou deploy.
+
+Recorte local sobre a305a143, sem branch ou commit: app.ts,
+postgresCadastroRepositories.ts, tenantCrudService.ts e
+GrupoProdutoForm.jsx, 73+/29-. git apply --check e diff --check
+PASS; typecheck raiz/backend e build backend PASS. Nao inclui
+contatos ou Pedido. Nao e candidata, CI ou aceite integrado do port.
+Proximo: identificar capacidade adicional ou copia reconstruivel
+com procedencia e ausencia de consumo; revalidar e fechar backup
+fresco/restauro/ack. A parte de codigo pode seguir em ensaio
+local do port com regressao e pacote revisavel sem publicar.
+
 ## Catalogo: preflight de backup bloqueado por espaco
 
 VPS somente leitura: livres 22473437184 bytes, banco HML 410295319
