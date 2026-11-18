@@ -162,7 +162,7 @@ test('canonical local batch: CAS, rollback, replay rejection, permissions and fi
         await assert.rejects(service.sync(denied, ID.clientePjA, payload));
       }
       await assert.rejects(service.sync(ctx, ID.clientePjA, { ...payload, review_version: undefined }), { code: 'CLIENTE_LOCAIS_VERSION_CONFLICT' });
-      await assert.rejects(service.sync(ctx, ID.clientePjA, { ...payload, operations: [{ ...op, data: { nome: 'Ainda parcial' } }] }), { code: 'VALIDATION_ERROR' });
+      await assert.rejects(service.sync(ctx, ID.clientePjA, { ...payload, operations: [{ ...op, data: { cep: 'invalid' } }] }), { code: 'VALIDATION_ERROR' });
       await assert.rejects(service.sync(ctx, ID.clientePjA, { ...payload, operations: [{ ...op, data: { ...op.data, legacy_id: 'forged' } }] }), { code: 'VALIDATION_ERROR' });
       rbac.link({ actorId: ID.runtimeActorA, groupId: ctx.groupId, permissions: { Cadastros: { cliente_local: ['visualizar', 'editar'] } } });
       await assert.rejects(service.sync(ctx, ID.clientePjA, { ...payload, operations: [{ ...op, activate: true }] }), { code: 'PERMISSION_DENIED' });
@@ -199,8 +199,12 @@ test('canonical local batch: CAS, rollback, replay rejection, permissions and fi
       });
       const read = () => service.snapshot(ctx, ID.clientePjA, true);
       const before = await read(), audits = await countAudit();
-      const op = { op: 'review', id: local.id, data: { nome: 'Fiscal comprovado', numero: '51', pais: 'BRASIL' } };
+      const op = { op: 'review', id: local.id, data: { nome: 'Fiscal comprovado', numero: '51' } };
       const payload = { version: before.version, review_version: before.reviewVersion, operations: [op] };
+      await assert.rejects(service.sync(ctx, ID.clientePjA, {
+        ...payload, operations: [{ ...op, activate: true }],
+      }), { code: 'VALIDATION_ERROR' });
+      assert.equal((await read()).reviewVersion, before.reviewVersion);
       await assert.rejects(service.sync(ctx, ID.clientePjA, { ...payload,
         operations: [op, { ...op, id: ID.clienteLocalB1 }] }), { code: 'CLIENTE_LOCAL_NOT_FOUND' });
       assert.equal((await read()).reviewVersion, before.reviewVersion);
@@ -219,6 +223,18 @@ test('canonical local batch: CAS, rollback, replay rejection, permissions and fi
       assert.equal(await countAudit(), audits + 1);
       const fiscal = (await service.list(ctx, ID.clientePjA, { ativo: false })).data.find(x => x.id === local.id);
       assert.equal(fiscal?.ativo, false); assert.equal(fiscal?.finalidades[0].finalidade, 'FISCAL');
+      assert.equal(fiscal?.endereco_incompleto, true);
+      assert.equal(fiscal?.numero, '51');
+      assert.equal(fiscal?.pais, '');
+      assert.equal(fiscal?.logradouro, local.logradouro);
+      assert.equal(fiscal?.cep, local.cep);
+      assert.equal(fiscal?.bairro, local.bairro);
+      assert.equal(fiscal?.cidade, local.cidade);
+      assert.equal(fiscal?.uf, local.uf);
+      assert.equal(fiscal?.finalidades[0].principal, false);
+      assert.equal(fiscal?.legacy_id, local.legacy_id);
+      assert.equal(fiscal?.source_system, local.source_system);
+      assert.equal(fiscal?.migration_batch, local.migration_batch);
     });
     await t.test('delivery review rejects SQL permission revocation during audit and rolls back all state', async () => {
       rbac.link({ actorId: ctx.actorId, groupId: ctx.groupId, permissions: { Cadastros: {

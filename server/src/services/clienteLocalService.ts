@@ -293,8 +293,25 @@ export class ClienteLocalService {
     await check();
     const before = await this.repo.get(this.scope(fixed, clienteId), localId, executor);
     if (!before || before.ativo || before.origem !== 'MIGRACAO') this.notFound();
-    this.validateCandidate(before, data);
-    if (!before.endereco_incompleto && Object.entries(data).every(([key, value]) =>
+    const candidate = this.parseCandidate(before, data);
+    const incomplete = !candidate.success;
+    if (!candidate.success) {
+      const fields = ['nome', 'cep', 'logradouro', 'numero', 'complemento', 'bairro',
+        'cidade', 'uf', 'pais', 'referencia'] as const;
+      if (activate || !before.endereco_incompleto
+          || Object.keys(data).some(key => !fields.some(field => field === key))) {
+        this.validationError(candidate.error.flatten());
+      }
+      const pending = clienteLocalMigrationPendingSchema.safeParse({
+        ...Object.fromEntries(fields.map(field => [field, Object.hasOwn(data, field) ? data[field] : before[field]])),
+        origem: before.origem, legacy_id: before.legacy_id, legacy_code: before.legacy_code,
+        source_system: before.source_system, migration_batch: before.migration_batch,
+        imported_at: before.imported_at, ativo: false, endereco_incompleto: true,
+        finalidades: before.finalidades.map(({ finalidade, principal }) => ({ finalidade, principal })),
+      });
+      if (!pending.success) this.validationError(pending.error.flatten());
+    }
+    if (before.endereco_incompleto === incomplete && Object.entries(data).every(([key, value]) =>
       value === (before as unknown as Record<string, unknown>)[key])) {
       await check();
       const result = activate ? await this.restore(fixed, clienteId, localId) : publicLocal(before);
@@ -302,7 +319,7 @@ export class ClienteLocalService {
       return result;
     }
     const after = await this.repo.update(this.scope(fixed, clienteId), localId,
-      { ...data, endereco_incompleto: false }, fixed.actorId, executor);
+      { ...data, endereco_incompleto: incomplete }, fixed.actorId, executor);
     if (!after) this.notFound();
     await check();
     await this.appendAudit(fixed, 'update', before, after, executor);
@@ -457,7 +474,12 @@ export class ClienteLocalService {
   }
 
   private validateCandidate(before: ClienteLocal, update: Record<string, unknown>) {
-    const candidate = clienteLocalCreateSchema.safeParse({
+    const candidate = this.parseCandidate(before, update);
+    if (!candidate.success) this.validationError(candidate.error.flatten());
+  }
+
+  private parseCandidate(before: ClienteLocal, update: Record<string, unknown>) {
+    return clienteLocalCreateSchema.safeParse({
       nome: before.nome,
       cep: before.cep,
       logradouro: before.logradouro,
@@ -487,7 +509,6 @@ export class ClienteLocalService {
       })),
       ...update,
     });
-    if (!candidate.success) this.validationError(candidate.error.flatten());
   }
 
   private principalChanged(

@@ -222,7 +222,7 @@ export type ClienteLocalPersistenceCreate = ClienteLocalCreate & {
   endereco_incompleto?: boolean; ativo?: boolean;
 };
 // Internal persistence flag only; public update schema remains strict and excludes it.
-export type ClienteLocalUpdate = z.infer<typeof clienteLocalUpdateSchema> & { endereco_incompleto?: false };
+export type ClienteLocalUpdate = z.infer<typeof clienteLocalUpdateSchema> & { endereco_incompleto?: boolean };
 export type ClienteLocalFinalidadeInput = z.infer<typeof clienteLocalFinalidadeSchema>;
 
 export type ClienteLocalFinalidade = {
