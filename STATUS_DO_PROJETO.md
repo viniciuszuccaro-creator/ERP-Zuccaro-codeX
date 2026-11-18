@@ -1,3 +1,9 @@
+## Comercial: ACL original conferida na copia POS
+
+96 GRANT e 15 REVOKE reaplicados em transacao revertida. Papeis do dump
+sem INSERT Orcamento/Pedido; nove relacoes comerciais com FORCE RLS
+sem policy. Base preservada. Venda autenticada no POS e telas pendentes.
+
 ## Comercial: bootstrap Auth restrito conferido na copia POS
 
 Policies 042 e grants de coluna ensaiados com rollback no WSL. Identidade

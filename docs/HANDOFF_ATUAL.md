@@ -1,3 +1,17 @@
+## ACL original reconciliada no POS descartavel
+
+Base aa6ba6b0. Aplicados em transacao os 96 GRANT e 15 REVOKE do dump
+original sobre o POS WSL com delta comercial, sem importar globais.
+Cinco destinatarios originais representados por papeis NOLOGIN,
+NOSUPERUSER, NOBYPASSRLS; um com SELECT de coluna em profiles,
+nenhum com INSERT em Orcamento/Pedido. Nove relacoes comerciais
+amostradas com FORCE RLS e sem policy. Rollback voltou o SELECT de
+profiles a zero papeis piloto; 17471 clientes e 16087 locais preservados.
+O ensaio prova a ACL explicita, nao heranca/atributos dos logins remotos
+nem a matriz comercial nova. POS parado. Ainda falta executar venda
+autenticada na copia POS e os negativos nas telas reais do ERP.
+Sem escrita na HML servida ou no operacional.
+
 ## Bootstrap restrito ensaiado no POS; telas comerciais pendentes
 
 Base de9a41c1. POS restaurado PostgreSQL 16.15 WSL/socket: 17471 clientes,
