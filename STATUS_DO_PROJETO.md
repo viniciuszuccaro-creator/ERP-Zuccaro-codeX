@@ -1,3 +1,9 @@
+## Comercial: venda restrita por requisicao confirmada no clone POS
+
+Chrome/harness contra API canonica e PG restaurado: alcada e endereco
+alheio rejeitados, aprovador distinto auditado, entrega correta reaberta.
+Hashes preservados; sem HML/operacional. Falta teste nas telas ERP.
+
 ## Comercial: ACL original conferida na copia POS
 
 96 GRANT e 15 REVOKE reaplicados em transacao revertida. Papeis do dump

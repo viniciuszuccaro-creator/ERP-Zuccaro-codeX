@@ -1,3 +1,20 @@
+## Venda autentica por requisicao no clone POS; UI real pendente
+
+Base 85a14ac7. Clone descartavel do POS no WSL, ACL explicita original
+reaplicada e delta comercial de ensaio com logins separados para Auth e
+Dados, sem superusuario/BYPASSRLS na API. Policies 042 para Auth, escopo
+Grupo/Empresa para Dados e privilegios de lock/edicao como no ensaio
+de9a41c1. Matriz funcional, nao certificada como minima para promocao.
+Fixtures sinteticas em Grupos separados e Auth sintetico por Bearer;
+sem contexto estatico no pool. Contexto limpo apos as requisicoes.
+Chrome via harness (nao telas ERP), API/PostgreSQL do clone POS:
+201/403/200/403/422/201/200/409. Criador sem alcada negado, aprovador
+distinto auditado, ENTREGA de outro cliente do mesmo Grupo rejeitada,
+pedido com local correto reaberto, total 23.691356, retry sem duplicata.
+Hashes dos clientes, locais, finalidades e vinculos preexistentes iguais.
+Logins descartaveis desabilitados, PostgreSQL parado. Sem HML/operacional.
+Proximo: repetir os negativos nos consumidores reais do ERP em navegador.
+
 ## ACL original reconciliada no POS descartavel
 
 Base aa6ba6b0. Aplicados em transacao os 96 GRANT e 15 REVOKE do dump
