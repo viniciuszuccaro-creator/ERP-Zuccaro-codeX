@@ -1,3 +1,22 @@
+## Ensaio comercial isolado: schema e venda sintetica
+
+POS 134922Z conferido por SHA e restaurado: 17471 clientes e 16087 locais.
+Em transacao, migrations 005/006/007/008/012/013/016/017/018/019/023/039/041/044
+e somente o indice uq_empresas_id_group_scope da 040, exigido pela FK da 041.
+19 tabelas novas para cadastros auxiliares, Obras, Produtos, precos,
+Orcamentos e Pedidos. Sem reexecutar 003 (marcas existente). Fingerprints
+dos quatro conjuntos preservados; rollback do primeiro ensaio sem indice
+e isolamento por socket confirmados. Instancia descartavel parada; reversao
+do ensaio e abandonar a copia e restaurar o POS, nao sobrescrever a HML.
+No PG sintetico separado, HTTP: cliente 200, orcamento 201/reabre 200,
+entrega fiscal 422, conversao para entrega valida 201/reabre 200,
+repeticao 409, uma linha por orcamento. Total 24.691356, item/unidade/preco
+e vinculos conferidos. Sem desconto sujeito a alcada; navegador, principal
+restrito fisico e efeitos downstream ainda nao homologados.
+Fonte: 14 unidades com identidade e siglas conferidas; 871 produtos
+seguem fora do lote aplicavel (870 revisao e 1 historico). Nenhum preco
+elegivel demonstrado. Nao estimar desempenho de lote sem ensaio da entidade.
+
 ## Fiscal10871 autorizado: 10870 reconciliados, 1 UF pendente (2026-11-18)
 
 Plano 961d936e8f0a404a814aed0ce5014d0e7950a8ce2c5043683cb03f05b441723f.

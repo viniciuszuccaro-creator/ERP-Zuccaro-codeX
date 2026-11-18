@@ -1,3 +1,14 @@
+## Ensaio comercial isolado: delta e venda HTTP com entrega
+
+Backup POS restaurado em PostgreSQL 16 local no WSL, somente socket.
+Delta de 19 tabelas aplicado; fingerprints dos clientes, locais, finalidades
+e vinculos anteriores iguais (excluida a nova coluna nula de tabela de preco).
+Em banco sintetico separado: Cliente, Orcamento, conversao ENTREGA e
+reabertura via HTTP/PostgreSQL passaram; fiscal rejeitado e replay sem
+duplicacao. Nao prova navegador, RBAC SQL da HML ou publicacao.
+Nenhuma escrita na HML servida. Proximo: ensaiar principal restrito e
+conferir lote piloto de dados comprovados antes de pedir promocao.
+
 ## Fiscal dos 10871 novos: 10870 locais inativos, 1 excecao (2026-11-18)
 
 Plano 961d936e autorizado e aplicado somente na HML. R1 confirmou 4945;
