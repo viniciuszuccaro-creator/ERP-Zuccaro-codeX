@@ -1,3 +1,25 @@
+## Leitor SQL preparado; disco fisico limita extracao
+
+Base 87d2acbf / CI7261 SUCCESS. WSL2 Ubuntu 24.04; namespace de rede
+disponivel. APT privado verificou e baixou SQL Server 2025 17.0.5065.9-3,
+tools18 e ODBC18 oficiais. Sem instalar ou iniciar SQL. C fisico tinha
+1.43 GiB livres apos download; engine 1396606 KiB + par 1022492672
+bytes requerem 2.28 GiB antes de sistema/logs/exports. D e USB e nao
+sera usado como executor. Reservar pelo menos 5 GiB livres em C ou
+usar executor interno privado equivalente. Retomar pelos pacotes
+ja baixados em /var/lib/zuccaro-sql-reader-20261118, isolamento
+sem rede, copia verificada, attach somente da copia, READ ONLY e
+manifesto/hash antes de centralizar exports na VPS. Sem repetir carga.
+
+Comercial, clone POS/papel restrito: 3 pedidos no escopo proprio,
+0 ao trocar Empresa, 0 ao trocar Grupo; UPDATE de cliente/local
+permitido, UPDATE das colunas tenant e DELETE do Pedido ausentes;
+papel Auth sem UPDATE. Escopo demonstrado, nao prova minimalidade
+da matriz inteira. Central360 ja e entrada de Pedidos; orcamento
+permanece dentro dela. HML API segue a305a143, sem deploy ou carga.
+Sem vinculo autoritativo novo de Grupo Base44; 14 unidades validadas
+sem conversao, 870 produtos revisao/1 historico e 0 precos aptos.
+
 ## Pedido direto A-B salvo/reaberto; fonte SQL na VPS confirmada
 
 Base 3b640311, CI7260 SUCCESS; sem delta runtime nesta rodada. No clone

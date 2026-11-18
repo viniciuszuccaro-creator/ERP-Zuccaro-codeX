@@ -1,3 +1,11 @@
+## Legado: leitor SQL baixado; espaco fisico insuficiente
+
+87d2acbf CI7261 SUCCESS. APT oficial baixado no WSL, sem instalar.
+C tem 1.43 GiB; engine e copia exigem 2.28 GiB antes de overhead.
+Reservar 5 GiB livres no disco interno; D USB nao utilizado.
+No POS, papel de Dados ve somente pedidos do proprio escopo e nao
+edita tenant/exclui Pedido; Auth nao edita. HML sem alteracao.
+
 ## Comercial: pedido direto salvo e reaberto com entrega B
 
 3b640311 CI7260 SUCCESS. Chrome no POS isolado: troca A-B limpou local,
