@@ -1,3 +1,20 @@
+## Bootstrap restrito ensaiado no POS; telas comerciais pendentes
+
+Base de9a41c1. POS restaurado PostgreSQL 16.15 WSL/socket: 17471 clientes,
+16087 locais. Em transacao: grants de coluna do fixture Auth, policies
+canonicas 042 e papeis separados NOSUPERUSER/NOBYPASSRLS. Auth sem
+identidade 0 perfis; identidade sintetica vinculada 1 perfil/1 empresa,
+outra empresa 0, sem INSERT de pedidos. Dados: leitura de unidade por
+policy propria, sem contexto 0, propria empresa 1, outra 0. Rollback
+sem papeis remanescentes; PostgreSQL parado. ACL do POS nao foi restaurada
+pela copia (no-acl); esta prova nao certifica a matriz da HML.
+R40 autenticado: 1 PASS com provedor sintetico HTTP e PostgreSQL separado,
+pools Auth/Data distintos, negativos de tenant/ator/token e contexto
+limpo apos resposta. Nao combina venda com alcada e entrega na copia POS
+nem prova telas reais. Proximo gate: matriz comercial completa aplicada
+na copia POS, Auth por requisicao no mesmo processo da venda e UI real.
+Sem escrita HML ou operacional.
+
 ## Venda restrita e negativas em navegador sintetico
 
 Base 90965996; banco sintetico descartavel separado, listener local WSL.

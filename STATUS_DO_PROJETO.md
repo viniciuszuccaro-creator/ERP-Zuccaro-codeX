@@ -1,3 +1,11 @@
+## Comercial: bootstrap Auth restrito conferido na copia POS
+
+Policies 042 e grants de coluna ensaiados com rollback no WSL. Identidade
+vinculada viu apenas perfil/empresa autorizados, sem escrita de pedidos.
+R40 autenticado passou no PG sintetico separado. A venda autenticada
+na copia POS e o teste de alcada/entrega nas telas reais seguem pendentes.
+Sem alteracao na HML ou no operacional.
+
 ## Comercial: venda e alcada com login SQL restrito em copia sintetica
 
 Orcamento e Pedido com entrega passaram via API e PostgreSQL com login
