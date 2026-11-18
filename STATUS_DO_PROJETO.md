@@ -1,3 +1,10 @@
+## Catalogo: itens de preco conciliados na origem nativa
+
+7bcfec85 CI7277 SUCCESS. 5162 itens / 1040 materiais / 6 tabelas,
+sem orfaos ou duplicidade de material/tabela, 24 vinculos classe/
+grupo sem orfao. Todos os itens com material, unidade preenchida
+e classe; 698 precos zero. Zero precos habilitados, sem escrita.
+
 ## Legado: fontes alternativas de numero e chaves de catalogo
 
 Busca dirigida no catalogo da copia SQL: nenhuma coluna candidata

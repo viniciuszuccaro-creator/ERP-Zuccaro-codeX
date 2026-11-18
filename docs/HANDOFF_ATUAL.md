@@ -1,3 +1,19 @@
+## Catalogo: conciliacao nativa de precos e materiais
+
+Leitor isolado: CadastroMateriais 2360 chaves distintas. Os 5162
+itens apontam a 1040 materiais e 6 tabelas: sem orfaos, sem
+par duplicado, sem unidade vazia ou classe ausente no mestre.
+Sem divergencia observada entre CODCLASSE do item e CODIGOCLASSE
+do mestre. 24 vinculos classe/grupo sem orfao. Preco decimal:
+nenhum nulo, 698 zero. Datas de tabela e promocao sao inteiros
+legados; nas 6 tabelas, sem nulos ou inversao numerica, o que nao
+comprova vigencia interpretada.
+
+Proxima prova: semantica das datas e escopo da tabela, crosswalk
+autoritativo de CODIGOMATERIAL para o recorte atual e de unidade
+para Grupo/Empresa. Nao usar semelhanca de nome; zero nao entra
+como oferta sem contrato. Nenhuma carga HML ou operacional.
+
 ## Legado: procura de fonte alternativa e chaves de catalogo
 
 Busca dirigida por campos de numero de endereco e chaves nativas
