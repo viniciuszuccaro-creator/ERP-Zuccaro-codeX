@@ -1,3 +1,13 @@
+## Contatos HML: autorizado, backup fresco bloqueado por reserva
+
+a9ae6245 CI7270 SUCCESS. Gate 92848c8f autorizado para HML somente.
+Backup canonico falhou antes do dump: RECOVERY_SPACE_RESERVE.
+22289264640 bytes livres, reserva 22461584453 bytes com o tamanho
+do banco atual. Sem papel temporario e sem escrita. Runtime de
+0beade64 centralizado e carregado em container sem conexao ao banco.
+Proximo: obter folga acima da reserva sem descartar artefatos,
+repetir backup/restauracao, revalidar plano e ACL e executar.
+
 ## Contatos: rodada integral concluida no PostgreSQL isolado
 
 19d1828e CI7269 SUCCESS. Executor r2 com launcher integral r3:

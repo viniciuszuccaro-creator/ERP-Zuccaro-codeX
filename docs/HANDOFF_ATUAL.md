@@ -1,3 +1,34 @@
+## Contatos HML: gate concedido; reserva impede backup fresco
+
+a9ae6245 CI7270 SUCCESS. Proprietario autorizou 92848c8f na HML,
+ate 15870 clientes/41737 canais/32 grupos, papel temporario e
+retirada. Sem deploy ou outras entidades autorizadas. O destino
+canonico erp-hml-pg / hml344_restore_20261104 / hml344_cpa_20261104
+conferiu pela identidade fisica do preflight. API permanece a305a143.
+
+hml-backup.service falhou antes do dump com RECOVERY_SPACE_RESERVE.
+Banco 328915991 bytes; 22289264640 livres; limite estrito de
+22461584453 (20 GiB mais tres vezes o banco). Faltaram 172319814
+bytes para cruzar o gate na medicao; provisionar folga sustentada
+sem remover backups, imagens de reversao, volumes ou originais.
+Docker nao indicou cache recuperavel; nao houve limpeza nem retry.
+Backup anterior nao substitui o fresco. Nenhum executor recebeu
+acesso ao banco e nenhum dado foi escrito nesta rodada.
+
+Privado: incoming/erp344-reader-20261118T170353Z/
+contacts-hml-runtime-stage-r1. Build compilado de 0beade64,
+archive 85c53753, runner 9c35da23, core 823bcb1d. Sintaxe e imports
+passaram no container Node 22 isolado, sem socket ou credencial.
+Nao constitui preflight de ACL viva. Retomar com disco acima da
+reserva, backup fresco restaurado, pin/identidade/ACL confirmados e
+preimage imediatamente antes de escrita. Nao pedir nova aprovacao
+por grupo no mesmo escopo. Zero de 32, sem tempo de carga na VPS.
+
+Obras: diretorio de exports possui ClientesObras e inventario;
+nao possui export ou metadados de colunas de ClientesObrasHistoricoAjustes.
+Proxima leitura dirigida do historico em leitor isolado quando
+houver folga; sem presumir numero nem ativar entrega.
+
 ## Contatos: 32 grupos reconciliados no clone e decisao da HML
 
 19d1828e CI7269 SUCCESS. Hashes integrais verificados do manifesto,
