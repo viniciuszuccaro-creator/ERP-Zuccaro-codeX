@@ -1,3 +1,12 @@
+## Obras: historico consultado no leitor isolado
+
+f144f6fd CI7273 SUCCESS. 3096 eventos; sem coluna propria de
+numero/pais nem FK declarada. CODIGOCLIENTE + ITEMLOCALENTREGA
+localizam uma Obra em 1536 eventos; 1560 sem correspondencia.
+SEQUENCIA e PK do evento, nao da Obra. Zero numeros homologados,
+zero carga ou ativacao. Contatos sem recarga; aceite de navegador
+pendente por interferencia detectada na janela do Chrome.
+
 ## HML: aceite visual pendente e fila de Obras delimitada
 
 0192bd9e: nenhuma recarga de contatos. Controle Chrome encerrou

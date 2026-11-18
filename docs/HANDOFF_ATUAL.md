@@ -1,3 +1,22 @@
+## Obras: leitura dirigida do historico de ajustes
+
+f144f6fd CI7273 SUCCESS, API HML a305a143. Leitor SQL ja existente
+com network none, zero portas e somente volume proprio. Consulta
+de catalogo e agregados, sem export de valores identificaveis.
+ClientesObrasHistoricoAjustes: 3096 eventos, oito tipos, conteudo
+atual textual em todos. Sem coluna estruturada de numero/pais e
+sem FK declarada. CODIGOCLIENTE + ITEMLOCALENTREGA encontram uma
+Obra em 1536 eventos (zero ambiguos pelo par); 1560 sem match.
+SEQUENCIA e PK do evento; zero matches com o triplo da Obra.
+Proximo: comprovar semantica de TIPOALTERACAO e do conteudo textual
+em dicionario ou consumidor legado antes de extrair numero. Nao
+inferir numero, pais ou finalidade. Nenhuma escrita na HML.
+
+Chrome ativo expunha o chat; controle bloqueou a navegacao por
+interacao concorrente. Usuario orientado a deixar HML autenticada
+visivel enquanto responde pelo app, sem dados pessoais no chat.
+Sem aceite visual declarado e sem repetir a carga de contatos.
+
 ## Aceite de contatos e proximo lote de enderecos
 
 Sem repeticao do manifesto 92848c8f. Controle Windows interrompeu
