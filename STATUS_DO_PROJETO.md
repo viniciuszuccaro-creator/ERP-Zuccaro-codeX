@@ -1,3 +1,10 @@
+## Catalogo: consumidores candidatos e lacuna de schema HML
+
+VendaExternaItens tem CODIGOTABELAPRECO; cabecalho tem CODIGOEMPRESA,
+mas ambos zerados nesta copia. ConfiguracaoMobile e Empresas trazem
+parametros de uso/IPI, nao binding de tabela. Schema HML atual sem
+tabelas de produtos, unidades ou precos. Sem habilitacao ou escrita.
+
 ## Catalogo: datas e escopo das tabelas de preco
 
 Seis tabelas com datas inteiras de cinco digitos; AAAAMMDD

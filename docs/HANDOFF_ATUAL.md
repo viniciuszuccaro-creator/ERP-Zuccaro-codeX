@@ -1,3 +1,20 @@
+## Catalogo: rota de vinculo empresarial nao comprovada nesta copia
+
+Pesquisa por aliases da chave: VendaExternaItens.CODIGOTABELAPRECO
+e VendaExterna.CODIGOEMPRESA sao candidatos, porem ambas com zero
+linhas. PropostaComercialItem e tabelas de descontos candidatas
+tambem vazias. ConfiguracaoMobile (1) e Empresas (5) tem campos
+UTILIZATABELAPRECO/IncluiIPITabelaPreco, nao uma atribuicao da tabela.
+HistoricoMaterial menciona chave e valor, insuficiente para provar
+escopo. Nao repetir busca na mesma copia sem nova evidencia.
+
+Preflight read-only HML: schema hml344_cpa_20261104 sem tabelas
+de produtos/unidades/precos. Referencias canonicas 005, 006 e
+013; comparar dependencias/ACL no clone, nao aplicar journal
+inteiro. Proxima fonte do binding: configuracao ou transacao
+legada de outro recorte com chave de empresa e tabela comprovadas.
+Leitor parado; sem DDL, carga, deploy ou escrita operacional.
+
 ## Catalogo: vigencia candidata, sem binding empresarial
 
 Leitor isolado e consultas agregadas. DATAINICIAL 81691..82335,
