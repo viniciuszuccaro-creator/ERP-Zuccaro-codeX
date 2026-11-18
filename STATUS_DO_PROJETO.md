@@ -1,3 +1,12 @@
+## Catalogo: pacote HML de GrupoProduto pronto para revisao
+
+02f3fc14 / CI7289 SUCCESS. Manifesto e gates separados no HANDOFF.
+Backup HML de 18/11 conferiu SHA, restore de 17 tabelas e ack externo;
+ultimo status do servico signal/15. Requer backup fresco restaurado,
+copia externa e capacidade revalidada antes de DDL/ACL ou deploy.
+Sem alteracao HML ou operacional; proximo: fechar preflight de backup
+e pedir decisoes separadas para schema/ACL e runtime.
+
 ## Catalogo: ACL de GrupoProduto validada pela API no clone
 
 Clone restaurado com Auth sintetico e papel restrito, blobs do

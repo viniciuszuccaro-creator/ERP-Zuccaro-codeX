@@ -1,3 +1,46 @@
+## Catalogo: pacote de decisao HML para GrupoProduto
+
+Codigo 02f3fc14 / CI7289 SUCCESS. API HML confirmada em a305a143
+no preflight; destino exclusivo erp-hml-pg / hml344_restore_20261104 /
+hml344_cpa_20261104. Nao ha autorizacao de aplicacao neste lote.
+
+Gate 1, schema/ACL: portar somente o recorte GrupoProduto da 005:
+tabela grupos_produto, PK e FKs para Grupo/Empresa, cinco indices
+da entidade (inclui unicidade de codigo), dois gatilhos e RLS forcada.
+Confirmar ausencia da tabela antes do DDL e conservar a definicao
+canonica de constraints, indices e gatilhos, sem journal global.
+Principal de destino: exatamente a role nao-superuser e sem BYPASSRLS
+pinada na API HML. SELECT e UPDATE apenas nas 10 colunas do SET:
+nome_grupo, codigo, natureza, ncm_padrao, margem_sugerida, icone, cor,
+observacoes, ativo, empresa_id. Sem INSERT/DELETE ou novos perfis.
+Duas policies da tabela: Grupo CPA fixo e igual a app.group_id;
+em Empresa exigir empresa_id igual a app.empresa_id, tambem no
+WITH CHECK do UPDATE; RLS forcada. Auditoria existente, sem delta.
+
+Backup: em 18/11, arquivo 34508800 bytes, 17 tabelas, restore verificado,
+SHA do arquivo correspondeu ao recibo e ao ack externo. Timer ativo,
+mas ultimo status do servico e signal/15; nao confundir com o recibo.
+Disco livre 22473449472 bytes no preflight; revalidar reserva 20 GiB
+mais espaco de recuperacao e ausencia de writer/backup concorrente.
+Antes do gate, esclarecer falha do servico, gerar backup fresco,
+restaurar em destino isolado e verificar copia externa pelo SHA.
+
+Aplicar DDL/ACL apenas em transacao apos pins e lock/timeout. Se
+divergir, ROLLBACK. Reversao pos-commit: voltar runtime separado,
+revogar apenas grants/policies do pacote; conservar tabela e dados
+se houver uso. Remover a tabela somente se vazia, sem consumidores
+ou dependencias novas e com autorizacao especifica; nunca restaurar
+dump sobre o banco servido. Sem seed, carga ou reativacao.
+
+Gate 2, runtime: pacote privado do SHA aprovado com manifesto e
+reversao para runtime anterior, API/web identificados e saudaveis.
+Revisar o delta integral do runtime servido ao candidato antes de
+aprovar o pacote; CI verde nao libera mudancas fora de GrupoProduto.
+Aceite HML com conta existente: lista vazia e pagina real distintas
+de falha/permissao; Grupo/Empresa e negativas. Salvar/reabrir so
+quando houver registro e escopo de teste autorizado; prova sintetica
+do clone nao cria dado HML. Nenhuma mudanca no operacional.
+
 ## Catalogo: ACL de GrupoProduto validada pela API no clone
 
 Clone restaurado com Auth sintetico e papel restrito, blobs do
