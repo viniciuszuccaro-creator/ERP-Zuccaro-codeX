@@ -13,7 +13,8 @@ export async function persistirPlanoClientesLegado(input, deps, approval) {
   if (approval?.partialMastersOnly !== true || approval.manifestSha256 !== plan.manifestSha256
     || approval.sourceSha256 !== plan.manifest.sourceSha256
     || !Number.isSafeInteger(approval.maxRecords) || approval.maxRecords < count
-    || approval.maxRecords > 5000 || plan.batches.some(b => b.items.length > 1000)
+    || approval.maxRecords > 11000 || (approval.maxRecords > 5000 && approval.maxRecords !== count)
+    || plan.batches.some(b => b.items.length > 1000)
     || input.manifestSha256 !== plan.manifestSha256) throw new Error('LEGACY_APPROVED_SCALE_REQUIRED');
   const receipts = [];
   for (const batch of plan.batches) {

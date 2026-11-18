@@ -182,7 +182,18 @@ test('PostgreSQL canonical 500 then 1000: commit-gap replay, full postimages, re
       const input={...raw,manifestSha256:plan.manifestSha256};
       const approval={partialMastersOnly:true,manifestSha256:plan.manifestSha256,sourceSha256:plan.manifest.sourceSha256,maxRecords:1001};
       const beforeApproval=(await f.admin.query('SELECT count(*)::int AS n FROM clientes')).rows[0].n;
+      const expanded={...await syntheticBatch(deps,5001,12000),batchSize:500};
+      const expandedPlan=prepararPersistenciaClientesLegado(expanded,deps.schemas);
+      assert.equal(expandedPlan.batches.length,11);
+      const expandedInput={...expanded,manifestSha256:expandedPlan.manifestSha256};
+      const stop=new Error('EXPANDED_APPROVAL_REACHED_TRANSACTION_GATE');
+      await assert.rejects(persistirPlanoClientesLegado(expandedInput,{
+        ...deps,hooks:{beforeTransaction:()=>{throw stop;}},
+      },{...approval,manifestSha256:expandedPlan.manifestSha256,
+        sourceSha256:expandedPlan.manifest.sourceSha256,maxRecords:5001}),error=>error===stop);
       await assert.rejects(persistirPlanoClientesLegado(input,deps,{...approval,maxRecords:1000}),/LEGACY_APPROVED_SCALE_REQUIRED/);
+      await assert.rejects(persistirPlanoClientesLegado(input,deps,{...approval,maxRecords:10871}),/LEGACY_APPROVED_SCALE_REQUIRED/);
+      await assert.rejects(persistirPlanoClientesLegado(input,deps,{...approval,maxRecords:11001}),/LEGACY_APPROVED_SCALE_REQUIRED/);
       await assert.rejects(persistirPlanoClientesLegado(input,deps,{...approval,partialMastersOnly:false}),/LEGACY_APPROVED_SCALE_REQUIRED/);
       assert.equal((await f.admin.query('SELECT count(*)::int AS n FROM clientes')).rows[0].n,beforeApproval);
       const composed=await persistirPlanoClientesLegado(input,deps,approval),applied=composed.receipts;

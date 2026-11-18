@@ -1,3 +1,27 @@
+## Rodada HML de 10871: autorizada, ainda nao aplicada (2026-11-18)
+
+Manifesto 45385950f651366656909e840ce5ef8201bc800b615a7aecfa4360ac976046fb:
+21 lotes de 500 e um de 371, mestres parciais, somente HML. Recibo privado
+de autorizacao gravado; snapshot de identidades dos 6600 coincide com o plano.
+Backup fresco hml-20261118T112057Z-39604bbc: restauracao de 17 tabelas, SHA
+e copia externa com ACK verificados. Revalidar novamente antes da escrita.
+O ensaio Linux comprovou o importador por lote, mas o orquestrador de rodada
+rejeita maxRecords acima de 5000 na revisao publicada. Ajuste local exige
+contagem exata para aprovacoes acima de 5000, sem ampliar o tamanho da
+transacao. Nao executar a carga ate validar o orquestrador e o SHA final.
+Zero gravacoes na HML nesta rodada; nenhuma alteracao operacional.
+
+## Complementacao fiscal sem ativacao (2026-11-17)
+
+O fluxo de revisao ja envia o ID do ClienteLocal, CAS e activate:false.
+O servico exigia o schema completo mesmo nesse modo. Agora, somente para
+local migrado ja inativo e incompleto, aceita alteracoes cadastrais parciais
+validadas pelo schema de revisao existente. Mantem ID, procedencia, finalidade,
+RBAC e auditoria transacional. Ativacao continua exigindo dados completos.
+Teste PGlite: 13 PASS, incluindo releitura, CAS, rollback e ativacao negada.
+Nenhuma carga, backfill ou migracao. HML ainda precisa da promocao do SHA
+validado e de salvar/reabrir pelo fluxo autenticado, sem ativar.
+
 ## Fiscal5000 aplicado e reconciliado como revisao INATIVA HML (2026-11-17)
 
 Autorizacao especifica cumprida:5000fiscais/90000comparacoes/replay5000 sem
