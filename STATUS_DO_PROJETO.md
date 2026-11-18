@@ -1,3 +1,26 @@
+## Catalogo: PATCH de GrupoProduto com auditoria atomica
+
+O PATCH persistente fixa Grupo/Empresa na transacao, bloqueia a linha
+e usa o mesmo executor no snapshot, na atualizacao e na auditoria.
+Ensaio HTTP/PostgreSQL isolado com login restrito: negativa da policy
+de auditoria retornou HTTP 500 e preservou o nome original; policy
+temporaria limitada a fixture permitiu HTTP 200, nome alterado,
+natureza intacta e uma auditoria com antes/depois e ator corretos.
+Nenhuma mudanca de grants ou policies no pacote; HML e producao intactas.
+Chrome no clone: editou, enviou o valor no PATCH HTTP 200, confirmou
+persistencia e auditoria unica e reabriu o mesmo registro com o novo nome.
+Regressao HTTP/PGlite: 7/7. Typecheck do backend passou.
+Snapshot Linux HEAD 4f452e84 + WIP: a transacao agora e fornecida
+pelo repositorio de GrupoProduto, sem delta em app.ts ou rotas.
+Protecoes historicas 10/10, regressao 7/7 e typecheck passaram.
+Checks Linux do snapshot: raiz 3041/3041, backend 669 aprovados
+e 31 pulados, audit:baseline, lint, typecheck e builds aprovados.
+Inventario usou somente fixtures com as montagens reais ocultas.
+Backend em diretorio privado e rede somente loopback; build
+com dependencias no proprio checkout, sem links externos.
+Proximo: confirmar CI do SHA publicado e verificar schema e ACL
+efetivos da HML em leitura antes de propor publicacao separada.
+
 ## Catalogo: gravacao no navegador bloqueada na auditoria
 
 Clone Linux, Chrome, Auth sintetico, API real e login restrito
