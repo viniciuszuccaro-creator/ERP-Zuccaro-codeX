@@ -1,3 +1,10 @@
+## Comercial: login e empresa confirmados pela interface no clone POS
+
+Chrome e login real com Auth sintetico. Proxy /api same-origin no
+ensaio manteve sessao apos reload sem alterar CSP. Central360 abriu e
+leu orcamento do PG. Edicao abriu e recalculou desconto, sem PATCH em
+Salvar; alcada e entrega/reabertura na UI ainda pendentes.
+
 ## Comercial: venda restrita por requisicao confirmada no clone POS
 
 Chrome/harness contra API canonica e PG restaurado: alcada e endereco

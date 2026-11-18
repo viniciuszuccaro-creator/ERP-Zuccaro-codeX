@@ -1,3 +1,19 @@
+## Login real do ERP e contexto comercial retomados no clone POS
+
+Base 7726438e. Chrome limpo, formulario real de login e IdP sintetico
+no WSL. Login HTTP 200 com 1 perfil e 1 empresa autorizada. Configuracao
+cross-origin HTTP perdeu sessao apos CSP do Layout. Proxy local /api
+same-origin corrigiu o ensaio sem mudar runtime/CSP nem injetar sessao.
+Reload manteve login e Empresa DEV A, vinculada ao perfil pela API.
+Central360 abriu no contexto correto e carregou 1 orcamento sintetico
+do PG. Perfil de teste recebeu apenas leitura de cadastros auxiliares;
+criador permaneceu sem alcada. Formulario de edicao abriu por duplo
+clique, desconto 2 recalculou total local 22.69; Salvar nao enviou PATCH.
+Nao conta como negativa de alcada. Proximo: conferir guards de Salvar,
+condicao/tabela retornadas e dialogs de permissao da secao Pedidos;
+depois testar aprovador em Chrome separado e entrega/reabertura na UI.
+Nenhum runtime alterado, HML servida e operacional intocados.
+
 ## Venda autentica por requisicao no clone POS; UI real pendente
 
 Base 85a14ac7. Clone descartavel do POS no WSL, ACL explicita original
