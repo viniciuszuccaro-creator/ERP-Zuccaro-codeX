@@ -1,3 +1,27 @@
+## Contatos: prova de retomada em copia restaurada
+
+Base 9890adf2 (CI7264 SUCCESS); API HML a305a143. Snapshot READ ONLY
+revalidou os 15870 candidatos (32 grupos, 41737 canais), sem ausentes
+ou divergencia de identidade, versao e contatos; 1600 com contatos
+existentes permanecem fora. Nenhuma escrita na HML ou producao.
+
+Grupo 2 no PostgreSQL 16 isolado: papel sem SUPERUSER/BYPASSRLS,
+visibilidade limitada aos 500 IDs, UPDATE somente de contatos;
+tentativa de atualizar nome negada. 11 commits com checkpoint
+sincronizado para 10: segundo processo reconheceu o 11o via replay
+e completou 500 clientes/1261 canais, conferidos por conteudo.
+Retomada e conferencias: 24.296s, p95 64ms, pico RSS 172492 KiB.
+Lock: timeout em 1023ms, replay continuou apos ROLLBACK.
+Papel desabilitado e cluster parado. Nao extrapolar tempo para VPS.
+
+WIP privado do repositorio e teste de grant por coluna: 19 testes
+focados passaram, suite integral rejeitou a mudanca no pin historico
+da composicao Cliente. Proximo: integrar o hunk sem enfraquecer as
+contraprovas historicas, rodar suite e validar editar/reabrir em UI
+real no clone. Antes da rodada HML: revisar ACL equivalente, backup
+restauravel, retorno por auditoria/reversao e decisao unica dos 32
+grupos. Obras ficam em revisao; nenhuma entrega nova liberada.
+
 ## Contatos em escala: plano preparado e POS500 ensaiado
 
 Base 58be3d0e, CI7263 SUCCESS. Sem reextracao SQL. Conferidos pins

@@ -1,3 +1,14 @@
+## Legado: contatos com papel restrito e retomada no clone
+
+9890adf2 CI7264 SUCCESS. HML a305a143: leitura confirmou 17471
+clientes, 15870 candidatos sem divergencia nos campos comparados e
+1600 com contatos fora do plano. Zero gravacoes na HML.
+Clone Linux, grupo 2: 500 clientes/1261 canais, retomada apos commit
+sem checkpoint; um replay, sem duplicacao. Timeout sob lock: 1023 ms.
+O WIP de UPDATE restrito passou testes focados, mas a suite integral
+barrou o delta pelo pin de integridade da composicao. Sem publicar
+runtime: revisar a composicao, validar UI no clone e fechar gate HML.
+
 ## Legado: plano de 15870 clientes e ensaio de 500 contatos
 
 58be3d0e CI7263 SUCCESS. Mapeamento canonico de 41737 canais,
