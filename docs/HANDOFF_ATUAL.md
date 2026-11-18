@@ -1,3 +1,25 @@
+## Catalogo: preflight de backup bloqueado por espaco
+
+VPS somente leitura: livres 22473437184 bytes, banco HML 410295319
+bytes. O guard canonico exige >20 GiB + max(256 MiB, 3 x banco),
+ou >22705722437 bytes. Deficit de 232285253 bytes ate o limiar;
+obter folga segura adicional, nao operar no limite. Inodes livres
+12230763; sem lease de deploy nem job de backup listado na leitura.
+Journal mostra RECOVERY_SPACE_RESERVE em tentativa anterior. A
+execucao posterior morreu com SIGTERM em 50s, timeout configurado
+15min; origem do sinal nao comprovada. Nao iniciar backup abaixo
+do guard nem reutilizar recibo anterior como backup fresco.
+Docker reporta 0 B recuperaveis em imagens/volumes/cache e ~299 kB
+em containers. Preservar backups, reversoes, journals e volumes.
+
+Revisao do runtime a305a143 -> 02f3fc14: 18 arquivos no delta; inclui
+contatos 0beade64 e entrega de Pedido 3b640311, alem de GrupoProduto.
+Nao aprovar deploy como se fosse apenas GrupoProduto. Separar port
+revisado ou submeter o delta completo com seus gates especificos.
+Proximo: comprovar artefatos nao essenciais com folga suficiente
+ou obter decisao de capacidade; depois backup fresco/restauro/ack.
+Sem limpeza, cobranca, reinicio, schema, carga ou deploy.
+
 ## Catalogo: pacote de decisao HML para GrupoProduto
 
 Codigo 02f3fc14 / CI7289 SUCCESS. API HML confirmada em a305a143
