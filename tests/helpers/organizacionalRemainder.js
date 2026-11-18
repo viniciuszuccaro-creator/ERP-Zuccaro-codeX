@@ -4,6 +4,15 @@ import { createHash } from 'node:crypto';
 // Exact authorized organizational delta; all historical assertion hashes stay unchanged.
 // Only historical comparisons use this projection; current behavior has separate tests.
 const entries = {
+  "server/src/repositories/postgresClienteRepository.ts": {
+    "baseline": "c3bc02c1129c4dc9239b7cf59c6b0d80268aa6ebfffadf48e68c141f33cfaa90",
+    "hunks": [
+      {
+        "before": "",
+        "after": "    // A contact-only command must not require UPDATE on unrelated master columns.\n    if (data.contatos !== undefined && Object.keys(data).every(key => key === 'contatos')) {\n      const result = await executor.query(\n        `UPDATE clientes SET contatos=$1::jsonb\n         WHERE group_id=$2 AND id=$3\n         RETURNING *, to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SS.US\"Z\"') AS cliente_updated_at_canonical`,\n        [data.contatos === null ? null : JSON.stringify(data.contatos), scope.groupId, id],\n      );\n      const row = result.rows[0] as Record<string, unknown> | undefined;\n      return row ? mapCliente(row) : null;\n    }\n"
+      }
+    ]
+  },
   "server/src/app.ts": {
     "baseline": "696acc2f603c866168e904ee68c327874be84ddf973de488b0635666faa57fd2",
     "hunks": [

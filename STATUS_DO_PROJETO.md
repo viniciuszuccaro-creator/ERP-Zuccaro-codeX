@@ -1,3 +1,19 @@
+## Legado: composicao e escrita restrita de contatos
+
+Base c612aab8, CI7265 SUCCESS documental. A projecao historica remove
+somente o novo hunk de UPDATE(contatos) para comparar o ancestral;
+hashes e contraprovas anteriores preservados. Suite principal Linux:
+3040/3040; backend 667 aprovados, 31 pulados, zero falhas em Linux
+isolado. Auditoria, lint, typecheck e builds passaram. O ensaio
+PostgreSQL com retomada continua valido: SQL e
+checkpoint nao mudaram neste lote.
+
+HML a305a143, sem escrita. A policy atual de clientes usa principal
+sem BYPASSRLS, mas o grant permite UPDATE de tabela e de nome.
+Nao reutilizar esse papel para a rodada. Falta ensaiar executor de
+lote equivalente ao restrito, navegador no clone e fechar backup
+restauravel e autorizacao especifica dos 32 grupos.
+
 ## Legado: contatos com papel restrito e retomada no clone
 
 9890adf2 CI7264 SUCCESS. HML a305a143: leitura confirmou 17471

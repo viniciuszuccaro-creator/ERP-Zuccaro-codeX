@@ -1,3 +1,38 @@
+## Contatos: composicao validada e preflight de ACL HML
+
+Base c612aab8, CI7265 SUCCESS documental. Hunk real de contatos mantido;
+apenas a projecao historica exata foi acrescentada em testes. Suite
+principal Linux 3040/3040; backend 667 passaram, 31 pulados, zero
+falhas. Contraprovas historicas preservadas. A
+retomada POS500 nao foi repetida: gravacao e permissao do clone nao
+mudaram. A API HML continua a305a143, com zero escrita nesta etapa.
+
+Preflight READ ONLY: a policy ALL de clientes aponta para papel sem
+SUPERUSER/BYPASSRLS, mas com UPDATE da tabela, contatos e nome. Nao
+demonstrada equivalencia com o papel do ensaio. Proximo: ensaiar papel
+de lote isolado, limitado a SELECT dos IDs do manifesto, UPDATE
+de contatos e auditoria canonica; conferir os negativos e validar UI
+autenticada no clone. Revalidar o plano e o backup restauravel antes
+da decisao unica para a HML (15870 clientes, 41737 canais, 32 grupos).
+Backup de 18/11 13:49Z: SHA e 34508800 bytes conferem com o
+manifesto e o recibo externo separado; manifesto marca restauracao
+verificada. Conferencia da copia externa pelo recibo, nao nova
+leitura daquele destino. Gerar backup fresco antes da aplicacao.
+
+Obras: a fila privada distingue 27648 em revisao de 117 ocorrencias
+com entrega existente a reconciliar. A HML tem 117 entregas inativas
+e zero locais de entrega ativos e completos; nenhuma ativacao.
+Fonte bruta: 35309 chaves CODIGOCLIENTE/ITEM/SEQUENCIA completas e
+unicas; unicidade nao comprova completude nem vinculo no destino.
+Catalogo:
+inventario confirma ClasseMateriais (46), GruposClasseMateriais (24),
+TabelaPrecosSCI (6), TabelaPrecosItensSCI (5162) e historico (48866).
+O pareamento historico de classe de outro recorte nao prova as 817
+referencias atuais. Proxima leitura dirigida: chaves nativas e
+vinculos ao Grupo/Empresa; zero precos operacionais aprovados.
+Referencia erp-integra-novo d1ee7ab0 contem contratos Base44 de
+GrupoProduto e UnidadeMedida, nao e evidencia dos registros reais.
+
 ## Contatos: prova de retomada em copia restaurada
 
 Base 9890adf2 (CI7264 SUCCESS); API HML a305a143. Snapshot READ ONLY

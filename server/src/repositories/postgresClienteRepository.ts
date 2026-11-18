@@ -383,6 +383,17 @@ export class PostgresClienteRepository implements ClienteRepository {
     if (data.contatos !== undefined && current.contatos === undefined) {
       throw new AppError(503, 'CLIENTE_CONTATOS_STORAGE_REQUIRED', 'Reviewed contacts schema required');
     }
+    // A contact-only command must not require UPDATE on unrelated master columns.
+    if (data.contatos !== undefined && Object.keys(data).every(key => key === 'contatos')) {
+      const result = await executor.query(
+        `UPDATE clientes SET contatos=$1::jsonb
+         WHERE group_id=$2 AND id=$3
+         RETURNING *, to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS cliente_updated_at_canonical`,
+        [data.contatos === null ? null : JSON.stringify(data.contatos), scope.groupId, id],
+      );
+      const row = result.rows[0] as Record<string, unknown> | undefined;
+      return row ? mapCliente(row) : null;
+    }
     const rawDoc = data.documento !== undefined || data.cpf_cnpj !== undefined
       ? (data.documento ?? data.cpf_cnpj ?? '')
       : undefined;

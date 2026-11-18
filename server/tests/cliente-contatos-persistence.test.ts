@@ -289,7 +289,9 @@ test('contacts canonical persistence, CAS and legacy receipts: isolated syntheti
       await assert.rejects(enrich({ ...command, contatos: [...baseline, baseline[0]] }), { code: 'VALIDATION_ERROR' });
       assert.deepEqual(await snapshot(), before); assert.equal(await audits(), count);
       const addition = { ...command, contatos: [...baseline, { id: 'new-enrichment-only', tipo: 'Telefone', valor: '007788' }] };
+      await f.exec(`REVOKE UPDATE ON clientes FROM "${ROLE}"; GRANT UPDATE(contatos) ON clientes TO "${ROLE}"`);
       const applied = await enrich(addition);
+      await assert.rejects(f.data.query('UPDATE clientes SET nome=nome WHERE id=$1', [addition.id]), { code: '42501' });
       const after = await snapshot(); assert.ok(after);
       assert.deepEqual(after, { ...before, contatos: addition.contatos, updated_at: after.updated_at });
       assert.deepEqual((after.contatos as typeof channels).slice(0, baseline.length), baseline);
@@ -300,6 +302,7 @@ test('contacts canonical persistence, CAS and legacy receipts: isolated syntheti
       const restored = await snapshot(); assert.ok(restored);
       assert.deepEqual(restored, { ...before, updated_at: restored.updated_at });
       assert.equal((await enrich(reversal)).reused, true); assert.equal(await audits(), count + 2);
+      await f.exec(`REVOKE UPDATE(contatos) ON clientes FROM "${ROLE}"; GRANT UPDATE ON clientes TO "${ROLE}"`);
     });
     await t.test('legacy captures caller fields before await; final reauthorization failure rolls back receipt', async () => {
       const before = await snapshot(); assert.ok(before);
