@@ -1,3 +1,13 @@
+## Obras: tipos de ajuste e limites da fonte
+
+Catalogo SQL sem modulos, dependencias, gatilhos ou propriedades
+que expliquem o historico. Cinco rotulos reconhecidos em 3047
+eventos: Endereco (1914), Referencia (821), Bairro (192),
+Situacao (91), CEP (29). Outros 49 pendentes. 1214 Obras
+distintas vinculadas; 228 com mais de um evento. Nenhum numero
+comprovado, zero novas entregas e zero carga. HML a305a143 e
+contexto Grupo CPA vistos no Chrome; aba Contatos nao validada.
+
 ## Obras: historico consultado no leitor isolado
 
 f144f6fd CI7273 SUCCESS. 3096 eventos; sem coluna propria de

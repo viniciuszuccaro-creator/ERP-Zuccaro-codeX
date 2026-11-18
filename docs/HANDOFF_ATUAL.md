@@ -1,3 +1,22 @@
+## Obras: classificacao parcial dos tipos de ajuste
+
+Leitor isolado consultado e parado. Sem modulos, dependencias,
+gatilhos ou propriedades de catalogo que expliquem esta tabela.
+Cinco rotulos comprovados: Endereco 1914, Referencia 821,
+Bairro 192, Situacao 91 e CEP 29. Tres tipos nao classificados
+somam 49 eventos. Nenhum conteudo atual apenas numerico; texto
+de Endereco/Referencia nao prova numero de imovel. Dos 1536
+eventos vinculados, 1214 Obras distintas e 228 com varios eventos.
+Sem regra comprovada para escolher estado aplicavel nem novos
+locais aptos. Proxima leitura: conferir tres tipos restantes e
+fonte independente com numero estruturado; sem extracao massiva.
+
+Chrome confirmou URL Cadastros HML e Grupo CPA na sessao existente.
+Clique em Contatos falhou por falta de geometria; solicitada abertura
+manual, sem salvar. Sem aceite da amostra ou recarga. API a305a143.
+Disco 22479138816 bytes livres na leitura, ainda abaixo da ultima
+reserva 22705722437. Sem limpeza/deploy/escrita em HML ou operacional.
+
 ## Obras: leitura dirigida do historico de ajustes
 
 f144f6fd CI7273 SUCCESS, API HML a305a143. Leitor SQL ja existente
