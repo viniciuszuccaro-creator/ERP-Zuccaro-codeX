@@ -1,3 +1,13 @@
+## Contatos: aceite de edicao e reabertura no navegador do clone
+
+e80cbfcd CI7267 SUCCESS; API HML a305a143, zero escrita. Chrome real
+com Auth sintetico no clone: busca, detalhe, aba Contatos, edicao de
+observacao e persistencia na API/PostgreSQL. Outros canais, nome e
+observacao geral inalterados; novo login e reabertura conferidos.
+Manifesto privado conferido: 31 grupos de 500 e um de 370,
+15870 clientes e 41737 canais. Falta runner final dos 32 grupos e
+gate HML; nenhum tempo de aplicacao medido na VPS.
+
 ## Contatos: negativas de ACL e reversao restrita no clone
 
 0beade64 CI7266 SUCCESS. No clone restaurado, o executor enxerga

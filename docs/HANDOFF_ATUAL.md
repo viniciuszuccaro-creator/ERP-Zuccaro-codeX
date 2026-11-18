@@ -1,3 +1,31 @@
+## Contatos: aceite no Chrome do clone e pin da rodada integral
+
+e80cbfcd CI7267 SUCCESS; API HML a305a143. Chrome com login real da
+interface e provedor sintetico, somente contra clone PostgreSQL
+restaurado. Perfil ERP escopado ao Grupo CPA. Busca por codigo,
+detalhe HTTP 200, aba Contatos e valor importado conferidos. Editada
+observacao de um canal pelo formulario e gravada pelo botao do
+cadastro. PostgreSQL confirmou observacao do contato, outros canais,
+nome e observacao geral preservados. Nova sessao de navegador, login
+e reabertura confirmaram a observacao gravada e outro canal visivel.
+Isolamento SQL usa as contraprovas do checkpoint anterior; nao
+confundir login sintetico ou o principal local de API com o da HML.
+
+O pin do plano privado 92848c8f foi conferido integralmente:
+31 x 500 mais 370, 15870 clientes e 41737 canais. Proximo: fechar
+executor dedicado para 32 grupos, com identidade de operacao fixa,
+checkpoint duravel e retirada de acesso, e pedir uma unica decisao
+de carga depois do ensaio. Aplicar so na HML, com backup fresco
+restaurado, manifesto revalidado, reversao por postimage e parada
+por erro sistemico, desvio de escopo ou pressao de recursos.
+Preservar os 1600 com contatos fora da rodada. Zero cargas HML.
+
+Obras: export de 35309 linhas nao tem campos estruturados de numero
+e pais; 22893 textos tem padrao final candidato de numero, ainda
+sem prova de numero de imovel. Nao promover automaticamente. Fiscal
+de mestre e demais fontes continuam em revisao separada. Zero novas
+entregas ou catalogo operacional; Central sem aceite na VPS.
+
 ## Contatos: isolamento do executor confirmado no clone
 
 0beade64 CI7266 SUCCESS; API HML a305a143. No clone restaurado, RLS
