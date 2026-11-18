@@ -1,3 +1,13 @@
+## Catalogo: aceite de navegador pendente de contexto no clone
+
+25dda114 / CI7285 SUCCESS. Chrome com Auth sintetico, API real e
+PostgreSQL isolado chegou a Cadastros e recebeu HTTP 200 em auth/session.
+Sem Grupo/Empresa ativos no contexto visual, o card bloqueou a abertura;
+nao houve requisicao de GrupoProduto nem prova de grade, edicao ou reabertura.
+Proximo: conferir as opcoes retornadas ao perfil sintetico e selecionar o
+contexto autorizado pelo seletor real, sem injetar IDs, antes de retomar a grade.
+HML e operacional intocados; nao repetir carga ou suite HTTP ja comprovada.
+
 ## Catalogo: formulario de GrupoProduto alinhado ao RBAC HTTP
 
 9bdcc9f6/CI7284 SUCCESS no backend. Formulario HTTP usa a chave
