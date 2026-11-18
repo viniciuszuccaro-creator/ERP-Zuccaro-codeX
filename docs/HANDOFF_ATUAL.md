@@ -1,3 +1,36 @@
+## VPS: seis exports SQL centralizados e vinculacao CPA revisada
+
+Base 8b80bfbc / CI7262 SUCCESS. VPS 2 vCPU, 7940 MiB RAM, 5687 MiB
+disponiveis antes, 26 GiB disco/6% inodes; sar do dia ~85% ociosa.
+Imagem SQL2025 no digest anterior. Leitor sem rede/portas, 3 GiB,
+0.65 CPU, volume separado e rootfs somente leitura. Primeira inicializacao
+falhou no AppLoader antes da copia; segunda passou sem afrouxar isolamento.
+Par original revalidado por SHA, somente copia anexada, DBCC filelist
+e identidade READ_ONLY conferidos, SQL com ROLLBACK. Dois leitores
+parados, nenhum OOM na prova concluida. Ao fim 21 GiB e 5727 MiB livres
+ou disponiveis; volumes de prova conservados, sem tocar servicos ERP.
+
+Privado: incoming/erp344-reader-20261118T170353Z. Manifesto, inventario,
+controller SHA conferido e recibos por arquivo. Cinco auxiliares: 53412
+linhas/35281985 bytes. ClientesObras:35309/42161319. Seis exports
+revalidados:88721/77443304; 981 tabelas inventariadas, incluindo fontes
+candidatas a classes, precos e historicos. Inventario nao valida joins.
+
+binding-review.private.json, nao executavel, cruza CODIGOCLIENTE com
+codigo_legado unico de 17471 clientes do Grupo CPA na HML:
+Telefones:33690 linhas/15871 clientes sem contatos,3487/1600 com
+contatos a reconciliar,11391 fora do destino. Obras:27648/17305 sem
+entrega a revisar,117/100 com entrega existente,7544 fora do escopo.
+Nenhum lote gravado ou ativado; zero entrega operacional nova.
+Proximo: aplicar mapeador canonico de contatos por chave nativa,
+separar canal invalido/valor manual, gerar plano CAS e ensaiar lote
+com replay e reversao. Em Obras preservar ITEM/SEQUENCIA e componentes,
+sem inferir numero, pais, situacao ou aptidao; financeiro sem carga.
+
+HML API a305a143, sem publicacao nem mudanca. Delta comercial SQL,
+API/web e dados seguem gates separados; nao pedir autorizacao de carga
+antes de manifesto executavel ensaiado. Operacional intocado.
+
 ## Leitor SQL preparado; disco fisico limita extracao
 
 Base 87d2acbf / CI7261 SUCCESS. WSL2 Ubuntu 24.04; namespace de rede

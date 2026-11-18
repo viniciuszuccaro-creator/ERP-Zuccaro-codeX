@@ -1,3 +1,13 @@
+## Legado VPS: cinco auxiliares e ClientesObras extraidos
+
+8b80bfbc CI7262 SUCCESS. Leitor temporario isolado; seis exports
+88721 linhas/77443304 bytes validados e 981 tabelas inventariadas.
+Vinculacao read-only CPA: 33690 linhas/15871 clientes sem contatos;
+27648 Obras/17305 clientes sem entrega, ainda em revisao. Export e
+manifesto privado centralizados. Leitor parado. Zero gravacoes HML,
+API a305a143 e operacional preservado. Proximo: plano CAS e ensaio
+de contatos; Obras exigem revisao antes de ativar.
+
 ## Legado: leitor SQL baixado; espaco fisico insuficiente
 
 87d2acbf CI7261 SUCCESS. APT oficial baixado no WSL, sem instalar.
