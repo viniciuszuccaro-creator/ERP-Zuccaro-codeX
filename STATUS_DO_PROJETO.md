@@ -1,3 +1,14 @@
+## HML a305a143 publicada; RG ensaiado sem aplicar (2026-11-18)
+
+Promocao autorizada somente API/web HML, a305a143/CI7250, backup
+121955Z-171446bd verificado com restauracao e copia externa. HTTPS API/web
+mesmo SHA, asset verificado, anon401, 17 provas iguais. Containers
+anteriores c370b55c preservados parados para retorno. Sem DDL/grants,
+ativacao, carga ou alteracao operacional. Aceite autenticado pendente.
+RG: 8677 fingerprints conferidos; amostra restaurada 20 aplicados,
+replay sem novas linhas, 20 revertidos, 40 auditorias no ensaio,
+negativas de CAS e outro Grupo confirmadas. Zero escrita RG na HML.
+
 ## Enderecos ensaiados e inventario dos 10871 (2026-11-18)
 
 Pacote a305a143/CI7250 ensaiado em restauracao do backup pos-carga:

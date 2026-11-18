@@ -1,3 +1,20 @@
+## HML a305a143 servida; aceite autenticado pendente (2026-11-18)
+
+Promocao autorizada apos backup121955Z-171446bd restore17/SHA/externo.
+API/web a305a143883d497e5d54c996dd711d6ed674d19b/CI7250,
+health/marker/asset/anon401; 17 tabelas com provas iguais; PG e
+operacional mesmos containers. Recibo privado em
+promotion-a305a143-20261118-r1. API/web c370b55c preservados parados
+para reversao se falhar. Nenhum endereco ativado. Aceite: Dados Gerais
+> Revisar fiscal > salvar sem ativar > reabrir, confirmar mesmo ID e
+campos omitidos. Nao inferir sucesso autenticado de health/CI.
+
+RG candidatos: ensaio privado enrichment-10871-20261118-r1/rehearsal-r1:
+8677 fingerprints conferidos, 20 apply/replay/reverse no restaurado,
+40 novas auditorias somente no ensaio, 17471 clientes preservados,
+CAS antigo e outro Grupo negados. Sem gravacao RG na HML. Proximo
+gate separado: confirmar escopo e backup ao preparar aplicacao real.
+
 ## Canary a305a143 e candidatos de enriquecimento (2026-11-18)
 
 Canary restaurado do POS121955-171446bd:17 tabelas preservadas antes/depois,
