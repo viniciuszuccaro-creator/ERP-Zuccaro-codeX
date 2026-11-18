@@ -1,3 +1,14 @@
+## Contatos: negativas de ACL e reversao restrita no clone
+
+0beade64 CI7266 SUCCESS. No clone restaurado, o executor enxerga
+somente o recorte; Grupo/Empresa incorretos e ID fora do manifesto
+nao leem nem alteram registros. Nome e DELETE de auditoria negados.
+500 recibos para 500 clientes. Uma reversao, replay e reaplicacao
+canonicos passaram com o papel restrito. Sem repetir POS500.
+HML a305a143, 17471 clientes, 1600 com contatos, zero grupos gravados.
+Pendentes: navegador no clone, executor final de 32 grupos, backup
+fresco e autorizacao especifica na HML.
+
 ## Legado: composicao e escrita restrita de contatos
 
 Base c612aab8, CI7265 SUCCESS documental. A projecao historica remove

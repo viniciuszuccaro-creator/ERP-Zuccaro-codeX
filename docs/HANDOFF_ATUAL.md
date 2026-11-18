@@ -1,3 +1,26 @@
+## Contatos: isolamento do executor confirmado no clone
+
+0beade64 CI7266 SUCCESS; API HML a305a143. No clone restaurado, RLS
+do papel de ensaio foi ajustada para negar contexto Empresa e
+vincular INSERT de auditoria ao ator, acao e tipo de recibo. A role
+restrita nao leu nem escreveu ID fora do manifesto, outro Grupo ou
+contexto Empresa; UPDATE de nome e DELETE de auditoria negados.
+500 recibos de aplicacao para 500 clientes antes da contraprova;
+uma reversao, replay e reaplicacao canonicos com contatos conferidos.
+A role voltou a NOLOGIN e o cluster de ensaio foi parado.
+
+O executor servido da HML nao foi modificado. Proximo: validar
+editar/salvar/reabrir no navegador do clone, fechar configuracao do
+executor para o manifesto inteiro, incluindo retirada do acesso e
+checkpoint, e preparar decisao unica de 15870 clientes/41737 canais
+em 32 grupos. Backup fresco e revalidacao imediatamente antes de
+escrever. Zero grupos, clientes ou canais gravados nesta rodada.
+
+HML READ ONLY: 15970 locais FISCAL e 117 ENTREGA; todos sem numero
+e pais persistidos, zero ativos e completos. Nao ativar nem gerar
+locais novos pelo mesmo ID de origem; sem vendas com entrega
+comprovadas na versao servida.
+
 ## Contatos: composicao validada e preflight de ACL HML
 
 Base c612aab8, CI7265 SUCCESS documental. Hunk real de contatos mantido;
