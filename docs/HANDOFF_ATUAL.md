@@ -1,3 +1,22 @@
+## Catalogo: contraste do schema HML e prova de leitura no clone
+
+HML tem grupos/empresas/perfis, clientes, cliente_empresas,
+marcas e auditoria; sem unidades, grupos de produto, setores,
+produtos, vinculos produto/empresa ou tabelas/itens de preco.
+Delta estrutural a revisar por objeto: 005, 006, 013 e 041
+quando houver elegibilidade operacional. 013 altera tambem
+cliente_empresas; conferir FK, coluna e gatilho antes de portar.
+
+Clone erp_sale_pos85 por socket, READ ONLY/ROLLBACK. RLS forcada.
+SET SESSION AUTHORIZATION no papel restrito existente (nao login
+novo): proprio escopo 1 produto, 2 unidades, 1 tabela, 2 itens;
+outro Grupo zero em todos. Marcas, grupos de produto e setores
+sem SELECT e sem policies no clone. Nao interpretar essa negativa
+como cadastro vazio. Proximo: ensaiar delta de leitura dos tres
+cadastros com RBAC e contexto, sem liberar escrita, e comparar
+schema/ACL HML. Dados ainda dependem de crosswalk e vigencia.
+Clone parado; HML e operacional sem alteracao.
+
 ## Catalogo: rota de vinculo empresarial nao comprovada nesta copia
 
 Pesquisa por aliases da chave: VendaExternaItens.CODIGOTABELAPRECO

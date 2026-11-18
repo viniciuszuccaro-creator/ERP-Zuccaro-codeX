@@ -1,3 +1,11 @@
+## Catalogo: estrutura e leitura restrita no clone
+
+HML sem relacoes de produto, unidades e precos; clone tem RLS
+forcada. Papel nao administrativo leu 1 produto, 2 unidades,
+1 tabela e 2 itens no escopo sintetico; outro Grupo leu zero.
+Marcas, grupos de produto e setores sem SELECT para esse papel
+e sem policies no clone. Somente leitura; sem DDL ou deploy.
+
 ## Catalogo: consumidores candidatos e lacuna de schema HML
 
 VendaExternaItens tem CODIGOTABELAPRECO; cabecalho tem CODIGOEMPRESA,
