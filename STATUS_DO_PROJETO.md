@@ -1,3 +1,16 @@
+## HML: endereco aceito, 8677 RGs aplicados (2026-11-18)
+
+Aceite manual do dono: salvou e reabriu o mesmo fiscal em a305a143,
+local inativo e demais campos preservados. Nao e aceite de entrega/pedido.
+Gate RG HML autorizado e executado: 8677 complementos, 8677 auditorias,
+0 conflitos; replay amostra20 sem novas linhas. Tempo 682.32s, pico RSS
+246546432 bytes. 594014 comparacoes em 17471 clientes sem divergencias,
+15971 ativos/1500 inativos,4200 contatos,5217 locais conservados.
+15 tabelas alheias e auditoria anterior preservadas. Reversa por postimage
+preparada e nao executada na HML. Nenhuma mudanca no operacional.
+PRE123849Z-40ae0bf1 e POS125400Z-9c66c7a8: restore17/SHA/externoACK.
+Nao reaplicar RG; cadastro permanece parcial.
+
 ## HML a305a143 publicada; RG ensaiado sem aplicar (2026-11-18)
 
 Promocao autorizada somente API/web HML, a305a143/CI7250, backup

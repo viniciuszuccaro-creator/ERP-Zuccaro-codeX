@@ -1,3 +1,20 @@
+## HML a305a143 aceita no fiscal; lote RG8677 concluido (2026-11-18)
+
+Dono confirmou salvar/reabrir mesmo fiscal, sem ativar e sem perda de
+campos. Aceite autenticado MANUAL nesse alcance; nao supor entrega/pedido.
+Gate especifico RG: 8677 atuais enriquecidos,0 conflitos/8677 auditorias,
+replay amostral20 sem novas linhas. 682.32s, pico RSS246546432 bytes.
+Reconciliacao 594014 comparacoes/17471 clientes,0 divergencias; 15 tabelas
+alheias e auditorias antigas iguais. 15971 ativos/1500 inativos,
+4200 contatos e 5217 locais conservados. Nenhum novo cliente ou ativacao.
+Banco e operacional preservados; nenhuma mudanca de schema/grants.
+
+PRE123849Z-40ae0bf1 restore17/SHA/externoACK apos aceite do fiscal; POS
+125400Z-9c66c7a8 restore17/SHA/externoACK. Recibos privados em
+incoming/enrichment-10871-20261118-r1/{owner-authorization-rg,application-r1,
+application-r1-terminal}. Reversa por postimage preparada e ensaiada em
+copia, nao executar sem gate; nao repetir lote ou usar RG como completude.
+
 ## HML a305a143 servida; aceite autenticado pendente (2026-11-18)
 
 Promocao autorizada apos backup121955Z-171446bd restore17/SHA/externo.
