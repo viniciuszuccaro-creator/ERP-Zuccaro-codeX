@@ -1,3 +1,19 @@
+## Catalogo: preflight HML de GrupoProduto somente leitura
+
+02f3fc14 publicado; CI7289 ainda em andamento na consulta.
+HML API a305a143 pela configuracao ativa, no banco/schema pinados.
+Transacao READ ONLY/ROLLBACK pelo principal da API: sem superuser
+ou BYPASSRLS; grupos_produto, unidades, setores, produtos e tabelas
+de preco ausentes. Marcas existe sem SELECT efetivo para esse papel.
+Groups, empresas e funcoes de gatilho de tenant e updated_at existem.
+Audit_logs tem RLS forcada e INSERT efetivo; uma policy INSERT
+aplicavel, com Grupo e ator iguais aos pins da configuracao HML.
+A leitura de catalogo nao comprova INSERT de auditoria no runtime.
+Proximo: ensaiar em copia restaurada somente tabela/indices/gatilhos
+de GrupoProduto e SELECT/UPDATE delimitados por Grupo/Empresa.
+Reusar auditoria existente e provar rollback/negativas; sem portar
+005 inteiro, liberar criacao/inativacao ou aplicar schema/deploy HML.
+
 ## Catalogo: PATCH de GrupoProduto com auditoria atomica
 
 O PATCH persistente fixa Grupo/Empresa na transacao, bloqueia a linha
