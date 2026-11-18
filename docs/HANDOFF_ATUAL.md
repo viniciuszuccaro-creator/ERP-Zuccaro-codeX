@@ -1,3 +1,19 @@
+## Catalogo: formulario de GrupoProduto usa permissoes da API
+
+Backend 9bdcc9f6 CI7284 SUCCESS reutilizado. No HTTP, formulario
+confere chave exata Cadastros.grupo_produto no perfil; somente
+legado mantem fallback de Produto. Criar nao libera editar;
+editar controla campos/status do rascunho; inativar autoriza
+a acao canonica de inativacao do registro. Perfil carregando
+bloqueado e ID ligado ao registro preservado.
+
+React SSR com handlers reais: positivos e negativas de Produto,
+coringa, leitura, carregamento, criar, editar e inativar. Suite
+raiz 3041/3041. Helper historico compartilhado ficou inalterado.
+Proximo: navegador no clone com perfil e API reais da candidata,
+incluindo grade e reabertura, antes de propor ACL/deploy HML.
+Nenhuma escrita, deploy ou alteracao operacional.
+
 ## Catalogo: guarda de GrupoProduto ligada e validada
 
 Wiring reaproveita TenantCrudService e Cadastros.grupo_produto.

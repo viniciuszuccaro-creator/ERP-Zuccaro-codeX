@@ -1,3 +1,12 @@
+## Catalogo: formulario de GrupoProduto alinhado ao RBAC HTTP
+
+9bdcc9f6/CI7284 SUCCESS no backend. Formulario HTTP usa a chave
+explicita Cadastros.grupo_produto sem herdar Produto ou coringa.
+Criar, editar rascunho e inativar registro sao acoes distintas;
+perfil carregando falha fechado. Modo legado preservado.
+Suite raiz 3041/3041, incluindo componente montado via SSR.
+Sem deploy ou alteracao da HML.
+
 ## Catalogo: RBAC granular de GrupoProduto corrigido
 
 TenantCrudService usa Cadastros.grupo_produto no wiring do app.
