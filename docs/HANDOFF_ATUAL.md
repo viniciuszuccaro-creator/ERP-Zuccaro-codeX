@@ -1,3 +1,18 @@
+## Catalogo: contraprova HTTP dos cadastros auxiliares
+
+App real em loopback isolado, Auth sintetico e PGlite. Com
+ACL SELECT temporaria na fixture, Marca e Setor responderam
+200 com permissao explicita e 403 sem permissao de entidade.
+As tres rotas bloquearam outro Grupo (403) e sessao invalida
+(401). GrupoProduto nao passou o negativo de permissao local:
+falta a guarda granular no wiring de TenantCrudService.
+
+Nao habilitar ACL de GrupoProduto na HML. Proxima acao: confirmar
+chave RBAC usada pelos consumidores, ligar a guarda canonica e
+testar visualizar e mutacoes com permissoes independentes,
+preservando fixture e contraprovas historicas. Sem DDL, deploy
+ou mudanca de runtime neste checkpoint.
+
 ## Catalogo: tres cadastros auxiliares com leitura minima ensaiada
 
 Clone erp_sale_pos85, socket, papel restrito trial_sale85 por

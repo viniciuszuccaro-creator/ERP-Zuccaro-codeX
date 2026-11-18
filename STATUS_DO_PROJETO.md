@@ -1,3 +1,10 @@
+## Catalogo: aceite HTTP restrito e bloqueio de GrupoProduto
+
+API real com Auth sintetico e PGlite: Marca e Setor validaram
+permissao da entidade. GrupoProduto ainda requer guarda granular
+antes de publicar o delta. Auth e isolamento de Grupo passaram
+nas tres rotas. Sem mudanca de runtime ou da HML.
+
 ## Catalogo: leitura minima dos cadastros auxiliares no clone
 
 Marcas, grupos de produto e setores: SELECT temporario com RLS
