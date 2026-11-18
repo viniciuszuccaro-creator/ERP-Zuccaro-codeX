@@ -1,3 +1,39 @@
+## Pedido direto A-B salvo/reaberto; fonte SQL na VPS confirmada
+
+Base 3b640311, CI7260 SUCCESS; sem delta runtime nesta rodada. No clone
+POS, Chrome real com login sintetico: entrega A hidratada, troca limpou
+selecao, escolha de entrega B via teclado habilitou a gravacao. HTTP
+200, detalhe reaberto e nova sessao confirmou entrega B no formulario.
+PostgreSQL: obra anterior ausente, item 2 KG a 12.345678, total 24.691356
+(R$24,69). Em prova separada segurou 1 resposta real central-360 de A
+no Chrome, voltou a B e liberou A: B permaneceu e local antigo nao voltou.
+Sem gravacao na HML. Nao repetir prova da conversao/alcada anterior.
+
+HML: /cadastros HTTP200; /api/v1/meta a305a143 (CI7250 registrada),
+ProdutoEmpresa disabled. Contagens via snapshot read-only: 17471
+clientes, 15971 ativos, 16087 locais, 16087 finalidades, 1600 contatos
+nao nulos, 15970 clientes com fiscal, 100 com entrega, 0 com entrega
+operacional. Grupo CPA 001, 3Z 001, CPA 002. 17471 documentos/IDs legados,
+13993 RG, 3031 IE e 1227 email preenchidos; nao sao clientes completos.
+
+Acervo privado: cinco exports nao localizados nos dois diretorios
+consultados. Par MDF/LDF do pacote local verificado tem 2/2 membros com
+SHA e tamanho iguais na centralizacao privada da VPS (duas copias
+coincidentes por membro). Reextracao possivel da copia: usar leitor SQL
+Server isolado e o procedimento anterior de attach somente da copia,
+READ ONLY/ROLLBACK, conferir as cinco contagens e SHA. WSL sem leitor
+SQL Server; Windows original parado. Sem extracao ou transferencia.
+Catalogo: 14/14 validam sem conversao, sem mapa de Grupo; 870 revisao,
+1 historico, 0 precos aptos. Entre produtos, 817 referencias de classe
+nao constam do export atual e 54 nao foram informadas. Sem lote/medicao.
+
+Promocao ainda nao solicitada: A) fechar ACL comercial minima, incluidos
+locks Clientes e edicao restrita de Pedido, em backup restaurado;
+B) publicar API/web juntos no SHA revisado com ProdutoEmpresa somente
+apos schema, reversao para a305a143 e teste autenticado; C) sem carga de
+catalogo ou ativacao ate comprovar fonte/vinculos e manifesto. Nao usar
+fiscais inativos para suprir entrega. Sem alteracao operacional.
+
 ## Troca de cliente limpa entrega e obra no Pedido
 
 Base 22e26cce / CI7259 success. O handler anterior conservava IDs

@@ -1,3 +1,11 @@
+## Comercial: pedido direto salvo e reaberto com entrega B
+
+3b640311 CI7260 SUCCESS. Chrome no POS isolado: troca A-B limpou local,
+B salvo/reaberto; resposta retida de A nao contaminou B. HML HTTP200,
+API a305a143, 17471 clientes/16087 locais, zero entrega operacional.
+MDF/LDF verificados na VPS; cinco exports ainda nao recuperados.
+Proximo: leitor SQL isolado, crosswalk de Grupo e gate comercial HML.
+
 ## Comercial: troca de cliente limpa entrega e obra
 
 Base 22e26cce CI7259 success. A-B-A conferido no formulario de Pedido
