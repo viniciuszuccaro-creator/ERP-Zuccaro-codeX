@@ -1,3 +1,24 @@
+## Aceite de contatos e proximo lote de enderecos
+
+Sem repeticao do manifesto 92848c8f. Controle Windows interrompeu
+antes de confirmar a URL; aba ativa do Chrome era WhatsApp.
+Proxima acao do aceite: deixar Cadastros da HML autenticada em
+primeiro plano e conferir amostra de importados multicanal e um
+cliente fora da rodada, sem salvar. Aceite do banco nao e do Chrome.
+
+Reserva READ ONLY: 22478835712 bytes livres, minimo estrito
+22705722437; deficit 226886726. Indices APT ja liberados na rodada
+anterior, sem cache adicional suficiente comprovado. Manter
+backups, volumes, journals e reversoes. Antes da proxima escrita,
+obter folga adicional com margem e comprovar novo backup/restauro.
+
+Obras: 27648 em revisao, 25353 vinculadas a clientes ativos e
+2295 a inativos; 117 ocorrencias com entrega existente ficam em
+reconciliacao. HML: 15970 fiscais e 117 entregas, zero numero/pais
+estruturados nesse recorte e nenhuma entrega ativa completa.
+Proxima leitura: colunas e chaves de ClientesObrasHistoricoAjustes
+em leitor isolado, sem promover sufixos a numero. Sem cargas.
+
 ## Contatos HML: rodada 92848c8f concluida
 
 e0909515 CI7271 SUCCESS. Limpeza restrita a 73 indices/cache APT
