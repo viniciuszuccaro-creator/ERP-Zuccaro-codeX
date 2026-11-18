@@ -1,3 +1,17 @@
+## Catalogo: gravacao no navegador bloqueada na auditoria
+
+Clone Linux, Chrome, Auth sintetico, API real e login restrito
+PostgreSQL. Grade/detalhe HTTP 200; salvar disparou PATCH e retornou
+500/42501 na policy de audit_logs. O novo nome nao foi confirmado
+no banco; o conteudo alterado do PATCH tambem nao foi comprovado.
+Nao houve aceite de salvar/reabrir. TenantCrudService.update chama
+repo.update e audit.append separadamente; ausencia do novo nome
+nesse ensaio nao comprova rollback atomico.
+Proximo: provar payload do formulario e implementar/ensaiar uma
+transacao compartilhada com contraprova de falha de auditoria;
+so entao ensaiar policy minima no clone e repetir salvar/reabrir.
+Nenhuma alteracao na HML ou no operacional.
+
 ## Catalogo: grade e reabertura comprovadas no navegador
 
 25dda114 / CI7285 SUCCESS. Chrome real no clone Linux, com Auth
