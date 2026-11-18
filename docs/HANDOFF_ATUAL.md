@@ -1,3 +1,21 @@
+## Delta comercial: prova restrita parcial, promocao bloqueada
+
+Checkpoint 8ce11360; sem delta de server/src, migrations ou src desde
+a305a143. PostgreSQL 16.15 WSL, copia POS por socket, nunca HML servida.
+Papel temporario NOLOGIN/NOSUPERUSER/NOBYPASSRLS: SELECT em unidades sem
+grant negado; com grant mas sem policy, ocultou unidade sintetica existente.
+Policy SELECT temporaria: empresa propria 1, outra empresa 0, outro Grupo 0.
+ROLLBACK confirmou zero unidades e zero papel de teste remanescente.
+INSERT Orcamento com grant isolado parou em SELECT de empresas no trigger;
+demais dependencias do trigger: cliente_empresas, condicoes_pagamento e
+condicao_pagamento_empresas. Tabelas comerciais examinadas com FORCE RLS
+mas sem policies; nao conceder grants isolados como correcao.
+Pendentes: matriz minima de ACL/policies, venda restrita por login real
+no ensaio, navegador, alcada e local alheio. Sem gate de promocao.
+Unidades: tabela ausente na HML e vazia no delta ensaiado. As 14 da fonte
+sao candidatas, nao liberadas: validar metadados e unicidade por sigla
+case-insensitive no Grupo; nao assumir fator 1 nem permitir conversao.
+
 ## Ensaio comercial isolado: schema e venda sintetica
 
 POS 134922Z conferido por SHA e restaurado: 17471 clientes e 16087 locais.

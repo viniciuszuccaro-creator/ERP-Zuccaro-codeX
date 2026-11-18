@@ -1,3 +1,11 @@
+## Comercial: prova restrita de Unidade passou; venda bloqueada
+
+Papel restrito no WSL: SELECT exige grant e policy. Policy de teste deixou
+visivel a unidade propria e ocultou para outra empresa/Grupo; rollback
+integral conferido. INSERT Orcamento parou na leitura de empresas pelo
+trigger. Sem navegador novo, promocao ou carga. Proximo: ensaiar a matriz
+minima de ACL/policies com identidade restrita; detalhes no HANDOFF.
+
 ## Ensaio comercial isolado: delta e venda HTTP com entrega
 
 Backup POS restaurado em PostgreSQL 16 local no WSL, somente socket.
