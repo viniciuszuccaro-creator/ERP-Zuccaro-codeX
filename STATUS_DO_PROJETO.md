@@ -1,3 +1,20 @@
+## Catalogo: recorte SQL e ACL de GrupoProduto ensaiados
+
+Clone restaurado erp_sale_pos85, namespace descartavel, mesmo PG.
+Objeto recortado da 005: tabela, indices, gatilhos e RLS forcada
+de grupos_produto, sem portar unidades/setores nem tocar na HML.
+Papel restrito no ensaio: SELECT e UPDATE somente nas colunas do
+SQL atual. Tres fixtures: grupo compartilhado e duas empresas.
+SQL direto: Empresa ve propria e compartilhada, edita so a propria;
+Grupo autorizado ve as tres, outro Grupo nao le nem altera. INSERT,
+DELETE, UPDATE group_id e troca de empresa a partir do escopo
+empresarial negados. Codigo preservado e colisao negada. Rollback
+removeu o namespace do ensaio; clone parado. Sem carga, ACL ou deploy
+na HML/producao. CI7289 de 02f3fc14 em andamento na ultima consulta.
+Proximo: combinar esse recorte com API do SHA revisado e auditoria
+equivalente ao perfil HML no clone, sem confundir SQL direto com o
+filtro da API. Fechar manifesto de schema/ACL e reversao antes do gate.
+
 ## Catalogo: preflight HML de GrupoProduto somente leitura
 
 02f3fc14 publicado; CI7289 ainda em andamento na consulta.
