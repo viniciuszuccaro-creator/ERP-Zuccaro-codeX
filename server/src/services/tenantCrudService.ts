@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type {DbQueryExecutor} from '../db/client.js';
+import type { DbQueryExecutor } from '../db/client.js';
 import type { AuditRepository, RequestContext } from '../audit/types.js';
 import { sanitizeAuditSnapshot } from '../audit/sanitizeAuditSnapshot.js';
 import { AppError } from '../api/errors.js';
@@ -16,9 +16,10 @@ export type Scope = { groupId: string; empresaId?: string | null };
 
 export interface TenantEntityRepository<TRow, TCreate, TUpdate> {
   list(filter: Scope & ListOptions): Promise<TRow[]>;
-  getById(scope: Scope, id: string,executor?:DbQueryExecutor): Promise<TRow | null>;
+  getById(scope: Scope, id: string, executor?: DbQueryExecutor, options?: { forUpdate?: boolean }): Promise<TRow | null>;
   create(scope: Scope, data: TCreate): Promise<TRow>;
-  update(scope: Scope, id: string, data: TUpdate): Promise<TRow | null>;
+  update(scope: Scope, id: string, data: TUpdate, executor?: DbQueryExecutor): Promise<TRow | null>;
+  withUpdateTransaction?<T>(scope: Scope, fn: (executor: DbQueryExecutor) => Promise<T>): Promise<T>;
   softDelete(scope: Scope, id: string): Promise<TRow | null>;
 }
 
@@ -112,16 +113,22 @@ export class TenantCrudService<TRow, TCreate, TUpdate> {
     if (!parsed.success) {
       throw new AppError(400, 'VALIDATION_ERROR', `Invalid ${this.opts.entityName} payload`, parsed.error.flatten());
     }
+    if (!this.repo.withUpdateTransaction) return this.persistUpdate(ctx, id, parsed.data);
+    return this.repo.withUpdateTransaction({ groupId: ctx.groupId, empresaId: ctx.empresaId },
+      executor => this.persistUpdate(ctx, id, parsed.data, executor));
+  }
+
+  private async persistUpdate(ctx: RequestContext, id: string, data: TUpdate, executor?: DbQueryExecutor) {
     const scope = { groupId: ctx.groupId, empresaId: ctx.empresaId };
-    const before = await this.repo.getById(scope, id);
+    const before = await this.repo.getById(scope, id, executor, executor ? { forUpdate: true } : undefined);
     if (!before) {
       throw new AppError(404, this.opts.notFoundCode, `${this.opts.entityName} not found in tenant scope`);
     }
-    const empresaId = this.opts.resolveEmpresaIdFromUpdate(parsed.data, before);
-    await this.tenantGuard.assertEmpresaInGroup(ctx.groupId, empresaId);
+    const empresaId = this.opts.resolveEmpresaIdFromUpdate(data, before);
+    await this.tenantGuard.assertEmpresaInGroup(ctx.groupId, empresaId, executor);
     let updated: TRow | null;
     try {
-      updated = await this.repo.update(scope, id, parsed.data);
+      updated = await this.repo.update(scope, id, data, executor);
     } catch (error) {
       this.rethrowConflict(error);
       throw error;
@@ -141,7 +148,7 @@ export class TenantCrudService<TRow, TCreate, TUpdate> {
       afterData: this.snapshot(updated),
       requestId: ctx.requestId,
       ipAddress: ctx.ipAddress,
-    });
+    }, executor);
     return updated;
   }
 

@@ -10,19 +10,33 @@ import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 import useCadastroReopenOnIdentity from "@/components/cadastros/useCadastroReopenOnIdentity";
+import { isHttpBackendMode } from "@/api/base44Client";
+
+// Match the HTTP guard's exact entity section without global fallbacks.
+function hasGrupoProdutoHttpAction(user, action) {
+  const cadastros = user?.permissoes?.Cadastros;
+  if (!cadastros || typeof cadastros !== 'object' || Array.isArray(cadastros)) return false;
+  const matches = (node) => Array.isArray(node)
+    ? node.some((value) => String(value).trim().toLowerCase() === action)
+    : Boolean(node && typeof node === 'object' && Object.values(node).some(matches));
+  return Object.hasOwn(cadastros, 'grupo_produto') && matches(cadastros.grupo_produto);
+}
 
 /**
  * V21.1.2 - WINDOW MODE READY
  */
 export default function GrupoProdutoForm({ grupo, grupoProduto, item, data, initialData, defaultValues, onSubmit, isSubmitting, windowMode = false, closeSelf }) {
   const dadosIniciais = item || data || initialData || defaultValues || grupoProduto || grupo;
-  const { hasPermission } = usePermissions();
+  const { hasPermission, user, isLoading } = usePermissions();
   const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || null;
   const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciais?.empresa_id || dadosIniciais?.group_id);
-  const podeCriar = hasPermission?.("Cadastros.GrupoProduto.criar") || hasPermission?.("Cadastros.Produto.criar");
-  const podeEditar = hasPermission?.("Cadastros.GrupoProduto.editar") || hasPermission?.("Cadastros.Produto.editar");
-  const podeExcluir = hasPermission?.("Cadastros.GrupoProduto.excluir") || hasPermission?.("Cadastros.Produto.excluir");
+  const podeAcao = (action) => isHttpBackendMode
+    ? !isLoading && hasGrupoProdutoHttpAction(user, action)
+    : hasPermission?.(`Cadastros.GrupoProduto.${action}`) || hasPermission?.(`Cadastros.Produto.${action}`);
+  const podeCriar = podeAcao("criar");
+  const podeEditar = podeAcao("editar");
+  const podeExcluir = podeAcao(isHttpBackendMode ? "inativar" : "excluir");
     const emptyFormData = {
     nome_grupo: '',
     codigo: '',
@@ -40,6 +54,10 @@ export default function GrupoProdutoForm({ grupo, grupoProduto, item, data, init
     mapToForm: (record) => record || emptyFormData,
   });
   const podeSalvar = grupoProdutoBoundId ? podeEditar : podeCriar;
+  const podeAlterarStatus = podeSalvar && (!isHttpBackendMode || (!!grupoProdutoBoundId && contextoValido && !isSubmitting));
+  const podeInativarRegistro = podeExcluir && (!isHttpBackendMode || (!!grupoProdutoBoundId && contextoValido && !isSubmitting));
+  const camposBloqueados = isHttpBackendMode && (!podeSalvar || !contextoValido || isSubmitting);
+  const permissao = (http, legacy) => isHttpBackendMode ? `Cadastros.grupo_produto.${http}` : `Cadastros.GrupoProduto.${legacy ?? http}`;
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -67,20 +85,24 @@ export default function GrupoProdutoForm({ grupo, grupoProduto, item, data, init
   };
 
   const handleExcluir = () => {
-    if (!podeExcluir) {
+    if (!podeInativarRegistro) {
       alert('Sem permissão para excluir grupo de produto.');
       return;
     }
-    if (!window.confirm(`Tem certeza que deseja excluir o grupo "${formData.nome_grupo}"? Esta ação não pode ser desfeita.`)) {
+    const mensagem = isHttpBackendMode
+      ? `Inativar o grupo "${formData.nome_grupo}"?`
+      : `Tem certeza que deseja excluir o grupo "${formData.nome_grupo}"? Esta ação não pode ser desfeita.`;
+    if (!window.confirm(mensagem)) {
       return;
     }
     if (onSubmit) {
-      onSubmit({ ...formData, _action: 'delete' });
+      onSubmit({ ...formData, ...(isHttpBackendMode ? { id: grupoProdutoBoundId } : {}), _action: 'delete' });
     if (typeof closeSelf === 'function') closeSelf();
     }
   };
 
   const handleAlternarStatus = () => {
+    if (!podeAlterarStatus) return;
     const novoStatus = !formData.ativo;
     setFormData({ ...formData, ativo: novoStatus });
   };
@@ -97,6 +119,7 @@ export default function GrupoProdutoForm({ grupo, grupoProduto, item, data, init
         <Label>Nome do Grupo *</Label>
         <Input
           value={formData.nome_grupo}
+          disabled={camposBloqueados}
           onChange={(e) => setFormData({...formData, nome_grupo: e.target.value})}
           placeholder="Ex: Ferragens, Bitolas, Materiais Elétricos"
           data-action="editar-nome-grupo-produto"
@@ -105,7 +128,7 @@ export default function GrupoProdutoForm({ grupo, grupoProduto, item, data, init
 
       <div>
         <Label>Natureza *</Label>
-        <Select value={formData.natureza} onValueChange={(v) => setFormData({...formData, natureza: v})}>
+        <Select value={formData.natureza} disabled={camposBloqueados} onValueChange={(v) => setFormData({...formData, natureza: v})}>
           <SelectTrigger data-action="selecionar-natureza-grupo-produto">
             <SelectValue />
           </SelectTrigger>
@@ -123,6 +146,7 @@ export default function GrupoProdutoForm({ grupo, grupoProduto, item, data, init
           <Label>NCM Padrão</Label>
           <Input
             value={formData.ncm_padrao}
+            disabled={camposBloqueados}
             onChange={(e) => setFormData({...formData, ncm_padrao: e.target.value})}
             placeholder="Ex: 7213.10.00"
             data-action="editar-ncm-padrao-grupo-produto"
@@ -134,6 +158,7 @@ export default function GrupoProdutoForm({ grupo, grupoProduto, item, data, init
             type="number"
             step="0.01"
             value={formData.margem_sugerida}
+            disabled={camposBloqueados}
             onChange={(e) => setFormData({...formData, margem_sugerida: parseFloat(e.target.value)})}
             data-action="editar-margem-grupo-produto"
           />
@@ -144,9 +169,9 @@ export default function GrupoProdutoForm({ grupo, grupoProduto, item, data, init
         <Label>Grupo Ativo</Label>
         <Switch
           checked={formData.ativo}
-          onCheckedChange={(v) => setFormData({...formData, ativo: v})}
-          disabled={!podeSalvar}
-          data-permission="Cadastros.GrupoProduto.alterarStatus"
+          onCheckedChange={(v) => { if (podeAlterarStatus) setFormData({...formData, ativo: v}); }}
+          disabled={!podeAlterarStatus}
+          data-permission={permissao("editar", "alterarStatus")}
           data-action="alternar-status-grupo-produto"
           data-sensitive="true"
         />
@@ -159,8 +184,8 @@ export default function GrupoProdutoForm({ grupo, grupoProduto, item, data, init
               type="button"
               variant="outline"
               onClick={handleAlternarStatus}
-              disabled={!podeSalvar}
-              data-permission="Cadastros.GrupoProduto.alterarStatus"
+              disabled={!podeAlterarStatus}
+              data-permission={permissao("editar", "alterarStatus")}
               data-action={formData.ativo ? "inativar-grupo-produto" : "ativar-grupo-produto"}
               data-sensitive="true"
               className={formData.ativo ? 'border-orange-300 text-orange-700' : 'border-green-300 text-green-700'}
@@ -175,19 +200,19 @@ export default function GrupoProdutoForm({ grupo, grupoProduto, item, data, init
               type="button"
               variant="destructive"
               onClick={handleExcluir}
-              disabled={!podeExcluir}
-              data-permission="Cadastros.GrupoProduto.excluir"
+              disabled={!podeInativarRegistro}
+              data-permission={permissao("inativar", "excluir")}
               data-action="excluir-grupo-produto"
               data-sensitive="true"
             >
-              <Trash2 className="w-4 h-4 mr-2" />Excluir
+              <Trash2 className="w-4 h-4 mr-2" />{isHttpBackendMode ? 'Inativar registro' : 'Excluir'}
             </Button>
           </>
         )}
         <Button
           type="submit"
           disabled={isSubmitting || !contextoValido || !podeSalvar}
-          data-permission={grupoProdutoBoundId ? "Cadastros.GrupoProduto.editar" : "Cadastros.GrupoProduto.criar"}
+          data-permission={permissao(grupoProdutoBoundId ? "editar" : "criar")}
           data-action="salvar-grupo-produto"
           data-sensitive="true"
         >

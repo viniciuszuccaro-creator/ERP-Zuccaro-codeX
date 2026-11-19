@@ -146,6 +146,7 @@ export function createApp(options: CreateAppOptions) {
   });
   const grupoProdutoService = new TenantCrudService(grupoRepo, auditRepo, tenantGuard, {
     entityName: 'GrupoProduto',
+    authorization: { guard: rbacGuard, moduleName: 'Cadastros', section: 'grupo_produto' },
     notFoundCode: 'GRUPO_PRODUTO_NOT_FOUND',
     createSchema: grupoProdutoCreateSchema,
     updateSchema: grupoProdutoUpdateSchema,

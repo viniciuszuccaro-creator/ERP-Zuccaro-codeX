@@ -49,11 +49,11 @@ test('Setor canonical HTTP authorizes before SQL; synthetic PGlite is not real A
   const server = app.listen(0, '127.0.0.1');
   await new Promise<void>(resolve => server.once('listening', resolve));
   const address = server.address(); assert.ok(address && typeof address !== 'string');
-  const base = `http://127.0.0.1:${address.port}/api/v1/setores-atividade`;
-  const request = (path = '', extra: Record<string, string> = {}, method = 'GET') => fetch(base + path,
+  const base = `http://127.0.0.1:${address.port}/api/v1/`;
+  const request = (path = '', extra: Record<string, string> = {}, method = 'GET', entity = 'setores-atividade', payload: object = { nome: 'SYNTHETIC SECTOR' }) => fetch(base + entity + path,
     { method, headers: { Authorization: 'Bearer synthetic-valid', 'Content-Type': 'application/json',
       'x-group-id': ID.groupA, 'x-actor-id': ID.runtimeActorA, ...extra },
-    ...(method === 'POST' || method === 'PATCH' ? { body: JSON.stringify({ nome: 'SYNTHETIC SECTOR' }) } : {}) });
+    ...(method === 'POST' || method === 'PATCH' ? { body: JSON.stringify(payload) } : {}) });
   const permissions = async (tree: unknown, ativo = true) => f.admin.query(
     'UPDATE profiles SET auth_user_id=$1,permissoes=$2::jsonb,ativo=$3 WHERE id=$4',
     [userId, JSON.stringify(tree), ativo, ID.runtimeActorA]);
@@ -97,6 +97,59 @@ test('Setor canonical HTTP authorizes before SQL; synthetic PGlite is not real A
       assert.equal((await request()).status, 403);
       assert.equal(sectorQueries, before);
       assert.equal((await request('', { Authorization: '' })).status, 401);
+    });
+    await t.test('GrupoProduto requires its own read and write permissions', async () => {
+      const groupId = randomUUID();
+      await f.exec(`GRANT SELECT ON grupos_produto TO ${ROLE};
+        CREATE POLICY grupo_http_fixture ON grupos_produto FOR SELECT TO ${ROLE}
+        USING(group_id=NULLIF(current_setting('app.group_id',true),'')::uuid);
+        INSERT INTO grupos_produto(id,group_id,nome_grupo) VALUES('${groupId}','${ID.groupA}','SYNTHETIC PRODUCT GROUP');`);
+      const groupRequest = (method = 'GET', path = '') => request(path, {}, method, 'grupos-produto');
+      for (const permissionsTree of [{ Cadastros: { setor_atividade: ['visualizar'] } }, { '*': ['*'] }]) {
+        await permissions(permissionsTree);
+        for (const path of ['', `/${groupId}`]) {
+          const response = await groupRequest('GET', path);
+          assert.equal(response.status, 403);
+          assert.equal((await response.json()).error.code, 'PERMISSION_DENIED');
+        }
+      }
+      await permissions({ Cadastros: { grupo_produto: ['visualizar'] } });
+      const list = await groupRequest();
+      assert.equal(list.status, 200);
+      assert.ok((await list.json()).data.some((row: { id: string }) => row.id === groupId));
+      const detail = await groupRequest('GET', `/${groupId}`);
+      assert.equal(detail.status, 200);
+      assert.equal((await detail.json()).data.id, groupId);
+      for (const method of ['POST', 'PATCH', 'DELETE']) {
+        const response = await groupRequest(method, method === 'POST' ? '' : `/${groupId}`);
+        assert.equal(response.status, 403);
+        assert.equal((await response.json()).error.code, 'PERMISSION_DENIED');
+      }
+    });
+    await t.test('GrupoProduto rolls back a valid PATCH when audit is denied', async () => {
+      const recordId = randomUUID();
+      await permissions({ Cadastros: { grupo_produto: ['visualizar', 'editar'] } });
+      await f.exec(`GRANT UPDATE ON grupos_produto TO ${ROLE};
+        CREATE POLICY grupo_http_update_fixture ON grupos_produto FOR UPDATE TO ${ROLE}
+        USING(group_id=NULLIF(current_setting('app.group_id',true),'')::uuid);
+        INSERT INTO grupos_produto(id,group_id,nome_grupo) VALUES('${recordId}','${ID.groupA}','Before');`);
+      const patch = () => request(`/${recordId}`, {}, 'PATCH', 'grupos-produto', { nome_grupo: 'After' });
+      const read = async () => (await f.admin.query('SELECT nome_grupo FROM grupos_produto WHERE id=$1', [recordId])).rows[0].nome_grupo;
+      const audit = async () => (await f.admin.query('SELECT actor_id, before_data, after_data FROM audit_logs WHERE entity_id=$1', [recordId])).rows;
+      assert.equal((await patch()).status, 500);
+      assert.equal(await read(), 'Before');
+      assert.equal((await audit()).length, 0);
+      await f.exec(`CREATE POLICY grupo_http_audit_fixture ON audit_logs FOR INSERT TO ${ROLE}
+        WITH CHECK(group_id=NULLIF(current_setting('app.group_id',true),'')::uuid
+          AND entity='GrupoProduto' AND action='update' AND entity_id='${recordId}'
+          AND actor_id='${ID.runtimeActorA}');`);
+      assert.equal((await patch()).status, 200);
+      assert.equal(await read(), 'After');
+      const rows = await audit();
+      assert.equal(rows.length, 1);
+      assert.equal(rows[0].actor_id, ID.runtimeActorA);
+      assert.equal(rows[0].before_data.nome_grupo, 'Before');
+      assert.equal(rows[0].after_data.nome_grupo, 'After');
     });
   } finally {
     await new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve()));

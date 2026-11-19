@@ -34,10 +34,12 @@ async function listSimple<T>(
 
 async function getSimple<T>(
   db: DbQueryExecutor, table: string, scope: Scope, id: string, mapRow: (row: Record<string, unknown>) => T,
+  lock = false,
 ): Promise<T | null> {
   const params: unknown[] = [scope.groupId, id];
   let sql = `SELECT * FROM ${table} WHERE group_id = $1 AND id = $2`;
   if (scope.empresaId) { params.push(scope.empresaId); sql += ' AND empresa_id = $3'; }
+  if (lock) sql += ' FOR UPDATE';
   const result = await db.query(sql, params);
   return result.rows[0] ? mapRow(result.rows[0] as Record<string, unknown>) : null;
 }
@@ -131,7 +133,16 @@ export class PostgresUnidadeRepository implements TenantEntityRepository<Unidade
 export class PostgresGrupoProdutoRepository implements TenantEntityRepository<GrupoProduto, GrupoProdutoCreate, GrupoProdutoUpdate> {
   constructor(private readonly db: DbClient) {}
   list(f: Scope & ListOptions) { return listSimple(this.db, 'grupos_produto', f, "lower(nome_grupo || ' ' || coalesce(codigo,''))", mapGrupo); }
-  getById(s: Scope, id: string,executor?:DbQueryExecutor) { return getSimple(executor??this.db, 'grupos_produto', s, id, mapGrupo); }
+  getById(s: Scope, id: string, executor?: DbQueryExecutor, options?: { forUpdate?: boolean }) {
+    return getSimple(executor ?? this.db, 'grupos_produto', s, id, mapGrupo, options?.forUpdate);
+  }
+  withUpdateTransaction<T>(scope: Scope, fn: (executor: DbQueryExecutor) => Promise<T>): Promise<T> {
+    return this.db.withTransaction(async executor => {
+      await executor.query("SELECT set_config('app.group_id', $1, true), set_config('app.empresa_id', $2, true)",
+        [scope.groupId, scope.empresaId ?? '']);
+      return fn(executor);
+    });
+  }
   async create(scope: Scope, data: GrupoProdutoCreate) {
     const codigo = await reserveEntityCodigo({
       db: this.db,
@@ -151,8 +162,8 @@ export class PostgresGrupoProdutoRepository implements TenantEntityRepository<Gr
     );
     return mapGrupo(result.rows[0] as Record<string, unknown>);
   }
-  async update(scope: Scope, id: string, data: GrupoProdutoUpdate) {
-    const current = await this.getById(scope, id);
+  async update(scope: Scope, id: string, data: GrupoProdutoUpdate, executor?: DbQueryExecutor) {
+    const current = await this.getById(scope, id, executor);
     if (!current) return null;
     const next = { ...current, ...data, empresa_id: data.empresa_id === undefined ? current.empresa_id : data.empresa_id };
     // Preserva codigo existente; não renumerar em update
@@ -163,7 +174,7 @@ export class PostgresGrupoProdutoRepository implements TenantEntityRepository<Gr
       icone=$6, cor=$7, observacoes=$8, ativo=$9, empresa_id=$10 WHERE group_id=$11 AND id=$12`;
     if (scope.empresaId) { params.push(scope.empresaId); sql += ' AND empresa_id=$13'; }
     sql += ' RETURNING *';
-    const result = await this.db.query(sql, params);
+    const result = await (executor ?? this.db).query(sql, params);
     return result.rows[0] ? mapGrupo(result.rows[0] as Record<string, unknown>) : null;
   }
   softDelete(scope: Scope, id: string) { return this.update(scope, id, { ativo: false }); }

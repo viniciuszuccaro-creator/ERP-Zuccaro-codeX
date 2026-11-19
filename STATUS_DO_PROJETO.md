@@ -1,3 +1,11 @@
+## GrupoProduto: candidata de validacao para HML
+
+Base servida a305a143. Recorte de GrupoProduto: RBAC HTTP granular,
+formulario canonico e PATCH com auditoria atomica. Sem contatos,
+Pedido, schema, grants ou dados. 30 testes focados em Linux PASS;
+typecheck raiz/backend e build backend PASS no recorte. Suite ampla
+local interrompida; aguardar CI deste SHA. Nao homologado/deployado.
+
 ## Rodada HML de 10871: autorizada, ainda nao aplicada (2026-11-18)
 
 Manifesto 45385950f651366656909e840ce5ef8201bc800b615a7aecfa4360ac976046fb:
