@@ -14,6 +14,11 @@ vigencia, numero de imovel ou titularidade financeira. Recibo
 agregado privado SHA-256:
 1ddea5c4a1ceff7428deee295b6b83fd602b6a596a8f735de6ad4d1a5c80a8f6.
 
+Historico de Obras: 3096 linhas; 1536 com um unico par nativo
+CODIGOCLIENTE/ITEM, zero ambiguas por esse par e 1560 sem par.
+Isso nao comprova numero de imovel nem libera locais. Caixa/Caixa01
+expoem NRPEDIDO, SEQUENCIA e CODCLIENTE, ainda sem prova de titulo.
+
 Proximo: usar o leitor isolado para comprovar configuracao de
 preco/filial e seguir documento/parcela na fonte; Obras continuam
 com pendencias para liberacao. Nenhuma exclusao da VPS autorizada
