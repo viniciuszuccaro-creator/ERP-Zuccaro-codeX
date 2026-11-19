@@ -1,3 +1,26 @@
+## CPA3: codigo de entrega preservado e jornada persistente ensaiada
+
+Port de #596 limitado a apresentacao do codigo quando fornecido
+no seletor de entrega; mesma identidade de local, RBAC, filtro e
+troca de contexto. Nao portar a remocao da revogacao no Shell.
+28 testes focados, lint do seletor, typecheck raiz e regressao
+PostgreSQL de composicao (3/3) em clone isolado, dados sinteticos.
+Cliente -> Orcamento -> Pedido -> Expedicao, replay, rollback e
+segregacao comprovados por servicos/PostgreSQL, nao navegador.
+Faturamento/titulo/baixa nao executados: sem transicao HTTP
+Pedido -> faturamento/Contas a Receber montada no recorte testado.
+Proximo: revisar contrato persistente de faturamento e baixa sem
+fallback legado nem efeitos externos; ensaio autenticado na UI.
+
+Legado: Empresas/EmpresasAjustes/TabelaPrecosSCIAjustes e grupos
+consultados no leitor isolado, READ_ONLY/ROLLBACK; leitor parado.
+USATABELACV tinyint e CAMINHOPARAMETROESTOQUE char em 5 empresas;
+sem FK direta a cadastro, classe ou tabela de preco. Nao define
+empresa aplicavel ao item. Recibo privado catalog-company-settings-r2
+SHA 05b5349692b8bf97200b1f6dfcf2e970f8b2c6dd332363c65e9727682e980e35.
+Falta semantica documentada e relacao explicita por empresa/unidade.
+Zero registros aptos, manifestos de carga ou escrita HML. Sem deploy.
+
 ## CPA3: matriz de elegibilidade e revisao do primeiro recorte
 
 Matriz privada catalog-filial-r1/eligibility-by-scope-r1.private.json

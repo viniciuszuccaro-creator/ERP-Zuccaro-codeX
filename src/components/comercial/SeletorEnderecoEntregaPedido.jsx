@@ -324,6 +324,9 @@ export default function SeletorEnderecoEntregaPedido({
                   <MapPin className="w-4 h-4 text-blue-600" />
                   <div>
                     <p className="font-medium">
+                      {end.codigo != null && String(end.codigo).trim() !== ""
+                        ? `${String(end.codigo)} · `
+                        : ""}
                       {String(end.apelido || `${end.cidade || ""}, ${end.estado || ""}`)}
                     </p>
                     <p className="text-xs text-slate-600">
@@ -371,7 +374,12 @@ export default function SeletorEnderecoEntregaPedido({
                   {enderecoSelecionado.bairro} - {enderecoSelecionado.cidade}/{enderecoSelecionado.estado}
                   {enderecoSelecionado.cep && ` - CEP: ${enderecoSelecionado.cep}`}
                 </p>
-                <p className="text-xs text-blue-700 mt-1">cliente_local_id: {String(enderecoSelecionado.id)}</p>
+                <p className="text-xs text-blue-700 mt-1">
+                  {enderecoSelecionado.codigo != null && String(enderecoSelecionado.codigo).trim() !== ""
+                    ? `código ${String(enderecoSelecionado.codigo)} · `
+                    : ""}
+                  cliente_local_id: {String(enderecoSelecionado.id)}
+                </p>
 
                 {enderecoSelecionado.mapa_url && (
                   <a
