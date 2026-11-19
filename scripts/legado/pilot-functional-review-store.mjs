@@ -131,3 +131,45 @@ export async function archiveAssistedClientReview(input, scope, { db, audit, rba
     return { id, replayed: false };
   }));
 }
+
+/** The caller pins canonical staged inputs and supplies a durable, private receipt sink. */
+export async function runAssistedClientReviewManifest(input, scope, deps, approval) {
+  const ctx = captureScope(scope);
+  const { rows, target, expectedState, batchSize, total } = structuredClone(input ?? {});
+  if (!Array.isArray(rows) || rows.length !== total || total < 1 || total > 11000
+      || !Number.isSafeInteger(batchSize) || batchSize < 1 || batchSize > 500
+      || !['REVIEW_REQUIRED', 'HISTORY_ONLY'].includes(expectedState)
+      || !target || typeof deps.checkpoint !== 'function') reject('REVIEW_MANIFEST_INVALID');
+  const keys = new Set();
+  for (const row of rows) {
+    if (!token(row?.nativeKey) || !token(row?.provenance?.sourceSystem)
+        || (row.sourceStatus === 'In') !== (expectedState === 'HISTORY_ONLY')) reject('REVIEW_MANIFEST_INVALID');
+    const key = JSON.stringify([row.provenance.sourceSystem, row.nativeKey]);
+    if (keys.has(key)) reject('REVIEW_MANIFEST_DUPLICATE');
+    keys.add(key);
+  }
+  const manifestSha256 = rowHash({ version: 1, groupId: ctx.groupId, actorId: ctx.actorId,
+    target, expectedState, batchSize, total, rows });
+  if (approval?.manifestSha256 !== manifestSha256) reject('REVIEW_MANIFEST_PIN_MISMATCH');
+  const receipts = [];
+  for (let offset = 0; offset < total; offset += batchSize) {
+    const batch = rows.slice(offset, offset + batchSize);
+    const receipt = await deps.db.withTenantContext(ctx, () => deps.db.withTransaction(async q => {
+      const found = (await q.query(`SELECT current_database() AS database, current_schema() AS schema,
+        current_user AS principal,
+        (SELECT oid::int FROM pg_database WHERE datname=current_database()) AS "databaseOid",
+        (SELECT oid::int FROM pg_namespace WHERE nspname=current_schema()) AS "schemaOid",
+        (SELECT system_identifier::text FROM pg_control_system()) AS "clusterIdentifier"`)).rows[0];
+      if (!found || Object.keys(target).length !== Object.keys(found).length
+          || Object.entries(found).some(([key, value]) => target[key] !== value)) reject('REVIEW_PHYSICAL_TARGET_MISMATCH');
+      const saved = [];
+      for (const row of batch) saved.push(await stageAssistedClientReview(row, ctx, deps));
+      return { manifestSha256, offset, total: batch.length,
+        fingerprint: rowHash(saved.map(({ id, fingerprint }) => ({ id, fingerprint }))) };
+    }));
+    // Retry reconciles committed identities rather than trusting progress written by the caller.
+    await deps.checkpoint(receipt);
+    receipts.push(receipt);
+  }
+  return { manifestSha256, total, receipts };
+}

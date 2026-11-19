@@ -1,3 +1,33 @@
+## CPA3: executor retomavel e manifestos vinculados a HML
+
+Base 8e2e50a3, CI44596541001 SUCCESS. Pacote privado 5423
+conferido por SHA. Executor da Revisao Assistida valida manifesto,
+Grupo, ator, contagem e identidade fisica do PostgreSQL antes
+de cada grupo (ate 500); checkpoint recebido apos COMMIT.
+PG16 restrito: hash/destino divergentes recusados; falha simulada
+no checkpoint deixou 1 grupo confirmado, retomada terminou 2/2
+sem duplicar auditoria; zero mestres. Sink duravel e CLI ainda
+precisam ser ligados ao procedimento de execucao privada.
+Suite Linux 3041/3041 sem skips; regressao PG16 restrita 1/1.
+
+Schema candidato ensaiado em transacao na copia restaurada de
+18/11: RLS habilitada/forcada, fila vazia, 17471 mestres antes
+e depois; ROLLBACK removeu a fila. Prova de ACL do clone e
+separada da HML. Sem entrada no journal de migrations da HML.
+A imagem API leva server/src e migrations, nao scripts/legado:
+falta expor o contrato autenticado a partir de modulo empacotado
+e validar HTTP. Nao houve prova de faturamento, titulo ou baixa.
+
+HML READ ONLY: API/web a305a143, fila ausente, banco 410295319
+bytes, volume livre 23050309632. Manifestos vinculados fisicamente
+ao destino e preparados sem envio ou aprovacao:
+- 5384 revisao, e0ff5bd7bfcbe7b8f491cb8dc6d779ac8c79f0fdd35dfa6b35ebe9f44941ebc9.
+- 39 historicos, 11fa55b1b6de013f65ab56edd78cf9963fe7d4865c4a9d4b38edb44836422127.
+Total arquivos 2157304 bytes. Antes de aplicar: concluir contrato
+HTTP/runner, medir pico e validar backup fresco restauravel e
+copia externa, aprovar schema/ACL e manifestos separadamente.
+Nenhuma escrita HML ou operacional; cargas anteriores preservadas.
+
 ## CPA3: nova identidade persistida na Revisao Assistida, apenas clone
 
 Delta de reversao: arquivamento logico por Grupo, identidade e

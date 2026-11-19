@@ -8,7 +8,8 @@ import { PostgresRbacGuard } from '../src/db/rbacGuard.ts';
 import { SEED_IDS as ID } from '../scripts/seedDevIds.ts';
 import { realCrmFixture } from './helpers/crmPostgresFixture.ts';
 import { syntheticCpf } from './helpers/legadoBatchFixture.ts';
-import { archiveAssistedClientReview, reopenAssistedClientReview, saveAssistedClientDocumentCorrection, stageAssistedClientReview } from '../../scripts/legado/pilot-functional-review-store.mjs';
+import { archiveAssistedClientReview, reopenAssistedClientReview, runAssistedClientReviewManifest, saveAssistedClientDocumentCorrection, stageAssistedClientReview } from '../../scripts/legado/pilot-functional-review-store.mjs';
+import { rowHash } from '../../scripts/legado/pilot-functional-policy.mjs';
 
 const url = process.env.LEGACY_REVIEW_PG_TEST_URL;
 test('new Assisted Review identity survives a new PostgreSQL connection without creating a master', { skip: !url }, async () => {
@@ -92,6 +93,35 @@ test('new Assisted Review identity survives a new PostgreSQL connection without 
     const proof = await f.admin.query(`SELECT record,correction FROM legacy_client_review WHERE id=$1`, [saved.id]);
     assert.equal(proof.rows[0].record.fields.find((field: { name: string }) => field.name === 'cpf').original, row.cpf);
     assert.equal(proof.rows[0].correction.proposedValue, syntheticCpf(90));
+    const target = (await firstConnection.db.query(`SELECT current_database() AS database, current_schema() AS schema,
+        current_user AS principal,
+        (SELECT oid::int FROM pg_database WHERE datname=current_database()) AS "databaseOid",
+        (SELECT oid::int FROM pg_namespace WHERE nspname=current_schema()) AS "schemaOid",
+        (SELECT system_identifier::text FROM pg_control_system()) AS "clusterIdentifier"`)).rows[0];
+    const plan = { target, total: 2, batchSize: 1, expectedState: 'REVIEW_REQUIRED',
+      rows: [{ ...row, nativeKey: 'RESUME-1' }, { ...row, nativeKey: 'RESUME-2' }] };
+    const pin = (value: typeof plan) => rowHash({ version: 1, groupId: scope.groupId, actorId: scope.actorId,
+      target: value.target, expectedState: value.expectedState, batchSize: value.batchSize, total: value.total, rows: value.rows });
+    await assert.rejects(runAssistedClientReviewManifest(plan, scope, { ...firstConnection, checkpoint: async () => {} },
+      { manifestSha256: '0'.repeat(64) }), /REVIEW_MANIFEST_PIN_MISMATCH/);
+    const wrong = { ...plan, target: { ...target, database: 'wrong_database' } };
+    await assert.rejects(runAssistedClientReviewManifest(wrong, scope, { ...firstConnection, checkpoint: async () => {} },
+      { manifestSha256: pin(wrong) }), /REVIEW_PHYSICAL_TARGET_MISMATCH/);
+    await assert.rejects(runAssistedClientReviewManifest(plan, scope, {
+      ...firstConnection, checkpoint: async () => { throw new Error('AFTER_COMMIT'); },
+    }, { manifestSha256: pin(plan) }), /AFTER_COMMIT/);
+    const stagedCount = async () => (await f.admin.query(`SELECT count(*) n FROM legacy_client_review
+      WHERE native_key LIKE 'RESUME-%'`)).rows[0].n;
+    assert.equal(await stagedCount(), '1');
+    const offsets: number[] = [];
+    const resumed = await runAssistedClientReviewManifest(plan, scope, {
+      ...firstConnection, checkpoint: async (receipt: { offset: number }) => { offsets.push(receipt.offset); },
+    }, { manifestSha256: pin(plan) });
+    assert.equal(resumed.total, 2);
+    assert.deepEqual(offsets, [0, 1]);
+    assert.equal(await stagedCount(), '2');
+    assert.equal((await f.admin.query(`SELECT count(*) n FROM audit_logs a JOIN legacy_client_review r ON a.entity_id=r.id::text
+      WHERE r.native_key LIKE 'RESUME-%' AND a.entity='LegacyClientReview'`)).rows[0].n, '2');
     assert.equal((await f.admin.query('SELECT count(*) n FROM clientes')).rows[0].n, before);
   } finally {
     await f.close();
