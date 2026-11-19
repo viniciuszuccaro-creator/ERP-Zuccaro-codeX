@@ -11,6 +11,7 @@ const suites = [
   ['LEGACY_CLIENT', 'tests/runtime04.test.ts'],
   ['LEGACY_IDENTITY', 'tests/legacy-identity.test.ts'],
   ['LEGACY_NAME_REVIEW', 'tests/cliente-legacy-name.test.ts'],
+  ['LEGACY_CLIENT_REVIEW', 'tests/legacy-client-review-postgres.test.ts'],
   ['CLIENTE_CONFERENCIA', 'tests/cliente-conferencia-duplicates.test.ts'],
   ['CLIENTE_CONFERENCIA_RESTRICTED', 'tests/cliente-conferencia-restricted.test.ts'],
   ['LEGACY_PRODUCT', 'tests/legacy-product.test.ts'],
@@ -30,7 +31,16 @@ const suites = [
 ];
 let allPassed = true;
 for (const [label, suite] of suites) {
-  const result = spawnSync(process.execPath, ['--import', 'tsx', '--test', suite], { cwd: process.cwd(), env: { ...process.env, ...(label === 'LEGACY_NAME_REVIEW' ? { LEGACY_NAME_PG_TEST_URL: process.env.DATABASE_URL } : {}), ...(label === 'CLIENTE_CONFERENCIA' ? { CLIENTE_CONFERENCIA_PG_TEST_URL: process.env.DATABASE_URL } : {}), ...(label === 'LEGACY_ADDRESS_REVIEW' ? { LEGACY_ADDRESS_PG_TEST_URL: process.env.DATABASE_URL } : {}) }, encoding: 'utf8' });
+  const env = {
+    ...process.env,
+    ...(label === 'LEGACY_NAME_REVIEW' ? { LEGACY_NAME_PG_TEST_URL: process.env.DATABASE_URL } : {}),
+    ...(label === 'LEGACY_CLIENT_REVIEW' ? { LEGACY_REVIEW_PG_TEST_URL: process.env.DATABASE_URL } : {}),
+    ...(label === 'CLIENTE_CONFERENCIA' ? { CLIENTE_CONFERENCIA_PG_TEST_URL: process.env.DATABASE_URL } : {}),
+    ...(label === 'LEGACY_ADDRESS_REVIEW' ? { LEGACY_ADDRESS_PG_TEST_URL: process.env.DATABASE_URL } : {}),
+  };
+  const result = spawnSync(process.execPath, ['--import', 'tsx', '--test', suite], {
+    cwd: process.cwd(), env, encoding: 'utf8',
+  });
   const output = `${result.stdout ?? ''}${result.stderr ?? ''}`;
   process.stdout.write(output);
   const total = Number(output.match(/tests\s+(\d+)/)?.[1] ?? 0);

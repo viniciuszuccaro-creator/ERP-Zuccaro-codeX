@@ -1,0 +1,99 @@
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import test from 'node:test';
+import pg from 'pg';
+import { PostgresAuditRepository } from '../src/audit/auditRepository.ts';
+import { createPoolDbClient } from '../src/db/client.ts';
+import { PostgresRbacGuard } from '../src/db/rbacGuard.ts';
+import { SEED_IDS as ID } from '../scripts/seedDevIds.ts';
+import { realCrmFixture } from './helpers/crmPostgresFixture.ts';
+import { syntheticCpf } from './helpers/legadoBatchFixture.ts';
+import { archiveAssistedClientReview, reopenAssistedClientReview, saveAssistedClientDocumentCorrection, stageAssistedClientReview } from '../../scripts/legado/pilot-functional-review-store.mjs';
+
+const url = process.env.LEGACY_REVIEW_PG_TEST_URL;
+test('new Assisted Review identity survives a new PostgreSQL connection without creating a master', { skip: !url }, async () => {
+  const f = await realCrmFixture(url!, { restrictedLogin: true });
+  const scope = { groupId: ID.groupA, actorId: ID.runtimeActorA, requestId: 'synthetic-review', scopeType: 'grupo' };
+  const row = {
+    nativeKey: 'NEW-SYNTH', cpf: '0012', cnpj: '', sourceStatus: 'At',
+    reason: 'DOCUMENTO_ESTRUTURAL_PENDENTE', sourceIndex: 0,
+    provenance: { sourceSystem: 'SYNTHETIC', file: 'synthetic.csv', fileSha256: 'a'.repeat(64), rowSha256: 'b'.repeat(64) },
+  };
+  const identity = { sourceSystem: 'SYNTHETIC', nativeKey: row.nativeKey };
+  const deps = (pool: pg.Pool) => {
+    const db = createPoolDbClient(pool);
+    return { db, audit: new PostgresAuditRepository(db), rbac: new PostgresRbacGuard(db) };
+  };
+  try {
+    await f.exec(await readFile(new URL('../schema-candidates/legacy_client_review.sql', import.meta.url), 'utf8'));
+    await f.exec(`GRANT SELECT,INSERT ON legacy_client_review TO "${f.role}"`);
+    await f.exec(`GRANT UPDATE(correction,archived) ON legacy_client_review TO "${f.role}"`);
+    const before = (await f.admin.query('SELECT count(*) n FROM clientes')).rows[0].n;
+    const firstConnection = deps(f.data.pool!);
+    await assert.rejects(stageAssistedClientReview(row, scope, firstConnection), { code: '42501' });
+    assert.equal((await f.admin.query('SELECT count(*) n FROM legacy_client_review')).rows[0].n, '0');
+    await f.exec(`CREATE POLICY review_test_audit ON audit_logs FOR INSERT TO "${f.role}"
+      WITH CHECK (group_id=NULLIF(current_setting('app.group_id',true),'')::uuid AND empresa_id IS NULL)`);
+    const saved = await stageAssistedClientReview(row, scope, firstConnection);
+    assert.equal(saved.replayed, false);
+    const restricted = f.data.pool as pg.Pool & { options: pg.PoolConfig };
+    const secondPool = new pg.Pool({ ...restricted.options });
+    try {
+      const secondConnection = deps(secondPool);
+      const opened = await reopenAssistedClientReview(identity, scope, secondConnection);
+      assert.equal(opened?.id, saved.id);
+      assert.equal(opened?.correctionStatus, null);
+      assert.equal(opened?.record.status, 'REVIEW_REQUIRED');
+      assert.equal(opened?.record.actions.releaseOperational, false);
+      assert.equal(opened?.record.fields.find(field => field.name === 'cpf')?.original, undefined);
+      assert.deepEqual(await stageAssistedClientReview(row, scope, secondConnection), { ...saved, replayed: true });
+      await assert.rejects(stageAssistedClientReview({ ...row, cpf: '0023' }, scope, secondConnection), /REVIEW_SOURCE_CONFLICT/);
+      await assert.rejects(reopenAssistedClientReview(identity, { ...scope, empresaId: ID.empresaA }, secondConnection), /REVIEW_GROUP_SCOPE/);
+      assert.equal(await reopenAssistedClientReview(identity, { ...scope, groupId: ID.groupB, actorId: ID.runtimeActorB }, secondConnection), null);
+      const command = { operationId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaab',
+        expectedSourceFingerprint: opened!.record.sourceFingerprint, field: 'cpf',
+        proposedValue: syntheticCpf(90), reason: 'Verified synthetic source',
+        evidenceRefs: [{ ref: 'synthetic-proof', sha256: 'c'.repeat(64) }] };
+      await assert.rejects(saveAssistedClientDocumentCorrection(identity, { ...command, proposedValue: '123' }, scope, secondConnection),
+        /REVIEW_CANONICAL_DOCUMENT_REQUIRED/);
+      await assert.rejects(saveAssistedClientDocumentCorrection(identity, { ...command, evidenceRefs: [] }, scope, secondConnection),
+        /REVIEW_MEANING_CHANGE_EVIDENCE_REQUIRED/);
+      const correction = await saveAssistedClientDocumentCorrection(identity, command, scope, secondConnection);
+      assert.deepEqual(correction, { id: saved.id, replayed: false, status: 'PENDING_CANONICAL_REVALIDATION' });
+      assert.deepEqual(await saveAssistedClientDocumentCorrection(identity, command, scope, secondConnection),
+        { ...correction, replayed: true });
+      await assert.rejects(saveAssistedClientDocumentCorrection(identity, { ...command, proposedValue: syntheticCpf(91) }, scope, secondConnection),
+        /REVIEW_CORRECTION_CONFLICT/);
+      assert.deepEqual(await reopenAssistedClientReview(identity, scope, secondConnection),
+        { ...opened, correctionStatus: 'PENDING_CANONICAL_REVALIDATION' });
+      await assert.rejects(archiveAssistedClientReview({ ...identity, ...saved }, scope, secondConnection),
+        /REVIEW_ARCHIVE_POSTIMAGE_CHANGED/);
+      const otherRow = { ...row, nativeKey: 'NEW-SYNTH-ARCHIVE', sourceIndex: 1 };
+      const otherIdentity = { ...identity, nativeKey: otherRow.nativeKey };
+      const other = await stageAssistedClientReview(otherRow, scope, secondConnection);
+      const receipt = { ...otherIdentity, ...other };
+      await assert.rejects(archiveAssistedClientReview({ ...receipt, fingerprint: '0'.repeat(64) }, scope, secondConnection),
+        /REVIEW_ARCHIVE_RECEIPT_MISMATCH/);
+      assert.deepEqual(await archiveAssistedClientReview(receipt, scope, secondConnection), { id: other.id, replayed: false });
+      assert.deepEqual(await archiveAssistedClientReview(receipt, scope, secondConnection), { id: other.id, replayed: true });
+      assert.equal(await reopenAssistedClientReview(otherIdentity, scope, secondConnection), null);
+      await assert.rejects(stageAssistedClientReview(otherRow, scope, secondConnection), /REVIEW_SOURCE_ARCHIVED/);
+      assert.equal((await f.admin.query(`SELECT count(*) n FROM audit_logs
+        WHERE entity='LegacyClientReview' AND entity_id=$1 AND action='inactivate'`, [other.id])).rows[0].n, '1');
+      assert.equal((await f.admin.query('SELECT archived FROM legacy_client_review WHERE id=$1', [other.id])).rows[0].archived, true);
+    } finally {
+      await secondPool.end();
+    }
+    const audit = await f.admin.query(`SELECT action,after_data FROM audit_logs
+      WHERE entity='LegacyClientReview' AND entity_id=$1 ORDER BY action`, [saved.id]);
+    assert.equal(audit.rowCount, 2);
+    assert.deepEqual(Object.keys(audit.rows[0].after_data).sort(), ['fingerprint', 'reason', 'sourceStatus', 'status']);
+    assert.deepEqual(Object.keys(audit.rows[1].after_data).sort(), ['commandHash', 'field', 'status']);
+    const proof = await f.admin.query(`SELECT record,correction FROM legacy_client_review WHERE id=$1`, [saved.id]);
+    assert.equal(proof.rows[0].record.fields.find((field: { name: string }) => field.name === 'cpf').original, row.cpf);
+    assert.equal(proof.rows[0].correction.proposedValue, syntheticCpf(90));
+    assert.equal((await f.admin.query('SELECT count(*) n FROM clientes')).rows[0].n, before);
+  } finally {
+    await f.close();
+  }
+});

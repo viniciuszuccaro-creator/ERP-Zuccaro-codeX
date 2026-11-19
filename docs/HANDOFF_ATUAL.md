@@ -1,3 +1,59 @@
+## CPA3: nova identidade persistida na Revisao Assistida, apenas clone
+
+Delta de reversao: arquivamento logico por Grupo, identidade e
+fingerprint com permissao explicita e auditoria transacional. Nao
+arquiva item com correcao posterior, nao apaga dado original e
+nao permite reimportar item arquivado. PG16 restrito 1/1.
+Ensaio integral: 5423 entraram e 5423 foram arquivados em 11
+grupos (500 por transacao); 27,9 s de entrada e 74,4 s de
+arquivamento. Replay do primeiro grupo: 500. Delta em clientes 0.
+VPS medida: 23050952704 bytes livres; API/web a305a143 intactas.
+
+Delta local: proposta de correcao CPF/CNPJ usa o contrato da
+Revisao Assistida, exige valor canonico e referencia de evidencia,
+guarda original e proposta separadamente e audita sem documento.
+Releitura retorna so estado da proposta; replay nao duplica,
+proposta concorrente diferente e recusada. Sem transicao para
+cliente operacional, schema/ACL HML ou alteracao no financeiro.
+PG16 restrito: regressao 1/1 com correcao, releitura e auditoria.
+Build Linux aprovado. HML API/web a305a143, volume 23051186176
+bytes livres; pacote privado original conferido pelo SHA.
+Manifestos privados de ensaio, nao aplicaveis a HML sem novo pin:
+5384 revisao SHA 76c7cf80b40b751b2cfcb188cccca8a132c91f2579f0b726bd47807395e8d9;
+39 historicos SHA 125e22321dace9b06092e6b0671f179e7189d03cb4980735636062bfa48f8bd7.
+
+Handoff Casa 4b5c2afe lido sem integrar branch documental.
+HD Empresa: tamanho e SHA do par original conferidos 2/2, sem
+copia nova. API HML a305a143; 23051292672 bytes livres observados.
+O lote 849ba70c e a rodada dos 10871 nao foram reaplicados.
+
+Revisao Assistida recebeu armazenamento candidato em PG16, fora
+do journal de migrations. RLS por Grupo, RBAC explicito de
+Cliente, chave nativa unica, documento bruto separado de clientes
+e auditoria sem documento. Em clone com login restrito, uma nova
+identidade foi gravada e relida em outra conexao; replay voltou ao
+mesmo ID, divergencia de origem recusada e falha de auditoria
+desfez gravacao. Sem linha nova em clientes nem liberacao fiscal.
+
+Pacote privado existente: 5423 persistidos no ensaio; 5384 em
+revisao, 39 historicos. 500: 11 grupos, 25,437s, RSS 334766080;
+1000: 6 grupos, 43,630s, RSS 346656768. Replay do primeiro grupo
+apos checkpoint e replay integral 5423 no segundo ensaio, sem
+duplicar identidade ou auditoria. Referencia deste ensaio: 500.
+Nao reutilizar orquestrador de mestres para gravar fila de revisao.
+
+Fechamento: regressao PG16 1/1, suite Linux 3041/3041 sem skips,
+audit:baseline, lint/typecheck e builds frontend/backend passaram.
+Snapshot Linux usou cache privado, historico Git completo e
+temporarios em memoria, sem acesso ao HD real durante a suite.
+
+Zero transferencia ou escrita HML. Sem transicao operacional,
+API/tela autenticada ou ensaio de faturamento/titulo/baixa.
+Proximo: ligar o contrato ao acesso autenticado do operador,
+preparar o executor retomavel e revisar o delta de schema/ACL.
+Gate do delta
+DDL/ACL, backup fresco e manifesto antes de qualquer escrita na HML.
+
 ## CPA3: cliente unitario aplicado e conciliado na HML
 
 Com autorizacao especifica, removidos somente os dois TID_EXETPS
