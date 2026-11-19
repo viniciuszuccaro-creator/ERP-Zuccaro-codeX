@@ -1,3 +1,25 @@
+## CPA3: manifesto HML de um mestre e revisao dos demais
+
+PrepararPersistenciaClientesLegado gerou 1 candidato com pins
+fisicos da HML, perfil existente e principal sem superuser ou
+BYPASSRLS, em leitura. API a305a143, web nao reconfirmada.
+Manifesto canonico 849ba70cf471b03e39046c933e70a04274eeab075e99c46a2b565bc6169fee6a;
+arquivo SHA-256 e89fdb1180dc9d9b170ee7b2ba0f4a5db48fc2f57e29fe68fe417370ce342d72.
+Tres arquivos privados, 1543 bytes, sem envio e sem aplicacao.
+Colisoes zero na prova anterior, revalidar no gate da escrita.
+Volume abaixo da reserva: 22125658112 vs 22705722437 bytes.
+Faltam backup fresco restaurado, margem e autorizacao especifica.
+
+Revisao Assistida existente gerou e reabriu 5423 registros
+privados, sem duplicidade de chave no pacote e sem escrita de
+mestre: 4253 estrutura, 18 repetidos, 4 invalidos, 1109 potenciais,
+39 inativos. Status original, dados brutos e motivos preservados.
+Projecao sem liberar uso/fiscal; HTML e JSON fora do checkout.
+SHA records b0fd05df5c946d3b50b4ddfe31705586d6e282d4810088a9308f001f75a2697b.
+E staging em arquivos, nao registro PG nem prova de faturamento.
+Testes focados 18/18 Linux; Windows 17/18, process.getuid ausente.
+Sem alteracao de runtime, venda, transferencia, carga ou operacional.
+
 ## CPA3: primeiro mestre do saldo ensaiado e revertido
 
 Leitor SQL 17 isolado confirmou CPF e CGC textuais; captura
