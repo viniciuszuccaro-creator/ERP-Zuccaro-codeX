@@ -1,3 +1,24 @@
+## Catalogo: recorte Base44 centralizado e comparado por codigo
+
+5/5 artefatos conferidos por SHA entre Empresa e VPS: tres CSV
+originais e dois recibos. Canal privado incoming/base44-recovery-20261106-r1,
+diretorio 0700/arquivos 0600. Nao depende da Empresa para retomar.
+Recibo privado catalog-crosswalk-review-r1.private.json, nao executavel.
+
+Base44 x SQL por codigo exato: 870/871 unicos, 1 ausente, 0 ambiguos.
+Dos 817 com classe pendente: 816 unicos, 1 ausente; 378 tambem
+com descricao coincidente ignorando caixa. Sao candidatos, nao
+crosswalk oficial: codigo Base44 nao e identificado como legado.
+Unidades: 9 rotulos em comum de 14 Base44/18 SQL; nenhum fator,
+escopo ou equivalencia aprovado. Sem manifesto de carga/ensaio.
+Proximo: investigar CadastroChaveExternaMateriais e CodigoSistemaAntigo
+com recorte dirigido; provar vinculo Base44/SQL e Grupo/Empresa.
+
+CI7303 SUCCESS em d21c419a; candidata 162ed280 CI7298 SUCCESS.
+Marcador HML API/web a305a143. Livre 22127620096 bytes, abaixo
+do guard 22705722437; nenhuma liberacao de espaco ou restore do HD.
+Sem novas gravacoes, entregas aptas ou deploy; contatos preservados.
+
 ## Catalogo: mestre nativo vinculado aos itens de preco
 
 Leitor isolado reutilizado e parado. Novo recorte privado em
