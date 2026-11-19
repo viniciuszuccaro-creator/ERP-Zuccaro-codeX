@@ -1,3 +1,29 @@
+## Retomada: candidata GrupoProduto e capacidade HML (2026-11-19)
+
+Candidata codex/hml-grupo-produto-a305a143, 162ed280/CI7298 queued:
+base a305a143 + quatro arquivos runtime, testes e projecao exata.
+30 testes focados, typechecks e build backend PASS. Suite ampla
+local interrompida; nao homologado. HML ainda a305a143; sem deploy.
+
+VPS HML 22134820864 bytes livres, banco 410295319; minimo estrito
+22705722437. Deficit 570901573 bytes; com 512 MiB de margem faltam
+1107772485 bytes. Servico registra RECOVERY_SPACE_RESERVE. Menor
+alvo pratico: +2 GiB livres efetivos no mesmo filesystem. Opcao
++6 GiB livres efetivos se projetar +1 GiB de crescimento do banco
+(consumo de 1 GiB e aumento de 3 GiB na reserva), mantendo margem.
+Sao metas tecnicas, nao oferta de plano; recalcular com crescimento
+medido e demais arquivos. Sem alteracao de capacidade/cobranca.
+
+Obras no acervo VPS: hash e tamanho conferiram, 35309/42161319
+bytes. Revisao existente recontada, sem chave duplicada: 25353
+ativas em revisao, 2295 inativas, 117 entregas a reconciliar.
+Nao ha novo manifesto executavel com aptidao comprovada neste lote.
+Catalogo: 14 unidades sem mapa de Grupo; 817 referencias de classe
+pendentes e zero precos aptos comprovados. Nao repetir contatos.
+Proximo: CI7298; obter capacidade, backup/restauro/ack e gates
+separados; para dados, cruzar fontes nativas e preparar somente
+lotes comprovados. Nada gravado na HML ou no operacional.
+
 ## Catalogo: capacidade de backup sem descarte comprovado
 
 Somente leitura na VPS: HML e overlays Docker usam /dev/sda1;
