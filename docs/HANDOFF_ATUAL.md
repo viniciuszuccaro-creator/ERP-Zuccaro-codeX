@@ -1,3 +1,28 @@
+## CPA3: gate do cliente HML e prova PG da revisao existente
+
+Tres artefatos privados (1543 bytes) conferidos pelos hashes e
+identidade do manifesto 849ba70c. READ ONLY pelo principal API em
+a305a143 e mesmo Grupo: 0 colisoes por chave legada, codigo ou
+documento. Backup de 18/11 conferiu SHA e tem restore verificado,
+mas nao e backup fresco com ACK externo para esta escrita.
+
+Volume PostgreSQL: 22125531136 livres vs 22705722437 exigidos,
+deficit 580191301 bytes. Par SQL de trabalho redundante na mesma
+particao: 1022496768 bytes alocados, inodes distintos, um link
+cada. Copia original VPS e par de trabalho conferiram os hashes
+pinados do HD; HD ja abriu com SQL 17 READ_ONLY. Nenhum mount
+Docker no acervo ou handle aberto reportado. Nada removido.
+Confirmacao especifica da copia de trabalho, nova medicao e
+backup fresco ainda necessarios, alem da autorizacao do manifesto.
+
+PG16 privado, login restrito, codigo a305a143: 12/12 na regressao
+cliente-legacy-name via LEGACY_NAME_PG_TEST_URL. Revisao sintetica
+reabre cliente ja inativo, preserva ID e estado, audita correcao,
+prova replay, rollback e reversao. Nao grava cliente novo com
+documento pendente. 5423 continuam em staging privado em arquivo;
+sem ensaio de carga integral, transferencias ou gravacoes HML.
+Sem nova prova de faturamento, titulo ou baixa. Operacional intacto.
+
 ## CPA3: manifesto HML de um mestre e revisao dos demais
 
 PrepararPersistenciaClientesLegado gerou 1 candidato com pins
