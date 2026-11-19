@@ -1,3 +1,30 @@
+## CPA3: cruzamento preliminar de Obras com backup HML
+
+MDF/LDF da Empresa em SQL Server isolado READ_ONLY: extraidas
+somente 1214 chaves nativas CODIGOCLIENTE/ITEM/SEQUENCIA; 1560
+eventos sem par mantidos fora. VPS por SSH respondeu, volume do
+PostgreSQL com 22125977600 bytes livres vs reserva 22705722437.
+HTTPS /cadastros 200; SHA em execucao nao reconfirmado. Socket
+/run/hml-pg exige autenticacao; consulta de dados ao vivo nao feita.
+
+Restaurado somente database.dump do backup de 18/11, SHA
+081c22a036e9fbe79d207134bb1f9a4ed0cae4db40c66d80aa2a53c77ca6f71b,
+no PG16 local com socket exclusivo, sem TCP, ACLs e policies fora
+do ensaio de dados. Base: 17471 clientes, 16087 locais e um grupo.
+Cruzamento por sistema de origem e codigo legado, normalizando
+zeros apenas para comparacao: 907 de 1044 clientes, 137 ausentes,
+zero ambiguos; 1054 Obras com cliente e 160 sem cliente. Em 8
+linhas o cliente ja tem um local de entrega, sem prova de ser a
+mesma Obra. Duplicidade exata, empresa operacional e edicoes
+manuais ao vivo nao comprovadas. Numero/pais pendentes; 0 aptos.
+Matriz privada SHA 9af3f1835f1f5c1432d20d38b43d0a36e0407af815a0bb78f8bde383966f2389.
+
+Sem transferencia, carga, ativacao ou escrita na VPS. Proximo:
+usar identidade canonica de Obra no ledger e confirmar os campos
+nativos, depois revalidar destino pelo principal HML documentado.
+Venda: FechamentoFinanceiroTab chama faturarPedidoCompleto;
+neste recorte nao houve novo teste HTTP/PG de titulo ou baixa.
+
 ## CPA3: matriz preliminar de Obras e fontes comerciais
 
 Sucessor de 4b6cf99be. Leitor SQL 17.0.5065.9 sobre a mesma copia
