@@ -1,3 +1,31 @@
+## CPA3: cliente unitario aplicado e conciliado na HML
+
+Com autorizacao especifica, removidos somente os dois TID_EXETPS
+de trabalho; hashes da copia original VPS conferidos, HD intocado.
+Volume: 22125330432 antes, 23147827200 apos remocao e 23051264000
+apos backup e carga; reserva 22705722437. Sem retencao nesta janela.
+
+Backup fresco hml-20261119T172410Z-7d624196, 46028800 bytes:
+17 tabelas restauradas e verificadas, copia externa Empresa com
+SHA-256 4b78aef1b241be03c5feca0f7112fe810413aeade922bb469b221db027ac92be
+e EXTERNAL_ACK_VERIFIED. Primeira leitura do snapshot expirou;
+nova tentativa com timeout local do snapshot funcionou. Nenhuma
+mudanca da configuracao do servidor ou do timer. Snapshot atual
+comparado ao backup sob trava antes de aplicar.
+
+Manifesto privado 849ba70c: 3 arquivos/1543 bytes transferidos e
+conferidos. HML API a305a143, CI7250 SUCCESS. Cliente-only:
+1/1 lote, 1 inserido, 0 conflitos, 0 cadastros completos.
+Importador 0,316s, pico RSS 86994944 bytes. Releitura independente
+pelo principal restrito confirmou codigo, documento, nome, Grupo,
+status, origem e um recibo por lote e execucao. 17472 no total,
+15972 ativos e 1500 inativos. Recibos privados preservados.
+Nao reaplicar. Cadastros HTTPS 200; sem aceite de tela autenticada.
+
+O novo mestre nao vincula nenhuma das 160 Obras pendentes.
+5423 seguem em staging sem mestre. Sem alteracao operacional,
+publicacao de runtime, fatura, titulo ou baixa nesta rodada.
+
 ## CPA3: decisao de espaco e conferencia do staging
 
 Volume 22125436928 bytes livres; reserva 22705722437, deficit
