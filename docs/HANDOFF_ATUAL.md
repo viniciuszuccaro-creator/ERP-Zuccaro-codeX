@@ -1,3 +1,38 @@
+## CPA3: saldo integral de mestres Cliente por identidade nativa
+
+Leitura SQL Server isolada do HD: 22895 chaves de dbo.Clientes,
+CGC e CPF separados, situacao preservada. Nao existe coluna
+nativa empresa/filial no mestre. Nao atribuir dados do Grupo
+a uma empresa por inferencia. Extracao privada SHA-256
+d4acea4e83f9a0031e2b01bc85320c7310b6d8b2988719c47cea77c83c36a559.
+
+HML vivo hml344_restore_20261104/hml344_cpa_20261104 pela
+configuracao montada da API a305a143, sem superuser ou BYPASSRLS,
+REPEATABLE READ READ ONLY/ROLLBACK. Grupo unico confirmado.
+Dos 22895: 17471 encontrados, 5424 ausentes, zero ambiguos;
+o destino possui 17471 identidades legadas nesse escopo. Nenhuma
+reexecucao da rodada 45385950. SHA web nao reconfirmado.
+
+Backup restaurado conferido: dos ausentes, 1109 Potencial e
+39 Inativo fora da rodada ativa; dos 4276 Ativo, 4253 sem CPF/CGC
+com comprimento estrutural, 18 com documento repetido na fonte
+e 5 submetidos ao validador canonico (4 invalidos, 1 CNPJ valido).
+Esse unico candidato ainda exige mapeamento integral e prova
+de escopo, status e conflitos atuais. Nenhum apto confirmado.
+Dos encontrados, zero divergencias no documento comparado;
+1500 inativos no backup permanecem preservados; nao se conclui
+atualizacao dos demais campos por essa leitura. Das 137 chaves
+ausentes do recorte Obras, 132 no bloqueio estrutural, 1 no
+documento repetido e 4 fora da rodada ativa (160 Obras no total).
+
+Matriz agregada por identidade em arquivo privado SHA-256
+3c7dadf28a1f7d96992d5ca4795bec81d45cdbbc867f7816f8c12b48e888bd4c;
+a verificacao dos cinco candidatos e posterior a essa matriz.
+Sem manifesto de escrita, ensaio de carga, transferencia,
+insercao, atualizacao, exclusao ou mudanca no operacional.
+Proximo: aplicar contrato integral ao candidato remanescente,
+sem reutilizar autorizacao anterior nem reativar inativos.
+
 ## CPA3: cruzamento preliminar de Obras com backup HML
 
 MDF/LDF da Empresa em SQL Server isolado READ_ONLY: extraidas
