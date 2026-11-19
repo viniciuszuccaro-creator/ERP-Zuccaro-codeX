@@ -1,3 +1,25 @@
+## Catalogo legado: quatro exports nativos centralizados
+
+Leitor privado existente, copia previamente atrelada no volume proprio,
+sem rede/porta, 3 GiB/0.65 CPU. Aguardou a base ONLINE/READ_ONLY
+apos master, consultas com ROLLBACK. Leitor parado ao fim. Nenhum
+novo MDF copiado; originais, seis exports e backups preservados.
+Privado: incoming/erp344-reader-20261118T170353Z/catalog-native-r2.
+Manifesto f3724310834dbd6bb5cda63388f9b592830057ff930cdaa8e9b55fb409f35110.
+Quatro hashes e tamanhos conferidos: ClasseMateriais 46,
+GruposClasseMateriais 24, TabelaPrecosSCI 6 e TabelaPrecosItensSCI
+5162; 4814790 bytes. Join nativo: 24/24 grupos com classe unica;
+5162/5162 itens com tabela e classe unicas e CODIGOMATERIAL presente.
+Proximo: cruzar mestre por codigo, as 817 referencias e as 14
+unidades; provar Grupo/Empresa, unidade e vigencia antes do manifesto.
+
+HD da Empresa USB detectado; C com 1247887360 bytes livres,
+insuficiente para leitor + copia. Alternativa ainda nao restaurada;
+zero descarte da VPS. Folga apos export 22128893952 bytes; abaixo
+do guard 22705722437. Sem upgrade, novo backup HML ou carga.
+API HML a305a143; candidata 162ed280 / CI7298 SUCCESS. Contatos e
+enderecos preservados; zero novas entregas aptas ou gravadas.
+
 ## GrupoProduto: reversao conferida e decisao de capacidade pendente
 
 CI7298 SUCCESS para 162ed280. Pacote de retorno a305a143 na VPS:
