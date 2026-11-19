@@ -1,3 +1,26 @@
+## CPA3: matriz de elegibilidade e revisao do primeiro recorte
+
+Matriz privada catalog-filial-r1/eligibility-by-scope-r1.private.json
+SHA cc123b439671602a51f48ed556042454566469d2e6737aa53968ecc496f262fc.
+Tres pins validados; filas sem atribuicao comprovada a CPA ou 3Z:
+46 classes, 24 vinculos grupo/classe, 18 rotulos de unidade, 2360
+produtos, 6 tabelas e 5162 itens. Zero elegiveis/ensaiados/gravados.
+Falta fonte nativa de escopo, unidade e aplicabilidade de preco.
+Nao fabricar manifesto executavel ou recontar contatos/mestres.
+
+Primeiro recorte #595: LogisticaEntregaTab ja igual ao head Cursor;
+GerenciarEnderecos preserva estados de leitura/RBAC e tem guardas
+posteriores. Pedido da continuidade preserva troca de cliente e
+escopo; nao substituir pelo arquivo antigo. #596 Shell removeria
+a revogacao de visualizacao e limparia menos estado que a versao atual.
+14 testes Linux de locais, React montado e seletor passaram.
+Sem novo port, merge ou candidato: proximo, revisar somente hunks
+funcionais remanescentes e provar jornada HTTP/PG/navegador.
+
+VPS livre 22126559232, guard anterior 22705722437; sem restore
+do HD, exclusao, novo lote, deploy ou alteracao operacional.
+HML a305a143 do preflight vigente; GrupoProduto 162ed280 CI7298.
+
 ## CPA3: saldo dos 10871 confirmado e composicao comercial triada
 
 Recibo privado full-reconciliation do manifesto autorizado 45385950:
