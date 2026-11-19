@@ -1,3 +1,28 @@
+## CPA3: saldo dos 10871 confirmado e composicao comercial triada
+
+Recibo privado full-reconciliation do manifesto autorizado 45385950:
+22/22 lotes, 10871 inseridos, 144099 comparacoes, saldo zero.
+SHA do recibo 5516704b88737cfdc9c8c7d50935826ab9ec3d75e70e2a03c57441a5e1894cbf.
+HML READ ONLY: 17471 clientes, banco 410295319 bytes, SHA API/web
+a305a143 (nao d054e2b3). Porta 3080 do operacional respondeu health200,
+sem escrita. Livre 22126694400 vs guard 22705722437; HD sem restore
+alternativo comprovado. Nenhuma exclusao, recarga ou deploy.
+
+PR heads/checks: #342 5d1fa0fc CI6919/6920 SUCCESS; #591 e3b32276
+CI6811/6812 SUCCESS; #594 69430028 sem Actions no SHA consultado;
+#595 b5862fc5 CI7053 SUCCESS (GitHub dirty); #596 1a5bc05e CI7170
+SUCCESS (mergeability unknown). merge-tree local das bases reflete
+pares sem conflito, mas no checkpoint fa641f83 ha 7 conflitos #595
+e 18 #596, incluindo enderecos, Pedido, Orcamento e Central.
+Nao substituir arquivos em bloco. Proximo: portar hunks de locais
+sobre protecao de troca de cliente, e depois v6, em Codex isolado.
+
+66 testes focados Linux no runtime equivalente ao checkpoint:
+Central v6, respostas tardias, cliques, cancelamento e entrega.
+Nao e jornada integrada nem candidato composto. fa641f83 CI7306
+SUCCESS. GrupoProduto 162ed280 CI7298 SUCCESS, sem publicacao.
+Sem novos lotes de catalogo/endereco aptos, ensaiados ou gravados.
+
 ## Catalogo: parametros de estoque sem escopo de filial comprovado
 
 Leitor existente ONLINE/READ_ONLY, consultas com ROLLBACK e parado.
