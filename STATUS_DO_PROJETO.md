@@ -1,3 +1,27 @@
+## Catalogo: parametros de estoque sem escopo de filial comprovado
+
+Leitor existente ONLINE/READ_ONLY, consultas com ROLLBACK e parado.
+Privado incoming/erp344-reader-20261118T170353Z/catalog-filial-r1:
+manifesto d18e32ddbfd5742ebeded2a63feb5afe3b6dcd3e2a16324c25ad22a677ba9613.
+Parametros 2372/60597 bytes: 2360 ligados ao mestre, 12 fora.
+Estoque 184/4122 bytes: 171 ligados ao mestre, 13 fora. Ambos
+exports por CODIGOMATERIAL; sem coluna comprovada filial/empresa/unidade.
+Precos: 6/6 cabecalhos com datas presentes, 4464/5162 positivos;
+header/item sem campos de escopo empresa/filial/unidade. Presenca
+nao comprova vigencia aplicavel. Recibo scope-review privado SHA
+fc48eb56cf11457a41456f88245b45000cd2c42ee7101791979129a44ee0e812.
+Zero grupos/unidades/produtos/precos aptos ou ensaiados; proximo
+localizar relacao autoritativa de aplicacao do cadastro/tabela.
+
+HML READ ONLY com principal pinado: a305a143, 15970 fiscais e
+117 entregas, zero ativos/completos no criterio conferido.
+Sem novo manifesto, gravacao ou entrega selecionavel. Contatos intactos.
+VPS 22127910912 bytes apos consulta, abaixo do guard 22705722437.
+C interno 1331236864 bytes; HD USB nao usado como executor. Par
+ja pinado; abrir copia em disco interno com pelo menos 5 GiB livres
+ou executor interno equivalente. Sem restore, descarte ou upgrade.
+Candidata GrupoProduto 162ed280/CI7298 SUCCESS; sem deploy.
+
 ## Legado: par original do HD pinado; chaves externas nao vinculam
 
 HD Empresa 01_ORIGINAL_COPY/TIDSCI/MDFSQL: TID_EXETPS.mdf
