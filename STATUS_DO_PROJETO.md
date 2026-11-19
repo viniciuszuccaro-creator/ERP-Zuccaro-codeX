@@ -1,3 +1,31 @@
+## GrupoProduto: pacote verificado; capacidade pendente (2026-11-19)
+
+162ed280 / CI7298 SUCCESS. Empacotador canonico rodou em clone
+limpo do GitHub fora da VPS: API/web no mesmo SHA, 2222 arquivos
+e 17941430 bytes revalidados individualmente por SHA-256.
+Manifesto d1e52c5a205dbc509cb9c770551f21c5776268314b0143818fc6e1387e1907bc.
+Reconstruivel pelo SHA e npm locks; nao foi transferido/deployado.
+Destino HML a305a143, schema/ACL e runtime em gates separados,
+reversao runtime a305a143. Zero carga de catalogo.
+
+VPS: 22134734848 bytes livres e banco 410295319 bytes. Reserva
+canon 22705722437; deficit 570987589 bytes, sem margem. Meta
+imediata +2 GiB efetivamente livres; +6 GiB para cenario +1 GiB
+de banco, sujeito a pico medido de extracao/restauro/logs/rodadas.
+Hostinger nao amplia apenas disco; se hPanel confirmar KVM 2,
+avaliar upgrade KVM 4 (100 -> 200 GB no catalogo publico).
+Valor exato da assinatura/upgrade depende da cotacao autenticada
+do hPanel. Nao contratar, reduzir reserva ou mexer no operacional.
+
+Obras: 25353/25353 chaves da fila ativa cruzaram com export bruto;
+25341 com ENDERECO/CIDADE/UF/CEP informados (presenca, nao validade).
+Sem numero/pais estruturados comprovados; nenhum novo local apto
+ou gravado. Fiscais e catalogo sem novo manifesto executavel neste
+lote. Separados 2295 inativos e 117 para reconciliacao preexistente.
+Source-copy, arquivos de auditoria e reversao preservados; nenhum
+temporario liberado. Proximo: obter cotacao e janela, ou capacidade
+ja disponivel confirmada; depois backup fresco/restauro/ack e gates.
+
 ## Retomada: candidata GrupoProduto e capacidade HML (2026-11-19)
 
 Candidata codex/hml-grupo-produto-a305a143, 162ed280/CI7298 queued:
