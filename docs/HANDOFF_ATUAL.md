@@ -1,3 +1,28 @@
+## CPA3: contrato Cliente-only e saldo em revisao
+
+No PG16 sintetico isolado, via persistirLoteClientesLegado e
+fixtures reais do importador a305a143 (arquivos sem delta no
+checkpoint), 4 entradas individuais terminaram em
+LEGACY_NO_ELIGIBLE_SELECTION: Ativo sem documento, Ativo com
+documento incompleto, Potencial e Inativo. Clientes e auditoria
+sem delta. A selecao descarta antes de gravar: estados nao ativos
+e falha de schema canonico. Nenhum mestre de revisao foi criado
+ou avaliado em faturamento. A matriz privada preserva excecoes;
+nao equivale a staging persistido no ERP nem permite ativacao.
+
+Dos 4253 ativos na classe estrutural, zero com CPF e CGC ambos
+vazios; os 4253 contem digitos nao nulos sem atender ao formato
+por campo. Os 18 repetidos seguem distintos. Os 1109 potenciais
+e 39 inativos ficam fora do Cliente-only ativo.
+
+Candidato com CNPJ valido: principal API restrito, banco/schema
+HML pinados, READ ONLY/ROLLBACK, zero conflitos por codigo
+legado, codigo interno normalizado ou documento no Grupo.
+Falta validar campos obrigatorios da fonte e preparar candidato
+pelo contrato integral; nao ha manifesto executavel aprovado.
+Sem ensaio em volume, transferencia, carga, alteracao operacional
+ou reexecucao dos 10871. Nenhum novo vinculo de Obras a recalcular.
+
 ## CPA3: saldo integral de mestres Cliente por identidade nativa
 
 Leitura SQL Server isolada do HD: 22895 chaves de dbo.Clientes,
