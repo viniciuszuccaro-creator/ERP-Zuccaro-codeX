@@ -1,3 +1,26 @@
+## Legado: par original do HD pinado; chaves externas nao vinculam
+
+HD Empresa 01_ORIGINAL_COPY/TIDSCI/MDFSQL: TID_EXETPS.mdf
+1016070144 bytes e TID_EXETPS_log.ldf 6422528 bytes, SHA 2/2
+iguais aos pins da fonte VPS. Somente leitura; sem copia ou attach
+desse par. C interno 1340219392 bytes livres; exige pelo menos
+5 GiB livres ou executor interno isolado equivalente para abrir
+a copia, conferir versao/cobertura e autorizar descarte por caminho.
+Nada removido da VPS. Livre medido 22127398912 bytes; abaixo do
+guard 22705722437. Nao combinar backup/extracao/carga.
+
+Leitura SQL dirigida, copia existente ONLINE/READ_ONLY com ROLLBACK:
+2360/2360 sem CodigoSistemaAntigo e CODIGOEXTERNO preenchidos.
+CadastroChaveExternaMateriais tem 1 linha; nenhum valor e um ID
+Base44. So coincidencia no campo CODIGO, sem propriedade descritiva
+ou prova de mapeamento. Nao vincular os 870 candidatos do CSV.
+Recibo privado em incoming/erp344-reader-20261118T170353Z/
+catalog-external-keys-r1, SHA 0eb61c89d13e5e79647b1fe7713b93880bdc7f0cab5c083b5f826698f77e5a54.
+Leitor parado. Proximo no catalogo SQL direto: verificar escopo e
+unidade nos parametros nativos por filial antes de montar lote.
+Sem novo manifesto executavel, gravacoes ou entregas selecionaveis.
+HML API/web a305a143; 162ed280 CI7298 verde, sem deploy.
+
 ## Catalogo: recorte Base44 centralizado e comparado por codigo
 
 5/5 artefatos conferidos por SHA entre Empresa e VPS: tres CSV
