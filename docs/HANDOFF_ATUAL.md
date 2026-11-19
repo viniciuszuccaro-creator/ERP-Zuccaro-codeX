@@ -1,3 +1,28 @@
+## Catalogo: mestre nativo vinculado aos itens de preco
+
+Leitor isolado reutilizado e parado. Novo recorte privado em
+incoming/erp344-reader-20261118T170353Z/catalog-material-master-r1:
+CadastroMateriais 2360/292997 bytes, GruposMateriais 6/336 bytes.
+Manifesto 6c80a6efa5ea10cefd8d09b85b9e64cb974d1312a6619c6b146a638d06c155e9.
+Seis arquivos de catalogo revalidados pelos respectivos manifestos.
+CID/volume existentes, consultas READ_ONLY/ROLLBACK, sem novo MDF.
+
+Join nativo: 2360/2360 materiais com classe unica e 18 rotulos
+de unidade presentes; sem codigo material duplicado. 5162/5162
+itens cruzaram CODIGOMATERIAL e tem a mesma classe do mestre;
+zero duplicidade por tabela/material. Nao confundir 18 rotulos do
+mestre com 14 unidades do recorte antigo; nenhum fator presumido.
+Falta cruzar os 871 antigos/817 pendentes por chave autoritativa,
+e provar escopo, unidade operacional, valor e vigencia. Zero lotes
+executaveis aprovados ou novas gravacoes. Sem novos locais aptos.
+
+HML marcador API/web a305a143; 162ed280 CI7298 SUCCESS.
+Livre apos export 22128431104 bytes: abaixo do guard vigente.
+C interno 1312808960 bytes; sem restore alternativo comprovado,
+zero liberacao de disco ou alteracao na VPS/HML operacional.
+Proximo: crosswalk do recorte antigo e escopo dos mestres; manter
+a carga bloqueada ate manifesto, backup restaurado e gate especifico.
+
 ## Catalogo legado: quatro exports nativos centralizados
 
 Leitor privado existente, copia previamente atrelada no volume proprio,
