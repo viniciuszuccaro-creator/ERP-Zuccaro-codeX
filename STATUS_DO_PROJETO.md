@@ -1,3 +1,27 @@
+## GrupoProduto: reversao conferida e decisao de capacidade pendente
+
+CI7298 SUCCESS para 162ed280. Pacote de retorno a305a143 na VPS:
+2222 arquivos / 17940554 bytes conferidos individualmente por SHA,
+marcador API/web no mesmo SHA. Nenhum deploy, restore ou transferencia.
+
+VPS: 22134599680 bytes livres. Com o banco de 410295319 bytes do
+preflight vigente, guard 22705722437; faltam 571122757 bytes.
+Meta +2 GiB efetivos; +6 GiB no cenario de crescimento de 1 GiB.
+Cotacao autenticada KVM4 condicionada ao plano atual no hPanel.
+Sem preco exato, janela ou autorizacao nao alterar a assinatura.
+Revalidar tamanho/freespace do filesystem apos qualquer ampliacao.
+
+Acervo: crosswalk nativo tem duas empresas, sem vinculo com unidade
+ou classe. Busca dirigida em incoming/source-copy nao localizou
+exports de ClasseMateriais/GruposClasseMateriais/TabelaPrecosSCI.
+Inventario nao substitui export. Proximo: extracao dirigida em
+leitor isolado sobre copia, nao reabrir Codespace nem inferir escopo.
+Obras: reusar join completo anterior; sem nova fonte para numero/pais.
+Zero novos fiscais/entregas/catalogo aptos comprovados ou gravados;
+zero temporarios liberados. Contatos preservados. HML e producao
+intactas. Gate seguinte: cotacao real ou capacidade existente, backup
+fresco restaurado e copia externa; schema/ACL e runtime separados.
+
 ## GrupoProduto: pacote verificado; capacidade pendente (2026-11-19)
 
 162ed280 / CI7298 SUCCESS. Empacotador canonico rodou em clone
