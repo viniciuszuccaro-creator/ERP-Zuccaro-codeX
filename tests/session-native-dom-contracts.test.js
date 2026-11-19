@@ -9,6 +9,7 @@ import {renderToStaticMarkup} from 'react-dom/server';
 import {nativeDomEdits,nativeDomAttributeRemainder} from './helpers/nativeDomAttributeRemainder.js';
 import {mirrorInputAfter,httpMirrorAnnotationRemainder,httpGroupScopeRemainder,httpGroupScopeHunks} from './helpers/httpMirrorAnnotationRemainder.js';
 import {iaResponseValidationRemainder} from './helpers/iaResponseValidationRemainder.js';
+import {financialUiBoundaryRemainder} from './helpers/financialUiBoundaryRemainder.js';
 
 const hashes = [
   ['src/api/localBase44Client.js','81a4ef9c0c06d920bf967c86b3d6897f060948f65326c7ee1f1bc2ac21768968'],
@@ -27,7 +28,8 @@ const read=file=>fs.readFileSync(file,'utf8').replace(/\r\n/g,'\n');
 const emit=source=>ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext,jsx:ts.JsxEmit.React,removeComments:true}}).outputText;
 for(const [file,beforeHash] of hashes)test(`${file}: stage45 runtime retained outside exact numeric DOM attributes`,()=>{
   const current = file === 'src/api/localBase44Client.js' ? httpGroupScopeRemainder(read(file)) : read(file);
-  const source=nativeDomAttributeRemainder(file,iaResponseValidationRemainder(file,current));
+  const guarded = file === 'src/components/comercial/FechamentoFinanceiroTab.jsx' ? financialUiBoundaryRemainder(file,current) : current;
+  const source=nativeDomAttributeRemainder(file,iaResponseValidationRemainder(file,guarded));
   assert.equal(crypto.createHash('sha256').update(emit(source)).digest('hex'),beforeHash);
 });
 

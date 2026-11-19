@@ -1,3 +1,24 @@
+## CPA3: projecao de parcelas e preservacao do bloqueio HTTP
+
+Primeiro incremento isolado, ainda nao chamado pela API: projecao
+de parcelas a partir do schema canonico de condicao, centavos
+inteiros, ordem deterministica e data de emissao explicita.
+Recusa total com fracao de centavo, parcela zero, data impossivel
+ou condicao invalida. Rateio candidato; nao libera emissao/titulo.
+Backend: 2 testes focados, typecheck e build passaram.
+
+CI7310 de 7f29dd10 falhou em npm test frontend; outros jobs verdes.
+Projecao historica limitada aos hunks exatos do bloqueio HTTP:
+43 testes locais passaram com os hashes ancestrais intactos.
+Guardas de faturamento permanecem; sem rota/schema/titulo/baixa.
+
+Acervo: Caixa/Caixa01 e formas de recebimento sao novas pistas
+no inventario, sem vinculo de titulo, parcela, empresa e saldo
+comprovado. Nao houve nova extracao/manifesta/carga. HML API/web
+a305a143; livre 22126579712 vs guard 22705722437. Proximo: fechar
+contrato transacional de titulo/baixa e prova de fonte financeira;
+nao tocar no operacional nem reaplicar a rodada 45385950.
+
 ## CPA3: limite HTTP de faturamento comprovado no clone
 
 f2fb17086 CI7309 SUCCESS. Clone sintetico: regressao PostgreSQL
