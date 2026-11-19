@@ -1,3 +1,25 @@
+## CPA3: copia do legado recuperada no HD da Empresa
+
+Checkpoint 90224927d, CI7311 SUCCESS. HML API/web a305a143, sem
+publicacao nem carga. VPS: 22126231552 bytes livres, abaixo da
+reserva de 22705722437 (deficit de 579490885 bytes).
+
+Par MDF/LDF do HD (1022492672 bytes) copiado para armazenamento
+privado no WSL e conferido por SHA-256 (2/2). SQL Server Developer
+17.0.5065.9 abriu somente a copia, em rede isolada e sem acesso ao
+HD. Vinculo fisico conferido e consultas em READ_ONLY/ROLLBACK:
+2360 materiais, 5162 itens de preco, 35309 Obras, 13524 linhas
+Caixa e 80750 Caixa01. As contagens nao comprovam elegibilidade,
+vigencia, numero de imovel ou titularidade financeira. Recibo
+agregado privado SHA-256:
+1ddea5c4a1ceff7428deee295b6b83fd602b6a596a8f735de6ad4d1a5c80a8f6.
+
+Proximo: usar o leitor isolado para comprovar configuracao de
+preco/filial e seguir documento/parcela na fonte; Obras continuam
+com pendencias para liberacao. Nenhuma exclusao da VPS autorizada
+por esta prova. Venda ainda sem persistencia HTTP de titulo/baixa;
+a projecao de parcelas nao muda esse estado.
+
 ## CPA3: projecao de parcelas e preservacao do bloqueio HTTP
 
 Primeiro incremento isolado, ainda nao chamado pela API: projecao
