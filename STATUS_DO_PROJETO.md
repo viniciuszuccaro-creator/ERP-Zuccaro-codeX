@@ -1,3 +1,27 @@
+## CPA3: decisao de espaco e conferencia do staging
+
+Volume 22125436928 bytes livres; reserva 22705722437, deficit
+580285509. Par redundante de trabalho: mesmos inodes, dispositivo
+2049 e um link por arquivo; 1022496768 bytes alocados, original
+separado e acervo sem montagem Docker ou handles reportados.
+Projecao apos remocao: 23147933696 bytes livres, 442211259 acima
+da reserva antes de temporarios. Hashes e prova READ_ONLY do HD
+reutilizados do checkpoint. Sem confirmacao especifica: nada
+apagado. Manifesto 849ba70c segue sem escrita, backup fresco ou
+autorizacao especifica; revalidar pico de backup apos a decisao.
+
+Reabertura do pacote privado conferiu SHA e 5423 chaves unicas:
+4275 ativos de origem em revisao, 1109 potenciais em revisao e
+39 inativos somente historico. Todos sem aplicacao, liberacao
+operacional ou emissao na projecao. Isso nao cria mestre ou fila
+PG. Ledger de enderecos exige ID de cliente preexistente; nao
+reaproveitar como persistencia de uma nova identidade sem contrato.
+
+Projecao de parcelas: 2/2 no checkout atual. Checkout Linux do
+runtime a305a143 nao contem esse teste posterior; sem nova
+prova HTTP/PG de faturamento/baixa. Sem carga, transferencia,
+ativacao, alteracao de runtime ou no operacional.
+
 ## CPA3: gate do cliente HML e prova PG da revisao existente
 
 Tres artefatos privados (1543 bytes) conferidos pelos hashes e
