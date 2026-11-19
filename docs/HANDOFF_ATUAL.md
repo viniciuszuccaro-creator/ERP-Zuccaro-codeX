@@ -1,3 +1,27 @@
+## CPA3: matriz preliminar de Obras e fontes comerciais
+
+Sucessor de 4b6cf99be. Leitor SQL 17.0.5065.9 sobre a mesma copia
+privada do HD, sem rede externa, READ_ONLY/ROLLBACK. Os 1536 eventos
+com par nativo unico correspondem a 1214 Obras e 1044 clientes;
+1560 eventos sem par ficam separados. Na fonte de Obras: 11 CEPs
+fora da validacao sintatica; 1 ausencia em cada campo logradouro,
+bairro, municipio e UF (criterios podem se sobrepor). Numero e
+pais ainda nao comprovados. Zero locais liberados; cruzamento
+com IDs, conflitos e edicoes da HML ainda nao executado.
+A verificacao de CEP nao prova existencia postal. Recibo agregado
+privado SHA-256 5f161b3dbb1b81bf300dfc80096a04d3a64c7fdeac8ee81b044690cca4c1f9ae.
+
+RomaneioEntrega e itens contem codigo de empresa: 14830 e 210751
+linhas, respectivamente, dois codigos em cada fonte. Evidencia
+candidata de contexto historico, nao de aplicacao de tabela.
+SimulacaoPreco tem EMPRESA, mas zero linhas nesta copia.
+Caixa/Caixa01 nao exibem colunas nomeadas de vencimento, parcela
+ou empresa na sondagem; existe ParametrosIntegracaoCaixaCtasReceber.
+Proximo: localizar uma referencia de titulo conhecido e comprovar
+o vinculo fora de Caixa; em Obras, exigir fonte independente de
+numero/pais antes de liberar o pacote. Sem manifesto apto, carga,
+transferencia, exclusao, deploy ou escrita na HML/operacional.
+
 ## CPA3: copia do legado recuperada no HD da Empresa
 
 Checkpoint 90224927d, CI7311 SUCCESS. HML API/web a305a143, sem
