@@ -1,3 +1,30 @@
+## CPA3: primeiro mestre do saldo ensaiado e revertido
+
+Leitor SQL 17 isolado confirmou CPF e CGC textuais; captura
+dirigida de 5 candidatos e campos obrigatorios SHA-256
+6ece4a4e2a5112091588a2e5f2f43efcd581c97ff84ccc59731ca27212b9db32.
+CGC valido e razao social presentes em um Ativo. Cliente-only
+a305a143 em PG16 isolado, fixture nova: 1 inserido, 1 relido
+com codigo, documento, razao social, Grupo sem empresa e origem
+conferidos. Falha simulada apos COMMIT, retry sem duplicar ou
+duplicar auditoria, reversao logica e repeticao da reversao.
+Manifesto de ensaio SHA-256
+8cc94910c0342ee3c7f2f77b15247676fec60b4720d674fbbbacf8f041cbb5eb.
+Esse manifesto e pinado ao clone; nao usar para escrever na HML.
+
+Dos 4253, todos com zero inicial preservado e algum campo curto,
+nenhum com pontuacao, zero documentos aprovados pelos validadores
+canonicos no campo esperado ou invertido. Nao preencher zeros
+nem mudar tipo por inferencia. Staging localizado e classificador,
+nao mestre persistido/revisavel por este fluxo. Nao houve gravacao
+de pendente, testes de faturamento ou rodada em volume.
+
+HML: livre medido 22125727744 bytes vs reserva 22705722437.
+Zero transferidos/gravados. Proximo: gerar manifesto pinado ao
+destino para o mestre unico, atualizar conflitos, backup e
+reserva antes do gate; para o restante, definir persistencia e
+revisao sem ativacao. Operacional e 10871 preservados.
+
 ## CPA3: contrato Cliente-only e saldo em revisao
 
 No PG16 sintetico isolado, via persistirLoteClientesLegado e
