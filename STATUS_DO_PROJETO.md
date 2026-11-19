@@ -1,3 +1,24 @@
+## CPA3: limite HTTP de faturamento comprovado no clone
+
+f2fb17086 CI7309 SUCCESS. Clone sintetico: regressao PostgreSQL
+3/3 ate Expedicao. Auth sintetico; conversao HTTP 201, detalhe
+200, sem sessao 401. Sondas POST /api/v1/pedidos/:id/faturar
+e GET /api/v1/contas-a-receber retornaram 404; nao sao rotas
+montadas. Fluxo antigo escreve NotaFiscal via cliente hibrido,
+sem contrato HTTP persistente para faturar, gerar ou baixar titulo.
+Aba Fechamento agora bloqueia abertura e callback NF em modo HTTP
+antes de qualquer gravacao local; modo legado inalterado.
+20 testes focados, lint direcionado, typecheck e build passaram.
+Nao foi financeiro funcional, navegador ou homologacao.
+
+Inventario financeiro dirigido encontrou parcelas de cartao e log
+de transferencia fiscal; nenhum contrato fonte/destino de titulo
+com baixa e saldo comprovado. Proximo: localizar a fonte historica
+e definir transacao canonica de faturamento/titulos/recebimento
+com RBAC e idempotencia, sem efeitos externos.
+HML a305a143, livre 22126727168 vs guard 22705722437. Zero novo
+manifesto elegivel, carga, deploy ou alteracao operacional.
+
 ## CPA3: codigo de entrega preservado e jornada persistente ensaiada
 
 Port de #596 limitado a apresentacao do codigo quando fornecido

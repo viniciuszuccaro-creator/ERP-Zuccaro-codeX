@@ -88,6 +88,8 @@ test('commercial billing persists the NF instead of logging it', async () => {
   assert.doesNotMatch(fechamento, /console\.log\('Emitir NF-e'/);
   assert.match(fechamento, /assertFaturamentoDentroDoPedido/);
   assert.match(fechamento, /createInContext\('NotaFiscal'/);
+  assert.match(fechamento, /disabled=\{isHttpBackendMode \|\| !contextoValido/);
+  assert.match(fechamento, /onEmitir=\{async \(dadosNFe\) => \{\s*if \(isHttpBackendMode\) throw new Error\(faturamentoHttpIndisponivel\);/);
   assert.match(fluxo, /assertFaturamentoDentroDoPedido/);
   assert.match(fluxo, /reservarEstoqueItemAprovacao/);
   assert.match(fluxo, /evaluatePedidoCredito|validarLimiteCredito/);
