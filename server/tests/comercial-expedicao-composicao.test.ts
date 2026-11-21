@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { randomUUID } from 'node:crypto';
+import { once } from 'node:events';
 import { localCrmFixture } from './helpers/crmFixture.ts';
 import { realCrmFixture } from './helpers/crmPostgresFixture.ts';
 import { createApp } from '../src/app.ts';
@@ -9,7 +10,7 @@ import { SEED_IDS as ID } from '../scripts/seedDevIds.ts';
 import { PostgresExpedicaoEstoquePort, PostgresExpedicaoPedidoPort } from '../src/integrations/expedicaoPersistentPorts.ts';
 
 // The same synthetic journey runs locally and in the mandatory isolated PostgreSQL job.
-async function journey(f: Awaited<ReturnType<typeof localCrmFixture>>) {
+async function journey(f: Awaited<ReturnType<typeof localCrmFixture>>, probeBilling = false) {
   const config = loadConfig({ NODE_ENV: 'test', ERP_ENV: 'dev', REQUIRE_DATABASE: 'false', DATABASE_URL: 'postgresql://synthetic@localhost/erp_test', ENABLE_CRM_HTTP: 'true' });
   const runtime = createApp({ config, db: f.admin, useMemory: false,
     expedicaoPedidoPort: new PostgresExpedicaoPedidoPort(), expedicaoEstoquePort: new PostgresExpedicaoEstoquePort() });
@@ -107,6 +108,28 @@ async function journey(f: Awaited<ReturnType<typeof localCrmFixture>>) {
   assert.ok(central);
   assert.deepEqual((await runtime.pedidoService.history(ctx, order.id)).map(h => h.status_novo), ['EM_ABERTO', 'PRONTO_ENTREGA']);
   assert.ok((await runtime.auditRepo.listByEntity('Pedido', order.id)).length >= 3);
+  if (probeBilling) {
+    const listener = runtime.app.listen(0, '127.0.0.1');
+    try {
+      await once(listener, 'listening');
+      const address = listener.address();
+      assert.ok(address && typeof address !== 'string');
+      const endpoint = `http://127.0.0.1:${address.port}/api/v1/pedidos/${order.id}`;
+      const headers = { 'x-group-id': ctx.groupId, 'x-empresa-id': ctx.empresaId, 'x-actor-id': ctx.actorId };
+      const request = (suffix: string, method = 'GET') => fetch(endpoint + suffix, {
+        method, headers, signal: AbortSignal.timeout(5000),
+      });
+      const before = await runtime.pedidoService.get(ctx, order.id);
+      const auditBefore = await runtime.auditRepo.listByEntity('Pedido', order.id);
+      assert.equal((await request('')).status, 200);
+      // Replace this boundary with the positive contract when billing is wired.
+      assert.equal((await request('/faturar', 'POST')).status, 404);
+      assert.deepEqual(await runtime.pedidoService.get(ctx, order.id), before);
+      assert.deepEqual(await runtime.auditRepo.listByEntity('Pedido', order.id), auditBefore);
+    } finally {
+      await new Promise<void>((resolve, reject) => listener.close(error => error ? reject(error) : resolve()));
+    }
+  }
 }
 
 test('Composição persistida: Cliente→Orçamento→Pedido→Expedição, rollback, replay, parcial, devolução e cancelamento', async () => {
@@ -116,7 +139,7 @@ test('Composição persistida: Cliente→Orçamento→Pedido→Expedição, roll
 
 if (process.env.DATABASE_URL) test('Composição PostgreSQL real isolado executa o mesmo percurso canônico', async () => {
   const f = await realCrmFixture(process.env.DATABASE_URL!);
-  try { await journey(f); } finally { await f.close(); }
+  try { await journey(f, true); } finally { await f.close(); }
 });
 
 test('Leitores comerciais persistidos nao promovem ator nem tenant trocados durante validacao SQL', async () => {

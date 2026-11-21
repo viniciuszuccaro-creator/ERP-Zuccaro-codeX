@@ -1,3 +1,21 @@
+## CPA3: primeira transicao HTTP apos Expedicao
+
+a3478aca, CI44904280880 SUCCESS. GET e POST de revisao assistida
+na candidata; proposta nao autoriza aplicacao, cadastro ou faturamento.
+PG16 isolado: composicao comercial 3/3, com pedido persistido.
+GET do Pedido 200; POST /pedidos/:id/faturar 404. Pedido e sua
+auditoria iguais antes/depois. Nenhum titulo, recebimento ou baixa.
+O fechamento legado em useFluxoPedido grava contas sequencialmente
+via Base44 e nao comprova atomicidade no backend atual. Reusar
+faturamentoParcelasPolicy e os contratos de ContaReceber na
+integracao transacional, sem fallback nem efeitos externos.
+
+Leitor da Empresa indisponivel neste executor. Preservados volumes,
+HD e deficit minimo de 1032430004 bytes anotado para clonar na VPS.
+Lote 5384/39: zero extraido, transferido, gravado ou conciliado nesta
+rodada. Retomar pelo leitor isolado da Empresa com a copia conferida.
+HML sem publicacao; ERP operacional sem alteracao.
+
 ## CPA3: proposta de correcao assistida por HTTP
 
 Base c0a813f2. POST /api/v1/clientes/revisao-legado/:sourceSystem/:nativeKey/correcao
