@@ -1,3 +1,18 @@
+## CPA3: parametrizacao contabil do faturamento
+
+Base 54beaae66, CI44909234197 SUCCESS. ContaReceberForm consulta
+CentroCusto e PlanoDeContas no contexto e exige selecao explicita
+dos dois. useFluxoPedido nao fornece esses vinculos ao gerar
+parcelas. ConfigFinanceiroLogistica e financeLinkLogistica usam
+ConfiguracaoSistema/log_finance_cfg por empresa para frete e
+custo de entrega; nao usar essas contas para receita de venda.
+propagateGroupConfigs propaga cadastros, nao define um padrao
+contabil de venda. Nenhum padrao comercial comprovado no codigo.
+Proximo: conferir toda origem autorizada da configuracao comercial
+ou validar a selecao explicita de centro/plano por empresa no
+contrato de faturamento. Sem fallback para public ou Logistica,
+rotas novas, gravacao financeira, DDL ou deploy neste delta.
+
 ## CPA3: ensaio SQL de faturamento e baixa no clone
 
 Base d4cc77e49. Fixture PG16 descartavel usa somente seu
