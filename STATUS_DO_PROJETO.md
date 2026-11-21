@@ -16,7 +16,14 @@ schema hml344_cpa_20261104, 17 relacoes. Busca no pg_catalog por
 Pedido, revisao, faturamento, fiscal, financeiro, titulo,
 recebimento e pagamento retornou apenas as tres relacoes de
 condicao de pagamento. API/web a305a143; Docker 23047565312
-bytes livres. Nenhum grant, DDL ou deploy nesta conferencia.
+bytes livres. Conferencia adicional READ ONLY: public tem pedidos,
+pedido_itens, pedido_historico e expedicao_pedido_eventos, sem
+SELECT para o principal HML e FKs para relacoes de public.
+Nao usar public como fallback. Nenhuma relacao nos dois schemas
+com colunas pesquisadas de vencimento, valor pago/recebido,
+saldo devedor, baixa ou vinculos de titulo/recebimento.
+Condicoes de pagamento existem na HML mas sem SELECT para a API.
+Nenhum grant, DDL ou deploy nesta conferencia.
 Proximo: ensaiar no clone as dependencias comerciais e a
 integracao transacional de titulos com o contrato de ContaReceber.
 HTTP de faturamento ainda 404; nenhum titulo, recebimento ou baixa.
