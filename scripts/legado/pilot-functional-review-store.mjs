@@ -1,6 +1,7 @@
 import { buildAssistedReviewRecord, prepareAssistedReviewProposal } from './pilot-functional-review-record.mjs';
 import { rowHash } from './pilot-functional-policy.mjs';
 import { isValidCpf, isValidCnpj } from '../../src/api/localCadastroMasterPolicy.js';
+export { reopenAssistedClientReview } from '../../server/src/services/legacyClientReviewRead.js';
 
 const uuid = value => typeof value === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 const token = value => typeof value === 'string' && /^[a-z0-9_.:-]{1,80}$/i.test(value);
@@ -88,24 +89,6 @@ export async function stageAssistedClientReview(input, scope, { db, audit, rbac 
       afterData: { fingerprint, sourceStatus, reason, status: record.status } }, q);
     await authorize(rbac, ctx, 'importar', q);
     return { id, replayed: false, fingerprint };
-  }));
-}
-
-export async function reopenAssistedClientReview(identity, scope, { db, rbac }) {
-  const ctx = captureScope(scope);
-  const { sourceSystem, nativeKey } = identity ?? {};
-  if (!token(sourceSystem) || !token(nativeKey)) reject('REVIEW_IDENTITY_REQUIRED');
-  return db.withTenantContext(ctx, () => db.withTransaction(async q => {
-    await authorize(rbac, ctx, 'visualizar', q);
-    await authorize(rbac, ctx, 'importar', q);
-    const found = (await selectRecord(q, ctx, sourceSystem, nativeKey)).rows[0];
-    if (!found || found.archived) return null;
-    // Existing renderer masks protected fields; do not return their raw values.
-    return { id: found.id, correctionStatus: found.correction_status, record: { ...found.record, fields: found.record.fields.map(field => {
-      if (!field.protected) return field;
-      const { original: _original, ...masked } = field;
-      return masked;
-    }) } };
   }));
 }
 

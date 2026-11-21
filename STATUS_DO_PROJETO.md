@@ -1,3 +1,30 @@
+## CPA3: leitura autenticada da Revisao Assistida no candidato
+
+Base fbe206cd, CI44891726578 SUCCESS. Leitura canonica movida
+para server/src e reutilizada pela CLI; build inclui servico e
+rota. GET /api/v1/clientes/revisao-legado/:sourceSystem/:nativeKey
+requer Bearer verificado, X-Group-Id, visao Grupo e permissoes
+explicitas Cliente visualizar/importar. Retorna id, record
+mascarado e correctionStatus; sem cache. Sem permissao 403;
+identidade fora do escopo visivel 404; tabela indisponivel 503.
+PG16 restrito + HTTP local com middleware real e IdP sintetico:
+200 autorizado sem bruto, 403 solicitando Grupo alheio, 404
+operador de outro Grupo, 403 apos revogacao. Sem cliente novo.
+Build/typecheck API, regressao PG16 e suite Linux 3041/3041 passaram.
+Rota montada somente no teste HTTP; bootstrap canonico ficou
+inalterado por contratos historicos de preservacao. Sem liberacao
+para consumo pelo frontend ainda.
+
+Proposal/correcao ainda sem endpoint; schema candidato permanece
+fora do journal ativo e requer integracao antes da implantacao.
+HML API/web a305a143, livre 23048708096 bytes, ~327 MiB acima
+da reserva, sem pico comprovado. Pacotes 5384/39 conferiram
+SHA; nenhum arquivo/recibo dos dois lotes localizado na area
+incoming consultada. Sem transferencia, escrita, DDL, rollout ou venda.
+Preservados 10871 e 849ba70c, sem alteracao operacional.
+Proximo: empacotar a correcao canonica, fechar migration/ACL,
+ensaio de pico e backup externo antes de pedir a decisao da HML.
+
 ## CPA3: comando privado de revisao e recibos duraveis
 
 Base ad0cad7f, CI44610131514 SUCCESS. CLI Linux:

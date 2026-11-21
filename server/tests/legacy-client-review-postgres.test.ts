@@ -6,6 +6,11 @@ import { join } from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import pg from 'pg';
+import express, { type ErrorRequestHandler } from 'express';
+import { once } from 'node:events';
+import { createSupabaseAuthMiddleware, requestIdMiddleware, scopeMiddleware } from '../src/middleware/requestContext.ts';
+import { mountLegacyClientReviewRead } from '../src/api/legacyClientReviewRoute.ts';
+import { AppError } from '../src/api/errors.ts';
 import { PostgresAuditRepository } from '../src/audit/auditRepository.ts';
 import { createPoolDbClient } from '../src/db/client.ts';
 import { PostgresRbacGuard } from '../src/db/rbacGuard.ts';
@@ -42,6 +47,46 @@ test('new Assisted Review identity survives a new PostgreSQL connection without 
       WITH CHECK (group_id=NULLIF(current_setting('app.group_id',true),'')::uuid AND empresa_id IS NULL)`);
     const saved = await stageAssistedClientReview(row, scope, firstConnection);
     assert.equal(saved.replayed, false);
+    const users = { a: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1', b: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb2' };
+    await f.admin.query('UPDATE profiles SET auth_user_id=$1 WHERE id=$2', [users.a, ID.runtimeActorA]);
+    await f.admin.query('UPDATE profiles SET auth_user_id=$1 WHERE id=$2', [users.b, ID.runtimeActorB]);
+    const http = express();
+    http.use(requestIdMiddleware);
+    http.use(createSupabaseAuthMiddleware({ supabaseUrl: 'https://synthetic.invalid', anonKey: 'synthetic',
+      db: f.admin, fetchImpl: async (_url, options) => {
+        const token = new Headers(options?.headers).get('authorization')?.replace(/^Bearer /, '');
+        const id = users[token as keyof typeof users];
+        return id ? Response.json({ id }) : new Response(null, { status: 401 });
+      },
+    }));
+    http.use(scopeMiddleware);
+    mountLegacyClientReviewRead(http, firstConnection.db, firstConnection.rbac);
+    const errors: ErrorRequestHandler = (error, _req, res, _next) => {
+      res.status(error instanceof AppError ? error.statusCode : 500).json({ code: error instanceof AppError ? error.code : 'TEST_ERROR' });
+    };
+    http.use(errors);
+    const listener = http.listen(0, '127.0.0.1');
+    try {
+      await once(listener, 'listening');
+      const addr = listener.address();
+      assert.ok(addr && typeof addr !== 'string');
+      const url = `http://127.0.0.1:${addr.port}/api/v1/clientes/revisao-legado/SYNTHETIC/NEW-SYNTH`;
+      const get = (token: string, groupId: string) => fetch(url, {
+        headers: { Authorization: 'Bearer ' + token, 'x-group-id': groupId }, signal: AbortSignal.timeout(5000),
+      });
+      const authorized = await get('a', ID.groupA);
+      assert.equal(authorized.status, 200);
+      assert.match(authorized.headers.get('cache-control') ?? '', /no-store/);
+      const body = await authorized.json();
+      assert.equal(body.id, saved.id);
+      assert.equal(body.record.fields.find((field: { name: string }) => field.name === 'cpf').original, undefined);
+      assert.equal((await get('a', ID.groupB)).status, 403);
+      assert.equal((await get('b', ID.groupB)).status, 404);
+      const prior = (await f.admin.query('SELECT permissoes FROM profiles WHERE id=$1', [ID.runtimeActorA])).rows[0].permissoes;
+      await f.admin.query("UPDATE profiles SET permissoes='{}'::jsonb WHERE id=$1", [ID.runtimeActorA]);
+      assert.equal((await get('a', ID.groupA)).status, 403);
+      await f.admin.query('UPDATE profiles SET permissoes=$1 WHERE id=$2', [prior, ID.runtimeActorA]);
+    } finally { await new Promise<void>((resolve, reject) => listener.close(error => error ? reject(error) : resolve())); }
     const restricted = f.data.pool as pg.Pool & { options: pg.PoolConfig };
     const secondPool = new pg.Pool({ ...restricted.options });
     try {
