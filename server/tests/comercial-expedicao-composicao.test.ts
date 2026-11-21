@@ -12,6 +12,7 @@ import { PostgresExpedicaoEstoquePort, PostgresExpedicaoPedidoPort } from '../sr
 import { projetarParcelasFaturamento, quantizarTotalPedidoParaFaturamento } from '../src/services/faturamentoParcelasPolicy.ts';
 import { PostgresAuditRepository } from '../src/audit/auditRepository.ts';
 import type { DbClient, DbQueryExecutor } from '../src/db/client.ts';
+import { createPoolDbClient } from '../src/db/client.ts';
 
 // The same synthetic journey runs locally and in the mandatory isolated PostgreSQL job.
 async function journey(f: Awaited<ReturnType<typeof localCrmFixture>>, postgres?: Awaited<ReturnType<typeof realCrmFixture>>) {
@@ -251,6 +252,73 @@ async function rehearseSettlement(f: Awaited<ReturnType<typeof realCrmFixture>>,
   }
   assert.equal(await balance(), '0.00');
   assert.equal((await audit.listByEntity('RecebimentoEnsaio', orderId)).length, installments.length + 1);
+  await f.exec(`DELETE FROM contas_receber_recebimentos; DELETE FROM contas_receber;
+    GRANT SELECT ON condicoes_pagamento,condicao_pagamento_parcelas,condicao_pagamento_empresas TO "${f.role}"`);
+  for (const table of ['condicoes_pagamento', 'condicao_pagamento_parcelas', 'condicao_pagamento_empresas']) {
+    const company = table === 'condicao_pagamento_empresas' ? " AND empresa_id=NULLIF(current_setting('app.empresa_id',true),'')::uuid" : '';
+    await f.exec(`CREATE POLICY rehearsal_terms_read ON ${table} FOR SELECT TO "${f.role}"
+      USING(group_id=NULLIF(current_setting('app.group_id',true),'')::uuid${company})`);
+  }
+  const authId = randomUUID();
+  const permissions = { Comercial: { pedidos: ['faturar'] }, Financeiro: { contas_receber: ['visualizar','baixar'] } };
+  await f.admin.query('UPDATE profiles SET auth_user_id=$1,permissoes=$2 WHERE id=$3', [authId, permissions, ctx.actorId]);
+  const config = loadConfig({ ERP_ENV: 'hml', DATABASE_URL: 'postgresql://synthetic@localhost/erp_test',
+    SUPABASE_URL: 'https://synthetic.invalid', SUPABASE_ANON_KEY: 'synthetic' });
+  const { app } = createApp({ config, db: createPoolDbClient(f.data.pool!), authDb: f.admin,
+    tenantContextEnabled: true, pedidoFinanceiroEnabled: true,
+    authFetchImpl: async () => Response.json({ id: authId }),
+  });
+  const listener = app.listen(0, '127.0.0.1');
+  try {
+    await once(listener, 'listening');
+    const address = listener.address();
+    assert.ok(address && typeof address !== 'string');
+    const url = `http://127.0.0.1:${address.port}/api/v1/pedidos/${orderId}`;
+    const http = (path: string, body?: object, empresa = ctx.empresaId, authenticated = true) => fetch(url + path, {
+      method: body ? 'POST' : 'GET', body: body && JSON.stringify(body), signal: AbortSignal.timeout(5000),
+      headers: { 'x-group-id': ctx.groupId, 'x-empresa-id': empresa, 'content-type': 'application/json',
+        ...(authenticated ? { authorization: 'Bearer synthetic' } : {}) },
+    });
+    const billing = { centro_custo_id: accounting[0], plano_contas_id: accounting[1] };
+    assert.equal((await http('/faturar', billing, ctx.empresaId, false)).status, 401);
+    assert.equal((await http('/faturar', {})).status, 422);
+    assert.equal((await http('/faturar', { ...billing, plano_contas_id: otherAccounting[1] })).status, 422);
+    await f.admin.query("UPDATE profiles SET permissoes='{}'::jsonb WHERE id=$1", [ctx.actorId]);
+    assert.equal((await http('/faturar', billing)).status, 403);
+    await f.admin.query('UPDATE profiles SET permissoes=$1 WHERE id=$2', [permissions, ctx.actorId]);
+    await f.exec(`CREATE FUNCTION rehearsal_finance_audit_failure() RETURNS trigger LANGUAGE plpgsql AS $$
+      BEGIN IF NEW.entity='FaturamentoPedido' THEN RAISE EXCEPTION 'REHEARSAL_AUDIT_FAILURE'; END IF; RETURN NEW; END $$;
+      CREATE TRIGGER rehearsal_finance_audit_failure BEFORE INSERT ON audit_logs
+      FOR EACH ROW EXECUTE FUNCTION rehearsal_finance_audit_failure()`);
+    assert.equal((await http('/faturar', billing)).status, 500);
+    assert.equal((await http('/titulos')).status, 404);
+    await f.exec('DROP TRIGGER rehearsal_finance_audit_failure ON audit_logs');
+    const replay = await Promise.all([http('/faturar', billing), http('/faturar', billing)]);
+    const responses = await Promise.all(replay.map(r => r.json()));
+    assert.deepEqual(replay.map(r => r.status), [200, 200], responses.map(r => r.error?.code).join(','));
+    assert.deepEqual(responses.map(r => r.data.replay).sort(), [false, true]);
+    assert.equal((await http('/titulos', undefined, ID.empresaB)).status, 403);
+    assert.equal((await http('/titulos', undefined, ID.empresaA2)).status, 404);
+    assert.equal((await http('/titulos/baixa', { parcela: first.ordem, evento: 'cross', valor: '0.01' }, ID.empresaA2)).status, 404);
+    const partial = await http('/titulos/baixa', { parcela: first.ordem, evento: 'partial', valor: '0.01' });
+    assert.equal(partial.status, 200);
+    assert.equal((await partial.json()).data.titulos[0].saldo, money(asCents(first.valor) - 1n));
+    for (const part of installments) {
+      const payload = { parcela: part.ordem, evento: 'settle', valor: part === first ? money(asCents(part.valor) - 1n) : part.valor };
+      const paid = await http('/titulos/baixa', payload);
+      assert.equal(paid.status, 200);
+      const repeated = await http('/titulos/baixa', payload);
+      assert.equal(repeated.status, 200);
+      assert.equal((await repeated.json()).data.replay, true);
+    }
+    const reopened = await http('/titulos');
+    assert.equal(reopened.status, 200);
+    assert.deepEqual((await reopened.json()).data.map((item: { saldo: string }) => item.saldo), installments.map(() => '0.00'));
+    assert.equal((await audit.listByEntity('FaturamentoPedido', orderId)).length, 1);
+    assert.equal((await audit.listByEntity('RecebimentoPedido', orderId)).length, installments.length + 1);
+  } finally {
+    await new Promise<void>((resolve, reject) => listener.close(error => error ? reject(error) : resolve()));
+  }
 }
 
 test('Composição persistida: Cliente→Orçamento→Pedido→Expedição, rollback, replay, parcial, devolução e cancelamento', async () => {

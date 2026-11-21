@@ -14,6 +14,7 @@ import { InMemoryTenantGuard, PostgresTenantGuard } from './db/tenantGuard.js';
 import { createErrorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import { createSupabaseAuthMiddleware, requestIdMiddleware, scopeMiddleware } from './middleware/requestContext.js';
 import { mountLegacyClientReviewRead } from './api/legacyClientReviewRoute.js';
+import { mountPedidoFinanceiroRoutes } from './api/pedidoFinanceiroRoutes.js';
 import {
   createInMemoryGrupoProdutoRepo,
   createInMemorySetorRepo,
@@ -96,6 +97,7 @@ export type CreateAppOptions = {
   authFetchImpl?: typeof fetch;
   /** Explicit opt-in after verified Auth; never enables tenant context from dev headers. */
   tenantContextEnabled?: boolean;
+  pedidoFinanceiroEnabled?: boolean;
   storagePort?: StoragePort;
   malwareScanPort?: MalwareScanPort;
   /** Porta de custo para alçada de margem (Onda 2). Null/omitido = skip (não inventa custo). */
@@ -315,6 +317,7 @@ export function createApp(options: CreateAppOptions) {
     expedicaoService,
   }));
   if (!useMemory && config.authMode === 'supabase_user' && options.tenantContextEnabled === true) mountLegacyClientReviewRead(app, db, rbacGuard);
+  if (!useMemory && config.authMode === 'supabase_user' && options.tenantContextEnabled === true && options.pedidoFinanceiroEnabled === true) mountPedidoFinanceiroRoutes(app, db, rbacGuard);
   app.use(notFoundHandler);
   app.use(createErrorHandler(config));
 

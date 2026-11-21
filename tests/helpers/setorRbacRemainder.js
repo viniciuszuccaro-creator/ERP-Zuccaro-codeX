@@ -6,6 +6,19 @@ const wiring = "    authorization: { guard: rbacGuard, moduleName: 'Cadastros', 
 
 /** Peel only the Setor authorization wiring, retaining the entire prior app. */
 export function setorRbacRemainder(file, text) {
+  if (file === 'server/src/app.ts' && /mountPedidoFinanceiroRoutes|pedidoFinanceiroEnabled/.test(text)) {
+    const wire = [
+      "import { mountPedidoFinanceiroRoutes } from './api/pedidoFinanceiroRoutes.js';",
+      '  pedidoFinanceiroEnabled?: boolean;',
+      "  if (!useMemory && config.authMode === 'supabase_user' && options.tenantContextEnabled === true && options.pedidoFinanceiroEnabled === true) mountPedidoFinanceiroRoutes(app, db, rbacGuard);",
+    ];
+    const eol = text.includes('\r\n') ? '\r\n' : '\n';
+    for (const line of wire) {
+      const exact = eol + line + eol;
+      assert.equal(text.split(exact).length, 2, 'exact opt-in financial wiring');
+      text = text.replace(exact, eol);
+    }
+  }
   if (file === 'server/src/app.ts' && text.includes('mountLegacyClientReviewRead')) {
     const reviewed = [
       "import { mountLegacyClientReviewRead } from './api/legacyClientReviewRoute.js';",

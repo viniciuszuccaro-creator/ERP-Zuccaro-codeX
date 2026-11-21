@@ -1,3 +1,24 @@
+## CPA3: faturamento e baixa pelo HTTP do clone
+
+Base 63823febf. createApp habilita por opcao explicita em
+PostgreSQL com Auth Supabase e contexto tenant; inicializacao
+padrao nao habilita. Pedido: POST /:id/faturar, GET /:id/titulos,
+POST /:id/titulos/baixa sob /api/v1/pedidos. Reutiliza schema
+candidato, parcelas e auditoria, sem emissao ou mudanca de
+status do Pedido. Sem public no search_path e sem BYPASSRLS.
+RBAC explicito: Comercial.pedidos.faturar,
+Financeiro.contas_receber.visualizar e baixar.
+PG16/auth sintetico, papel restrito: vinculo contabil cruzado,
+sessao ausente e revogacao recusadas; rollback em falha de
+auditoria, faturamento concorrente sem duplicata, parcial,
+replay e releitura HTTP com saldo 0,00. Outro Grupo 403;
+outra Empresa do mesmo Grupo nao encontra titulo.
+Composicao PG 3/3, suite Linux 3041/3041 e checks passaram:
+audit baseline, lint, typecheck, build raiz/servidor e diff.
+Cadastros/saldo sinteticos; sem DDL, grants ou publicacao HML.
+Pendente para promocao: dependencias contabeis reais, grants,
+versao de retorno, aceite e integracao da interface existente.
+
 ## CPA3: schema candidato de titulos do Pedido
 
 Base 12b290b81. contas_receber_pedido.sql substitui o DDL

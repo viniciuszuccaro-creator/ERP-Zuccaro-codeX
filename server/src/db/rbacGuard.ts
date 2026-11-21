@@ -7,6 +7,8 @@ export type RbacAction =
   | 'dados-sensiveis.visualizar'
   | 'criar'
   | 'editar'
+  | 'faturar'
+  | 'baixar'
   | 'cancelar'
   | 'conciliar'
   | 'estornar'
