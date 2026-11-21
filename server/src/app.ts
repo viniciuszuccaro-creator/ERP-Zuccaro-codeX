@@ -13,6 +13,7 @@ import { InMemoryRbacGuard, PostgresRbacGuard } from './db/rbacGuard.js';
 import { InMemoryTenantGuard, PostgresTenantGuard } from './db/tenantGuard.js';
 import { createErrorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import { createSupabaseAuthMiddleware, requestIdMiddleware, scopeMiddleware } from './middleware/requestContext.js';
+import { mountLegacyClientReviewRead } from './api/legacyClientReviewRoute.js';
 import {
   createInMemoryGrupoProdutoRepo,
   createInMemorySetorRepo,
@@ -313,6 +314,7 @@ export function createApp(options: CreateAppOptions) {
     oportunidadeService,
     expedicaoService,
   }));
+  if (!useMemory && config.authMode === 'supabase_user' && options.tenantContextEnabled === true) mountLegacyClientReviewRead(app, db, rbacGuard);
   app.use(notFoundHandler);
   app.use(createErrorHandler(config));
 

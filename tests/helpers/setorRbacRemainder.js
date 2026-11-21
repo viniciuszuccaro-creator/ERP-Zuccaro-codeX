@@ -6,6 +6,17 @@ const wiring = "    authorization: { guard: rbacGuard, moduleName: 'Cadastros', 
 
 /** Peel only the Setor authorization wiring, retaining the entire prior app. */
 export function setorRbacRemainder(file, text) {
+  if (file === 'server/src/app.ts' && text.includes('mountLegacyClientReviewRead')) {
+    const reviewed = [
+      "import { mountLegacyClientReviewRead } from './api/legacyClientReviewRoute.js';",
+      "  if (!useMemory && config.authMode === 'supabase_user' && options.tenantContextEnabled === true) mountLegacyClientReviewRead(app, db, rbacGuard);",
+    ];
+    for (const line of reviewed) {
+      const match = new RegExp('^' + line.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\r?\\n', 'gm');
+      assert.equal([...text.matchAll(match)].length, 1, `${file}: exact authenticated review wiring`);
+      text = text.replace(match, '');
+    }
+  }
   text = clienteLocalBatchRemainder(file, text);
   if (file !== 'server/src/app.ts' || !text.includes('authorization:')) return text;
   const source = text.replace(/\r\n/g, '\n');

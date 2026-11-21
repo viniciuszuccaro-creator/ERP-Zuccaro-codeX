@@ -36,16 +36,13 @@ DEFAULT_ROOTS=(
 )
 
 ROOTS_EFFECTIVE=()
-for r in "${DEFAULT_ROOTS[@]}"; do
+if ((${#ROOTS[@]} == 0)); then
+  ROOTS=("${DEFAULT_ROOTS[@]}")
+fi
+for r in "${ROOTS[@]}"; do
   [[ -d "$r" ]] || continue
   ROOTS_EFFECTIVE+=("$r")
 done
-if ((${#ROOTS[@]} > 0)); then
-  for r in "${ROOTS[@]}"; do
-    [[ -d "$r" ]] || continue
-    ROOTS_EFFECTIVE+=("$r")
-  done
-fi
 
 find_backup_dir() {
   local root candidate

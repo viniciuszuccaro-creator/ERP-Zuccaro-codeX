@@ -6,11 +6,9 @@ import { join } from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import pg from 'pg';
-import express, { type ErrorRequestHandler } from 'express';
 import { once } from 'node:events';
-import { createSupabaseAuthMiddleware, requestIdMiddleware, scopeMiddleware } from '../src/middleware/requestContext.ts';
-import { mountLegacyClientReviewRead } from '../src/api/legacyClientReviewRoute.ts';
-import { AppError } from '../src/api/errors.ts';
+import { createApp } from '../src/app.ts';
+import { loadConfig } from '../src/config/env.ts';
 import { PostgresAuditRepository } from '../src/audit/auditRepository.ts';
 import { createPoolDbClient } from '../src/db/client.ts';
 import { PostgresRbacGuard } from '../src/db/rbacGuard.ts';
@@ -50,21 +48,15 @@ test('new Assisted Review identity survives a new PostgreSQL connection without 
     const users = { a: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1', b: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb2' };
     await f.admin.query('UPDATE profiles SET auth_user_id=$1 WHERE id=$2', [users.a, ID.runtimeActorA]);
     await f.admin.query('UPDATE profiles SET auth_user_id=$1 WHERE id=$2', [users.b, ID.runtimeActorB]);
-    const http = express();
-    http.use(requestIdMiddleware);
-    http.use(createSupabaseAuthMiddleware({ supabaseUrl: 'https://synthetic.invalid', anonKey: 'synthetic',
-      db: f.admin, fetchImpl: async (_url, options) => {
+    const { app: http } = createApp({
+      config: loadConfig({ ERP_ENV: 'hml', DATABASE_URL: url!, SUPABASE_URL: 'https://synthetic.invalid', SUPABASE_ANON_KEY: 'synthetic' }),
+      db: firstConnection.db, authDb: f.admin, tenantContextEnabled: true,
+      authFetchImpl: async (_url, options) => {
         const token = new Headers(options?.headers).get('authorization')?.replace(/^Bearer /, '');
         const id = users[token as keyof typeof users];
         return id ? Response.json({ id }) : new Response(null, { status: 401 });
       },
-    }));
-    http.use(scopeMiddleware);
-    mountLegacyClientReviewRead(http, firstConnection.db, firstConnection.rbac);
-    const errors: ErrorRequestHandler = (error, _req, res, _next) => {
-      res.status(error instanceof AppError ? error.statusCode : 500).json({ code: error instanceof AppError ? error.code : 'TEST_ERROR' });
-    };
-    http.use(errors);
+    });
     const listener = http.listen(0, '127.0.0.1');
     try {
       await once(listener, 'listening');

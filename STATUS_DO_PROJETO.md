@@ -1,3 +1,28 @@
+## CPA3: GET integrado ao bootstrap e validado no Linux
+
+Base 78d9671f. GET montado depois do roteador, antes do 404,
+somente com PostgreSQL, Auth Supabase e contexto tenant habilitado.
+PG16 restrito via createApp: 200 sem documento bruto, 403 em Grupo
+alheio, 404 para operador do outro Grupo e 403 apos revogacao.
+Build/typecheck do backend e 31 testes focados passaram. O comparador
+historico aceita apenas a importacao e a montagem exatas; retirar a
+condicao de Auth ou duplicar a montagem continua falhando.
+
+Inventario do legado: --root explicito agora limita a busca aos
+diretorios informados. Antes o teste sintetico percorria discos
+padrao no WSL; os quatro testes focados passaram em Windows e Linux.
+Busca dirigida pelos dois hashes de arquivo nao encontrou copia
+na area compartilhada da VPS nem nos manifestos locais consultados.
+
+Suite Linux 3041/3041, audit:baseline, lint, typecheck, build e
+git diff --check passaram. Sem imagem publicada, transferencia ou
+escrita na HML. A ultima
+medicao confirmada da particao PostgreSQL registrou 23048413184
+bytes livres, API/web a305a143, sem pico do pacote comprovado.
+Proximo: confirmar CI do GET e integrar proposta e schema
+em clone isolado. Transporte e escrita dos manifestos 5384/39 seguem
+gates separados; nao repetir os lotes ja conciliados.
+
 ## CPA3: leitura autenticada da Revisao Assistida no candidato
 
 Base fbe206cd, CI44891726578 SUCCESS. Leitura canonica movida

@@ -13,6 +13,15 @@ for (const file of ['server/src/app.ts', 'server/src/api/router.ts']) {
     const previous = execFileSync('git', ['show', `5d9a7e37c:${file}`], { encoding: 'utf8' });
     assert.match(source, /fornecedorService/);
     assert.equal(fornecedorHttpRemainder(file, source).replace(/\r\n/g, '\n'), previous.replace(/\r\n/g, '\n'));
+    if (file.endsWith('/app.ts') && source.includes('mountLegacyClientReviewRead')) {
+      const mount = source.match(/^.*mountLegacyClientReviewRead\(app.*$/m)?.[0];
+      assert.ok(mount);
+      for (const changed of [source.replace("config.authMode === 'supabase_user' && options.tenantContextEnabled === true) mountLegacy", 'true) mountLegacy'),
+        source.replace(mount, () => mount + '\n' + mount)]) {
+        assert.notEqual(changed, source);
+        assert.throws(() => fornecedorHttpRemainder(file, changed));
+      }
+    }
     for (const changed of [source + '\nthrow new Error("OUTSIDE_SCOPE");\n',
       source.replace('fornecedorService,', 'fornecedorService, fornecedorService,'),
       source.replace(/import[^\n]*Fornecedor[^\n]*\n/, ''),

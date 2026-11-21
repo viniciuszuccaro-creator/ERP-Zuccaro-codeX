@@ -25,6 +25,7 @@ test('inventario legado: descobre pasta sintética, hasheia e não altera origem
   });
 
   assert.equal(run.status, 0, run.stderr || run.stdout);
+  assert.match(run.stdout, /^roots_scanned=1$/m);
   assert.match(run.stdout, /backup_dir_found=YES/);
   assert.match(run.stdout, /file_count=1/);
   assert.match(run.stdout, /format=sql_texto/);
