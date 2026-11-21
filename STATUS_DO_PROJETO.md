@@ -8,10 +8,15 @@ ConfiguracaoSistema/log_finance_cfg por empresa para frete e
 custo de entrega; nao usar essas contas para receita de venda.
 propagateGroupConfigs propaga cadastros, nao define um padrao
 contabil de venda. Nenhum padrao comercial comprovado no codigo.
-Proximo: conferir toda origem autorizada da configuracao comercial
-ou validar a selecao explicita de centro/plano por empresa no
-contrato de faturamento. Sem fallback para public ou Logistica,
-rotas novas, gravacao financeira, DDL ou deploy neste delta.
+Clone PG16, papel restrito e sem public: titulo da fixture exige
+centro e plano por FKs compostas de Grupo/Empresa, assim como
+o proprio Pedido. Ausencia de cada vinculo falhou 23502; cada
+vinculo de outra empresa falhou 23503, sem titulo ou auditoria.
+Com ambos validos, parcial, quitacao e replay preservaram saldo
+zero. Composicao 3/3. Tabelas descartaveis, nao contrato de runtime.
+Proximo: integrar selecao explicita e persistencia canonica por
+empresa no faturamento e no recebimento HTTP. Sem fallback para
+public/Logistica, rotas novas, gravacao HML ou deploy neste delta.
 
 ## CPA3: ensaio SQL de faturamento e baixa no clone
 

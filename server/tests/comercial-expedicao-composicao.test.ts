@@ -150,15 +150,25 @@ async function journey(f: Awaited<ReturnType<typeof localCrmFixture>>, postgres?
 async function rehearseSettlement(f: Awaited<ReturnType<typeof realCrmFixture>>, ctx: { groupId: string; empresaId: string; actorId: string; requestId: string },
   orderId: string, installments: ReturnType<typeof projetarParcelasFaturamento>) {
   const identity = [orderId, ctx.groupId, ctx.empresaId];
+  const accounting = [randomUUID(), randomUUID()];
+  const otherAccounting = [randomUUID(), randomUUID()];
   assert.match(f.role, /^crm_test_role_[a-f0-9]{18}$/);
   await f.admin.withTransaction(async tx => {
     const { rows: [scope] } = await tx.query('SELECT current_schemas(false)::text[] AS schemas');
     assert.match(scope.schemas[0], /^crm_test_[a-f0-9]{18}$/);
     assert.deepEqual(scope.schemas.slice(1), ['pg_catalog']);
-    await tx.query(`CREATE TABLE rehearsal_titles (
-      pedido_id uuid REFERENCES pedidos(id), group_id uuid NOT NULL, empresa_id uuid NOT NULL,
+    await tx.query(`CREATE TABLE rehearsal_cost_centers (
+      id uuid, group_id uuid, empresa_id uuid, PRIMARY KEY(id,group_id,empresa_id));
+      CREATE TABLE rehearsal_accounts (
+      id uuid, group_id uuid, empresa_id uuid, PRIMARY KEY(id,group_id,empresa_id));
+      CREATE TABLE rehearsal_titles (
+      pedido_id uuid, group_id uuid NOT NULL, empresa_id uuid NOT NULL,
       parcela int, vencimento date NOT NULL, valor numeric(16,2) NOT NULL CHECK (valor > 0),
+      centro_custo_id uuid NOT NULL, plano_contas_id uuid NOT NULL,
       recebido numeric(16,2) DEFAULT 0 CHECK (recebido BETWEEN 0 AND valor),
+      FOREIGN KEY(pedido_id,group_id,empresa_id) REFERENCES pedidos(id,group_id,empresa_id),
+      FOREIGN KEY(centro_custo_id,group_id,empresa_id) REFERENCES rehearsal_cost_centers,
+      FOREIGN KEY(plano_contas_id,group_id,empresa_id) REFERENCES rehearsal_accounts,
       PRIMARY KEY (pedido_id,group_id,empresa_id,parcela));
       CREATE TABLE rehearsal_receipts (
       pedido_id uuid, group_id uuid, empresa_id uuid, parcela int, evento text,
@@ -166,6 +176,10 @@ async function rehearseSettlement(f: Awaited<ReturnType<typeof realCrmFixture>>,
       PRIMARY KEY (pedido_id,group_id,empresa_id,parcela,evento),
       FOREIGN KEY (pedido_id,group_id,empresa_id,parcela) REFERENCES rehearsal_titles)`);
     const policy = "group_id=NULLIF(current_setting('app.group_id',true),'')::uuid AND empresa_id=NULLIF(current_setting('app.empresa_id',true),'')::uuid";
+    for (const [table, index] of [['rehearsal_cost_centers', 0], ['rehearsal_accounts', 1]] as const) {
+      await tx.query(`INSERT INTO ${table} VALUES ($1,$2,$3),($4,$2,$5)`,
+        [accounting[index], ctx.groupId, ctx.empresaId, otherAccounting[index], ID.empresaB]);
+    }
     for (const table of ['rehearsal_titles', 'rehearsal_receipts']) {
       await tx.query(`ALTER TABLE ${table} ENABLE ROW LEVEL SECURITY;
         ALTER TABLE ${table} FORCE ROW LEVEL SECURITY;
@@ -186,15 +200,19 @@ async function rehearseSettlement(f: Awaited<ReturnType<typeof realCrmFixture>>,
   const { rows: [role] } = await db.query('SELECT current_user AS name,rolsuper,rolbypassrls FROM pg_roles WHERE rolname=current_user');
   assert.deepEqual(role, { name: f.role, rolsuper: false, rolbypassrls: false });
   const scoped = 'pedido_id=$1 AND group_id=$2 AND empresa_id=$3';
-  const bill = (fail = false) => db.withTransaction(async tx => {
+  const bill = (fail = false, costCenter: string | null = accounting[0], account: string | null = accounting[1]) => db.withTransaction(async tx => {
     assert.equal((await tx.query('SELECT id FROM pedidos WHERE id=$1 AND group_id=$2 AND empresa_id=$3 FOR UPDATE', identity)).rowCount, 1);
     if ((await tx.query('SELECT 1 FROM rehearsal_titles WHERE ' + scoped, identity)).rowCount) return false;
-    for (const part of installments) await tx.query('INSERT INTO rehearsal_titles VALUES ($1,$2,$3,$4,$5,$6)',
-      [...identity, part.ordem, part.vencimento, part.valor]);
+    for (const part of installments) await tx.query('INSERT INTO rehearsal_titles VALUES ($1,$2,$3,$4,$5,$6,$7,$8)',
+      [...identity, part.ordem, part.vencimento, part.valor, costCenter, account]);
     await audit.append({ ...ctx, entity: 'FaturamentoEnsaio', entityId: orderId, action: 'create' }, tx);
     if (fail) throw new Error('REHEARSAL_BILLING_ROLLBACK');
     return true;
   });
+  await assert.rejects(bill(false, null), { code: '23502' });
+  await assert.rejects(bill(false, accounting[0], null), { code: '23502' });
+  await assert.rejects(bill(false, otherAccounting[0]), { code: '23503' });
+  await assert.rejects(bill(false, accounting[0], otherAccounting[1]), { code: '23503' });
   await assert.rejects(bill(true), /REHEARSAL_BILLING_ROLLBACK/);
   assert.equal((await db.query('SELECT 1 FROM rehearsal_titles WHERE ' + scoped, identity)).rowCount, 0);
   assert.equal((await audit.listByEntity('FaturamentoEnsaio', orderId)).length, 0);
