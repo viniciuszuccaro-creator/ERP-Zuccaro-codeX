@@ -1,3 +1,19 @@
+## CPA3: schema candidato de titulos do Pedido
+
+Base 12b290b81. contas_receber_pedido.sql substitui o DDL
+financeiro inline da fixture; ainda fora do journal. Reusa
+Pedido, politica de parcelas, auditoria e nomes do contrato
+ContaReceber. Requer centros_custo e plano_contas no schema
+alvo, com chaves compostas, sem criar ou atribuir cadastros
+reais. Bloqueia public no search_path e dependencias ausentes.
+PG16 restrito no clone: 3/3, RLS forcada, vinculos locais,
+rollback, parcial, quitacao e repeticao com saldo 0,00.
+Audit baseline, lint, typecheck, build, suite Linux 3041/3041
+e git diff --check aprovados.
+Persistencia candidata, sem rota HTTP, grants de runtime,
+publicacao na HML ou alteracao operacional. Proximo: ligar
+a operacao HTTP ao Pedido/Financeiro e validar seu RBAC.
+
 ## CPA3: parametrizacao contabil do faturamento
 
 Base 54beaae66, CI44909234197 SUCCESS. ContaReceberForm consulta
