@@ -1,11 +1,21 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { projetarParcelasFaturamento } from '../src/services/faturamentoParcelasPolicy.ts';
+import { projetarParcelasFaturamento, quantizarTotalPedidoParaFaturamento } from '../src/services/faturamentoParcelasPolicy.ts';
 
 const parcelas = [
   { ordem: 2, dias: 30, percentual: '50' },
   { ordem: 1, dias: 0, percentual: '50.000000' },
 ];
+
+test('total do pedido quantizado uma vez, com empate decimal e sem ponto flutuante', () => {
+  assert.equal(quantizarTotalPedidoParaFaturamento('1.005'), '1.01');
+  assert.equal(quantizarTotalPedidoParaFaturamento('1.004999'), '1.00');
+  assert.equal(quantizarTotalPedidoParaFaturamento('23.691356'), '23.69');
+  assert.equal(quantizarTotalPedidoParaFaturamento('9.999999'), '10.00');
+  for (const total of ['-1', '1e2', '0.004999', '99999999999999.999999', '1.0000001']) {
+    assert.throws(() => quantizarTotalPedidoParaFaturamento(total), { code: 'FATURAMENTO_TOTAL_PEDIDO_INVALIDO' });
+  }
+});
 
 test('parcelas canonicas conservam centavos e ordem, inclusive fim de mes', () => {
   const expected = [

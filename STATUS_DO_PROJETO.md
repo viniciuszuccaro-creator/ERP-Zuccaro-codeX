@@ -1,3 +1,24 @@
+## CPA3: total faturavel em centavos a partir do Pedido
+
+Base e16b8a82, CI44904980825 SUCCESS. Politica de parcelas
+existente ganhou conversao explicita do total decimal do Pedido
+para centavos, sem ponto flutuante, com rejeicao de zero e
+estouro. O projetor continua recusando fracoes de centavo.
+PG16 isolado: pedido e condicao de pagamento persistidos;
+parcelas projetadas conservam o total em centavos. 6/6 focados,
+build e typecheck do backend, audit:baseline, lint, typecheck,
+build, suite Linux 3041/3041 e diff --check. Sem efeito financeiro.
+
+Nenhuma relacao de titulos encontrada nas migrations do backend.
+Catalogo HML nao confirmado: socket privado /run/hml-pg respondeu
+fe_sendauth: no password supplied na tentativa READ ONLY.
+Nao ampliar grants nem inventar uma segunda ContaReceber.
+Proximo: ler catalogo com o principal restrito documentado e
+integrar o contrato de titulos e auditoria de modo transacional.
+HTTP de faturamento ainda 404; nenhum titulo, recebimento ou baixa.
+Lote 5384/39 depende do leitor isolado da Empresa; zero aplicacao.
+Sem escrita na HML ou alteracao no ERP operacional.
+
 ## CPA3: primeira transicao HTTP apos Expedicao
 
 a3478aca, CI44904280880 SUCCESS. GET e POST de revisao assistida

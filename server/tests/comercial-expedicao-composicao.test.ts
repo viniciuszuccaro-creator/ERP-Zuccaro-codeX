@@ -8,6 +8,7 @@ import { createApp } from '../src/app.ts';
 import { loadConfig } from '../src/config/env.ts';
 import { SEED_IDS as ID } from '../scripts/seedDevIds.ts';
 import { PostgresExpedicaoEstoquePort, PostgresExpedicaoPedidoPort } from '../src/integrations/expedicaoPersistentPorts.ts';
+import { projetarParcelasFaturamento, quantizarTotalPedidoParaFaturamento } from '../src/services/faturamentoParcelasPolicy.ts';
 
 // The same synthetic journey runs locally and in the mandatory isolated PostgreSQL job.
 async function journey(f: Awaited<ReturnType<typeof localCrmFixture>>, probeBilling = false) {
@@ -120,6 +121,16 @@ async function journey(f: Awaited<ReturnType<typeof localCrmFixture>>, probeBill
         method, headers, signal: AbortSignal.timeout(5000),
       });
       const before = await runtime.pedidoService.get(ctx, order.id);
+      const condition = await runtime.condicaoPagamentoService.get(ctx, before.condicao_pagamento_id);
+      const terms = condition.parcelas.map(({ ordem, dias, percentual }) => ({ ordem, dias, percentual }));
+      assert.ok(terms.length > 0);
+      assert.throws(() => projetarParcelasFaturamento(before.total, '2027-06-01', terms), {
+        code: 'FATURAMENTO_TOTAL_NAO_EXPRESSO_EM_CENTAVOS',
+      });
+      const invoiceTotal = quantizarTotalPedidoParaFaturamento(before.total);
+      const projected = projetarParcelasFaturamento(invoiceTotal, '2027-06-01', terms);
+      const asCents = (amount: string) => BigInt(amount.replace('.', ''));
+      assert.equal(projected.reduce((sum, parcela) => sum + asCents(parcela.valor), 0n), asCents(invoiceTotal));
       const auditBefore = await runtime.auditRepo.listByEntity('Pedido', order.id);
       assert.equal((await request('')).status, 200);
       // Replace this boundary with the positive contract when billing is wired.

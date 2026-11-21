@@ -13,6 +13,20 @@ function percentualEmMicros(value: string): bigint {
   return BigInt(whole) * 1_000_000n + BigInt(fraction.padEnd(6, '0'));
 }
 
+function formatCents(cents: bigint): string {
+  return `${cents / 100n}.${String(cents % 100n).padStart(2, '0')}`;
+}
+
+export function quantizarTotalPedidoParaFaturamento(total: string): string {
+  const match = /^(\d{1,14})(?:\.(\d{1,6}))?$/.exec(total);
+  if (!match) invalid('FATURAMENTO_TOTAL_PEDIDO_INVALIDO');
+  const fraction = (match[2] ?? '').padEnd(6, '0');
+  const micros = BigInt(match[1]) * 1_000_000n + BigInt(fraction);
+  const cents = (micros + 5_000n) / 10_000n;
+  if (cents <= 0n || cents >= 10_000_000_000_000_000n) invalid('FATURAMENTO_TOTAL_PEDIDO_INVALIDO');
+  return formatCents(cents);
+}
+
 export function projetarParcelasFaturamento(total: string, dataEmissao: string, parcelas: unknown) {
   const centsMatch = /^(\d{1,14})(?:\.(\d{1,2})0{0,4})?$/.exec(total);
   if (!centsMatch) invalid('FATURAMENTO_TOTAL_NAO_EXPRESSO_EM_CENTAVOS');
@@ -47,7 +61,7 @@ export function projetarParcelasFaturamento(total: string, dataEmissao: string, 
     return {
       ordem: share.ordem,
       vencimento: vencimento.slice(0, 10),
-      valor: `${share.cents / 100n}.${String(share.cents % 100n).padStart(2, '0')}`,
+      valor: formatCents(share.cents),
     };
   });
 }
