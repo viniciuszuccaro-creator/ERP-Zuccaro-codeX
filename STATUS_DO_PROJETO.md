@@ -10,11 +10,15 @@ build e typecheck do backend, audit:baseline, lint, typecheck,
 build, suite Linux 3041/3041 e diff --check. Sem efeito financeiro.
 
 Nenhuma relacao de titulos encontrada nas migrations do backend.
-Catalogo HML nao confirmado: socket privado /run/hml-pg respondeu
-fe_sendauth: no password supplied na tentativa READ ONLY.
-Nao ampliar grants nem inventar uma segunda ContaReceber.
-Proximo: ler catalogo com o principal restrito documentado e
-integrar o contrato de titulos e auditoria de modo transacional.
+Catalogo HML confirmado em transacao READ ONLY com o principal
+da aplicacao, sem superuser/BYPASSRLS: banco hml344_restore_20261104,
+schema hml344_cpa_20261104, 17 relacoes. Busca no pg_catalog por
+Pedido, revisao, faturamento, fiscal, financeiro, titulo,
+recebimento e pagamento retornou apenas as tres relacoes de
+condicao de pagamento. API/web a305a143; Docker 23047565312
+bytes livres. Nenhum grant, DDL ou deploy nesta conferencia.
+Proximo: ensaiar no clone as dependencias comerciais e a
+integracao transacional de titulos com o contrato de ContaReceber.
 HTTP de faturamento ainda 404; nenhum titulo, recebimento ou baixa.
 Lote 5384/39 depende do leitor isolado da Empresa; zero aplicacao.
 Sem escrita na HML ou alteracao no ERP operacional.
