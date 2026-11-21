@@ -78,6 +78,35 @@ test('new Assisted Review identity survives a new PostgreSQL connection without 
       await f.admin.query("UPDATE profiles SET permissoes='{}'::jsonb WHERE id=$1", [ID.runtimeActorA]);
       assert.equal((await get('a', ID.groupA)).status, 403);
       await f.admin.query('UPDATE profiles SET permissoes=$1 WHERE id=$2', [prior, ID.runtimeActorA]);
+      const httpRow = { ...row, nativeKey: 'HTTP-SYNTH' };
+      const httpSaved = await stageAssistedClientReview(httpRow, scope, firstConnection);
+      const httpUrl = url.replace(/NEW-SYNTH$/, 'HTTP-SYNTH');
+      const opened = await (await fetch(httpUrl, { headers: { Authorization: 'Bearer a', 'x-group-id': ID.groupA } })).json();
+      const draft = { operationId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaac',
+        expectedSourceFingerprint: opened.record.sourceFingerprint, field: 'cpf', proposedValue: syntheticCpf(91),
+        reason: 'Synthetic evidence', evidenceRefs: [{ ref: 'synthetic', sha256: 'c'.repeat(64) }] };
+      const post = (token: string, group: string, body: object) => fetch(httpUrl + '/correcao', {
+        method: 'POST', headers: { Authorization: 'Bearer ' + token, 'x-group-id': group, 'content-type': 'application/json' },
+        body: JSON.stringify(body), signal: AbortSignal.timeout(5000),
+      });
+      assert.equal((await post('a', ID.groupB, draft)).status, 403);
+      assert.equal((await post('b', ID.groupB, draft)).status, 404);
+      await f.admin.query("UPDATE profiles SET permissoes='{}'::jsonb WHERE id=$1", [ID.runtimeActorA]);
+      assert.equal((await post('a', ID.groupA, draft)).status, 403);
+      await f.admin.query('UPDATE profiles SET permissoes=$1 WHERE id=$2', [prior, ID.runtimeActorA]);
+      assert.equal((await post('a', ID.groupA, { ...draft, groupId: ID.groupA })).status, 422);
+      const [one, two] = await Promise.all([post('a', ID.groupA, draft), post('a', ID.groupA, draft)]);
+      assert.deepEqual([one.status, two.status].sort(), [200, 201]);
+      for (const response of [one, two]) {
+        assert.deepEqual(await response.json(), { id: httpSaved.id, replayed: response.status === 200,
+          status: 'PENDING_CANONICAL_REVALIDATION' });
+      }
+      assert.equal((await post('a', ID.groupA, { ...draft, proposedValue: syntheticCpf(92) })).status, 409);
+      const refreshed = await (await fetch(httpUrl, { headers: { Authorization: 'Bearer a', 'x-group-id': ID.groupA } })).json();
+      assert.equal(refreshed.correctionStatus, 'PENDING_CANONICAL_REVALIDATION');
+      assert.doesNotMatch(JSON.stringify(refreshed), new RegExp(draft.proposedValue));
+      const auditCount = await f.admin.query("SELECT count(*) AS n FROM audit_logs WHERE entity_id=$1 AND action='update'", [httpSaved.id]);
+      assert.equal(auditCount.rows[0].n, '1');
     } finally { await new Promise<void>((resolve, reject) => listener.close(error => error ? reject(error) : resolve())); }
     const restricted = f.data.pool as pg.Pool & { options: pg.PoolConfig };
     const secondPool = new pg.Pool({ ...restricted.options });

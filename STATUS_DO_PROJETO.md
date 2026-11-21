@@ -1,3 +1,25 @@
+## CPA3: proposta de correcao assistida por HTTP
+
+Base c0a813f2. POST /api/v1/clientes/revisao-legado/:sourceSystem/:nativeKey/correcao
+reutiliza a transacao da CLI. Sessao verificada, contexto Grupo e
+permissoes explicitas Cliente importar/editar. Proposta CPF/CNPJ
+com fingerprint, identificador da operacao, motivo e referencia
+de evidencia. 201 na criacao, 200 no replay, 409 na divergencia.
+Retorno sem documento, sem liberar cliente ou faturamento.
+PG16 restrito e Auth sintetico: criacao/replay concorrentes,
+uma auditoria, releitura, conflito, isolamento e revogacao.
+Build/typecheck backend, audit:baseline, lint, typecheck, build,
+suite Linux 3041/3041 e diff --check passaram. Nenhuma migration,
+escrita ou publicacao em HML.
+
+Leitor VPS parado, rede none, sem portas, raiz somente leitura,
+3 GiB e 0,65 CPU. Volume anterior de 1374571887 bytes preservado.
+Livre 23047864320; reserva 22705722437; deficit minimo de
+1032430004 bytes para clonar o volume, sem temporarios.
+Proximo: usar o executor isolado da Empresa com a copia do HD
+ja conferida, reusar filtros e reconciliar 5384/39. Zero
+extraidos, transferidos ou gravados nesta retomada.
+
 ## CPA3: CI do GET e preflight de recuperacao privada
 
 9f0ebe105 confirmado na branch de continuidade; CI44901044704
