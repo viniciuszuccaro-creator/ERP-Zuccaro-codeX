@@ -10,10 +10,10 @@ import { SEED_IDS as ID } from '../scripts/seedDevIds.ts';
 import { PostgresExpedicaoEstoquePort, PostgresExpedicaoPedidoPort } from '../src/integrations/expedicaoPersistentPorts.ts';
 import { projetarParcelasFaturamento, quantizarTotalPedidoParaFaturamento } from '../src/services/faturamentoParcelasPolicy.ts';
 import { PostgresAuditRepository } from '../src/audit/auditRepository.ts';
-import type { DbClient } from '../src/db/client.ts';
+import type { DbClient, DbQueryExecutor } from '../src/db/client.ts';
 
 // The same synthetic journey runs locally and in the mandatory isolated PostgreSQL job.
-async function journey(f: Awaited<ReturnType<typeof localCrmFixture>>, probeBilling = false) {
+async function journey(f: Awaited<ReturnType<typeof localCrmFixture>>, postgres?: Awaited<ReturnType<typeof realCrmFixture>>) {
   const config = loadConfig({ NODE_ENV: 'test', ERP_ENV: 'dev', REQUIRE_DATABASE: 'false', DATABASE_URL: 'postgresql://synthetic@localhost/erp_test', ENABLE_CRM_HTTP: 'true' });
   const runtime = createApp({ config, db: f.admin, useMemory: false,
     expedicaoPedidoPort: new PostgresExpedicaoPedidoPort(), expedicaoEstoquePort: new PostgresExpedicaoEstoquePort() });
@@ -111,7 +111,7 @@ async function journey(f: Awaited<ReturnType<typeof localCrmFixture>>, probeBill
   assert.ok(central);
   assert.deepEqual((await runtime.pedidoService.history(ctx, order.id)).map(h => h.status_novo), ['EM_ABERTO', 'PRONTO_ENTREGA']);
   assert.ok((await runtime.auditRepo.listByEntity('Pedido', order.id)).length >= 3);
-  if (probeBilling) {
+  if (postgres) {
     const listener = runtime.app.listen(0, '127.0.0.1');
     try {
       await once(listener, 'listening');
@@ -139,7 +139,7 @@ async function journey(f: Awaited<ReturnType<typeof localCrmFixture>>, probeBill
       assert.equal((await request('/faturar', 'POST')).status, 404);
       assert.deepEqual(await runtime.pedidoService.get(ctx, order.id), before);
       assert.deepEqual(await runtime.auditRepo.listByEntity('Pedido', order.id), auditBefore);
-      await rehearseSettlement(f.admin, ctx, order.id, projected);
+      await rehearseSettlement(postgres, ctx, order.id, projected);
     } finally {
       await new Promise<void>((resolve, reject) => listener.close(error => error ? reject(error) : resolve()));
     }
@@ -147,11 +147,11 @@ async function journey(f: Awaited<ReturnType<typeof localCrmFixture>>, probeBill
 }
 
 // Disposable SQL model only; not a migration, HTTP handler or ContaReceber replacement.
-async function rehearseSettlement(db: DbClient, ctx: { groupId: string; empresaId: string; actorId: string; requestId: string },
+async function rehearseSettlement(f: Awaited<ReturnType<typeof realCrmFixture>>, ctx: { groupId: string; empresaId: string; actorId: string; requestId: string },
   orderId: string, installments: ReturnType<typeof projetarParcelasFaturamento>) {
-  const audit = new PostgresAuditRepository(db);
   const identity = [orderId, ctx.groupId, ctx.empresaId];
-  await db.withTransaction(async tx => {
+  assert.match(f.role, /^crm_test_role_[a-f0-9]{18}$/);
+  await f.admin.withTransaction(async tx => {
     const { rows: [scope] } = await tx.query('SELECT current_schemas(false)::text[] AS schemas');
     assert.match(scope.schemas[0], /^crm_test_[a-f0-9]{18}$/);
     assert.deepEqual(scope.schemas.slice(1), ['pg_catalog']);
@@ -165,7 +165,26 @@ async function rehearseSettlement(db: DbClient, ctx: { groupId: string; empresaI
       valor numeric(16,2) NOT NULL CHECK (valor > 0),
       PRIMARY KEY (pedido_id,group_id,empresa_id,parcela,evento),
       FOREIGN KEY (pedido_id,group_id,empresa_id,parcela) REFERENCES rehearsal_titles)`);
+    const policy = "group_id=NULLIF(current_setting('app.group_id',true),'')::uuid AND empresa_id=NULLIF(current_setting('app.empresa_id',true),'')::uuid";
+    for (const table of ['rehearsal_titles', 'rehearsal_receipts']) {
+      await tx.query(`ALTER TABLE ${table} ENABLE ROW LEVEL SECURITY;
+        ALTER TABLE ${table} FORCE ROW LEVEL SECURITY;
+        CREATE POLICY rehearsal_scope ON ${table} TO "${f.role}" USING (${policy}) WITH CHECK (${policy});
+        GRANT SELECT, INSERT ON ${table} TO "${f.role}"`);
+    }
+    await tx.query(`GRANT UPDATE(recebido) ON rehearsal_titles TO "${f.role}"`);
   });
+  const inCompany = <T>(company: string, fn: (tx: DbQueryExecutor) => Promise<T>) => f.data.withTransaction(async tx => {
+    await tx.query("SELECT set_config('app.group_id',$1,true),set_config('app.empresa_id',$2,true)", [ctx.groupId, company]);
+    return fn(tx);
+  });
+  const db: DbClient = { ...f.data,
+    withTransaction: fn => inCompany(ctx.empresaId, fn),
+    query: (sql, params) => inCompany(ctx.empresaId, tx => tx.query(sql, params)),
+  };
+  const audit = new PostgresAuditRepository(db);
+  const { rows: [role] } = await db.query('SELECT current_user AS name,rolsuper,rolbypassrls FROM pg_roles WHERE rolname=current_user');
+  assert.deepEqual(role, { name: f.role, rolsuper: false, rolbypassrls: false });
   const scoped = 'pedido_id=$1 AND group_id=$2 AND empresa_id=$3';
   const bill = (fail = false) => db.withTransaction(async tx => {
     assert.equal((await tx.query('SELECT id FROM pedidos WHERE id=$1 AND group_id=$2 AND empresa_id=$3 FOR UPDATE', identity)).rowCount, 1);
@@ -182,6 +201,13 @@ async function rehearseSettlement(db: DbClient, ctx: { groupId: string; empresaI
   assert.deepEqual((await Promise.all([bill(), bill()])).sort(), [false, true]);
   assert.equal((await db.query('SELECT 1 FROM rehearsal_titles WHERE ' + scoped, identity)).rowCount, installments.length);
   assert.equal((await audit.listByEntity('FaturamentoEnsaio', orderId)).length, 1);
+  await inCompany(ID.empresaB, async tx => {
+    assert.equal((await tx.query('SELECT * FROM rehearsal_titles')).rowCount, 0);
+    assert.equal((await tx.query('UPDATE rehearsal_titles SET recebido=0')).rowCount, 0);
+  });
+  await assert.rejects(inCompany(ID.empresaB, tx => tx.query(
+    'INSERT INTO rehearsal_receipts VALUES ($1,$2,$3,$4,$5,$6)', [...identity, installments[0].ordem, 'cross-company', '0.01'],
+  )), { code: '42501' });
 
   const receive = (part: number, event: string, amount: string, company = ctx.empresaId, fail = false) => db.withTransaction(async tx => {
     const key = [orderId, ctx.groupId, company, part];
@@ -226,8 +252,8 @@ test('Composição persistida: Cliente→Orçamento→Pedido→Expedição, roll
 });
 
 if (process.env.DATABASE_URL) test('Composição PostgreSQL real isolado executa o mesmo percurso canônico', async () => {
-  const f = await realCrmFixture(process.env.DATABASE_URL!);
-  try { await journey(f, true); } finally { await f.close(); }
+  const f = await realCrmFixture(process.env.DATABASE_URL!, { restrictedLogin: true });
+  try { await journey(f, f); } finally { await f.close(); }
 });
 
 test('Leitores comerciais persistidos nao promovem ator nem tenant trocados durante validacao SQL', async () => {

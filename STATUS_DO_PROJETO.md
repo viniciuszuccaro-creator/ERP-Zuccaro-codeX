@@ -7,7 +7,12 @@ modelam titulos e recebimentos; nao sao migration ou API.
 Composicao 3/3: falha apos gravacao reverteu titulo/recibo e
 auditoria; concorrencia gerou uma vez; parcial, conflito de
 evento, repeticao, escopo por empresa e saldo 0,00 confirmados.
-Prova com principal da fixture, nao prova RBAC/RLS da aplicacao.
+Delta sobre 1bdc1006 (CI44907995994 SUCCESS): login restrito
+sem superuser/BYPASSRLS, grants minimos e RLS forcada nas duas
+tabelas descartaveis. Sem filtro manual, a Empresa B nao le nem
+altera titulos da A; INSERT cruzado falha 42501. O escopo A
+preserva rollback, replay e saldo zero. Prova RLS da fixture,
+nao RBAC das rotas reais nem RLS/ACL da HML.
 Audit baseline, lint, typecheck, build, suite Linux 3041/3041
 e git diff --check aprovados.
 POST de faturamento ainda 404; sem implantacao ou escrita remota.
