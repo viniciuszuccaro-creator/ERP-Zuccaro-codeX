@@ -1,15 +1,20 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { spawnSync } from 'node:child_process';
+import { mkdtemp, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import test from 'node:test';
+import { fileURLToPath } from 'node:url';
 import pg from 'pg';
 import { PostgresAuditRepository } from '../src/audit/auditRepository.ts';
 import { createPoolDbClient } from '../src/db/client.ts';
 import { PostgresRbacGuard } from '../src/db/rbacGuard.ts';
 import { SEED_IDS as ID } from '../scripts/seedDevIds.ts';
 import { realCrmFixture } from './helpers/crmPostgresFixture.ts';
-import { syntheticCpf } from './helpers/legadoBatchFixture.ts';
+import { sha, syntheticCpf } from './helpers/legadoBatchFixture.ts';
 import { archiveAssistedClientReview, reopenAssistedClientReview, runAssistedClientReviewManifest, saveAssistedClientDocumentCorrection, stageAssistedClientReview } from '../../scripts/legado/pilot-functional-review-store.mjs';
 import { rowHash } from '../../scripts/legado/pilot-functional-policy.mjs';
+import { runPrivateAssistedReviewCommand } from '../../scripts/legado/staging-checkpoint.mjs';
 
 const url = process.env.LEGACY_REVIEW_PG_TEST_URL;
 test('new Assisted Review identity survives a new PostgreSQL connection without creating a master', { skip: !url }, async () => {
@@ -104,6 +109,10 @@ test('new Assisted Review identity survives a new PostgreSQL connection without 
       target: value.target, expectedState: value.expectedState, batchSize: value.batchSize, total: value.total, rows: value.rows });
     await assert.rejects(runAssistedClientReviewManifest(plan, scope, { ...firstConnection, checkpoint: async () => {} },
       { manifestSha256: '0'.repeat(64) }), /REVIEW_MANIFEST_PIN_MISMATCH/);
+    const wrongCount = { ...plan, total: plan.total + 1 };
+    await assert.rejects(runAssistedClientReviewManifest(wrongCount, scope, {
+      ...firstConnection, checkpoint: async () => { throw new Error('UNEXPECTED_RECEIPT'); },
+    }, { manifestSha256: pin(wrongCount) }), /REVIEW_MANIFEST_INVALID/);
     const wrong = { ...plan, target: { ...target, database: 'wrong_database' } };
     await assert.rejects(runAssistedClientReviewManifest(wrong, scope, { ...firstConnection, checkpoint: async () => {} },
       { manifestSha256: pin(wrong) }), /REVIEW_PHYSICAL_TARGET_MISMATCH/);
@@ -122,6 +131,42 @@ test('new Assisted Review identity survives a new PostgreSQL connection without 
     assert.equal(await stagedCount(), '2');
     assert.equal((await f.admin.query(`SELECT count(*) n FROM audit_logs a JOIN legacy_client_review r ON a.entity_id=r.id::text
       WHERE r.native_key LIKE 'RESUME-%' AND a.entity='LegacyClientReview'`)).rows[0].n, '2');
+    if (process.platform !== 'win32') {
+      const dir = await mkdtemp(join(tmpdir(), 'erp-review-receipts-'));
+      try {
+        const filePlan = { ...plan, total: 1, rows: [{ ...row, nativeKey: 'FILE-RESUME-1' }] };
+        const manifestSha256 = pin(filePlan);
+        const bytes = Buffer.from(JSON.stringify({ input: filePlan, context: scope, manifestSha256 }));
+        await writeFile(join(dir, 'manifest.private.json'), bytes, { mode: 0o600 });
+        await writeFile(join(dir, 'approval.private.json'), JSON.stringify({
+          approved: true, artifactSha256: sha(bytes), manifestSha256,
+        }), { mode: 0o600 });
+        const args = [dir, 'manifest.private.json', 'approval.private.json'];
+        await assert.rejects(runPrivateAssistedReviewCommand(args, process.cwd(), {
+          ...firstConnection, beforeReceipt: async () => { throw new Error('POST_COMMIT_NO_FILE'); },
+        }), /POST_COMMIT_NO_FILE/);
+        assert.equal((await readdir(dir)).length, 2);
+        const restricted = f.data.pool as pg.Pool & { options: pg.PoolConfig };
+        await writeFile(join(dir, 'db.private.json'), JSON.stringify({
+          databaseUrl: restricted.options.connectionString, schema: f.schema,
+        }), { mode: 0o600 });
+        const command = fileURLToPath(new URL('../../scripts/legado/run-assisted-client-review.mjs', import.meta.url));
+        for (let attempt = 0; attempt < 2; attempt++) {
+          const cli = spawnSync(process.execPath, [command, ...args, 'db.private.json'], { encoding: 'utf8', timeout: 15000 });
+          assert.equal(cli.status, 0, cli.stderr);
+          assert.deepEqual(JSON.parse(cli.stdout), { status: 'REVIEW_COMPLETE', manifestSha256, total: 1, groups: 1 });
+        }
+        const receipt = join(dir, `review-${manifestSha256}-0.private.json`);
+        assert.equal((await stat(receipt)).mode & 0o777, 0o600);
+        const savedReceipt = JSON.parse(await readFile(receipt, 'utf8'));
+        assert.equal(savedReceipt.groupId, scope.groupId);
+        assert.equal(savedReceipt.total, 1);
+        assert.equal((await f.admin.query(`SELECT count(*) n FROM audit_logs a JOIN legacy_client_review r ON a.entity_id=r.id::text
+          WHERE r.native_key='FILE-RESUME-1' AND a.entity='LegacyClientReview'`)).rows[0].n, '1');
+      } finally {
+        await rm(dir, { recursive: true, force: true });
+      }
+    }
     assert.equal((await f.admin.query('SELECT count(*) n FROM clientes')).rows[0].n, before);
   } finally {
     await f.close();

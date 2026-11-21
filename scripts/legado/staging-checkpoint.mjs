@@ -1,8 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { consumirLoteStagingLegado } from './consumir-lote-staging.mjs';
 import { prepararPersistenciaClientesLegado, persistirLoteClientesLegado } from './staging-persistence.mjs';
+import { runAssistedClientReviewManifest } from './pilot-functional-review-store.mjs';
 export { prepararPersistenciaClientesLegado, persistirLoteClientesLegado,
   reverterLoteClientesLegado } from './staging-persistence.mjs';
 
@@ -56,12 +57,53 @@ const write = (file, value) => {
     try { fs.fsyncSync(parent); } finally { fs.closeSync(parent); }
   }
 };
-const read = file => {
+const readPrivateBytes = file => {
   const stat = fs.lstatSync(file);
   if (!stat.isFile() || stat.isSymbolicLink() || (process.platform !== 'win32'
     && (stat.uid !== process.getuid() || (stat.mode & 0o077)))) throw new Error('STAGING_PRIVATE_FILE_REQUIRED');
-  return JSON.parse(fs.readFileSync(file,'utf8'));
+  return fs.readFileSync(file);
 };
+const read = file => JSON.parse(readPrivateBytes(file));
+
+export async function runPrivateAssistedReviewCommand(argv, repo, deps) {
+  if (process.platform === 'win32' || argv.length !== 3) throw new Error('REVIEW_PRIVATE_LINUX_REQUIRED');
+  const [directory, manifestName, approvalName] = argv;
+  const root = fs.realpathSync(directory), checkout = fs.realpathSync(repo);
+  const relative = path.relative(checkout, root);
+  const stat = fs.lstatSync(directory);
+  if (!relative || (!relative.startsWith('..' + path.sep) && !path.isAbsolute(relative))
+      || !stat.isDirectory() || stat.isSymbolicLink() || stat.uid !== process.getuid() || (stat.mode & 0o077)
+      || ![manifestName, approvalName].every(name => /^[a-z0-9_-]+\.private\.json$/.test(name))
+      || manifestName === approvalName) throw new Error('STAGING_PRIVATE_DIRECTORY_REQUIRED');
+  const manifestFile = path.join(root, manifestName);
+  const approval = read(path.join(root, approvalName));
+  const manifestBytes = readPrivateBytes(manifestFile);
+  const input = JSON.parse(manifestBytes);
+  if (approval?.approved !== true || typeof approval.artifactSha256 !== 'string'
+      || createHash('sha256').update(manifestBytes).digest('hex') !== approval.artifactSha256
+      || typeof approval.manifestSha256 !== 'string' || approval.manifestSha256 !== input.manifestSha256)
+    throw new Error('REVIEW_ARTIFACT_APPROVAL_REQUIRED');
+  const context = { ...input.context, requestId: `review-${approval.manifestSha256.slice(0, 32)}` };
+  return runAssistedClientReviewManifest(input.input, context, {
+    ...deps,
+    checkpoint: async receipt => {
+      await deps.beforeReceipt?.(receipt);
+      const value = { ...receipt, groupId: context.groupId, targetSha256: digest(input.input.target) };
+      const file = path.join(root, `review-${receipt.manifestSha256}-${receipt.offset}.private.json`);
+      const temporary = path.join(root, `.review-${randomUUID()}.tmp`);
+      try {
+        write(temporary, value);
+        try { fs.linkSync(temporary, file); }
+        catch (error) { if (error.code !== 'EEXIST') throw error; }
+        if (digest(read(file)) !== digest(value)) throw new Error('REVIEW_CHECKPOINT_CHANGED');
+        const parent = fs.openSync(root, 'r');
+        try { fs.fsyncSync(parent); } finally { fs.closeSync(parent); }
+      } finally {
+        if (fs.existsSync(temporary)) fs.unlinkSync(temporary);
+      }
+    },
+  }, approval);
+}
 
 /** Private staging only. Canonical services continue to own any later business writes. */
 export function processStagingBatches({ rows, nativeKey, sourceSha256, runId, batchSize = 500,

@@ -1,3 +1,28 @@
+## CPA3: comando privado de revisao e recibos duraveis
+
+Base ad0cad7f, CI44610131514 SUCCESS. CLI Linux:
+node scripts/legado/run-assisted-client-review.mjs <diretorio-privado>
+<manifesto.private.json> <aprovacao.private.json> <db.private.json>.
+Usar servidor compilado. Arquivos 0600 em diretorio 0700 fora
+do checkout; aprovacao privada vinculada aos hashes do manifesto
+e do arquivo. Recibo por grupo com pin do destino e Grupo,
+salvo apos COMMIT via gravacao sincronizada e publicacao atomica.
+
+PG16 restrito: processo novo retomou apos falha entre COMMIT e
+recibo. Duas invocacoes da CLI mantiveram recibo 0600 e uma
+auditoria; hash, contagem e destino divergentes recusados.
+CLI integral no clone: 5384 em 11 grupos, 106,775 s; 39 em um
+grupo, 1,108 s. Conciliados 5423 registros e auditorias, 12
+recibos, delta zero em clientes. Manifestos reatados ao clone.
+Suite Linux 3041/3041 sem skips; PG16 restrito e build API aprovados.
+Sem transferencia ou escrita HML. Dois arquivos HML conferidos:
+bffda3f508d24741dba63f001bf111940978691cd507f9e3c36afea42e936918
+e 5518fe3b3822db038f0ae33f984c8a88552aecbfd079f3c457f2383125a2862a.
+Volume VPS 23048876032 bytes livres. Sem exclusao, deploy ou
+mudanca no operacional. Proximo: empacotar acesso autenticado,
+medir pico, backup fresco e gates de schema, ACL e manifestos.
+Venda ate a baixa nao executada nesta rodada.
+
 ## CPA3: executor retomavel e manifestos vinculados a HML
 
 Base 8e2e50a3, CI44596541001 SUCCESS. Pacote privado 5423
