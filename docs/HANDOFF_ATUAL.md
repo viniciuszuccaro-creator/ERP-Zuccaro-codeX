@@ -7,7 +7,13 @@ e os tres containers ativos. Particoes PostgreSQL e Docker:
 A leitura nao comprova identidade SQL ou pico com backup/WAL.
 
 HD original localizado pelo barramento USB e pasta documentada.
-Sem escrita no HD. Nenhum dos dois hashes esperados nos 162
+Original e copia 02_SQL_WORK: MDF/LDF 2/2 iguais aos pins do
+leitor; sem escrita no HD. WSL sem SQL Server, Docker ou Podman;
+leitor Windows continua bloqueado pelo guard de isolamento.
+VPS com volumes privados anteriores de aproximadamente 1,29 e
+1,37 GB, nenhum container de leitor ativo e 23048024064 bytes
+livres; nao cabe nova copia de 1,02 GB acima da reserva vigente.
+Nenhum dos dois hashes esperados nos 162
 manifestos candidatos das raizes consultadas, no WSL consultado
 ou na area compartilhada da VPS ja verificada. Isto nao prova
 ausencia em todos os arquivos, volumes ou executores. Zero
@@ -20,8 +26,10 @@ se os bytes mudarem. Conferir gates de transporte e escrita,
 identidade fisica, pico e backup restaurado/externo antes da HML.
 Nao repetir 10871 nem 849ba70c. Correcao assistida ainda e
 operacao interna da CLI; falta empacotar no servidor, expor e
-testar HTTP. Comercial: ultima prova Pedido/Expedicao; nenhum
-novo faturamento, titulo ou baixa comprovado.
+testar HTTP. Comercial: regressao 3/3 reexecutada em Linux e
+PG16 efemero isolado ate Pedido/Expedicao, com rollback,
+repeticao e isolamento. Nenhum faturamento, titulo ou baixa
+comprovado; nada implantado na HML.
 
 ## CPA3: GET integrado ao bootstrap e validado no Linux
 
