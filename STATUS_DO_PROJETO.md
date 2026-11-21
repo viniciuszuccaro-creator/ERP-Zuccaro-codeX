@@ -1,3 +1,41 @@
+## CPA3: preflight para promocao do faturamento na HML
+
+Candidato d47f29c75 (CI44912004967). Live a305a143 API/web;
+hml344_restore_20261104/hml344_cpa_20261104, principal da API
+sem superuser/BYPASSRLS. Leitura 21/11: 23048740864 bytes e
+12230631 inodes livres no volume Docker; nao comprova pico.
+Pedido, centros_custo, plano_contas, contas_receber e recibos
+ausentes no namespace. Condicoes e parcelas presentes com
+RLS forcada, mas sem SELECT da API. Auditoria ja tem SELECT/INSERT.
+Nenhum fallback para public. Nada aplicado.
+
+Backup de 21/11 03:31 BRT: servico success, 46028800 bytes;
+tamanho e SHA do tar conferem com recibo e ACK externo. Antes
+da janela, gerar novo backup, restaurar em base isolada e
+validar copia externa e pico medido. A reconciliacao de backup
+devera incluir os objetos novos antes de aceitar escrita.
+
+Pre-gate: ensaiar dependencias canonicas de Pedido no schema
+alvo e os mestres contabeis por empresa, sem inventar vinculos.
+Preparar habilitacao normal opt-in (index nao usa a opcao hoje)
+e consumidores das rotas no Pedido/Financeiro existentes.
+A CI e contrato HTTP isolado nao substituem o teste de navegador.
+
+ACL a ensaiar em restauro: leituras somente de Pedido, parcelas,
+condicao/vinculo e titulos/recibos; UPDATE de coluna inerte de
+Pedido somente se necessario ao FOR UPDATE; INSERT dos campos
+utilizados e UPDATE apenas valor_recebido, com RLS forcada e
+escopo por Grupo/Empresa. Sem novos grants de admin/superuser.
+Validar RBAC explicito por acao, sem ampliar perfil por inferencia.
+
+Gate separado para DDL/ACL, publicacao e transacao de aceite.
+Reversao: desligar rotas, voltar API e web ao a305a143 conferido,
+reverter somente grants/policies do delta, manter titulos e
+recibos; nao remover schema com dados nem restaurar sobre a HML.
+Provar retorno em clone; no aceite, venda de teste, parcial e
+quitacao reabertas, sem emissao fiscal, boleto, cobranca ou mensagem.
+Nao publicar enquanto faltarem dependencias, runtime ou interface.
+
 ## CPA3: faturamento e baixa pelo HTTP do clone
 
 Base 63823febf. createApp habilita por opcao explicita em
