@@ -9,6 +9,8 @@ import { loadConfig } from '../src/config/env.ts';
 import { SEED_IDS as ID } from '../scripts/seedDevIds.ts';
 import { PostgresExpedicaoEstoquePort, PostgresExpedicaoPedidoPort } from '../src/integrations/expedicaoPersistentPorts.ts';
 import { projetarParcelasFaturamento, quantizarTotalPedidoParaFaturamento } from '../src/services/faturamentoParcelasPolicy.ts';
+import { PostgresAuditRepository } from '../src/audit/auditRepository.ts';
+import type { DbClient } from '../src/db/client.ts';
 
 // The same synthetic journey runs locally and in the mandatory isolated PostgreSQL job.
 async function journey(f: Awaited<ReturnType<typeof localCrmFixture>>, probeBilling = false) {
@@ -137,10 +139,85 @@ async function journey(f: Awaited<ReturnType<typeof localCrmFixture>>, probeBill
       assert.equal((await request('/faturar', 'POST')).status, 404);
       assert.deepEqual(await runtime.pedidoService.get(ctx, order.id), before);
       assert.deepEqual(await runtime.auditRepo.listByEntity('Pedido', order.id), auditBefore);
+      await rehearseSettlement(f.admin, ctx, order.id, projected);
     } finally {
       await new Promise<void>((resolve, reject) => listener.close(error => error ? reject(error) : resolve()));
     }
   }
+}
+
+// Disposable SQL model only; not a migration, HTTP handler or ContaReceber replacement.
+async function rehearseSettlement(db: DbClient, ctx: { groupId: string; empresaId: string; actorId: string; requestId: string },
+  orderId: string, installments: ReturnType<typeof projetarParcelasFaturamento>) {
+  const audit = new PostgresAuditRepository(db);
+  const identity = [orderId, ctx.groupId, ctx.empresaId];
+  await db.withTransaction(async tx => {
+    const { rows: [scope] } = await tx.query('SELECT current_schemas(false)::text[] AS schemas');
+    assert.match(scope.schemas[0], /^crm_test_[a-f0-9]{18}$/);
+    assert.deepEqual(scope.schemas.slice(1), ['pg_catalog']);
+    await tx.query(`CREATE TABLE rehearsal_titles (
+      pedido_id uuid REFERENCES pedidos(id), group_id uuid NOT NULL, empresa_id uuid NOT NULL,
+      parcela int, vencimento date NOT NULL, valor numeric(16,2) NOT NULL CHECK (valor > 0),
+      recebido numeric(16,2) DEFAULT 0 CHECK (recebido BETWEEN 0 AND valor),
+      PRIMARY KEY (pedido_id,group_id,empresa_id,parcela));
+      CREATE TABLE rehearsal_receipts (
+      pedido_id uuid, group_id uuid, empresa_id uuid, parcela int, evento text,
+      valor numeric(16,2) NOT NULL CHECK (valor > 0),
+      PRIMARY KEY (pedido_id,group_id,empresa_id,parcela,evento),
+      FOREIGN KEY (pedido_id,group_id,empresa_id,parcela) REFERENCES rehearsal_titles)`);
+  });
+  const scoped = 'pedido_id=$1 AND group_id=$2 AND empresa_id=$3';
+  const bill = (fail = false) => db.withTransaction(async tx => {
+    assert.equal((await tx.query('SELECT id FROM pedidos WHERE id=$1 AND group_id=$2 AND empresa_id=$3 FOR UPDATE', identity)).rowCount, 1);
+    if ((await tx.query('SELECT 1 FROM rehearsal_titles WHERE ' + scoped, identity)).rowCount) return false;
+    for (const part of installments) await tx.query('INSERT INTO rehearsal_titles VALUES ($1,$2,$3,$4,$5,$6)',
+      [...identity, part.ordem, part.vencimento, part.valor]);
+    await audit.append({ ...ctx, entity: 'FaturamentoEnsaio', entityId: orderId, action: 'create' }, tx);
+    if (fail) throw new Error('REHEARSAL_BILLING_ROLLBACK');
+    return true;
+  });
+  await assert.rejects(bill(true), /REHEARSAL_BILLING_ROLLBACK/);
+  assert.equal((await db.query('SELECT 1 FROM rehearsal_titles WHERE ' + scoped, identity)).rowCount, 0);
+  assert.equal((await audit.listByEntity('FaturamentoEnsaio', orderId)).length, 0);
+  assert.deepEqual((await Promise.all([bill(), bill()])).sort(), [false, true]);
+  assert.equal((await db.query('SELECT 1 FROM rehearsal_titles WHERE ' + scoped, identity)).rowCount, installments.length);
+  assert.equal((await audit.listByEntity('FaturamentoEnsaio', orderId)).length, 1);
+
+  const receive = (part: number, event: string, amount: string, company = ctx.empresaId, fail = false) => db.withTransaction(async tx => {
+    const key = [orderId, ctx.groupId, company, part];
+    if (!(await tx.query('SELECT 1 FROM rehearsal_titles WHERE ' + scoped + ' AND parcela=$4 FOR UPDATE', key)).rowCount)
+      throw new Error('REHEARSAL_TITLE_NOT_FOUND');
+    const prior = await tx.query('SELECT valor::text FROM rehearsal_receipts WHERE ' + scoped + ' AND parcela=$4 AND evento=$5', [...key, event]);
+    if (prior.rows[0]) {
+      if (prior.rows[0].valor !== amount) throw new Error('REHEARSAL_EVENT_CONFLICT');
+      return false;
+    }
+    await tx.query('INSERT INTO rehearsal_receipts VALUES ($1,$2,$3,$4,$5,$6)', [...key, event, amount]);
+    await tx.query('UPDATE rehearsal_titles SET recebido=recebido+$5 WHERE ' + scoped + ' AND parcela=$4', [...key, amount]);
+    await audit.append({ ...ctx, entity: 'RecebimentoEnsaio', entityId: orderId, action: 'create', afterData: { part, event, amount } }, tx);
+    if (fail) throw new Error('REHEARSAL_RECEIPT_ROLLBACK');
+    return true;
+  });
+  const balance = async () => (await db.query('SELECT sum(valor-recebido)::text AS amount FROM rehearsal_titles WHERE ' + scoped, identity)).rows[0].amount;
+  const opening = await balance();
+  const first = installments[0];
+  const asCents = (value: string) => BigInt(value.replace('.', ''));
+  const money = (cents: bigint) => `${cents / 100n}.${String(cents % 100n).padStart(2, '0')}`;
+  assert.ok(asCents(first.valor) > 1n);
+  await assert.rejects(receive(first.ordem, 'partial', '0.01', ID.empresaB), /REHEARSAL_TITLE_NOT_FOUND/);
+  await assert.rejects(receive(first.ordem, 'partial', '0.01', ctx.empresaId, true), /REHEARSAL_RECEIPT_ROLLBACK/);
+  assert.equal(await balance(), opening);
+  assert.equal((await audit.listByEntity('RecebimentoEnsaio', orderId)).length, 0);
+  assert.deepEqual((await Promise.all([receive(first.ordem, 'partial', '0.01'), receive(first.ordem, 'partial', '0.01')])).sort(), [false, true]);
+  assert.equal(await balance(), money(asCents(opening) - 1n));
+  await assert.rejects(receive(first.ordem, 'partial', '0.02'), /REHEARSAL_EVENT_CONFLICT/);
+  for (const part of installments) {
+    const amount = part === first ? money(asCents(part.valor) - 1n) : part.valor;
+    assert.equal(await receive(part.ordem, 'settle', amount), true);
+    assert.equal(await receive(part.ordem, 'settle', amount), false);
+  }
+  assert.equal(await balance(), '0.00');
+  assert.equal((await audit.listByEntity('RecebimentoEnsaio', orderId)).length, installments.length + 1);
 }
 
 test('Composição persistida: Cliente→Orçamento→Pedido→Expedição, rollback, replay, parcial, devolução e cancelamento', async () => {

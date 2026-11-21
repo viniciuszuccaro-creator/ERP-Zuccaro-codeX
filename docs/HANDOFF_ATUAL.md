@@ -1,3 +1,20 @@
+## CPA3: ensaio SQL de faturamento e baixa no clone
+
+Base d4cc77e49. Fixture PG16 descartavel usa somente seu
+schema e pg_catalog. Reutilizados Pedido persistido, politica
+de parcelas e PostgresAuditRepository. Duas tabelas da fixture
+modelam titulos e recebimentos; nao sao migration ou API.
+Composicao 3/3: falha apos gravacao reverteu titulo/recibo e
+auditoria; concorrencia gerou uma vez; parcial, conflito de
+evento, repeticao, escopo por empresa e saldo 0,00 confirmados.
+Prova com principal da fixture, nao prova RBAC/RLS da aplicacao.
+Audit baseline, lint, typecheck, build, suite Linux 3041/3041
+e git diff --check aprovados.
+POST de faturamento ainda 404; sem implantacao ou escrita remota.
+Lote 5423: executor da Empresa inacessivel neste host, zero
+extraido/transferido/gravado. Retomar no leitor isolado da
+Empresa com a copia verificada do HD, sem repetir outras cargas.
+
 ## CPA3: total faturavel em centavos a partir do Pedido
 
 Base e16b8a82, CI44904980825 SUCCESS. Politica de parcelas
