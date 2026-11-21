@@ -1,3 +1,28 @@
+## CPA3: CI do GET e preflight de recuperacao privada
+
+9f0ebe105 confirmado na branch de continuidade; CI44901044704
+SUCCESS. A HML nao recebeu esse SHA: marcador API/web a305a143
+e os tres containers ativos. Particoes PostgreSQL e Docker:
+23048114176 bytes livres e 12230631 inodes livres em ambas.
+A leitura nao comprova identidade SQL ou pico com backup/WAL.
+
+HD original localizado pelo barramento USB e pasta documentada.
+Sem escrita no HD. Nenhum dos dois hashes esperados nos 162
+manifestos candidatos das raizes consultadas, no WSL consultado
+ou na area compartilhada da VPS ja verificada. Isto nao prova
+ausencia em todos os arquivos, volumes ou executores. Zero
+transferidos, gravados ou conciliados nesta rodada.
+
+Proximo: localizar no indice privado do executor original o
+registro dos dois arquivos ou reconstituir o mesmo recorte em
+copia SQL isolada, conferir conteudo logico e gerar novos pins
+se os bytes mudarem. Conferir gates de transporte e escrita,
+identidade fisica, pico e backup restaurado/externo antes da HML.
+Nao repetir 10871 nem 849ba70c. Correcao assistida ainda e
+operacao interna da CLI; falta empacotar no servidor, expor e
+testar HTTP. Comercial: ultima prova Pedido/Expedicao; nenhum
+novo faturamento, titulo ou baixa comprovado.
+
 ## CPA3: GET integrado ao bootstrap e validado no Linux
 
 Base 78d9671f. GET montado depois do roteador, antes do 404,
