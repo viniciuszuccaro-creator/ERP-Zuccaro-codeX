@@ -197,7 +197,7 @@ export default function DashboardAlertsBar({
             }
           }
           setDismissed(true);
-          // TTL mesmo sem storage (sessão) ou se setItem falhar — não depende de dismissTick.
+          // TTL de sessão também cobre falha de setItem / ausência de chave.
           sessionTimerRef.current = setTimeout(() => {
             sessionTimerRef.current = null;
             setDismissed(false);
