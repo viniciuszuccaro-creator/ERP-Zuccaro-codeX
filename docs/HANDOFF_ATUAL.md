@@ -1,3 +1,18 @@
+## CPA3: intersecao de Precos e estrutura de catalogo em clone
+
+Dos 4.342 itens cruzados: 1.831 (366 materiais) com unidade coincidente e
+empresa preenchida na origem; 1.040 sem empresa com unidade coincidente;
+889 com empresa fora do recorte de unidade coincidente; 582 sem ambos.
+Empresa preenchida nao comprova equivalencia no destino. Nenhum preco
+liberado: faltam produto/unidade/empresa no destino e vigencia comprovada.
+
+No PostgreSQL 16 restaurado e sem rede, 005/006/008 passaram em transacao.
+Unidades, grupos, setores e produtos ficaram com RLS forcada e sem policies
+no recorte ensaiado. Rollback confirmado com 17.472 clientes preservados.
+Proximo gate: matriz minima de policies/grants e manifesto de catalogo.
+HML intacta: nenhuma reaplicacao de clientes ou contatos; Obras segue sem
+prova nova de empresa. Backup agendado e integracao financeira seguem abertos.
+
 ## CPA3: triagem de unidade de venda para os candidatos de Precos
 
 Base44 Produto/UnidadeMedida com tamanho e SHA conferidos. Nos 861
