@@ -61,6 +61,8 @@ export default function FechamentoPedidoFinanceiroHttp({ formData, onTitulosChan
   const tentativaBaixaRef = useRef({});
   const operacaoGeracaoRef = useRef(0);
   const pedidoIdRef = useRef(pedidoId);
+  /** Escopo no momento da geração atual — resposta stale de outro grupo/empresa não publica. */
+  const scopeAtGeracaoRef = useRef({ groupId: formGroupId || '', empresaId: formEmpresaId || '' });
   const reactId = useId();
   const onTitulosChangeRef = useRef(onTitulosChange);
   onTitulosChangeRef.current = onTitulosChange;
@@ -82,14 +84,20 @@ export default function FechamentoPedidoFinanceiroHttp({ formData, onTitulosChan
   const publicarTitulos = (rows, geracao) => {
     if (geracao != null && geracao !== operacaoGeracaoRef.current) return;
     if (pedidoIdRef.current !== pedidoId) return;
+    // Escopo do formulário: resposta de outro grupo/empresa não publica.
+    if ((formGroupId || '') !== (scopeAtGeracaoRef.current.groupId || '')
+      || (formEmpresaId || '') !== (scopeAtGeracaoRef.current.empresaId || '')) {
+      return;
+    }
     const next = Array.isArray(rows) ? rows : [];
     setTitulos(next);
     if (typeof onTitulosChangeRef.current === 'function') onTitulosChangeRef.current(next);
   };
 
-  // Troca de pedido: limpar seleções/títulos/eventos incompatíveis.
+  // Troca de pedido OU escopo grupo/empresa: invalidar geração e limpar UI (fail-closed).
   useEffect(() => {
     pedidoIdRef.current = pedidoId;
+    scopeAtGeracaoRef.current = { groupId: formGroupId || '', empresaId: formEmpresaId || '' };
     operacaoGeracaoRef.current += 1;
     setCentros([]);
     setPlanos([]);
@@ -104,7 +112,7 @@ export default function FechamentoPedidoFinanceiroHttp({ formData, onTitulosChan
     setLoadingTitulos(false);
     tentativaBaixaRef.current = {};
     if (typeof onTitulosChangeRef.current === 'function') onTitulosChangeRef.current([]);
-  }, [pedidoId]);
+  }, [pedidoId, formGroupId, formEmpresaId]);
 
   useEffect(() => {
     if (!isHttpPedidoFinanceiroEnabled || !pedidoId || !canFaturar) {

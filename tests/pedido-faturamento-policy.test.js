@@ -115,6 +115,8 @@ test('commercial billing persists the NF instead of logging it', async () => {
   assert.match(painelHttp, /readErpHttpSession/);
   assert.match(painelHttp, /getScope:/);
   assert.match(painelHttp, /operacaoGeracaoRef/);
+  assert.match(painelHttp, /\[pedidoId, formGroupId, formEmpresaId\]/);
+  assert.match(painelHttp, /scopeAtGeracaoRef/);
   assert.match(painelHttp, /pending\.valor !== valorInformado/);
   assert.match(painelHttp, /delete tentativaBaixaRef\.current\[parcela\]/);
   assert.match(painelHttp, /pedidos\.faturar/);
