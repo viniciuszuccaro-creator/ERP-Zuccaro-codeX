@@ -166,8 +166,7 @@ export default function FechamentoPedidoFinanceiroHttp({ formData, onTitulosChan
         }
         const mapped = mapPedidoFinanceiroHttpError(error);
         setAviso((prev) => prev || mapped.message);
-        // Fail-closed: nunca publicar fixtures sintéticas na lista que aciona Baixar
-        // (mesmo em Vite DEV apontado a HTTP/HML). SYNTHETIC_PEDIDO_TITULOS fica só nos testes de policy.
+        // Fail-closed: erro de GET títulos → lista vazia (sem fixture na UI de Baixar).
         publicarTitulos([], geracao);
       })
       .finally(() => {
