@@ -195,6 +195,19 @@ export default function CentralVendas360Shell({
     }
     return null;
   })();
+  const localOuObraLabel = (() => {
+    const row = selectionForView;
+    if (!row) return null;
+    const localNome = [row.cliente_local_nome, row.local_nome, row.local_entrega_nome]
+      .find((v) => typeof v === 'string' && v.trim());
+    const obraNome = [row.obra_nome, row.nome_obra]
+      .find((v) => typeof v === 'string' && v.trim());
+    if (localNome) return `Local ${localNome.trim()}`;
+    if (obraNome) return `Obra ${obraNome.trim()}`;
+    if (row.cliente_local_id) return 'Local definido';
+    if (row.obra_id) return 'Obra definida';
+    return null;
+  })();
   const proximaAcaoLabel = situacao.kind === 'orcamento'
     ? (selectionForView?.status === 'EM_ABERTO' ? 'Fechar Orçamento' : 'Reabrir / editar documento')
     : (situacao.id === 'PRODUCAO' || situacao.id === 'ENTREGA' || situacao.id === 'RETIRA'
@@ -474,6 +487,15 @@ export default function CentralVendas360Shell({
             Cliente:{' '}
             <strong className={clienteNome ? 'text-sky-950' : 'text-slate-400'}>
               {clienteNome || (selectionForView ? 'sem nome na seleção' : 'selecione um documento')}
+            </strong>
+          </span>
+          <span data-block="central360-contexto-local-obra">
+            Obra/Local:{' '}
+            <strong className={localOuObraLabel ? 'text-sky-950' : (selectionForView ? 'text-amber-800' : 'text-slate-400')}>
+              {localOuObraLabel
+                || (selectionForView
+                  ? (selectionForView.tipo_operacao === 'RETIRADA' ? 'Retirada (sem local)' : 'pendente na seleção')
+                  : '—')}
             </strong>
           </span>
           <span>

@@ -1,3 +1,10 @@
+## Cursor — Central360 TERMINE (2026-11-23 America/Sao_Paulo)
+
+PR #599: sticky com Obra/Local; grades Qtde/Un./Unit./Desc./Total;
+seleção teclado; listLocais fail-closed; §7 opt-in sem SYNTHETIC na
+Baixar; CR canônica bloqueada até mapa. Evidência visual em
+`docs/evidence/central360-visual-melhoria-20261123.txt`. Aceite Codex HML.
+
 ## Cursor — Central360 ENTREGUE (2026-11-23 America/Sao_Paulo)
 
 PR #599 `cursor/comercial-360-frontend-v6-3cfd` entregue (frontend).
@@ -33,6 +40,21 @@ frontend/Central360; Completo/endereços/HML/deploy = Casa. Contrato
 financeiro clone documentado no HANDOFF §7; UI HTTP permanece indisponível
 até promote. P1 #598: lote 5.423 = encerrado (5384 revisão + 39 histórico);
 **não reaplicar** — alinhado ao recibo deste tip.
+
+## CPA3: intersecao de Precos e estrutura de catalogo em clone
+
+Dos 4.342 itens cruzados: 1.831 (366 materiais) com unidade coincidente e
+empresa preenchida na origem; 1.040 sem empresa com unidade coincidente;
+889 com empresa fora do recorte de unidade coincidente; 582 sem ambos.
+Empresa preenchida nao comprova equivalencia no destino. Nenhum preco
+liberado: faltam produto/unidade/empresa no destino e vigencia comprovada.
+
+No PostgreSQL 16 restaurado e sem rede, 005/006/008 passaram em transacao.
+Unidades, grupos, setores e produtos ficaram com RLS forcada e sem policies
+no recorte ensaiado. Rollback confirmado com 17.472 clientes preservados.
+Proximo gate: matriz minima de policies/grants e manifesto de catalogo.
+HML intacta: nenhuma reaplicacao de clientes ou contatos; Obras segue sem
+prova nova de empresa. Backup agendado e integracao financeira seguem abertos.
 
 ## CPA3: triagem de unidade de venda para os candidatos de Precos
 

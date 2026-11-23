@@ -181,6 +181,7 @@ test('CentralVendas360Shell: faixa, situações, grades dual, Cliente360', () =>
   assert.match(src, /central360-faixa-compacta/);
   assert.match(src, /central360-situacoes/);
   assert.match(src, /central360-contexto-venda/);
+  assert.match(src, /central360-contexto-local-obra/);
   assert.match(src, /central360-fluxo-pedido/);
   assert.match(src, /central360-proxima-acao/);
   assert.match(src, /central360-superficie-unica/);

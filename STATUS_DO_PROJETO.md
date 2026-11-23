@@ -1,3 +1,11 @@
+## Cursor — Central360 TERMINE sticky obra/local (2026-11-23 America/Sao_Paulo)
+
+PR #599. Sticky da venda passa a exibir Obra/Local a partir dos campos da
+seleção (sem inventar). Merge com tip Casa (interseção Preços/clone).
+Bases #595 `b5862fc5` / #596 `1a5bc05e`. listLocais fail-closed; §7 sem
+SYNTHETIC na Baixar; CR canônica bloqueada até mapa Codex. Sem Completo/
+deploy. Aceite HML no evidence visual.
+
 ## Cursor — Central360 visual + teclado (2026-11-23 America/Sao_Paulo)
 
 PR #599. Melhoria no existente (layout v6): grades com Qtde/Un./Unit./Desc./Total
@@ -100,6 +108,21 @@ P1 Codex #598: fila 5.423 reconciliada como **ENCERRADA** (5384+39; não
 reaplicar) — próximo Casa = backup/faturamento/Obras, não reimportar.
 Sem Completo/deploy/DDL. Próximo Cursor: Central360 visual + contrato
 financeiro HTTP (§7 do HANDOFF) só com indisponível até promote Casa.
+
+## CPA3: intersecao de Precos e estrutura de catalogo em clone
+
+Dos 4.342 itens cruzados: 1.831 (366 materiais) com unidade coincidente e
+empresa preenchida na origem; 1.040 sem empresa com unidade coincidente;
+889 com empresa fora do recorte de unidade coincidente; 582 sem ambos.
+Empresa preenchida nao comprova equivalencia no destino. Nenhum preco
+liberado: faltam produto/unidade/empresa no destino e vigencia comprovada.
+
+No PostgreSQL 16 restaurado e sem rede, 005/006/008 passaram em transacao.
+Unidades, grupos, setores e produtos ficaram com RLS forcada e sem policies
+no recorte ensaiado. Rollback confirmado com 17.472 clientes preservados.
+Proximo gate: matriz minima de policies/grants e manifesto de catalogo.
+HML intacta: nenhuma reaplicacao de clientes ou contatos; Obras segue sem
+prova nova de empresa. Backup agendado e integracao financeira seguem abertos.
 
 ## CPA3: triagem de unidade de venda para os candidatos de Precos
 
