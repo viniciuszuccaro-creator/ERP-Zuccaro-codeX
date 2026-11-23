@@ -1,4 +1,4 @@
-import React, { useEffect, useId, useRef, useState } from 'react';
+import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -10,6 +10,7 @@ import { Loader2, Wallet, AlertTriangle, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { isHttpPedidoFinanceiroEnabled } from '@/api/base44Client';
 import { createHttpApiClient, isHttpApiError } from '@/api/httpApiClient';
+import { readErpHttpSession } from '@/api/erpHttpSession';
 import usePermissions from '@/components/lib/usePermissions';
 import {
   classifyTituloSituacao,
@@ -23,11 +24,15 @@ import {
  * Painel do contrato §7 dentro do Fechamento Financeiro existente.
  * Opt-in via VITE_ERP_HTTP_PEDIDO_FINANCEIRO=true. HML permanece desligado.
  *
- * @param {{ formData?: { id?: string, status?: string }, onTitulosChange?: (titulos: unknown[]) => void }} props
+ * @param {{ formData?: { id?: string, status?: string, empresa_id?: string, group_id?: string, grupo_id?: string }, onTitulosChange?: (titulos: unknown[]) => void }} props
  */
 export default function FechamentoPedidoFinanceiroHttp({ formData, onTitulosChange }) {
   const { hasPermission, permissionsLoading } = usePermissions();
   const pedidoId = formData?.id ? String(formData.id) : '';
+  const formEmpresaId = formData?.empresa_id ? String(formData.empresa_id) : '';
+  const formGroupId = formData?.group_id || formData?.grupo_id
+    ? String(formData.group_id || formData.grupo_id)
+    : '';
   const canFaturar = !permissionsLoading && (
     hasPermission('Comercial', 'pedidos', 'faturar')
     || hasPermission('Comercial', 'Pedido', 'faturar')
@@ -46,22 +51,61 @@ export default function FechamentoPedidoFinanceiroHttp({ formData, onTitulosChan
   const [planos, setPlanos] = useState(/** @type {Array<{ id: string, descricao?: string }>} */ ([]));
   const [centroId, setCentroId] = useState('');
   const [planoId, setPlanoId] = useState('');
-  const [titulos, setTitulos] = useState(/** @type {typeof SYNTHETIC_PEDIDO_TITULOS | unknown[]} */ ([]));
+  const [titulos, setTitulos] = useState(/** @type {ReadonlyArray<unknown> | unknown[]} */ ([]));
   const [loadingVinculos, setLoadingVinculos] = useState(false);
   const [loadingTitulos, setLoadingTitulos] = useState(false);
   const [faturando, setFaturando] = useState(false);
   const [baixandoParcela, setBaixandoParcela] = useState(/** @type {number | null} */ (null));
   const [aviso, setAviso] = useState('');
   const [baixaValor, setBaixaValor] = useState(/** @type {Record<number, string>} */ ({}));
-  const tentativaBaixaRef = useRef(/** @type {Record<number, string>} */ ({}));
+  /** @type {React.MutableRefObject<Record<number, { key: string, valor: string }>>} */
+  const tentativaBaixaRef = useRef({});
+  const operacaoGeracaoRef = useRef(0);
+  const pedidoIdRef = useRef(pedidoId);
   const reactId = useId();
+  const onTitulosChangeRef = useRef(onTitulosChange);
+  onTitulosChangeRef.current = onTitulosChange;
 
-  const client = React.useMemo(() => createHttpApiClient(), []);
+  const client = useMemo(() => createHttpApiClient({
+    getScope: () => {
+      /** @type {{ token?: string, actorId?: string, actorEmail?: string, groupId?: string, empresaId?: string }} */
+      const session = readErpHttpSession() || {};
+      return {
+        token: session.token,
+        actorId: session.actorId,
+        actorEmail: session.actorEmail,
+        groupId: formGroupId || session.groupId,
+        empresaId: formEmpresaId || session.empresaId,
+      };
+    },
+  }), [formEmpresaId, formGroupId]);
 
-  const publicarTitulos = (rows) => {
-    setTitulos(Array.isArray(rows) ? rows : []);
-    if (typeof onTitulosChange === 'function') onTitulosChange(Array.isArray(rows) ? rows : []);
+  const publicarTitulos = (rows, geracao) => {
+    if (geracao != null && geracao !== operacaoGeracaoRef.current) return;
+    if (pedidoIdRef.current !== pedidoId) return;
+    const next = Array.isArray(rows) ? rows : [];
+    setTitulos(next);
+    if (typeof onTitulosChangeRef.current === 'function') onTitulosChangeRef.current(next);
   };
+
+  // Troca de pedido: limpar seleções/títulos/eventos incompatíveis.
+  useEffect(() => {
+    pedidoIdRef.current = pedidoId;
+    operacaoGeracaoRef.current += 1;
+    setCentros([]);
+    setPlanos([]);
+    setCentroId('');
+    setPlanoId('');
+    setTitulos([]);
+    setBaixaValor({});
+    setAviso('');
+    setBaixandoParcela(null);
+    setFaturando(false);
+    setLoadingVinculos(false);
+    setLoadingTitulos(false);
+    tentativaBaixaRef.current = {};
+    if (typeof onTitulosChangeRef.current === 'function') onTitulosChangeRef.current([]);
+  }, [pedidoId]);
 
   useEffect(() => {
     if (!isHttpPedidoFinanceiroEnabled || !pedidoId || !canFaturar) {
@@ -69,11 +113,14 @@ export default function FechamentoPedidoFinanceiroHttp({ formData, onTitulosChan
       setPlanos([]);
       return undefined;
     }
+    const geracao = operacaoGeracaoRef.current;
+    const scopedPedidoId = pedidoId;
     const ac = new AbortController();
     setLoadingVinculos(true);
     setAviso('');
-    client.pedidos.vinculosContabeis(pedidoId, { signal: ac.signal })
+    client.pedidos.vinculosContabeis(scopedPedidoId, { signal: ac.signal })
       .then((data) => {
+        if (ac.signal.aborted || geracao !== operacaoGeracaoRef.current || pedidoIdRef.current !== scopedPedidoId) return;
         const payload = data && typeof data === 'object' ? data : {};
         const nextCentros = Array.isArray(payload.centros) ? payload.centros : [];
         const nextPlanos = Array.isArray(payload.planos) ? payload.planos : [];
@@ -84,7 +131,7 @@ export default function FechamentoPedidoFinanceiroHttp({ formData, onTitulosChan
         }
       })
       .catch((error) => {
-        if (ac.signal.aborted) return;
+        if (ac.signal.aborted || geracao !== operacaoGeracaoRef.current || pedidoIdRef.current !== scopedPedidoId) return;
         const mapped = mapPedidoFinanceiroHttpError(error);
         setCentros([]);
         setPlanos([]);
@@ -93,38 +140,41 @@ export default function FechamentoPedidoFinanceiroHttp({ formData, onTitulosChan
           : ''));
       })
       .finally(() => {
-        if (!ac.signal.aborted) setLoadingVinculos(false);
+        if (!ac.signal.aborted && geracao === operacaoGeracaoRef.current) setLoadingVinculos(false);
       });
     return () => ac.abort();
   }, [client, pedidoId, canFaturar]);
 
   useEffect(() => {
     if (!isHttpPedidoFinanceiroEnabled || !pedidoId || !canVerTitulos) {
-      publicarTitulos([]);
+      publicarTitulos([], operacaoGeracaoRef.current);
       return undefined;
     }
+    const geracao = operacaoGeracaoRef.current;
+    const scopedPedidoId = pedidoId;
     const ac = new AbortController();
     setLoadingTitulos(true);
-    client.pedidos.titulos(pedidoId, { signal: ac.signal })
+    client.pedidos.titulos(scopedPedidoId, { signal: ac.signal })
       .then((rows) => {
-        publicarTitulos(Array.isArray(rows) ? rows : []);
+        if (ac.signal.aborted || geracao !== operacaoGeracaoRef.current || pedidoIdRef.current !== scopedPedidoId) return;
+        publicarTitulos(Array.isArray(rows) ? rows : [], geracao);
       })
       .catch((error) => {
-        if (ac.signal.aborted) return;
+        if (ac.signal.aborted || geracao !== operacaoGeracaoRef.current || pedidoIdRef.current !== scopedPedidoId) return;
         if (isHttpApiError(error) && error.status === 404) {
-          publicarTitulos([]);
+          publicarTitulos([], geracao);
           return;
         }
         const mapped = mapPedidoFinanceiroHttpError(error);
         setAviso((prev) => prev || mapped.message);
         if (import.meta.env.DEV) {
-          publicarTitulos(SYNTHETIC_PEDIDO_TITULOS);
+          publicarTitulos(SYNTHETIC_PEDIDO_TITULOS, geracao);
         } else {
-          publicarTitulos([]);
+          publicarTitulos([], geracao);
         }
       })
       .finally(() => {
-        if (!ac.signal.aborted) setLoadingTitulos(false);
+        if (!ac.signal.aborted && geracao === operacaoGeracaoRef.current) setLoadingTitulos(false);
       });
     return () => ac.abort();
   }, [client, pedidoId, canVerTitulos]);
@@ -152,24 +202,28 @@ export default function FechamentoPedidoFinanceiroHttp({ formData, onTitulosChan
       toast.error('Selecione centro de custo e plano de contas.');
       return;
     }
+    const geracao = operacaoGeracaoRef.current;
+    const scopedPedidoId = pedidoId;
     setFaturando(true);
     setAviso('');
     try {
-      const result = await client.pedidos.faturar(pedidoId, {
+      const result = await client.pedidos.faturar(scopedPedidoId, {
         centro_custo_id: centroId,
         plano_contas_id: planoId,
       });
+      if (geracao !== operacaoGeracaoRef.current || pedidoIdRef.current !== scopedPedidoId) return;
       const rows = Array.isArray(result?.titulos) ? result.titulos : [];
-      publicarTitulos(rows);
+      publicarTitulos(rows, geracao);
       toast.success(result?.replay
         ? 'Faturamento já existente (replay).'
         : 'Títulos gerados pelo servidor.');
     } catch (error) {
+      if (geracao !== operacaoGeracaoRef.current || pedidoIdRef.current !== scopedPedidoId) return;
       const mapped = mapPedidoFinanceiroHttpError(error);
       setAviso(mapped.message);
       toast.error(mapped.message);
     } finally {
-      setFaturando(false);
+      if (geracao === operacaoGeracaoRef.current) setFaturando(false);
     }
   };
 
@@ -196,24 +250,33 @@ export default function FechamentoPedidoFinanceiroHttp({ formData, onTitulosChan
       toast.error('Informe valor positivo com 2 casas (ex.: 10.00).');
       return;
     }
-    if (!tentativaBaixaRef.current[parcela]) {
-      tentativaBaixaRef.current[parcela] = `${reactId.replace(/:/g, '')}.${Date.now()}`;
+    const pending = tentativaBaixaRef.current[parcela];
+    // Mesmo evento só no retry do mesmo valor; parcial→quitação gera novo evento.
+    if (!pending || pending.valor !== valorInformado) {
+      tentativaBaixaRef.current[parcela] = {
+        key: `${reactId.replace(/:/g, '')}.${Date.now()}`,
+        valor: valorInformado,
+      };
     }
     const evento = buildPedidoTituloBaixaEvento({
       pedidoId,
       parcela,
-      attemptKey: tentativaBaixaRef.current[parcela],
+      attemptKey: tentativaBaixaRef.current[parcela].key,
     });
+    const geracao = operacaoGeracaoRef.current;
+    const scopedPedidoId = pedidoId;
     setBaixandoParcela(parcela);
     setAviso('');
     try {
-      const result = await client.pedidos.baixarTitulo(pedidoId, {
+      const result = await client.pedidos.baixarTitulo(scopedPedidoId, {
         parcela,
         evento,
         valor: valorInformado,
       });
+      if (geracao !== operacaoGeracaoRef.current || pedidoIdRef.current !== scopedPedidoId) return;
+      delete tentativaBaixaRef.current[parcela];
       const rows = Array.isArray(result?.titulos) ? result.titulos : [];
-      publicarTitulos(rows);
+      publicarTitulos(rows, geracao);
       toast.success(result?.replay
         ? 'Baixa reenviada (mesmo evento — replay).'
         : 'Baixa registrada.');
@@ -222,11 +285,16 @@ export default function FechamentoPedidoFinanceiroHttp({ formData, onTitulosChan
         toast.message('Venda reaberta: saldo zero em todos os títulos.');
       }
     } catch (error) {
+      if (geracao !== operacaoGeracaoRef.current || pedidoIdRef.current !== scopedPedidoId) return;
       const mapped = mapPedidoFinanceiroHttpError(error);
+      // Divergência: não reutilizar o evento com outro valor na próxima tentativa.
+      if (mapped.code === 'RECEBIMENTO_EVENTO_DIVERGENTE') {
+        delete tentativaBaixaRef.current[parcela];
+      }
       setAviso(mapped.message);
       toast.error(mapped.message);
     } finally {
-      setBaixandoParcela(null);
+      if (geracao === operacaoGeracaoRef.current) setBaixandoParcela(null);
     }
   };
 

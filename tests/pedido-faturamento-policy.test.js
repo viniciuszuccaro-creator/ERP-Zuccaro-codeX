@@ -112,6 +112,11 @@ test('commercial billing persists the NF instead of logging it', async () => {
   assert.match(fechamento, /onEmitir=\{async \(dadosNFe\) => \{\s*if \(isHttpBackendMode\) throw new Error\(faturamentoHttpIndisponivel\);/);
   const painelHttp = await readFile(new URL('../src/components/comercial/FechamentoPedidoFinanceiroHttp.jsx', import.meta.url), 'utf8');
   assert.match(painelHttp, /isHttpPedidoFinanceiroEnabled/);
+  assert.match(painelHttp, /readErpHttpSession/);
+  assert.match(painelHttp, /getScope:/);
+  assert.match(painelHttp, /operacaoGeracaoRef/);
+  assert.match(painelHttp, /pending\.valor !== valorInformado/);
+  assert.match(painelHttp, /delete tentativaBaixaRef\.current\[parcela\]/);
   assert.match(painelHttp, /pedidos\.faturar/);
   assert.match(painelHttp, /pedidos\.baixarTitulo/);
   assert.match(painelHttp, /buildPedidoTituloBaixaEvento/);
