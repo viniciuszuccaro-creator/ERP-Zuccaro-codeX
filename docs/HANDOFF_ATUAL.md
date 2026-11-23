@@ -13,6 +13,35 @@ financeiro clone documentado no HANDOFF §7; UI HTTP permanece indisponível
 até promote. P1 #598: lote 5.423 = encerrado (5384 revisão + 39 histórico);
 **não reaplicar** — alinhado ao recibo deste tip.
 
+## CPA3: prova SQL restrita do Catalogo em clone
+
+No restauro PG16 sem rede, o papel de importacao sem BYPASSRLS inseriu
+uma unidade e um produto sinteticos em visao de Grupo; papel de leitura
+consultou com SELECT apenas. Leituras e insercoes fora do Grupo ou em
+contexto Empresa foram bloqueadas para o importador. Rollback: 17.472 mestres.
+
+Prova SQL com papeis de ensaio, nao HTTP nem ACL final. O repositorio
+de Unidade exige codigo; aproveitar o delta aplicavel da migration 038
+e conferir reserva/auditoria antes do ensaio pelo servico canonico.
+Ainda falta mapa autoritativo do Grupo das 14 unidades e das classes de
+produto. Sem manifesto apto, transferencia ou escrita HML; clientes nao
+reaplicados. Precos, Obras, backup agendado e Comercial seguem abertos.
+
+## CPA3: intersecao de Precos e estrutura de catalogo em clone
+
+Dos 4.342 itens cruzados: 1.831 (366 materiais) com unidade coincidente e
+empresa preenchida na origem; 1.040 sem empresa com unidade coincidente;
+889 com empresa fora do recorte de unidade coincidente; 582 sem ambos.
+Empresa preenchida nao comprova equivalencia no destino. Nenhum preco
+liberado: faltam produto/unidade/empresa no destino e vigencia comprovada.
+
+No PostgreSQL 16 restaurado e sem rede, 005/006/008 passaram em transacao.
+Unidades, grupos, setores e produtos ficaram com RLS forcada e sem policies
+no recorte ensaiado. Rollback confirmado com 17.472 clientes preservados.
+Proximo gate: matriz minima de policies/grants e manifesto de catalogo.
+HML intacta: nenhuma reaplicacao de clientes ou contatos; Obras segue sem
+prova nova de empresa. Backup agendado e integracao financeira seguem abertos.
+
 ## CPA3: triagem de unidade de venda para os candidatos de Precos
 
 Base44 Produto/UnidadeMedida com tamanho e SHA conferidos. Nos 861
