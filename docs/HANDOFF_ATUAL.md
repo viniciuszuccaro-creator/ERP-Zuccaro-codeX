@@ -1,4 +1,8 @@
-<<<<<<< HEAD
+## Cursor — merge #599 com Casa tip e700b3c47 (2026-11-23 America/Sao_Paulo)
+
+Conflitos só STATUS/HANDOFF — prepends Cursor #599 + CPA3 Casa `e700b3c47`.
+Sem conflito de código.
+
 ## Cursor — pin Dashboard Base44 (2026-11-23 America/Sao_Paulo)
 
 PR #599: pin Dashboard após alertas/KPI/lazy. Aceite VPS = Codex.
@@ -87,7 +91,7 @@ frontend/Central360; Completo/endereços/HML/deploy = Casa. Contrato
 financeiro clone documentado no HANDOFF §7; UI HTTP permanece indisponível
 até promote. P1 #598: lote 5.423 = encerrado (5384 revisão + 39 histórico);
 **não reaplicar** — alinhado ao recibo deste tip.
-=======
+
 ## CPA3: gate de retomada de Unidades e backup avulso verificado
 
 O piloto canonico de Produtos exige branch e aprovacao do piloto antigo.
@@ -104,7 +108,7 @@ Gate: acoplar o manifesto segregado ao servico existente com checkpoint
 duravel atomico e reversao por postimage; ensaiar falha apos commit com
 ACL efetiva. Revalidar estado atual e backup antes de pedir aprovacao.
 Nenhuma gravacao, mudanca de permissao ou agendador na HML.
->>>>>>> origin/codex/casa-fechamento-hml-20261114
+
 
 ## CPA3: Grupo fixado e 14 unidades ensaiadas em PostgreSQL
 
