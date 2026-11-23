@@ -1,7 +1,7 @@
 ## Cursor — merge #598 com Casa tip 0ee16ad62 (2026-11-23 America/Sao_Paulo)
 
 Conflitos só STATUS/HANDOFF — prepends complementares (HANDOFF retomada #598 + CPA3 Casa).
-Sem conflito de código. Tip Casa .
+Sem conflito de código. Tip Casa `0ee16ad62`.
 
 ## Cursor — merge #598 com Casa tip 56222f6cc (2026-11-23 America/Sao_Paulo)
 
