@@ -1,3 +1,18 @@
+## CPA3: manifesto privado e prova HTTP das 14 unidades
+
+HML a305a143: leitura pelo principal efetivo, sem superuser/BYPASSRLS,
+confirmou um Grupo, duas empresas correspondentes por CNPJ e ausencia
+da tabela de Unidades. Nenhuma escrita na HML.
+
+Manifesto candidato privado: 14 ativos, siglas e codigos distintos; os
+14 payloads passaram no schema canonico. Flag de producao preservada
+na fonte, nao persistida pelo contrato atual; nenhuma marcada true.
+API local em memoria: 14 POST 201, 14 reaberturas 200, 14 leituras em
+outro Grupo 404 e 14 auditorias. Testes focados: 10/10.
+
+Falta ensaio do manifesto no importador com PostgreSQL restaurado, pin
+explicito do UUID alvo, replay/reversao e delta de ACL antes do gate.
+
 ## CPA3: inventario Base44 autenticado e vinculo de Grupo no clone
 
 Paginacao por ID ate pagina vazia, sem filtro de status, nas 48 entidades
