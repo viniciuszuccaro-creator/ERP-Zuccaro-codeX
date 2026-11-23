@@ -155,12 +155,12 @@ export function resolveCentralFluxoState(situacao, row) {
 export function invokeCentralDataAction(action, root = typeof document !== 'undefined' ? document : null) {
   const key = String(action || '').trim();
   if (!key || !root?.querySelector) return false;
-  const el = root.querySelector(`[data-action="${key}"]`);
-  // Duck-typing: Node testes usam stub sem HTMLElement global.
+  const found = root.querySelector(`[data-action="${key}"]`);
+  // Duck-typing: Node testes usam stub sem HTMLElement; tsc exige cast de Element.
+  /** @type {{ click?: () => void, disabled?: boolean, getAttribute?: (name: string) => string | null } | null} */
+  const el = /** @type {any} */ (found);
   if (!el || typeof el.click !== 'function' || typeof el.getAttribute !== 'function') return false;
-  const disabled = Boolean(/** @type {{ disabled?: boolean }} */ (el).disabled)
-    || el.getAttribute('aria-disabled') === 'true';
-  if (disabled) return false;
+  if (el.disabled || el.getAttribute('aria-disabled') === 'true') return false;
   el.click();
   return true;
 }
