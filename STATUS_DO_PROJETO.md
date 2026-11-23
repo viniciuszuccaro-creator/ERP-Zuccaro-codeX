@@ -1,3 +1,18 @@
+## CPA3: Unidades validadas no clone e suite Linux verde
+
+Manifesto de 14 Unidades processado pelo servico canonico no PG16
+restaurado, com papel restrito, RLS e RBAC. Interrupcao apos commit 7:
+7 reaproveitadas e 7 inseridas na retomada. Replay 14 sem duplicatas;
+13 inativadas e 1 edicao preservada. 41 auditorias, 17.472 mestres.
+
+Chrome headless recusava sandbox no namespace com UID root. No WSL
+normal, sem mudar testes, suite 3041/3041 e teste focado 1/1.
+Delta candidato: somente Unidade de 005, codigo/indice aplicavel de 038
+e ACL/RLS restritas de unidade, sequencia, perfil e auditoria.
+Falta backup fresco: 21.627.408.384 bytes livres, piso de 21.743.271.936
+antes do dump. Avulso de 23/11 restauravel; agendador segue falho.
+Sem escrita, deploy, schema ou grants na HML. Pacote nao autorizado.
+
 ## CPA3: gate de retomada de Unidades e backup avulso verificado
 
 O piloto canonico de Produtos exige branch e aprovacao do piloto antigo.
