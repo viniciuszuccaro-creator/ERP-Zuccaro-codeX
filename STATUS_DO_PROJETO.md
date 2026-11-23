@@ -4,6 +4,8 @@ Agent anterior `bc-d973626e` travou no limite de uso em 15/11 no tip PR596
 `1a5bc05ea` (OrcamentosTab `d43ae30b1`). Casa seguiu em
 `codex/casa-fechamento-hml-20261114` tip `bf2f02810`. Este lote: handoff
 completo em `HANDOFF.md` + restaura `docs/HANDOFF_CASA_2026-11-20.md`.
+P1 Codex #598: fila 5.423 reconciliada como **ENCERRADA** (5384+39; não
+reaplicar) — próximo Casa = backup/faturamento/Obras, não reimportar.
 Sem Completo/deploy/DDL. Próximo Cursor: Central360 visual + contrato
 financeiro HTTP (§7 do HANDOFF) só com indisponível até promote Casa.
 

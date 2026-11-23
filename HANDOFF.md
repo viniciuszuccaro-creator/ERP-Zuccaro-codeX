@@ -112,13 +112,14 @@ Marcos (sanitizados; sem PII/credenciais):
 | Port UI sessão/deny da PR596 | Aplicado na Casa; tip Cursor `1a5bc` preservado |
 | HML API live registrada | `a305a143` (reconfirmar web/API no ambiente) |
 | Clientes HML | 17.472 mestres; cargas unitárias/lotes conciliados; **não reaplicar** |
-| Pacote privado 5.423 | Staging em arquivos (revisão/potenciais/inativos); persistência revisão ainda aberta |
+| Pacote privado 5.423 | **ENCERRADO** no tip Casa: 5.384 em revisão + 39 no histórico (=5.423); recibo preservado; **não reaplicar** (`docs/HANDOFF_ATUAL.md` / tip `bf2f02810`) |
 | Faturamento/baixa HTTP | Implementado/provado em **clone isolado** (`d47f29c75` e sucessores); **não publicado na HML** |
 | Backup / espaço | Provas e preflight em andamento; folga vs reserva ainda crítica em leituras |
 | Obras / Preços | Sem lote apto (falta prova de empresa / calendário / vínculos) |
 
 Documento de escopo Cursor preparado em 19/11 (branch `codex/handoff-casa-20261120`):  
-`docs/HANDOFF_CASA_2026-11-20.md` — **somente frontend/visual**; API/banco/VPS/deploy → Codex.
+`docs/HANDOFF_CASA_2026-11-20.md` — **somente frontend/visual**; API/banco/VPS/deploy → Codex.  
+**Nota 23/11:** o texto histórico de 19/11 ainda falava em “falta persistência” do 5.423; isso foi **supersedido** pelo tip Casa — ver §8.
 
 ---
 
@@ -176,10 +177,11 @@ Consumidor existente a melhorar (não duplicar):
 
 ### Codex Casa — próximo
 
-1. Persistência da fila 5.423 em revisão/histórico (PG isolado → HML com backup/espaço/autorização).
-2. Preflight/promote faturamento (DDL/ACL, dependências Pedido/centros/planos, aceite browser).
-3. Endereços → pedido; Obras/Preços quando houver lote apto.
-4. Composição jornada inteira após deltas Cursor.
+1. **Não reaplicar** o lote 5.423 (já 5.384 revisão + 39 histórico; mestres 17.472 intactos).
+2. Fechar prova de backup agendado (timeout/`SNAPSHOT_READ_FAILED`, publicação autorizada do serviço, restauração + cópia externa) e margem de disco vs reserva.
+3. Preflight/promote faturamento (DDL/ACL, dependências Pedido/centros/planos, aceite browser) — contrato §7 ainda só no clone.
+4. Endereços → pedido; Obras/Preços quando houver lote apto (hoje sem lote: falta prova de empresa / calendário / vínculos).
+5. Composição jornada inteira após deltas Cursor.
 
 ### Explicitamente fora / bloqueado sem autorização
 

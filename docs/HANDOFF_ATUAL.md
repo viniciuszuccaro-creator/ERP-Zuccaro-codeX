@@ -4,7 +4,8 @@ Handoff canônico de retomada: **`HANDOFF.md`** (raiz). Tip Casa base
 `bf2f02810`. Tip Cursor PR596 preservado `1a5bc05ea`. Escopo Cursor:
 frontend/Central360; Completo/endereços/HML/deploy = Casa. Contrato
 financeiro clone documentado no HANDOFF §7; UI HTTP permanece indisponível
-até promote.
+até promote. P1 #598: lote 5.423 = encerrado (5384 revisão + 39 histórico);
+**não reaplicar** — alinhado ao recibo deste tip.
 
 ## CPA3: prazo da prova de backup agendado
 
