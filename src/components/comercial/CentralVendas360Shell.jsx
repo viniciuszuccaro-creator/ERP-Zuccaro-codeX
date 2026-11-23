@@ -496,59 +496,35 @@ export default function CentralVendas360Shell({
         </ol>
       </nav>
 
-      {/* Centro + Cliente360 — empilha no mobile */}
-      <div className="flex-1 min-h-0 flex flex-col lg:block">
-        <div className="hidden lg:block h-full min-h-0">
-          <ResizablePanelGroup direction="horizontal" className="w-full h-full rounded-md border border-sky-100 bg-white">
-            <ResizablePanel defaultSize={clientePanelOpen ? 72 : 100} minSize={45}>
-              <div className="h-full overflow-hidden p-2">{mainPanel}</div>
-            </ResizablePanel>
-            {clientePanelOpen && (
-              <>
-                <ResizableHandle withHandle className="bg-sky-50" />
-                <ResizablePanel defaultSize={28} minSize={18} maxSize={42}>
-                  <Cliente360Aside
-                    clienteForView={clienteForView}
-                    groupId={groupId}
-                    empresaId={empresaId}
-                    actorId={actorId}
-                    actorEmail={actorEmail}
-                    openHub={openHub}
-                    openChatbot={openChatbot}
-                    openEntregas={openEntregas}
-                    openContasReceber={openContasReceber}
-                    runCentralAction={runCentralAction}
-                    situacao={situacao}
-                    hasSelection={Boolean(selectionForView)}
-                    proposalMode={proposalMode}
-                  />
-                </ResizablePanel>
-              </>
-            )}
-          </ResizablePanelGroup>
-        </div>
-        <div className="lg:hidden flex-1 min-h-0 flex flex-col gap-2 overflow-auto">
-          <div className="min-h-[320px] rounded-md border border-sky-100 bg-white p-2">{mainPanel}</div>
+      {/* Centro + Cliente360 — uma única montagem (P1: sem cópia desktop/mobile). */}
+      <div className="flex-1 min-h-0" data-block="central360-superficie-unica">
+        <ResizablePanelGroup direction="horizontal" className="w-full h-full rounded-md border border-sky-100 bg-white">
+          <ResizablePanel defaultSize={clientePanelOpen ? 72 : 100} minSize={40}>
+            <div className="h-full min-h-[280px] overflow-hidden p-2">{mainPanel}</div>
+          </ResizablePanel>
           {clientePanelOpen ? (
-            <div className="min-h-[280px] rounded-md border border-sky-100 bg-white overflow-auto">
-              <Cliente360Aside
-                clienteForView={clienteForView}
-                groupId={groupId}
-                empresaId={empresaId}
-                actorId={actorId}
-                actorEmail={actorEmail}
-                openHub={openHub}
-                openChatbot={openChatbot}
-                openEntregas={openEntregas}
-                openContasReceber={openContasReceber}
-                runCentralAction={runCentralAction}
-                situacao={situacao}
-                hasSelection={Boolean(selectionForView)}
-                proposalMode={proposalMode}
-              />
-            </div>
+            <>
+              <ResizableHandle withHandle className="bg-sky-50" />
+              <ResizablePanel defaultSize={28} minSize={18} maxSize={48}>
+                <Cliente360Aside
+                  clienteForView={clienteForView}
+                  groupId={groupId}
+                  empresaId={empresaId}
+                  actorId={actorId}
+                  actorEmail={actorEmail}
+                  openHub={openHub}
+                  openChatbot={openChatbot}
+                  openEntregas={openEntregas}
+                  openContasReceber={openContasReceber}
+                  runCentralAction={runCentralAction}
+                  situacao={situacao}
+                  hasSelection={Boolean(selectionForView)}
+                  proposalMode={proposalMode}
+                />
+              </ResizablePanel>
+            </>
           ) : null}
-        </div>
+        </ResizablePanelGroup>
       </div>
 
       {/* Referência das 12 colunas (contrato visual — tabela operacional nos painéis embutidos) */}

@@ -183,6 +183,10 @@ test('CentralVendas360Shell: faixa, situações, grades dual, Cliente360', () =>
   assert.match(src, /central360-contexto-venda/);
   assert.match(src, /central360-fluxo-pedido/);
   assert.match(src, /central360-proxima-acao/);
+  assert.match(src, /central360-superficie-unica/);
+  // Uma única montagem do painel operacional (sem cópia lg:hidden + hidden lg:block).
+  assert.equal((src.match(/\{mainPanel\}/g) || []).length, 1);
+  assert.doesNotMatch(src, /lg:hidden[\s\S]{0,80}\{mainPanel\}/);
   assert.match(parts, /central360-grades-simultaneas/);
   assert.match(parts, /central360-grade-corte/);
   assert.match(parts, /central360-grade-revenda/);
@@ -232,6 +236,7 @@ test('TabelaReceber exibe Recebido/Saldo fail-closed; ContasReceber informa gate
   assert.match(tabela, /key: 'valor_recebido'/);
   assert.match(tabela, /key: 'saldo'/);
   assert.match(tabela, /≠ zero/);
+  assert.match(tabela, /missing\(r\.valor\) \|\| missing\(r\.valor_recebido\)/);
   assert.match(tab, /contas-receber-pedido-http-gate/);
   assert.match(tab, /titulos\/baixa/);
 });

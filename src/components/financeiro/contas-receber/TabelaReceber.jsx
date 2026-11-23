@@ -84,8 +84,9 @@ export default function TabelaReceber({
       }
     },
     { key: 'saldo', label: 'Saldo', isNumeric: true, render: (r) => {
-        // Preferir saldo canônico da API; senão derivar só com valor + recebido finitos.
-        if (r.saldo !== null && r.saldo !== undefined && r.saldo !== '') {
+        const missing = (v) => v === null || v === undefined || v === '';
+        // Preferir saldo canônico da API quando informado.
+        if (!missing(r.saldo)) {
           const s = Number(r.saldo);
           if (Number.isFinite(s)) {
             return (
@@ -95,10 +96,14 @@ export default function TabelaReceber({
             );
           }
         }
+        // Derivação só se valor E recebido foram fornecidos (null/'' ≠ 0).
+        if (missing(r.valor) || missing(r.valor_recebido)) {
+          return <span className="text-xs text-slate-400" title="Saldo indisponível sem valor e recebido da API (≠ zero)">—</span>;
+        }
         const valor = Number(r.valor);
         const recebido = Number(r.valor_recebido);
         if (!Number.isFinite(valor) || !Number.isFinite(recebido)) {
-          return <span className="text-xs text-slate-400" title="Saldo indisponível sem valor/recebido da API">—</span>;
+          return <span className="text-xs text-slate-400" title="Saldo indisponível: valor/recebido inválidos">—</span>;
         }
         const saldo = valor - recebido;
         return (
