@@ -199,8 +199,12 @@ test('CentralVendas360Shell: faixa, situações, grades dual, Cliente360', () =>
   assert.match(parts, /central360-grades-simultaneas/);
   assert.match(parts, /central360-grade-corte/);
   assert.match(parts, /central360-grade-revenda/);
+  assert.match(parts, /tabular-nums/);
+  assert.match(parts, /columns=\{\['item', 'descricao', 'qtde', 'un', 'peso', 'unit', 'desc', 'total'\]\}/);
+  assert.match(parts, /focus-visible:ring-2 focus-visible:ring-sky-500/);
   assert.match(parts, /central360-acoes-rapidas/);
   assert.match(parts, /central360-qa-desmembrar/);
+  assert.match(src, /central360-pagamento-condicao-alerta|Condição pendente/);
   // Desmembrar no aside abre Mais Ações (item do menu não está no DOM fechado).
   assert.match(parts, /runCentralAction\('central360-mais-acoes'/);
   assert.match(parts, /CentralCliente360Panel/);

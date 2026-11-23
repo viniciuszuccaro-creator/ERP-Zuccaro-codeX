@@ -280,26 +280,14 @@ export default function CentralVendas360Shell({
       <GradesSimultaneas itens={selectionForView?.itens} hasSelection={Boolean(selectionForView?.id)} />
       {selectionForView && (
         <div
-          className="rounded-md border border-sky-100 bg-white px-3 py-2 text-xs text-slate-700 flex flex-wrap gap-x-4 gap-y-1"
+          className="rounded-md border border-sky-200 bg-white px-3 py-2 text-xs text-slate-700 flex flex-wrap gap-x-4 gap-y-1"
           data-block="central360-pagamento-resumo"
           role="status"
         >
-          <span>
-            Condição:{' '}
-            <strong className={selectionForView.condicao_pagamento_id ? 'text-sky-900' : 'text-amber-800'}>
-              {selectionForView.condicao_pagamento_id
-                ? (
-                  selectionForView.condicao_pagamento_codigo
-                  || selectionForView.condicao_pagamento_nome
-                  || selectionForView.condicao_pagamento_label
-                  || 'definida (id canônico)'
-                )
-                : 'pendente — bloqueia Fechar'}
-            </strong>
-          </span>
+          {/* Condição/Total ficam na sticky — aqui só complementos para reduzir leitura duplicada. */}
           <span>
             Tabela:{' '}
-            <strong className={selectionForView.tabela_preco_id ? 'text-sky-900' : 'text-slate-500'}>
+            <strong className={selectionForView.tabela_preco_id ? 'text-sky-950' : 'text-slate-500'}>
               {selectionForView.tabela_preco_id
                 ? (
                   selectionForView.tabela_preco_codigo
@@ -312,7 +300,7 @@ export default function CentralVendas360Shell({
           </span>
           <span>
             Operação:{' '}
-            <strong className="text-sky-900">
+            <strong className="text-sky-950">
               {selectionForView.tipo_operacao === 'ENTREGA'
                 ? 'Entrega'
                 : selectionForView.tipo_operacao === 'RETIRADA'
@@ -320,31 +308,34 @@ export default function CentralVendas360Shell({
                   : (selectionForView.tipo_operacao || '—')}
             </strong>
           </span>
-          <span>
-            Total:{' '}
-            <strong className="font-mono text-sky-900">
-              {selectionForView.total == null && selectionForView.total !== 0 ? '—' : money(selectionForView.total)}
-            </strong>
-            {selectionForView.total == null && selectionForView.total !== 0 ? (
-              <span className="text-amber-800"> · total não hidratado (≠ zero)</span>
-            ) : null}
-          </span>
+          {!selectionForView.condicao_pagamento_id ? (
+            <span className="text-amber-900 font-medium" data-block="central360-pagamento-condicao-alerta">
+              Condição pendente — bloqueia Fechar
+            </span>
+          ) : null}
+          {selectionForView.total == null && selectionForView.total !== 0 ? (
+            <span className="text-amber-900 font-medium">Total não hidratado (≠ zero)</span>
+          ) : null}
           <span>
             Parcelas:{' '}
-            {Array.isArray(selectionForView.parcelas)
-              ? `${selectionForView.parcelas.length} no documento`
-              : 'não carregadas nesta seleção'}
+            <strong className="tabular-nums text-sky-950">
+              {Array.isArray(selectionForView.parcelas)
+                ? `${selectionForView.parcelas.length} no documento`
+                : 'não carregadas nesta seleção'}
+            </strong>
           </span>
           <span data-block="central360-pagamento-itens">
             Itens:{' '}
-            {Array.isArray(selectionForView.itens)
-              ? (() => {
-                const { corte, revenda } = partitionCentralItens(selectionForView.itens);
-                return `${selectionForView.itens.length} hidratados (corte ${corte.length} · revenda ${revenda.length})`;
-              })()
-              : 'não hidratados nesta seleção'}
+            <strong className="tabular-nums text-sky-950">
+              {Array.isArray(selectionForView.itens)
+                ? (() => {
+                  const { corte, revenda } = partitionCentralItens(selectionForView.itens);
+                  return `${selectionForView.itens.length} (corte ${corte.length} · revenda ${revenda.length})`;
+                })()
+                : 'não hidratados nesta seleção'}
+            </strong>
           </span>
-          <span className="text-slate-400 w-full sm:w-auto sm:ml-auto" data-block="central360-pagamento-dica">
+          <span className="text-slate-500 w-full sm:w-auto sm:ml-auto" data-block="central360-pagamento-dica">
             Fechar orçamento ≠ cancelar ≠ fechar janela.
           </span>
         </div>
@@ -505,7 +496,7 @@ export default function CentralVendas360Shell({
             type="button"
             variant={proximaAcaoKey ? 'default' : 'outline'}
             size="sm"
-            className="ml-auto h-7 px-2.5 text-xs font-medium"
+            className="ml-auto h-7 px-2.5 text-xs font-medium focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-1"
             data-block="central360-proxima-acao"
             disabled={!selectionForView}
             onClick={runProximaAcao}

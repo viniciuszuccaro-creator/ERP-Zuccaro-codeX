@@ -1,3 +1,13 @@
+## Cursor — Central360 visual + teclado (2026-11-23 America/Sao_Paulo)
+
+PR #599. Melhoria no existente (layout v6): grades com Qtde/Un./Unit./Desc./Total
+(tabular-nums); sticky + próxima ação com focus-visible; resumo sem duplicar
+condição/total; seleção orçamento/pedido com highlight + Enter/Espaço;
+Cadastros estruturantes: escopo incompleto fail-closed. Bases #595/#596
+conferidas. §7 sem SYNTHETIC na lista de Baixar; CR canônica bloqueada.
+Evidência `docs/evidence/central360-visual-melhoria-20261123.txt` + webp.
+Sem Completo/deploy. Aceite Codex HML no evidence.
+
 ## Cursor — Central360 ENTREGUE tip (2026-11-23 America/Sao_Paulo)
 
 PR #599 tip `495828cbf`. Checklist completo no existente: listLocais

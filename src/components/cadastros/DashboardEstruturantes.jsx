@@ -184,8 +184,10 @@ export default function DashboardEstruturantes() {
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-700">
           <span>
             Escopo:{' '}
-            <strong className="text-sky-950">
-              {contexto === 'empresa' ? 'Empresa' : 'Grupo (consolidado)'}
+            <strong className={contextoValido ? 'text-sky-950' : 'text-amber-800'}>
+              {contextoValido
+                ? (contexto === 'empresa' ? 'Empresa' : 'Grupo (consolidado)')
+                : 'incompleto'}
             </strong>
           </span>
           <span>
@@ -194,7 +196,11 @@ export default function DashboardEstruturantes() {
               {contextoValido ? contextoLabel : 'selecione grupo/empresa'}
             </strong>
           </span>
-          <span className="text-slate-500">Métricas abaixo respeitam o filtro multiempresa atual.</span>
+          <span className={contextoValido ? 'text-slate-500' : 'text-amber-800'}>
+            {contextoValido
+              ? 'Métricas abaixo respeitam o filtro multiempresa atual.'
+              : 'Sem grupo/empresa — métricas estruturantes não carregam.'}
+          </span>
         </div>
       </div>
 

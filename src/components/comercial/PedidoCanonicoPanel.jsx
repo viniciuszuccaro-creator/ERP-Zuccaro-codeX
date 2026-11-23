@@ -478,8 +478,18 @@ export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actor
                   <TableRow
                     key={row.id}
                     data-selected={selectedRow ? 'true' : undefined}
-                    className={selectedRow ? 'bg-sky-50' : 'cursor-pointer'}
+                    aria-selected={selectedRow}
+                    tabIndex={0}
+                    className={selectedRow
+                      ? 'bg-sky-100 ring-1 ring-inset ring-sky-400 cursor-pointer'
+                      : 'cursor-pointer hover:bg-slate-50 focus-visible:bg-sky-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sky-400'}
                     onClick={() => { void selectCentralRow(row); }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        void selectCentralRow(row);
+                      }
+                    }}
                     onDoubleClick={() => { void openEditHydrated(row); }}
                     data-action="central360-selecionar-pedido"
                   >

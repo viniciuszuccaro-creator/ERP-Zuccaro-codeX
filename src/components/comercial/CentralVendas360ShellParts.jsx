@@ -38,6 +38,18 @@ const money = (value) => {
 };
 
 
+const itemDescontoLabel = (item) => {
+  const raw = item?.desconto ?? item?.valor_desconto ?? item?.percentual_desconto;
+  if (raw === null || raw === undefined || raw === '') return '—';
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n === 0) return '—';
+  // Percentual tipicamente 0–100; valores monetários usam o mesmo formatador.
+  if (n > 0 && n <= 100 && (item?.percentual_desconto != null || String(raw).includes('%'))) {
+    return `${n}%`;
+  }
+  return money(n);
+};
+
 export function GradesSimultaneas({ itens, hasSelection = false }) {
   const list = Array.isArray(itens) ? itens : [];
   const { corte, revenda } = useMemo(() => partitionCentralItens(list), [list]);
@@ -46,7 +58,7 @@ export function GradesSimultaneas({ itens, hasSelection = false }) {
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 min-h-[160px]" data-block="central360-grades-simultaneas">
       {semItensCarregados ? (
         <div
-          className="lg:col-span-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900"
+          className="lg:col-span-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-950"
           data-block="central360-grades-sem-itens"
           role="status"
         >
@@ -57,60 +69,65 @@ export function GradesSimultaneas({ itens, hasSelection = false }) {
         title="Corte e Dobra / Montagem"
         rows={corte}
         testId="central360-grade-corte"
-        columns={['item', 'descricao', 'qtde', 'un', 'peso', 'total']}
+        columns={['item', 'descricao', 'qtde', 'un', 'peso', 'unit', 'desc', 'total']}
       />
       <GradeItens
         title="Materiais de Revenda"
         rows={revenda}
         testId="central360-grade-revenda"
-        columns={['item', 'descricao', 'qtde', 'un', 'unit', 'total']}
+        columns={['item', 'descricao', 'qtde', 'un', 'unit', 'desc', 'total']}
       />
     </div>
   );
 }
 
 function GradeItens({ title, rows, testId, columns }) {
+  const colCount = columns.length;
   return (
-    <div className="border border-sky-100 rounded-md bg-white overflow-hidden flex flex-col min-h-[140px]" data-testid={testId}>
-      <div className="px-3 py-1.5 bg-sky-50 border-b border-sky-100 flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-sky-900">{title}</h3>
-        <Badge variant="secondary" className="text-[10px]">{rows.length}</Badge>
+    <div className="border border-sky-200 rounded-md bg-white overflow-hidden flex flex-col min-h-[140px]" data-testid={testId}>
+      <div className="px-3 py-1.5 bg-sky-50 border-b border-sky-200 flex items-center justify-between">
+        <h3 className="text-sm font-semibold text-sky-950">{title}</h3>
+        <Badge variant="secondary" className="text-[10px] tabular-nums">{rows.length}</Badge>
       </div>
       <div className="overflow-auto flex-1">
         <Table>
           <TableHeader>
-            <TableRow>
-              {columns.includes('item') && <TableHead className="text-xs">Item</TableHead>}
-              {columns.includes('descricao') && <TableHead className="text-xs">Descrição</TableHead>}
-              {columns.includes('qtde') && <TableHead className="text-xs">Qtde</TableHead>}
-              {columns.includes('un') && <TableHead className="text-xs">Un.</TableHead>}
-              {columns.includes('peso') && <TableHead className="text-xs">Peso (Kg)</TableHead>}
-              {columns.includes('unit') && <TableHead className="text-xs">Valor Unit.</TableHead>}
-              {columns.includes('total') && <TableHead className="text-xs text-right">Total</TableHead>}
+            <TableRow className="hover:bg-transparent">
+              {columns.includes('item') && <TableHead className="text-xs text-slate-600">Item</TableHead>}
+              {columns.includes('descricao') && <TableHead className="text-xs text-slate-600">Descrição</TableHead>}
+              {columns.includes('qtde') && <TableHead className="text-xs text-slate-600 text-right">Qtde</TableHead>}
+              {columns.includes('un') && <TableHead className="text-xs text-slate-600">Un.</TableHead>}
+              {columns.includes('peso') && <TableHead className="text-xs text-slate-600 text-right">Peso (Kg)</TableHead>}
+              {columns.includes('unit') && <TableHead className="text-xs text-slate-600 text-right">Unit.</TableHead>}
+              {columns.includes('desc') && <TableHead className="text-xs text-slate-600 text-right">Desc.</TableHead>}
+              {columns.includes('total') && <TableHead className="text-xs text-slate-600 text-right">Total</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
             {rows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-xs text-slate-400 text-center py-6">
+                <TableCell colSpan={colCount} className="text-xs text-slate-500 text-center py-6">
                   Sem itens nesta grade para a seleção atual.
                 </TableCell>
               </TableRow>
             ) : rows.map((item, idx) => (
-              <TableRow key={item.id || `${idx}-${item.produto_id || item.descricao}`}>
-                <TableCell className="text-xs font-mono">{item.codigo || item.produto_codigo || idx + 1}</TableCell>
-                <TableCell className="text-xs">{item.descricao || item.nome || '—'}</TableCell>
-                <TableCell className="text-xs">{item.quantidade ?? '—'}</TableCell>
-                <TableCell className="text-xs">{item.unidade_sigla || item.unidade || '—'}</TableCell>
+              <TableRow key={item.id || `${idx}-${item.produto_id || item.descricao}`} className="odd:bg-white even:bg-slate-50/60">
+                <TableCell className="text-xs font-mono text-slate-800">{item.codigo || item.produto_codigo || idx + 1}</TableCell>
+                <TableCell className="text-xs text-slate-900">{item.descricao || item.nome || '—'}</TableCell>
+                <TableCell className="text-xs tabular-nums text-right text-slate-900">{item.quantidade ?? '—'}</TableCell>
+                <TableCell className="text-xs font-medium uppercase text-slate-800">{item.unidade_sigla || item.unidade || '—'}</TableCell>
                 {columns.includes('peso') && (
-                  <TableCell className="text-xs">
+                  <TableCell className="text-xs tabular-nums text-right text-slate-800">
                     {item.peso_kg ?? item.peso ?? '—'}
                   </TableCell>
                 )}
                 {columns.includes('unit') && (
-                  <TableCell className="text-xs">{money(item.preco_unitario ?? item.valor_unitario)}</TableCell>
+                  <TableCell className="text-xs tabular-nums text-right text-slate-900">{money(item.preco_unitario ?? item.valor_unitario)}</TableCell>
                 )}
-                <TableCell className="text-xs text-right font-medium">{money(item.total ?? item.subtotal)}</TableCell>
+                {columns.includes('desc') && (
+                  <TableCell className="text-xs tabular-nums text-right text-slate-800">{itemDescontoLabel(item)}</TableCell>
+                )}
+                <TableCell className="text-xs tabular-nums text-right font-semibold text-sky-950">{money(item.total ?? item.subtotal)}</TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -251,15 +268,15 @@ function QuickAction({ icon: Icon, label, onClick, action, disabled = false, tit
       onClick={onClick}
       data-action={action}
       title={title || label}
-      className={`flex items-center gap-1.5 rounded-md border px-2 py-1.5 text-left text-[11px] font-medium transition
+      className={`flex items-center gap-1.5 rounded-md border px-2 py-1.5 text-left text-[11px] font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-1
         ${disabled
           ? 'border-slate-100 bg-slate-50 text-slate-400 cursor-not-allowed'
           : 'border-sky-100 bg-white hover:bg-sky-50 text-sky-950'}`}
     >
-      <Icon className="w-3.5 h-3.5 text-sky-700 shrink-0" />
+      <Icon className="w-3.5 h-3.5 text-sky-700 shrink-0" aria-hidden />
       <span className="truncate">{label}</span>
       {!disabled && String(action || '').includes('mais') ? (
-        <MoreHorizontal className="w-3 h-3 ml-auto text-slate-400" />
+        <MoreHorizontal className="w-3 h-3 ml-auto text-slate-400" aria-hidden />
       ) : null}
     </button>
   );
@@ -272,7 +289,7 @@ export function FaixaTile({ icon: Icon, label, badge = null, onClick, action, di
       disabled={disabled}
       onClick={onClick}
       data-action={action}
-      className={`flex items-center gap-2 rounded-md border px-3 py-1.5 text-left text-sm transition
+      className={`flex items-center gap-2 rounded-md border px-3 py-1.5 text-left text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-1
         ${disabled
           ? 'border-slate-200 bg-slate-100 text-slate-400 cursor-not-allowed'
           : 'border-sky-100 bg-white hover:bg-sky-50 text-sky-950'}`}
