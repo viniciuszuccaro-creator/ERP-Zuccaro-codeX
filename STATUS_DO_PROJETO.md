@@ -1,3 +1,19 @@
+## CPA3: Grupo fixado e 14 unidades ensaiadas em PostgreSQL
+
+UUID do Grupo fixado privadamente apos leitura pelo principal efetivo
+da HML a305a143, sem superuser/BYPASSRLS. Candidato pinado: 14 linhas.
+No PG16 restaurado sem rede, prova SQL com papel restrito: 14 insercoes,
+14 auditorias, repeticao na mesma transacao sem novas linhas, rollback
+com zero auditorias do ensaio e 17.472 mestres preservados.
+
+Nao e ensaio pelo importador, checkpoint apos commit ou reversao de
+dados gravados. Falta acoplar manifesto ao fluxo canonico com ACL efetiva
+e validar backup fresco antes do pedido de escrita. Nenhuma carga HML.
+
+Produto: grupo/setor opcionais no schema generico; importador legado
+continua exigindo prova de classe, tipo e unidade. Sem liberar por omissao.
+Backup: timer ativo, servico falho; nenhuma alteracao no agendador.
+
 ## CPA3: manifesto privado e prova HTTP das 14 unidades
 
 HML a305a143: leitura pelo principal efetivo, sem superuser/BYPASSRLS,
