@@ -1,3 +1,17 @@
+## CPA3: prova SQL restrita do Catalogo em clone
+
+No restauro PG16 sem rede, o papel de importacao sem BYPASSRLS inseriu
+uma unidade e um produto sinteticos em visao de Grupo; papel de leitura
+consultou com SELECT apenas. Leituras e insercoes fora do Grupo ou em
+contexto Empresa foram bloqueadas para o importador. Rollback: 17.472 mestres.
+
+Prova SQL com papeis de ensaio, nao HTTP nem ACL final. O repositorio
+de Unidade exige codigo; aproveitar o delta aplicavel da migration 038
+e conferir reserva/auditoria antes do ensaio pelo servico canonico.
+Ainda falta mapa autoritativo do Grupo das 14 unidades e das classes de
+produto. Sem manifesto apto, transferencia ou escrita HML; clientes nao
+reaplicados. Precos, Obras, backup agendado e Comercial seguem abertos.
+
 ## CPA3: intersecao de Precos e estrutura de catalogo em clone
 
 Dos 4.342 itens cruzados: 1.831 (366 materiais) com unidade coincidente e
