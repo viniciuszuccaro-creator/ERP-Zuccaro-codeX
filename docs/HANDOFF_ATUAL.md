@@ -1,3 +1,19 @@
+## CPA3: backup fresco verificado para o gate de Unidades
+
+Removidas somente tres arvores node_modules duplicadas e reinstalaveis,
+conferidas por SHA com copias preservadas; sem mounts ou uso em processo.
+Livre antes 21.627.281.408; apos 22.820.106.240; ganho 1.192.824.832 bytes.
+Sem remover acervo, backup, volume, codigo ou versao de reversao.
+
+Avulso 23/11, 47.636.480 bytes: restore de 18 tabelas e ACK externo
+confirmados por SHA. Retencao nao executada; agendador inalterado.
+Livre apos backup 22.772.445.184. Reconfirmar capacidade e estado antes
+de aplicar para garantir que este recibo continua pre-intervencao.
+
+Gate: 14 Unidades Grupo CPA no schema HML, DDL/ACL minimo e reversao
+por postimage, sem Produtos/Precos/deploy. Aguardando aprovacao especifica.
+Nenhuma escrita no banco servido nem mudanca no operacional.
+
 ## CPA3: Unidades validadas no clone e suite Linux verde
 
 Manifesto de 14 Unidades processado pelo servico canonico no PG16
