@@ -1,3 +1,34 @@
+## Cursor — merge #598 com Casa tip 0ee16ad62 (2026-11-23 America/Sao_Paulo)
+
+Conflitos só STATUS/HANDOFF — prepends complementares (HANDOFF retomada #598 + CPA3 Casa).
+Sem conflito de código. Tip Casa `0ee16ad62`.
+
+## Cursor — merge #598 com Casa tip 56222f6cc (2026-11-23 America/Sao_Paulo)
+
+Conflitos só em STATUS/HANDOFF — prepends complementares (Cursor handoff
+bc-d973 + CPA3 manifesto/HTTP/inventário/código Unidade). Sem conflito
+de intenção em código. Tip Casa `56222f6cc`.
+
+## Cursor — HANDOFF.md enriquecido com transcript bc-d973 (2026-11-23 America/Sao_Paulo)
+
+Transcript do agent `bc-d973626e` lido (corte no checkpoint PR596 /
+`d43ae30b1`). `HANDOFF.md` ganhou cronologia de tips Bugbot, instrução
+15/11 (§4.6), trilha paralela #350 `1053cd4c7` e §13 desta retomada.
+Tip Casa `bf2f02810` e tip Cursor `1a5bc05ea` revalidados. Sem Completo/
+deploy/DDL. Próximo código Cursor: branch a partir da PR596 → Central360
+v6 + FechamentoFinanceiro indisponível até promote (§7).
+
+## Cursor — retomada bc-d973626e + HANDOFF.md (2026-11-23 America/Sao_Paulo)
+
+Agent anterior `bc-d973626e` travou no limite de uso em 15/11 no tip PR596
+`1a5bc05ea` (OrcamentosTab `d43ae30b1`). Casa seguiu em
+`codex/casa-fechamento-hml-20261114` tip `bf2f02810`. Este lote: handoff
+completo em `HANDOFF.md` + restaura `docs/HANDOFF_CASA_2026-11-20.md`.
+P1 Codex #598: fila 5.423 reconciliada como **ENCERRADA** (5384+39; não
+reaplicar) — próximo Casa = backup/faturamento/Obras, não reimportar.
+Sem Completo/deploy/DDL. Próximo Cursor: Central360 visual + contrato
+financeiro HTTP (§7 do HANDOFF) só com indisponível até promote Casa.
+
 ## CPA3: Unidades autorizadas, preflight bloqueado por margem
 
 Manifesto 43dfafc5: 14 unidades, 7.265 bytes, SHA e modo 600 conferidos
@@ -75,6 +106,7 @@ e validar backup fresco antes do pedido de escrita. Nenhuma carga HML.
 Produto: grupo/setor opcionais no schema generico; importador legado
 continua exigindo prova de classe, tipo e unidade. Sem liberar por omissao.
 Backup: timer ativo, servico falho; nenhuma alteracao no agendador.
+
 
 ## CPA3: manifesto privado e prova HTTP das 14 unidades
 

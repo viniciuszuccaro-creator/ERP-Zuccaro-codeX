@@ -1,3 +1,28 @@
+## Cursor — merge #598 com Casa tip 0ee16ad62 (2026-11-23 America/Sao_Paulo)
+
+Conflitos só STATUS/HANDOFF — prepends HANDOFF #598 + CPA3 Casa `0ee16ad62`.
+Sem conflito de código.
+
+## Cursor — merge #598 com Casa tip 56222f6cc (2026-11-23 America/Sao_Paulo)
+
+Conflitos só STATUS/HANDOFF — prepends Cursor handoff + CPA3 Casa.
+Sem conflito de código. Tip Casa `56222f6cc`.
+
+## Cursor — transcript bc-d973 lido + HANDOFF enriquecido (2026-11-23 America/Sao_Paulo)
+
+`HANDOFF.md` atualizado com cronologia Bugbot do transcript, §4.6 da
+instrução 15/11, trilha #350 separada e §13. Tip Casa `bf2f02810`; tip
+Cursor PR596 `1a5bc05ea`. Próximo código: branch a partir da PR596.
+
+## Cursor — retomada bc-d973626e (2026-11-23 America/Sao_Paulo)
+
+Handoff canônico de retomada: **`HANDOFF.md`** (raiz). Tip Casa base
+`bf2f02810`. Tip Cursor PR596 preservado `1a5bc05ea`. Escopo Cursor:
+frontend/Central360; Completo/endereços/HML/deploy = Casa. Contrato
+financeiro clone documentado no HANDOFF §7; UI HTTP permanece indisponível
+até promote. P1 #598: lote 5.423 = encerrado (5384 revisão + 39 histórico);
+**não reaplicar** — alinhado ao recibo deste tip.
+
 ## CPA3: Unidades autorizadas, preflight bloqueado por margem
 
 Manifesto 43dfafc5: 14 unidades, 7.265 bytes, SHA e modo 600 conferidos
@@ -75,6 +100,7 @@ e validar backup fresco antes do pedido de escrita. Nenhuma carga HML.
 Produto: grupo/setor opcionais no schema generico; importador legado
 continua exigindo prova de classe, tipo e unidade. Sem liberar por omissao.
 Backup: timer ativo, servico falho; nenhuma alteracao no agendador.
+
 
 ## CPA3: manifesto privado e prova HTTP das 14 unidades
 
