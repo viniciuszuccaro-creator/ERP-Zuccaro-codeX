@@ -41,11 +41,11 @@ const money = (value) => {
 
 
 const itemDescontoLabel = (item) => {
-  // Monetário (desconto/valor_desconto) tem prioridade — não misturar com % só porque percentual_desconto existe (inclui 0).
+  // Monetário explícito (inclui 0) tem prioridade — 0 confirmado → "—", sem cair no %.
   const mon = item?.desconto ?? item?.valor_desconto;
   if (mon != null && mon !== '') {
     const n = Number(mon);
-    if (Number.isFinite(n) && n !== 0) return money(n);
+    if (Number.isFinite(n)) return n === 0 ? '—' : money(n);
   }
   const pct = item?.percentual_desconto;
   if (pct != null && pct !== '') {

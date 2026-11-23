@@ -134,7 +134,9 @@ export default function FechamentoPedidoFinanceiroHttp({ formData, onTitulosChan
     setLoadingVinculos(false);
     setLoadingTitulos(false);
     tentativaBaixaRef.current = {};
-    mutacaoLockRef.current = false;
+    // Não zerar mutacaoLockRef: POST em voo ainda precisa serializar. Se o operador
+    // voltar ao mesmo pedido antes do finally, Baixar/Faturar permanece bloqueado
+    // (evita baixa duplicada com novo attemptKey). O finally da mutação libera o lock.
     if (typeof onTitulosChangeRef.current === 'function') onTitulosChangeRef.current([]);
   }, [pedidoId, formGroupId, formEmpresaId]);
 
@@ -195,14 +197,20 @@ export default function FechamentoPedidoFinanceiroHttp({ formData, onTitulosChan
       })
       .catch((error) => {
         if (ac.signal.aborted || geracao !== operacaoGeracaoRef.current || pedidoIdRef.current !== scopedPedidoId) return;
+        const mapped = mapPedidoFinanceiroHttpError(error);
+        // Fail-closed: qualquer erro de GET títulos → lista vazia (sem fixture na UI de Baixar).
+        publicarTitulos([], geracao);
         if (isHttpApiError(error) && error.status === 404) {
-          publicarTitulos([], geracao);
+          // TITULO_NAO_ENCONTRADO = zero confirmado (vazio legítimo). Demais 404
+          // (PEDIDO_NAO_ENCONTRADO, rota não publicada) → aviso; não fingir "fature o pedido".
+          if (mapped.code === 'TITULO_NAO_ENCONTRADO') return;
+          const unpublishedHint = mapped.code === 'HTTP_ERROR'
+            ? ' (GET /titulos ainda pendente no servidor — Codex.)'
+            : '';
+          setAviso((prev) => prev || mapped.message + unpublishedHint);
           return;
         }
-        const mapped = mapPedidoFinanceiroHttpError(error);
         setAviso((prev) => prev || mapped.message);
-        // Fail-closed: erro de GET títulos → lista vazia (sem fixture na UI de Baixar).
-        publicarTitulos([], geracao);
       })
       .finally(() => {
         if (!ac.signal.aborted && geracao === operacaoGeracaoRef.current) setLoadingTitulos(false);
@@ -263,9 +271,9 @@ export default function FechamentoPedidoFinanceiroHttp({ formData, onTitulosChan
       setAviso(mapped.message);
       toast.error(mapped.message);
     } finally {
+      // Escopo não zera o lock; esta mutação sempre libera ao terminar.
       mutacaoLockRef.current = false;
-      // Após mutação a geração sobe — limpar loading se o pedido ainda é o atual.
-      if (pedidoIdRef.current === scopedPedidoId) setFaturando(false);
+      setFaturando(false);
     }
   };
 
@@ -341,10 +349,9 @@ export default function FechamentoPedidoFinanceiroHttp({ formData, onTitulosChan
       setAviso(mapped.message);
       toast.error(mapped.message);
     } finally {
+      // Escopo não zera o lock; esta mutação sempre libera ao terminar.
       mutacaoLockRef.current = false;
-      if (pedidoIdRef.current === scopedPedidoId) {
-        setBaixandoParcela((cur) => (cur === parcela ? null : cur));
-      }
+      setBaixandoParcela((cur) => (cur === parcela ? null : cur));
     }
   };
 

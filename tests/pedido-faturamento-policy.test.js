@@ -127,10 +127,16 @@ test('commercial billing persists the NF instead of logging it', async () => {
   assert.match(painelHttp, /publicarTitulos\(\[\], geracao\)/);
   assert.match(painelHttp, /mapped\.code === 'HTTP_ERROR' && mapped\.status === 404/);
   assert.doesNotMatch(painelHttp, /mapped\.code === 'HTTP_ERROR' \|\| mapped\.status === 404/);
+  // GET /titulos: 404 genérico/pedido ≠ lista vazia silenciosa; TITULO_NAO_ENCONTRADO = vazio ok.
+  assert.match(painelHttp, /mapped\.code === 'TITULO_NAO_ENCONTRADO'/);
+  assert.match(painelHttp, /GET \/titulos ainda pendente no servidor/);
   assert.match(painelHttp, /publicarTitulosAposMutacao/);
   assert.match(painelHttp, /titulosAbortRef/);
   assert.match(painelHttp, /mutacaoLockRef/);
   assert.match(painelHttp, /mutacaoEmCurso/);
+  // Troca de escopo NÃO zera o lock (evita baixa duplicada com POST em voo).
+  assert.match(painelHttp, /Não zerar mutacaoLockRef/);
+  assert.doesNotMatch(painelHttp, /tentativaBaixaRef\.current = \{\};\s*mutacaoLockRef\.current = false/);
   // Sucesso: pedido+escopo; troca grupo/empresa não aborta GET novo.
   assert.match(painelHttp, /scopeAtStart/);
   assert.match(painelHttp, /if \(!publicarTitulosAposMutacao\(rows, scopeAtStart\)\) return/);

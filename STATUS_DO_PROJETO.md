@@ -1,3 +1,10 @@
+## Cursor — Bugbot #599 lock/404/desc (2026-11-23 America/Sao_Paulo)
+
+PR #599. (1) Escopo não zera `mutacaoLockRef` — evita baixa duplicada com POST em voo.
+(2) GET `/titulos` 404: `TITULO_NAO_ENCONTRADO` = vazio ok; demais → aviso.
+(3) Desc. monetário 0 explícito → "—" (não cai no %). Testes focados PASS.
+Sem Completo/deploy. CR canônica ainda Codex.
+
 ## Cursor — merge #599 com Casa tip af375376d (2026-11-23 America/Sao_Paulo)
 
 Conflitos só em STATUS/HANDOFF — prepends complementares (Cursor Dashboard/

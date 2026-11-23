@@ -1,3 +1,8 @@
+## Cursor — Bugbot #599 lock/404/desc (2026-11-23 America/Sao_Paulo)
+
+PR #599: lock sobrevive troca de escopo; títulos 404 com aviso; Desc. 0 monetário.
+Aceite HML = Codex (§7 + mapa CR).
+
 ## Cursor — merge #599 com Casa tip af375376d (2026-11-23 America/Sao_Paulo)
 
 Conflitos só STATUS/HANDOFF — prepends Cursor #599 + CPA3 Casa `af375376d`.
