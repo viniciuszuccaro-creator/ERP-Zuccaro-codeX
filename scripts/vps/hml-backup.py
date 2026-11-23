@@ -16,6 +16,8 @@ import uuid
 
 NAME = re.compile(r'hml-\d{8}T\d{6}Z-[a-f0-9]{8}')
 IDENT = re.compile(r'[a-z][a-z0-9_]*')
+SNAPSHOT_STATEMENT_SECONDS = 100
+SNAPSHOT_READ_SECONDS = SNAPSHOT_STATEMENT_SECONDS + 5
 
 
 def require(ok, reason):
@@ -123,7 +125,7 @@ class Snapshot:
         try:
             self.process.stdin.write((db.password + '\n').encode())
             self.token = self.query('BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY; '
-                                   "SET LOCAL statement_timeout='30s'; SELECT pg_export_snapshot()")
+                                   f"SET LOCAL statement_timeout='{SNAPSHOT_STATEMENT_SECONDS}s'; SELECT pg_export_snapshot()")
             require(re.fullmatch('[A-F0-9]+-[A-F0-9]+-[0-9]+', self.token), 'SNAPSHOT_TOKEN')
         except Exception:
             self.close()
@@ -140,7 +142,7 @@ class Snapshot:
         while b'\n' not in self.buffer:
             with selectors.DefaultSelector() as selector:
                 selector.register(self.process.stdout, selectors.EVENT_READ)
-                require(selector.select(35), 'SNAPSHOT_READ_TIMEOUT')
+                require(selector.select(SNAPSHOT_READ_SECONDS), 'SNAPSHOT_READ_TIMEOUT')
             chunk = os.read(self.process.stdout.fileno(), 65536)
             require(chunk, 'SNAPSHOT_READ_FAILED')
             self.buffer.extend(chunk)

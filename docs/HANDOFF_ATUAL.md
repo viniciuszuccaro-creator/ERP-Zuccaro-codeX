@@ -1,3 +1,54 @@
+## CPA3: prazo da prova de backup agendado
+
+PostgreSQL registrou cancelamento por statement timeout na prova
+de audit_logs, no instante de SNAPSHOT_READ_FAILED. Prazo SQL
+de 100 s e leitura de 105 s, sem mudar reserva ou retencao.
+Foco: cinco testes Python, cinco Node/Linux e prova em PostgreSQL
+isolado de 31 s. Backup avulso anterior restaurado e com ACK externo.
+Suite Linux: 3041/3041; audit baseline, lint, typecheck e build passaram.
+O servico instalado ainda precisa de publicacao autorizada e uma
+execucao agendada com restauracao e copia externa verificadas.
+Banco 421051415 bytes; reserva instalada >22737990725 bytes;
+folga amostrada 21615083520 bytes, deficit de 1122907205 bytes.
+
+Rodada anterior encerrada: 5384 em revisao, 39 no historico,
+17472 mestres preservados. pg.zip retirado apos verificacao do HD;
+ganho observado 378081280 bytes. Nao reaplicar. Obras e Precos
+sem lote apto: falta prova de empresa e, em Precos, calendario
+e vinculos no destino. Em 1536 ajustes com Obra unica por cliente/item,
+data/hora presentes, sem empate ou inversao pela sequencia do evento.
+Ajustes dependem do vinculo de destino da Obra. Sem carga ou deploy.
+
+## CPA3: contrato financeiro para Cursor (clone)
+
+Contrato para Cursor, candidato d47f29c75 com delta local sobre
+2163464c9; nao disponivel na HML a305a143. Base das rotas:
+`/api/v1/pedidos/:id` (UUID, sessao verificada e contexto Empresa).
+
+- GET `/vinculos-contabeis`: `data.centros` e `data.planos`,
+  ambos com id/descricao da Empresa; exige Comercial.pedidos.faturar.
+- POST `/faturar`: UUIDs `centro_custo_id` e `plano_contas_id`.
+  Pedido ativo PRONTO_ENTREGA, PRONTO_RETIRADA ou FINALIZADO;
+  parcelas e valores calculados no servidor. Reenvio com os mesmos
+  vinculos retorna replay; vinculos diferentes retornam 409.
+- GET `/titulos`: Financeiro.contas_receber.visualizar; `data` e
+  lista de parcela, data_vencimento, valor, valor_recebido e saldo.
+  Valores monetarios sao strings decimais; 404 distingue ausencia.
+- POST `/titulos/baixa`: Financeiro.contas_receber.baixar; parcela
+  inteira, evento estavel e valor positivo em string com 2 casas.
+  Mesmo evento/valor retorna replay. Divergencia ou excesso de saldo
+  retorna 409. Atualizacao, recibo e auditoria sao atomicos.
+- POSTs devolvem `data.replay` e `data.titulos`. Exibir saldo do
+  servidor; parcial se recebido > 0 e saldo > 0, quitado se saldo 0.
+  Nao atualizar generico ContaReceber nem gerar outro evento no retry.
+  Tratar 401/403, 404, 422 de contrato e 503 FINANCEIRO_SCHEMA_INVALIDO.
+
+Ativacao local opt-in em index.ts; requer HML, PostgreSQL e Auth/
+contexto tenant validos. A grade atual de Contas a Receber usa id
+de CRUD generico; precisa identificar pedido/parcela no servidor
+antes de consumir essa baixa. Prova HTTP de saldo zero no clone
+nao certifica grade, navegador, schema/ACL ou publicacao HML.
+
 ## CPA3: preflight para promocao do faturamento na HML
 
 Candidato d47f29c75 (CI44912004967). Live a305a143 API/web;

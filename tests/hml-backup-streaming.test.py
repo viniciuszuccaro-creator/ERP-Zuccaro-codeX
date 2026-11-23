@@ -16,6 +16,18 @@ spec.loader.exec_module(backup)
 
 
 class StreamingProof(unittest.TestCase):
+    def test_snapshot_wait_covers_the_server_deadline(self):
+        self.assertGreater(backup.SNAPSHOT_STATEMENT_SECONDS, 30)
+        self.assertGreater(backup.SNAPSHOT_READ_SECONDS, backup.SNAPSHOT_STATEMENT_SECONDS)
+        self.assertLess(backup.SNAPSHOT_READ_SECONDS, 120)
+        stream = types.SimpleNamespace(stdin=io.BytesIO(), stdout=io.BytesIO())
+        db = types.SimpleNamespace(args=lambda *_: [], password='synthetic', c={'database': 'erp_test'})
+        with patch.object(backup.subprocess, 'Popen', return_value=stream):
+            with patch.object(backup.Snapshot, 'line', return_value=b'A-B-1'):
+                snapshot = backup.Snapshot(db)
+        self.assertEqual(snapshot.token, 'A-B-1')
+        self.assertIn(f"statement_timeout='{backup.SNAPSHOT_STATEMENT_SECONDS}s'".encode(), stream.stdin.getvalue())
+
     def test_historical_array_and_empty_checksums(self):
         rows = [b'{"a": null}', '{"a": "á, 001"}'.encode(), b'{"a": [true, 1.20]}']
         expected = hashlib.md5(b'[' + b', '.join(rows) + b']', usedforsecurity=False).hexdigest()

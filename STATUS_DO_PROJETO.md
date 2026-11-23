@@ -1,3 +1,24 @@
+## CPA3: prazo da prova de backup agendado
+
+PostgreSQL registrou cancelamento por statement timeout na prova
+de audit_logs, no instante de SNAPSHOT_READ_FAILED. Prazo SQL
+de 100 s e leitura de 105 s, sem mudar reserva ou retencao.
+Foco: cinco testes Python, cinco Node/Linux e prova em PostgreSQL
+isolado de 31 s. Backup avulso anterior restaurado e com ACK externo.
+Suite Linux: 3041/3041; audit baseline, lint, typecheck e build passaram.
+O servico instalado ainda precisa de publicacao autorizada e uma
+execucao agendada com restauracao e copia externa verificadas.
+Banco 421051415 bytes; reserva instalada >22737990725 bytes;
+folga amostrada 21615083520 bytes, deficit de 1122907205 bytes.
+
+Rodada anterior encerrada: 5384 em revisao, 39 no historico,
+17472 mestres preservados. pg.zip retirado apos verificacao do HD;
+ganho observado 378081280 bytes. Nao reaplicar. Obras e Precos
+sem lote apto: falta prova de empresa e, em Precos, calendario
+e vinculos no destino. Em 1536 ajustes com Obra unica por cliente/item,
+data/hora presentes, sem empate ou inversao pela sequencia do evento.
+Ajustes dependem do vinculo de destino da Obra. Sem carga ou deploy.
+
 ## CPA3: preflight para promocao do faturamento na HML
 
 Candidato d47f29c75 (CI44912004967). Live a305a143 API/web;
