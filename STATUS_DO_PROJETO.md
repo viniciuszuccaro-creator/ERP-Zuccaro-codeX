@@ -1,3 +1,10 @@
+## Cursor — Bugbot escopo POST + chips … (2026-11-23 America/Sao_Paulo)
+
+PR #599. (1) POST faturar/baixa stale após troca grupo/empresa: `scopeAtStart`
+em `publicarTitulosAposMutacao` — sem abortar GET novo nem toast. (2) Atalhos
+Cadastros: `!data` → total null; UI prioriza `countsLoading` → `…` (não 0).
+Testes policy+count PASS. Sem Completo/deploy.
+
 ## Cursor — Cadastros UX Base44 (atalhos/busca/retry) (2026-11-23 America/Sao_Paulo)
 
 PR #599. Origem Base44 `5a8c26fab` Cadastros.jsx — melhoria no existente:

@@ -98,13 +98,23 @@ export default function FechamentoPedidoFinanceiroHttp({ formData, onTitulosChan
     if (typeof onTitulosChangeRef.current === 'function') onTitulosChangeRef.current(next);
   };
 
-  /** Publica títulos do POST e invalida GET em voo (nova geração). */
-  const publicarTitulosAposMutacao = (rows) => {
+  /**
+   * Publica títulos do POST e invalida GET em voo (nova geração).
+   * @returns {boolean} false se o escopo mudou — não aborta o GET novo nem publica.
+   */
+  const publicarTitulosAposMutacao = (rows, scopeAtStart) => {
+    const g = scopeAtStart?.groupId || '';
+    const e = scopeAtStart?.empresaId || '';
+    if ((scopeAtGeracaoRef.current.groupId || '') !== g
+      || (scopeAtGeracaoRef.current.empresaId || '') !== e) {
+      return false;
+    }
     titulosAbortRef.current?.abort();
     titulosAbortRef.current = null;
     operacaoGeracaoRef.current += 1;
     setLoadingTitulos(false);
     publicarTitulos(Array.isArray(rows) ? rows : [], operacaoGeracaoRef.current);
+    return true;
   };
 
   // Troca de pedido OU escopo grupo/empresa: invalidar geração e limpar UI (fail-closed).
@@ -231,6 +241,7 @@ export default function FechamentoPedidoFinanceiroHttp({ formData, onTitulosChan
     }
     const geracao = operacaoGeracaoRef.current;
     const scopedPedidoId = pedidoId;
+    const scopeAtStart = { groupId: formGroupId || '', empresaId: formEmpresaId || '' };
     mutacaoLockRef.current = true;
     setFaturando(true);
     setAviso('');
@@ -239,10 +250,10 @@ export default function FechamentoPedidoFinanceiroHttp({ formData, onTitulosChan
         centro_custo_id: centroId,
         plano_contas_id: planoId,
       });
-      // Sucesso: publicar se o pedido ainda é o atual (geração sobe no publish — não dropar o POST).
+      // Sucesso: pedido + escopo atuais (troca grupo/empresa não aborta o GET novo).
       if (pedidoIdRef.current !== scopedPedidoId) return;
       const rows = Array.isArray(result?.titulos) ? result.titulos : [];
-      publicarTitulosAposMutacao(rows);
+      if (!publicarTitulosAposMutacao(rows, scopeAtStart)) return;
       toast.success(result?.replay
         ? 'Faturamento já existente (replay).'
         : 'Títulos gerados pelo servidor.');
@@ -298,6 +309,7 @@ export default function FechamentoPedidoFinanceiroHttp({ formData, onTitulosChan
     });
     const geracao = operacaoGeracaoRef.current;
     const scopedPedidoId = pedidoId;
+    const scopeAtStart = { groupId: formGroupId || '', empresaId: formEmpresaId || '' };
     mutacaoLockRef.current = true;
     setBaixandoParcela(parcela);
     setAviso('');
@@ -307,11 +319,11 @@ export default function FechamentoPedidoFinanceiroHttp({ formData, onTitulosChan
         evento,
         valor: valorInformado,
       });
-      // Sucesso: não exigir geração — o bump em publicarTitulosAposMutacao invalidaria o próprio POST.
+      // Sucesso: pedido + escopo (não exigir geração; troca de escopo não aborta GET novo).
       if (pedidoIdRef.current !== scopedPedidoId) return;
       delete tentativaBaixaRef.current[parcela];
       const rows = Array.isArray(result?.titulos) ? result.titulos : [];
-      publicarTitulosAposMutacao(rows);
+      if (!publicarTitulosAposMutacao(rows, scopeAtStart)) return;
       toast.success(result?.replay
         ? 'Baixa reenviada (mesmo evento — replay).'
         : 'Baixa registrada.');

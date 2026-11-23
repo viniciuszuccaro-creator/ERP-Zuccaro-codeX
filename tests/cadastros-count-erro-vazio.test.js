@@ -314,9 +314,9 @@ test('UI Cadastros distingue erro (—) de zero; banner data-counts-unavailable'
   assert.match(page, /openBeforeSearchRef/);
   assert.match(page, /data-bloco=/);
   assert.match(page, /scrollIntoView/);
-  // Contagem real: Number.isFinite; loading → …; erro/parcial → —
+  // Contagem real: loading → … antes de Number.isFinite(0); erro/parcial → —
+  assert.match(page, /countsLoading\s*\?\s*"…"/);
   assert.match(page, /Number\.isFinite\(total\)/);
-  assert.match(page, /countsLoading[\s\S]*\?\s*"…"[\s\S]*:\s*"—"/);
 
   const badge = readOrganizacionalSource(path.join(ROOT, 'components/cadastros/GroupCountBadge.jsx'), 'utf8');
   assert.match(badge, /countsUnavailable/);
@@ -329,6 +329,7 @@ test('UI Cadastros distingue erro (—) de zero; banner data-counts-unavailable'
   assert.match(hook, /cadastrosAllCountsCore/);
   assert.match(hook, /countsUnavailable/);
   assert.match(hook, /refetch:/);
+  assert.match(hook, /if \(!data\) return \[bloco, null\]/);
 });
 
 test('Visualizador zera lastGoodData na troca de escopo (lista pós-contexto)', () => {

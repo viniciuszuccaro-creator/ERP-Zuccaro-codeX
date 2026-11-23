@@ -331,10 +331,10 @@ export default function Cadastros() {
                   <Icon className="w-3.5 h-3.5" aria-hidden />
                   <span>{label}</span>
                   <span className="font-bold tabular-nums" data-total-bloco={id}>
-                    {Number.isFinite(total)
-                      ? total.toLocaleString("pt-BR")
-                      : countsLoading
-                        ? "…"
+                    {countsLoading
+                      ? "…"
+                      : Number.isFinite(total)
+                        ? total.toLocaleString("pt-BR")
                         : "—"}
                   </span>
                 </button>

@@ -131,8 +131,9 @@ test('commercial billing persists the NF instead of logging it', async () => {
   assert.match(painelHttp, /titulosAbortRef/);
   assert.match(painelHttp, /mutacaoLockRef/);
   assert.match(painelHttp, /mutacaoEmCurso/);
-  // Sucesso de baixa/faturar não deve dropar o POST por bump de geração.
-  assert.match(painelHttp, /Sucesso: não exigir geração|Sucesso: publicar se o pedido ainda é o atual/);
+  // Sucesso: pedido+escopo; troca grupo/empresa não aborta GET novo.
+  assert.match(painelHttp, /scopeAtStart/);
+  assert.match(painelHttp, /if \(!publicarTitulosAposMutacao\(rows, scopeAtStart\)\) return/);
   assert.match(painelHttp, /disabled=\{!canBaixar \|\| mutacaoEmCurso\}/);
   assert.match(fluxo, /assertFaturamentoDentroDoPedido/);
   assert.match(fluxo, /reservarEstoqueItemAprovacao/);
