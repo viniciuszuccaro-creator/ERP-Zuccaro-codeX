@@ -1,3 +1,7 @@
+## Cursor — pin Dashboard Base44 (2026-11-23 America/Sao_Paulo)
+
+PR #599: pin Dashboard após alertas/KPI/lazy. Aceite VPS = Codex.
+
 ## Cursor — Bugbot #599 lock/404/desc (2026-11-23 America/Sao_Paulo)
 
 PR #599: lock sobrevive troca de escopo; títulos 404 com aviso; Desc. 0 monetário.

@@ -1,3 +1,8 @@
+## Cursor — pin Dashboard Base44 (2026-11-23 America/Sao_Paulo)
+
+PR #599. CI frontend: pin SHA-256 do restante de `Dashboard.jsx` atualizado
+após 1º ganho Base44 (`ae9e46288…`). Sem Completo/deploy.
+
 ## Cursor — Bugbot #599 lock/404/desc (2026-11-23 America/Sao_Paulo)
 
 PR #599. (1) Escopo não zera `mutacaoLockRef` — evita baixa duplicada com POST em voo.
