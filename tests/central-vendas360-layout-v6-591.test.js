@@ -191,6 +191,10 @@ test('CentralVendas360Shell: faixa, situações, grades dual, Cliente360', () =>
   assert.match(src, /import\('@\/components\/financeiro\/ContasReceberTab'\)/);
   assert.match(src, /import\('\.\/PedidosEntregaTab'\)/);
   assert.match(src, /stackPanels/);
+  // Troca vertical/horizontal não remonta a superfície (sem key stack|split).
+  assert.doesNotMatch(src, /key=\{stackPanels \? 'stack' : 'split'\}/);
+  assert.match(src, /typeof row\.cliente === 'string'/);
+  assert.doesNotMatch(src, /SYNTHETIC_PEDIDO_TITULOS/);
   assert.doesNotMatch(src, /React\.lazy\(\(\) => import\('@\/components\/financeiro\/ContasReceberTab'\)\)/);
   assert.match(parts, /central360-grades-simultaneas/);
   assert.match(parts, /central360-grade-corte/);

@@ -182,10 +182,19 @@ export default function CentralVendas360Shell({
     () => resolveCentralFluxoState(situacao, selectionForView),
     [situacao, selectionForView],
   );
-  const clienteNome = selectionForView?.cliente_nome
-    || selectionForView?.nome_cliente
-    || selectionForView?.cliente
-    || null;
+  const clienteNome = (() => {
+    const row = selectionForView;
+    if (!row) return null;
+    const fromFields = row.cliente_nome || row.nome_cliente
+      || (typeof row.cliente === 'string' ? row.cliente : null);
+    if (typeof fromFields === 'string' && fromFields.trim()) return fromFields.trim();
+    if (row.cliente && typeof row.cliente === 'object') {
+      const nested = row.cliente.nome_fantasia || row.cliente.razao_social
+        || row.cliente.nome || row.cliente.name;
+      if (typeof nested === 'string' && nested.trim()) return nested.trim();
+    }
+    return null;
+  })();
   const proximaAcaoLabel = situacao.kind === 'orcamento'
     ? (selectionForView?.status === 'EM_ABERTO' ? 'Fechar Orçamento' : 'Reabrir / editar documento')
     : (situacao.id === 'PRODUCAO' || situacao.id === 'ENTREGA' || situacao.id === 'RETIRA'
@@ -543,7 +552,6 @@ export default function CentralVendas360Shell({
       {/* Centro + Cliente360 — uma única montagem (P1: sem cópia desktop/mobile). */}
       <div className="flex-1 min-h-0" data-block="central360-superficie-unica">
         <ResizablePanelGroup
-          key={stackPanels ? 'stack' : 'split'}
           direction={stackPanels ? 'vertical' : 'horizontal'}
           className="w-full h-full rounded-md border border-sky-100 bg-white"
         >

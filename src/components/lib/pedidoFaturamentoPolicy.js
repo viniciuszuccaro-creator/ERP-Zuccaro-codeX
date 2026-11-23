@@ -167,7 +167,8 @@ export const pedidoJaTemReservaEstoque = ({ movimentos = [], pedidoId, produtoId
 };
 
 /**
- * Fixtures sintéticas do contrato §7 (DEV). Não inventar quitação na HML.
+ * Fixtures sintéticas do contrato §7 — somente testes de policy/classificação.
+ * Nunca publicar na lista viva de títulos (Baixar); UI fail-closed usa [].
  * @type {ReadonlyArray<{ readonly parcela: number, readonly data_vencimento: string, readonly valor: string, readonly valor_recebido: string, readonly saldo: string }>}
  */
 export const SYNTHETIC_PEDIDO_TITULOS = Object.freeze([

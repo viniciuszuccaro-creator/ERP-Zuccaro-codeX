@@ -17,7 +17,6 @@ import {
   formatContratoDecimal,
   buildPedidoTituloBaixaEvento,
   mapPedidoFinanceiroHttpError,
-  SYNTHETIC_PEDIDO_TITULOS,
 } from '@/components/lib/pedidoFaturamentoPolicy';
 
 /**
@@ -167,11 +166,9 @@ export default function FechamentoPedidoFinanceiroHttp({ formData, onTitulosChan
         }
         const mapped = mapPedidoFinanceiroHttpError(error);
         setAviso((prev) => prev || mapped.message);
-        if (import.meta.env.DEV) {
-          publicarTitulos(SYNTHETIC_PEDIDO_TITULOS, geracao);
-        } else {
-          publicarTitulos([], geracao);
-        }
+        // Fail-closed: nunca publicar fixtures sintéticas na lista que aciona Baixar
+        // (mesmo em Vite DEV apontado a HTTP/HML). SYNTHETIC_PEDIDO_TITULOS fica só nos testes de policy.
+        publicarTitulos([], geracao);
       })
       .finally(() => {
         if (!ac.signal.aborted && geracao === operacaoGeracaoRef.current) setLoadingTitulos(false);
