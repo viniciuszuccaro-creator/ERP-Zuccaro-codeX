@@ -1,3 +1,17 @@
+## CPA3: Unidades autorizadas, preflight bloqueado por margem
+
+Manifesto 43dfafc5: 14 unidades, 7.265 bytes, SHA e modo 600 conferidos
+no canal privado da VPS. Backup 044e14ad e ACK externo conferidos;
+snapshot vivo igual nas 18 tabelas, 17.472 mestres. API a305a143 e
+principal restrito; criar, visualizar e inativar autorizados no RBAC.
+
+Livre 22.772.314.112 bytes; piso 22.737.990.725; sobra 34.323.387.
+Dois segmentos WAL de 16 MiB deixam 768.955 bytes sobre o piso, sem
+margem adequada para tabela, indices, temporarios e variacao do host.
+Gate de planejamento: piso + 40 MiB; margem adicional 7.619.653 bytes
+ate o alvo na amostra. Revalidar antes de executar. Sem nova limpeza.
+Zero DDL, grants ou unidades gravadas; sem deploy ou operacional.
+
 ## CPA3: backup fresco verificado para o gate de Unidades
 
 Removidas somente tres arvores node_modules duplicadas e reinstalaveis,
