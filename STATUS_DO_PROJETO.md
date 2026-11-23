@@ -1,3 +1,22 @@
+## CPA3: triagem de unidade de venda para os candidatos de Precos
+
+Base44 Produto/UnidadeMedida com tamanho e SHA conferidos. Nos 861
+codigos candidatos, cada unidade_venda encontra uma unidade unica
+no mesmo grupo da fonte (4342 itens); 539 materiais/2720 itens tem
+empresa_id na origem, ainda sem prova de equivalencia com a HML.
+Tres fontes: 574 materiais/2871 itens com unidade textual identica
+ao export legado de revenda; 260/1336 com unidade diferente; 27/135
+sem codigo no export de revenda. Nao aplicar conversao por inferencia.
+As tres classes cobrem os 4342 candidatos; 820 ficam no saldo anterior.
+
+HML hml344_restore_20261104/hml344_cpa_20261104, papel restrito,
+sem produtos, unidades ou tabelas/itens de preco. Bloqueios: vinculo
+canonicamente validado por empresa, unidade e calendario legado.
+Nenhum manifesto apto, ensaio de carga, transferencia ou escrita.
+Sem fonte nova para empresa das Obras. Recibo 5423 preservado.
+Backup agendado segue exit-code; folga 21629157376 bytes, 12230436
+inodes livres; nenhum deploy. PR595 sem novo SHA, WIP preservado.
+
 ## CPA3: cruzamento de codigos de Precos e fonte empresarial de Obras
 
 Export Base44 Produto (871 linhas) com tamanho e SHA conferidos.
