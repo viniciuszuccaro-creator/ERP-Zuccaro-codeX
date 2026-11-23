@@ -1,3 +1,15 @@
+## CPA3: 11 Setores aplicados e conciliados na HML
+
+Backup 86f0c514/ACK revalidado; 19 tabelas iguais antes do DDL.
+Manifesto 67256abe com delta 2ca2e629 e executor e82801a4 conferidos.
+Somente tabela Setor de 005/038 e ACL por empresa; sem novos grants
+em sequencia, perfil ou auditoria. Execucao pelo principal restrito.
+11 inseridos/conciliados, 2 inativos preservados, 11 checkpoints e
+11 auditorias create. Replay 11 reusos; duas negativas entre empresas.
+17.472 mestres preservados. Menor folga amostrada 22.782.996.480 bytes.
+Recibo privado; reversao por postimage preservada, nao executada.
+API a305a143 sem deploy ou alteracao no operacional.
+
 ## CPA3: pacote dos 11 Setores pronto para aprovacao
 
 Manifesto 67256abe, executor e82801a4 e delta 2ca2e629 centralizados
