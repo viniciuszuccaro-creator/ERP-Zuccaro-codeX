@@ -1,3 +1,14 @@
+## Cursor — Central360 ENTREGUE tip (2026-11-23 America/Sao_Paulo)
+
+PR #599 tip `495828cbf`. Checklist completo no existente: listLocais
+fail-closed (vazio≠inválido/incompleto); Seletor/Completo estados;
+hydrateEpoch #596; sticky + próxima ação; superfície única; §7
+opt-in fail-closed (baixa CR bloqueada até mapa); Dashboard/Cadastros
+faixa escopo (`contextoValido`, sem alterar pin Dashboard.jsx).
+Evidência `docs/evidence/central360-entregue-20261123.txt`. Sem
+Completo/deploy. Aceite Codex HML no evidence. Próximo: CI tip +
+mapa CR pelo Codex.
+
 ## Cursor — Central360 ENTREGUE frontend (2026-11-23 America/Sao_Paulo)
 
 PR #599 tip entregue ao Codex. Checklist: listLocais fail-closed;

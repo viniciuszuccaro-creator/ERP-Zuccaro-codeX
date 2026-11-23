@@ -2,7 +2,7 @@ ENTREGA FRONTEND — Central de Vendas 360º (CPA)
 Data: 2026-11-23 (America/Sao_Paulo)
 PR: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/599
 Branch: cursor/comercial-360-frontend-v6-3cfd
-SHA: 31642e339
+SHA tip: 495828cbf (Bugbot escopo Dashboard + pin Dashboard.jsx preservado)
 Base Casa: codex/casa-fechamento-hml-20261114 / handoff bf2f0281
 Bases conferidas: #595 b5862fc5 · #596 1a5bc05e
 
