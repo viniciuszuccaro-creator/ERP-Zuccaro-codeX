@@ -1,3 +1,8 @@
+## Cursor — merge #599 com Casa tip 6eb5a7286 (2026-11-23 America/Sao_Paulo)
+
+Conflitos só STATUS/HANDOFF — prepends Cursor Dashboard/360/Cadastros + CPA3 backup/gate HML.
+Sem conflito de código. Tip Casa `6eb5a7286`.
+
 ## Cursor — Bugbot dismiss session/TTL (2026-11-23 America/Sao_Paulo)
 
 PR #599. AlertsBar: escopo via props do Dashboard; dismiss sem storageKey
@@ -204,6 +209,38 @@ P1 Codex #598: fila 5.423 reconciliada como **ENCERRADA** (5384+39; não
 reaplicar) — próximo Casa = backup/faturamento/Obras, não reimportar.
 Sem Completo/deploy/DDL. Próximo Cursor: Central360 visual + contrato
 financeiro HTTP (§7 do HANDOFF) só com indisponível até promote Casa.
+
+## CPA3: backup fresco verificado para o gate de Unidades
+
+Removidas somente tres arvores node_modules duplicadas e reinstalaveis,
+conferidas por SHA com copias preservadas; sem mounts ou uso em processo.
+Livre antes 21.627.281.408; apos 22.820.106.240; ganho 1.192.824.832 bytes.
+Sem remover acervo, backup, volume, codigo ou versao de reversao.
+
+Avulso 23/11, 47.636.480 bytes: restore de 18 tabelas e ACK externo
+confirmados por SHA. Retencao nao executada; agendador inalterado.
+Livre apos backup 22.772.445.184. Reconfirmar capacidade e estado antes
+de aplicar para garantir que este recibo continua pre-intervencao.
+
+Gate: 14 Unidades Grupo CPA no schema HML, DDL/ACL minimo e reversao
+por postimage, sem Produtos/Precos/deploy. Aguardando aprovacao especifica.
+Nenhuma escrita no banco servido nem mudanca no operacional.
+
+## CPA3: Unidades validadas no clone e suite Linux verde
+
+Manifesto de 14 Unidades processado pelo servico canonico no PG16
+restaurado, com papel restrito, RLS e RBAC. Interrupcao apos commit 7:
+7 reaproveitadas e 7 inseridas na retomada. Replay 14 sem duplicatas;
+13 inativadas e 1 edicao preservada. 41 auditorias, 17.472 mestres.
+
+Chrome headless recusava sandbox no namespace com UID root. No WSL
+normal, sem mudar testes, suite 3041/3041 e teste focado 1/1.
+Delta candidato: somente Unidade de 005, codigo/indice aplicavel de 038
+e ACL/RLS restritas de unidade, sequencia, perfil e auditoria.
+Falta backup fresco: 21.627.408.384 bytes livres, piso de 21.743.271.936
+antes do dump. Avulso de 23/11 restauravel; agendador segue falho.
+Sem escrita, deploy, schema ou grants na HML. Pacote nao autorizado.
+
 
 ## CPA3: gate de retomada de Unidades e backup avulso verificado
 
