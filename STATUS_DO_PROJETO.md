@@ -1,3 +1,18 @@
+## CPA3: cadastro de Setores ensaiado e candidatos centralizados
+
+Base44: 91 Grupos e 11 Setores com chaves/codigos e empresas conciliados.
+Dois candidatos privados, 36.079 bytes, transferidos, SHA e modo 600.
+Grupos: 51 inativos, 91 margens nulas recusadas pelo contrato; nao virar 0.
+Setores: 11/11 schema e PG16 restaurado; 2 inativos preservados, 11
+auditorias, reaberturas e negativas entre empresas. 17.472 mestres.
+Faltam replay/reversao de Setores e gate de DDL/ACL e escrita em HML.
+
+PR596 1a5bc05ea, PR599 cfb2c7319, PR600 ac4fc8100. PR600 bloqueia
+emissao no modo HTTP sem contrato, nao entrega faturamento/baixa.
+Composicao WIP: 3/3 focados; HML a305a143 sem novo aceite navegador.
+HML em leitura: 17.472 mestres, 5.423 na fila e 14 unidades. Agendador
+SNAPSHOT_READ_FAILED. Sem carga, DDL, deploy ou alteracao operacional.
+
 ## CPA3: Produtos Base44 cruzados com Unidades e Empresas
 
 871/871 unidades de venda conciliadas com as 14 siglas ativas do Grupo
