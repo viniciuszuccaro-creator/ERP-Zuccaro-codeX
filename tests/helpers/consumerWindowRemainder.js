@@ -59,7 +59,24 @@ export const consumerWindowHunks = {
         );
       }
     },
-    { key: 'status', label: 'Status', render: (r) => (<Badge className={statusColors[r.status] || 'bg-gray-100 text-gray-800'}>{r.status}</Badge>) },`,
+    { key: 'status', label: 'Status', render: (r) => {
+        // Situação §7 inline (sem import) para o harness consumer-window.
+        const missing = (v) => v === null || v === undefined || v === '';
+        const saldo = !missing(r.saldo)
+          ? Number(r.saldo)
+          : (!missing(r.valor) && !missing(r.valor_recebido) ? Number(r.valor) - Number(r.valor_recebido) : NaN);
+        const recebido = missing(r.valor_recebido) ? NaN : Number(r.valor_recebido);
+        const quitado = Number.isFinite(saldo) && saldo <= 0;
+        const parcial = Number.isFinite(saldo) && saldo > 0 && Number.isFinite(recebido) && recebido > 0;
+        return (
+          <div className="flex flex-col gap-1 items-start">
+            <Badge className={statusColors[r.status] || 'bg-gray-100 text-gray-800'}>{r.status}</Badge>
+            {quitado ? <Badge className="bg-green-100 text-green-800 text-xs" data-sit="quitado">Quitado</Badge> : null}
+            {parcial ? <Badge className="bg-amber-100 text-amber-900 text-xs" data-sit="parcial">Parcial</Badge> : null}
+          </div>
+        );
+      }
+    },`,
     `    { key: 'valor', label: 'Valor', isNumeric: true, render: (r) => (<span className="font-semibold">R$ {(r.valor||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>) },
     { key: 'status', label: 'Status', render: (r) => (<Badge className={statusColors[r.status] || 'bg-gray-100 text-gray-800'}>{r.status}</Badge>) },`],
   ],

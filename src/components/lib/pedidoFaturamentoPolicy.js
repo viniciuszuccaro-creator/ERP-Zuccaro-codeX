@@ -165,3 +165,102 @@ export const pedidoJaTemReservaEstoque = ({ movimentos = [], pedidoId, produtoId
     && String(mov?.produto_id || '') === prod
   ));
 };
+
+/**
+ * Fixtures sintéticas do contrato §7 (DEV). Não inventar quitação na HML.
+ * @type {ReadonlyArray<{ readonly parcela: number, readonly data_vencimento: string, readonly valor: string, readonly valor_recebido: string, readonly saldo: string }>}
+ */
+export const SYNTHETIC_PEDIDO_TITULOS = Object.freeze([
+  Object.freeze({ parcela: 1, data_vencimento: '2026-12-01', valor: '100.00', valor_recebido: '40.00', saldo: '60.00' }),
+  Object.freeze({ parcela: 2, data_vencimento: '2027-01-01', valor: '100.00', valor_recebido: '0.00', saldo: '100.00' }),
+  Object.freeze({ parcela: 3, data_vencimento: '2027-02-01', valor: '50.00', valor_recebido: '50.00', saldo: '0.00' }),
+]);
+
+/**
+ * Situação canônica a partir dos valores do servidor (strings decimais ou number).
+ * Parcial: recebido > 0 e saldo > 0. Quitado: saldo === 0. Pendente: recebido === 0.
+ * @param {{ valor_recebido?: unknown, saldo?: unknown, valor?: unknown }} titulo
+ * @returns {'pendente' | 'parcial' | 'quitado' | 'indisponivel'}
+ */
+export function classifyTituloSituacao(titulo = {}) {
+  const missing = (v) => v === null || v === undefined || v === '';
+  if (missing(titulo.saldo) && (missing(titulo.valor) || missing(titulo.valor_recebido))) {
+    return 'indisponivel';
+  }
+  const saldo = missing(titulo.saldo)
+    ? Number(titulo.valor) - Number(titulo.valor_recebido)
+    : Number(titulo.saldo);
+  const recebido = missing(titulo.valor_recebido) ? NaN : Number(titulo.valor_recebido);
+  if (!Number.isFinite(saldo)) return 'indisponivel';
+  if (saldo <= 0) return 'quitado';
+  if (Number.isFinite(recebido) && recebido > 0) return 'parcial';
+  return 'pendente';
+}
+
+/**
+ * Formata valor monetário do contrato (string decimal) sem alterar casas.
+ * @param {unknown} value
+ * @returns {string}
+ */
+export function formatContratoDecimal(value) {
+  if (value === null || value === undefined || value === '') return '—';
+  if (typeof value === 'string' && /^(?:0|[1-9]\d*)\.\d{2}$/.test(value)) {
+    const n = Number(value);
+    if (!Number.isFinite(n)) return '—';
+    return n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+  const n = Number(value);
+  if (!Number.isFinite(n)) return '—';
+  return n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+/**
+ * Evento estável de baixa — reutilizar no retry (não gerar outro id).
+ * @param {{ pedidoId?: unknown, parcela?: unknown, attemptKey?: unknown }} options
+ * @returns {string}
+ */
+export function buildPedidoTituloBaixaEvento({ pedidoId, parcela, attemptKey } = {}) {
+  const pedido = String(pedidoId || '').trim();
+  const part = String(parcela || '').trim();
+  const key = String(attemptKey || '').trim() || 'attempt';
+  const raw = `pedido.${pedido}.parcela.${part}.${key}`;
+  return raw.replace(/[^a-zA-Z0-9_.:-]/g, '_').slice(0, 120);
+}
+
+/**
+ * Mensagem fail-closed para erros do contrato §7.
+ * @param {unknown} error
+ * @returns {{ code: string, message: string, status?: number }}
+ */
+export function mapPedidoFinanceiroHttpError(error) {
+  const status = error && typeof error === 'object' && 'status' in error
+    ? Number(/** @type {{ status?: unknown }} */ (error).status)
+    : undefined;
+  const code = error && typeof error === 'object' && typeof /** @type {{ code?: unknown }} */ (error).code === 'string'
+    ? /** @type {{ code: string }} */ (error).code
+    : 'HTTP_ERROR';
+  /** @type {Record<string, string>} */
+  const byCode = {
+    AUTH_REQUIRED: 'Sessão expirada. Faça login novamente.',
+    EMPRESA_REQUIRED: 'Selecione a empresa antes de faturar ou baixar.',
+    PEDIDO_INVALIDO: 'Pedido inválido para operação financeira.',
+    PEDIDO_NAO_ENCONTRADO: 'Pedido não encontrado neste contexto.',
+    PEDIDO_NAO_FATURAVEL: 'Pedido ainda não está pronto para faturar.',
+    FATURAMENTO_VINCULOS_OBRIGATORIOS: 'Informe centro de custo e plano de contas.',
+    FATURAMENTO_VINCULOS_DIVERGENTES: 'Vínculos divergentes do faturamento já gravado (conflito).',
+    FATURAMENTO_VINCULO_FORA_DA_EMPRESA: 'Centro ou plano fora da empresa selecionada.',
+    TITULO_NAO_ENCONTRADO: 'Nenhum título encontrado para este pedido.',
+    RECEBIMENTO_INVALIDO: 'Dados de baixa inválidos (parcela, evento ou valor).',
+    RECEBIMENTO_EVENTO_DIVERGENTE: 'Mesmo evento com valor diferente (conflito).',
+    RECEBIMENTO_EXCEDE_SALDO: 'Valor excede o saldo do título.',
+    FINANCEIRO_SCHEMA_INVALIDO: 'Financeiro indisponível neste ambiente (schema).',
+  };
+  if (byCode[code]) return { code, message: byCode[code], status };
+  if (status === 401) return { code, message: 'Acesso não autenticado.', status };
+  if (status === 403) return { code, message: 'Sem permissão para esta operação financeira.', status };
+  if (status === 404) return { code, message: 'Recurso financeiro não disponível neste ambiente.', status };
+  if (status === 409) return { code, message: 'Conflito na operação financeira.', status };
+  if (status === 422) return { code, message: 'Dados rejeitados pelo contrato financeiro.', status };
+  if (status === 503) return { code, message: 'Financeiro temporariamente indisponível.', status };
+  return { code, message: 'Falha na operação financeira do pedido.', status };
+}

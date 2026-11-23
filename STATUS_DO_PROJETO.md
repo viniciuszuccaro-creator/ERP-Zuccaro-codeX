@@ -1,3 +1,16 @@
+## Cursor — Central360 §7 wire frontend (2026-11-23 America/Sao_Paulo)
+
+PR #599. Ligação fail-closed do contrato financeiro no UI existente:
+`httpApiClient.pedidos` (+vinculos/faturar/titulos/baixarTitulo),
+políticas em `pedidoFaturamentoPolicy`, painel
+`FechamentoPedidoFinanceiroHttp` (opt-in `VITE_ERP_HTTP_PEDIDO_FINANCEIRO`),
+badges Parcial/Quitado em Contas a Receber. Baixa na grade **não** ligada
+(aguarda mapeamento pedido/parcela do Codex). NF-e HTTP permanece bloqueada.
+Browser local: Central360 desktop+390px
+(`docs/evidence/central360-sec7-*.webp` + txt). lint/typecheck/build/audit PASS.
+Sem Completo/deploy. Próximo Codex: publish §7 HML + vinculos-contabeis +
+mapa CR; Cursor: Cadastros/Dashboard se ganho concreto.
+
 ## Cursor — Central360 browser + crash CR + stack mobile (2026-11-23 America/Sao_Paulo)
 
 PR #599. Browser `/comercial?proposta=comercial360`: seleção ORC-SINT-001

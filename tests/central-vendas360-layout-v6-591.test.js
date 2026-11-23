@@ -254,6 +254,8 @@ test('TabelaReceber exibe Recebido/Saldo fail-closed; ContasReceber informa gate
   assert.match(tabela, /key: 'saldo'/);
   assert.match(tabela, /≠ zero/);
   assert.match(tabela, /missing\(r\.valor\) \|\| missing\(r\.valor_recebido\)/);
+  assert.match(tabela, /data-sit="quitado"/);
+  assert.match(tabela, /data-sit="parcial"/);
   assert.match(tab, /contas-receber-pedido-http-gate/);
   assert.match(tab, /titulos\/baixa/);
 });

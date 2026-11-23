@@ -39,6 +39,9 @@ export const isHttpExpedicaoEnabled = expedicaoFlag(import.meta.env);
 export const isHttpExpedicaoMode = isHttpExpedicaoEnabled;
 export const isHttpProdutoEnabled = isHttpBackendMode && import.meta.env.VITE_ERP_HTTP_PRODUTO === 'true';
 export const isHttpCliente360Enabled = isHttpBackendMode && import.meta.env.VITE_ERP_HTTP_CLIENTE_360 === 'true';
+/** Opt-in do contrato §7 (faturar/títulos/baixa). HML permanece desligado até promote Casa. */
+export const isHttpPedidoFinanceiroEnabled = isHttpBackendMode
+  && import.meta.env.VITE_ERP_HTTP_PEDIDO_FINANCEIRO === 'true';
 /** Listagem Cliente via BFF (CLIENTE_360 ou CLIENTE). Sem flag: store local ≠ API. */
 export { isHttpClienteListEnabled };
 /** @type {boolean} */

@@ -113,7 +113,24 @@ export default function TabelaReceber({
         );
       }
     },
-    { key: 'status', label: 'Status', render: (r) => (<Badge className={statusColors[r.status] || 'bg-gray-100 text-gray-800'}>{r.status}</Badge>) },
+    { key: 'status', label: 'Status', render: (r) => {
+        // Situação §7 inline (sem import) para o harness consumer-window.
+        const missing = (v) => v === null || v === undefined || v === '';
+        const saldo = !missing(r.saldo)
+          ? Number(r.saldo)
+          : (!missing(r.valor) && !missing(r.valor_recebido) ? Number(r.valor) - Number(r.valor_recebido) : NaN);
+        const recebido = missing(r.valor_recebido) ? NaN : Number(r.valor_recebido);
+        const quitado = Number.isFinite(saldo) && saldo <= 0;
+        const parcial = Number.isFinite(saldo) && saldo > 0 && Number.isFinite(recebido) && recebido > 0;
+        return (
+          <div className="flex flex-col gap-1 items-start">
+            <Badge className={statusColors[r.status] || 'bg-gray-100 text-gray-800'}>{r.status}</Badge>
+            {quitado ? <Badge className="bg-green-100 text-green-800 text-xs" data-sit="quitado">Quitado</Badge> : null}
+            {parcial ? <Badge className="bg-amber-100 text-amber-900 text-xs" data-sit="parcial">Parcial</Badge> : null}
+          </div>
+        );
+      }
+    },
     { key: 'canal_origem', label: 'Canal', render: (r) => (<Badge variant="outline" className="text-xs">{r.canal_origem || 'Manual'}</Badge>) },
     { key: 'marketplace', label: 'Marketplace', render: (r) => (r.marketplace_origem && r.marketplace_origem !== 'Nenhum' ? (<Badge className="bg-purple-100 text-purple-700 text-xs">{r.marketplace_origem}</Badge>) : <span className="text-xs text-slate-400">-</span>) },
     { key: 'cobranca', label: 'Cobrança', render: (r) => ((r.status_cobranca === 'gerada_simulada' || r.status_cobranca === 'gerada') ? (<Badge className="bg-green-100 text-green-700 text-xs">{r.forma_cobranca}</Badge>) : (<Badge variant="outline" className="text-xs">Não Gerada</Badge>)) },

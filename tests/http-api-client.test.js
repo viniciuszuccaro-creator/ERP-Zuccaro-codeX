@@ -114,9 +114,19 @@ test('Pedido facade preserves filters, request methods, payloads and AbortSignal
   await client.pedidos.transition('synthetic/id', 'Aprovado', 'synthetic-reason', options);
   await client.pedidos.history('synthetic/id', options);
   await client.pedidos.convertOrcamento('synthetic/id', { referencia: 'synthetic' }, options);
-  assert.deepEqual(calls.map(call => call.init.method), ['GET', 'GET', 'POST', 'PATCH', 'POST', 'POST', 'GET', 'POST']);
+  await client.pedidos.vinculosContabeis('synthetic/id', options);
+  await client.pedidos.faturar('synthetic/id', { centro_custo_id: '11111111-1111-1111-1111-111111111111', plano_contas_id: '22222222-2222-2222-2222-222222222222' }, options);
+  await client.pedidos.titulos('synthetic/id', options);
+  await client.pedidos.baixarTitulo('synthetic/id', { parcela: 1, evento: 'pedido.synthetic.parcela.1.attempt', valor: '10.00' }, options);
+  assert.deepEqual(calls.map(call => call.init.method), ['GET', 'GET', 'POST', 'PATCH', 'POST', 'POST', 'GET', 'POST', 'GET', 'POST', 'GET', 'POST']);
   assert.equal(calls[1].url.pathname, '/api/v1/pedidos/synthetic%2Fid');
   assert.deepEqual(JSON.parse(calls[5].init.body), { status: 'Aprovado', motivo: 'synthetic-reason' });
+  assert.equal(calls[8].url.pathname, '/api/v1/pedidos/synthetic%2Fid/vinculos-contabeis');
+  assert.equal(calls[9].url.pathname, '/api/v1/pedidos/synthetic%2Fid/faturar');
+  assert.deepEqual(JSON.parse(calls[9].init.body), { centro_custo_id: '11111111-1111-1111-1111-111111111111', plano_contas_id: '22222222-2222-2222-2222-222222222222' });
+  assert.equal(calls[10].url.pathname, '/api/v1/pedidos/synthetic%2Fid/titulos');
+  assert.equal(calls[11].url.pathname, '/api/v1/pedidos/synthetic%2Fid/titulos/baixa');
+  assert.deepEqual(JSON.parse(calls[11].init.body), { parcela: 1, evento: 'pedido.synthetic.parcela.1.attempt', valor: '10.00' });
   for (const call of calls) {
     assert.equal(call.init.signal, controller.signal);
     assert.equal(call.init.headers.Authorization, 'Bearer synthetic-token');

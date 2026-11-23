@@ -6,11 +6,12 @@ const checkbox = setter => [`onCheckedChange={(checked) => ${setter}(checked ===
 const invalidation = key => [`queryClient.invalidateQueries({ queryKey: [${key}] });`, `queryClient.invalidateQueries([${key}]);`];
 export const financialUiBoundaryHunks = {
   'src/components/comercial/FechamentoFinanceiroTab.jsx': [
-    ["import { isHttpBackendMode } from '@/api/base44Client';\n\nconst faturamentoHttpIndisponivel = 'Faturamento indisponível neste ambiente: o pedido não pode gerar títulos pela API atual.';\n", ''],
+    ["import { isHttpBackendMode } from '@/api/base44Client';\nimport FechamentoPedidoFinanceiroHttp from './FechamentoPedidoFinanceiroHttp';\n\nconst faturamentoHttpIndisponivel = 'Faturamento indisponível neste ambiente: o pedido não pode gerar títulos pela API atual.';\n", ''],
     ['    if (isHttpBackendMode) {\n      toast.error(faturamentoHttpIndisponivel);\n      return;\n    }\n', ''],
     ['{(isHttpBackendMode || !contextoValido || !empresaId || !canEmitirNFe) && (', '{(!contextoValido || !empresaId || !canEmitirNFe) && ('],
     ["{isHttpBackendMode ? faturamentoHttpIndisponivel : 'Para emitir NF-e, selecione empresa faturadora e confirme permissao fiscal no contexto atual.'}", 'Para emitir NF-e, selecione empresa faturadora e confirme permissao fiscal no contexto atual.'],
     ['disabled={isHttpBackendMode || !contextoValido || !empresaId || !canEmitirNFe}', 'disabled={!contextoValido || !empresaId || !canEmitirNFe}'],
+    ['      <FechamentoPedidoFinanceiroHttp formData={formData} />\n\n', ''],
     ['          if (isHttpBackendMode) throw new Error(faturamentoHttpIndisponivel);\n', ''],
   ],
   [prefix + 'CaixaPDVCompleto.jsx']: ['setEmitirRecibo', 'setEmitirNFe', 'setEmitirBoleto'].map(checkbox),
