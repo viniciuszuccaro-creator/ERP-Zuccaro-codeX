@@ -59,11 +59,12 @@ function AlertChip({ type, message, to, onNavigate, permission, action }) {
 }
 
 /**
+ * Contagens/KPIs: number | string | null (policy pode usar toFixed → string).
  * @param {{
- *   produtosBaixoEstoque?: number | null,
- *   taxaInadimplencia?: number | null,
- *   pedidosAguardando?: number | null,
- *   anomaliasCount?: number | null,
+ *   produtosBaixoEstoque?: number | string | null,
+ *   taxaInadimplencia?: number | string | null,
+ *   pedidosAguardando?: number | string | null,
+ *   anomaliasCount?: number | string | null,
  *   hasContextoAtivo?: boolean,
  *   canSeeEstoque?: boolean,
  *   canSeeFinanceiro?: boolean,

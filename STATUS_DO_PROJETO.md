@@ -1,3 +1,8 @@
+## Cursor — typecheck taxaInadimplencia (2026-11-23 America/Sao_Paulo)
+
+PR #599. `DashboardAlertsBar` aceita `number | string | null` nos KPIs
+(policy `toFixed`). Sem mudar `Dashboard.jsx` (pin). Sem Completo/deploy.
+
 ## Cursor — Bugbot #599 chips/dismiss/root (2026-11-23 America/Sao_Paulo)
 
 PR #599. (1) Cadastros: busca ativa → chip só “Ir para” (não fecha).
