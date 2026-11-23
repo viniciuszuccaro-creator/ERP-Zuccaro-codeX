@@ -331,6 +331,27 @@ export default function Cadastros() {
             </Card>
           )}
 
+          {/* Identificação clara de escopo (empresa/grupo) antes dos atalhos. */}
+          {contextoAtivo && (
+            <p
+              className="text-xs text-slate-600"
+              data-block="cadastros-escopo-ativo"
+              role="status"
+            >
+              Escopo ativo:{' '}
+              <span className="font-medium text-slate-800">
+                {grupoAtual?.nome || grupoAtual?.razao_social
+                  ? `Grupo ${grupoAtual?.nome || grupoAtual?.razao_social}`
+                  : null}
+                {grupoAtual?.id && empresaAtual?.id ? ' · ' : null}
+                {empresaAtual?.nome_fantasia || empresaAtual?.razao_social
+                  ? `Empresa ${empresaAtual?.nome_fantasia || empresaAtual?.razao_social}`
+                  : (!grupoAtual?.id ? '—' : null)}
+              </span>
+              {' '}— filtros e contagens respeitam este contexto.
+            </p>
+          )}
+
           {/* SUMÁRIO RÁPIDO — atalhos compactos (origem Base44 Cadastros P4; reusa handleCardClick + GroupCountBadge fail-closed) */}
           <div className="flex flex-wrap gap-2 items-center" data-block="cadastros-atalhos-totais" role="navigation" aria-label="Atalhos dos blocos de Cadastros">
             {[

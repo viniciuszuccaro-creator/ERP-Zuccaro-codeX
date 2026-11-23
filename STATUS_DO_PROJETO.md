@@ -1,3 +1,9 @@
+## Cursor — AttentionStrip + Cadastros escopo (2026-11-23 America/Sao_Paulo)
+
+PR #599. Dashboard: faixa atrasados/expedir/receber (`DashboardAttentionStrip`);
+Cadastros: escopo Grupo/Empresa visível; pin `a29af89ab…`. Merge Casa `6eb5a7286`.
+Central360/§7 já no tip; CR baixa Codex. Sem Completo/deploy.
+
 ## Cursor — merge #599 com Casa tip 6eb5a7286 (2026-11-23 America/Sao_Paulo)
 
 Conflitos só STATUS/HANDOFF — prepends Cursor Dashboard/360/Cadastros + CPA3 backup/gate HML.

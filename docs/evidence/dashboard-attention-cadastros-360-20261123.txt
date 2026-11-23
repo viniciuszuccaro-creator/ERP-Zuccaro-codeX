@@ -1,0 +1,42 @@
+ERP CPA — Dashboard atenção + Cadastros escopo + Central360 — 2026-11-23 America/Sao_Paulo
+PR #599 branch cursor/comercial-360-frontend-v6-3cfd
+Ref. Base44: erp-integra-novo (DashboardAcoesRapidas / PedidosResumo / Cadastros)
+
+## Inventário por finalidade (Regra-Mãe)
+
+| Finalidade | Base44 | ERP | Decisão |
+|------------|--------|-----|---------|
+| Alertas acionáveis | AlertsBar | DashboardAlertsBar | ERP tip (já) |
+| KPI sticky Dia/Mês | KPIStrip | sticky 3 cards | ERP (mais operacional) |
+| Atrasados / expedir / receber | AcoesRapidas | AttentionStrip (novo extrato) | Incorporar no Dashboard |
+| Pedidos resumo colunas | PedidosResumoPanel | Stats + WidgetFechamento | ERP (preservar) |
+| Cadastros atalhos/busca | Cadastros chips | Cadastros.jsx | ERP tip + escopo ativo |
+| Central 360 jornada | — | Shell v6 + §7 HTTP | ERP; CR baixa = Codex |
+
+## Implementado neste lote
+
+1. `DashboardAttentionStrip.jsx` — 3 cartões: aprovação, pronto/pendente expedição,
+   recebimentos (aberto + vencido). Título, período, escopo, drill-down.
+   Estados: sem contexto, sem permissão, —, zero confirmado, valor.
+2. Cadastros: `cadastros-escopo-ativo` com Grupo/Empresa claros.
+3. Merge Casa `6eb5a7286` (docs/STATUS/HANDOFF).
+4. Pin Dashboard `a29af89ab…`.
+
+## Central 360 — estado
+
+- Layout v6, sticky, próximas ações, §7 faturar/títulos/baixa UI: no tip.
+- Baixa CR canônica: **bloqueada** até mapa pedido↔parcela (Codex).
+- Validação HML orçamento→baixa: pendente publicação de contrato.
+
+## Dependências Codex
+
+1. Contagens server-side (pedidos/entregas/CR) quando lista truncar.
+2. Publicar §7 + mapa CR; flag HML `VITE_ERP_HTTP_PEDIDO_FINANCEIRO`.
+3. Aceite VPS: AttentionStrip troca empresa/período; Cadastros escopo;
+   Central360 percurso até baixa quando contrato ativo.
+
+## Validação local vs HML
+
+- Local: testes focados AttentionStrip/Cadastros/pin PASS; typecheck OK.
+- HML: jornada completa orçamento→baixa **não comprovada** neste lote
+  (sem credenciais/contrato publicado neste agente).

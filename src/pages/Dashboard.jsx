@@ -63,6 +63,7 @@ import usePermissions from "@/components/lib/usePermissions";
 const WidgetCanaisOrigem = React.lazy(() => import("@/components/dashboard/WidgetCanaisOrigem")); // kept for backward-compat (not used directly here)
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import DashboardAlertsBar from "@/components/dashboard/DashboardAlertsBar";
+import DashboardAttentionStrip from "@/components/dashboard/DashboardAttentionStrip";
 import StatsSection from "@/components/dashboard/StatsSection";
 import KPIsOperacionaisSection from "@/components/dashboard/KPIsOperacionaisSection";
 import QuickAccessModulesGrid from "@/components/dashboard/QuickAccessModulesGrid";
@@ -864,6 +865,32 @@ export default function Dashboard() {
           ? ((anomaliasIA?.details || []).filter((a) => a.severity === 'alto').length)
           : null}
         onNavigate={handleDrillDown}
+      />
+
+      {/* Base44 AcoesRapidas/resumo: atrasados, pronto para expedir, recebimentos — no Dashboard existente. */}
+      <DashboardAttentionStrip
+        hasContextoAtivo={hasContextoAtivo}
+        periodoLabel={periodo === 'dia' ? 'Dia' : periodo === 'semana' ? 'Semana' : 'Mês'}
+        escopoLabel={estaNoGrupo
+          ? (grupoAtual?.nome || grupoAtual?.razao_social || 'Grupo')
+          : (empresaAtual?.nome_fantasia || empresaAtual?.razao_social || 'Empresa')}
+        canSeeComercial={canSeeComercial}
+        canSeeExpedicao={canSeeExpedicao}
+        canSeeFinanceiro={canSeeFinanceiro}
+        aprovacaoCount={canSeeComercial && hasContextoAtivo ? pedidosAguardandoAprovacao.length : null}
+        prontoExpedirCount={canSeeExpedicao && hasContextoAtivo
+          ? (entregas || []).filter((e) => {
+            const s = String(e?.status || '');
+            return /pronto|expedi|aguardando/i.test(s) || s === 'Em Expedição';
+          }).length
+          : null}
+        receitasPendentes={canSeeFinanceiro && hasContextoAtivo ? receitasPendentes : null}
+        valorVencido={canSeeFinanceiro && hasContextoAtivo ? valorVencido : null}
+        onNavigate={(target) => {
+          if (target === 'comercial') handleDrillDown(createPageUrl('Comercial'));
+          else if (target === 'expedicao') handleDrillDown(createPageUrl('Expedicao'));
+          else if (target === 'financeiro') handleDrillDown(createPageUrl('Financeiro'));
+        }}
       />
 
       <ErrorBoundary>

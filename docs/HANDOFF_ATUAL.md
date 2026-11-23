@@ -1,3 +1,8 @@
+## Cursor — AttentionStrip + Cadastros escopo (2026-11-23 America/Sao_Paulo)
+
+PR #599: AttentionStrip operacional + escopo Cadastros. Aceite VPS = Codex
+(§7 + mapa CR + contagens server-side).
+
 ## Cursor — merge #599 com Casa tip 6eb5a7286 (2026-11-23 America/Sao_Paulo)
 
 Conflitos só STATUS/HANDOFF — prepends Cursor #599 + CPA3 Casa `6eb5a7286`.

@@ -311,6 +311,8 @@ test('UI Cadastros distingue erro (—) de zero; banner data-counts-unavailable'
   assert.match(page, /Contagens indisponíveis por erro de consulta/);
   assert.match(page, /data-action="cadastros-contagens-retry"/);
   assert.match(page, /data-block="cadastros-atalhos-totais"/);
+  assert.match(page, /data-block="cadastros-escopo-ativo"/);
+  assert.match(page, /Escopo ativo:/);
   assert.match(page, /openBeforeSearchRef/);
   assert.match(page, /data-bloco=/);
   assert.match(page, /scrollIntoView/);
