@@ -1,3 +1,12 @@
+## Cursor — retomada bc-d973626e + HANDOFF.md (2026-11-23 America/Sao_Paulo)
+
+Agent anterior `bc-d973626e` travou no limite de uso em 15/11 no tip PR596
+`1a5bc05ea` (OrcamentosTab `d43ae30b1`). Casa seguiu em
+`codex/casa-fechamento-hml-20261114` tip `bf2f02810`. Este lote: handoff
+completo em `HANDOFF.md` + restaura `docs/HANDOFF_CASA_2026-11-20.md`.
+Sem Completo/deploy/DDL. Próximo Cursor: Central360 visual + contrato
+financeiro HTTP (§7 do HANDOFF) só com indisponível até promote Casa.
+
 ## CPA3: prazo da prova de backup agendado
 
 PostgreSQL registrou cancelamento por statement timeout na prova

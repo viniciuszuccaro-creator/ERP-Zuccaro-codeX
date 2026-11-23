@@ -1,3 +1,11 @@
+## Cursor — retomada bc-d973626e (2026-11-23 America/Sao_Paulo)
+
+Handoff canônico de retomada: **`HANDOFF.md`** (raiz). Tip Casa base
+`bf2f02810`. Tip Cursor PR596 preservado `1a5bc05ea`. Escopo Cursor:
+frontend/Central360; Completo/endereços/HML/deploy = Casa. Contrato
+financeiro clone documentado no HANDOFF §7; UI HTTP permanece indisponível
+até promote.
+
 ## CPA3: prazo da prova de backup agendado
 
 PostgreSQL registrou cancelamento por statement timeout na prova
