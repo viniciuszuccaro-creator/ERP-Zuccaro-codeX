@@ -1,3 +1,8 @@
+## Cursor — merge #599 com Casa tip 0ee16ad62 (2026-11-23 America/Sao_Paulo)
+
+Conflitos só STATUS/HANDOFF — prepends Cursor #599 + CPA3 Casa .
+Sem conflito de código.
+
 ## Cursor — AttentionStrip + Cadastros escopo (2026-11-23 America/Sao_Paulo)
 
 PR #599: AttentionStrip operacional + escopo Cadastros. Aceite VPS = Codex
@@ -117,6 +122,21 @@ frontend/Central360; Completo/endereços/HML/deploy = Casa. Contrato
 financeiro clone documentado no HANDOFF §7; UI HTTP permanece indisponível
 até promote. P1 #598: lote 5.423 = encerrado (5384 revisão + 39 histórico);
 **não reaplicar** — alinhado ao recibo deste tip.
+
+## CPA3: Unidades autorizadas, preflight bloqueado por margem
+
+Manifesto 43dfafc5: 14 unidades, 7.265 bytes, SHA e modo 600 conferidos
+no canal privado da VPS. Backup 044e14ad e ACK externo conferidos;
+snapshot vivo igual nas 18 tabelas, 17.472 mestres. API a305a143 e
+principal restrito; criar, visualizar e inativar autorizados no RBAC.
+
+Livre 22.772.314.112 bytes; piso 22.737.990.725; sobra 34.323.387.
+Dois segmentos WAL de 16 MiB deixam 768.955 bytes sobre o piso, sem
+margem adequada para tabela, indices, temporarios e variacao do host.
+Gate de planejamento: piso + 40 MiB; margem adicional 7.619.653 bytes
+ate o alvo na amostra. Revalidar antes de executar. Sem nova limpeza.
+Zero DDL, grants ou unidades gravadas; sem deploy ou operacional.
+
 
 ## CPA3: backup fresco verificado para o gate de Unidades
 
