@@ -95,7 +95,10 @@ export default function CentralVendas360Shell({
     if (!canViewDocumentRef.current) return;
     // Epoch obrigatório: loadCentralDetail/Fechar sem epoch não pode preencher grades após troca de situação.
     if (typeof meta.selectionEpoch !== 'number' || meta.selectionEpoch !== selectionEpochRef.current) return;
-    setSelected(row || null);
+    const withNome = row && meta.clienteNome && !row.cliente_nome && !row.nome_cliente
+      ? { ...row, cliente_nome: meta.clienteNome, nome_cliente: meta.clienteNome }
+      : row;
+    setSelected(withNome || null);
     setSelectedClienteId(meta.clienteId || row?.cliente_id || null);
   }, []);
 

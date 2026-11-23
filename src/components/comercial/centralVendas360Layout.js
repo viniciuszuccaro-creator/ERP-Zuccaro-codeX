@@ -123,8 +123,13 @@ export function resolveCentralFluxoState(situacao, row) {
     else activeIndex = 0;
   } else if (sid === 'PRODUCAO' || /PRODUC/.test(status)) {
     activeIndex = 3;
-  } else if (sid === 'ENTREGA' || sid === 'RETIRA' || /ENTREGA|RETIR|EXPED|ROMANE|SEPAR/.test(status)) {
-    activeIndex = /PRONTO|SEPAR|ROMANE|EXPED/.test(status) ? 4 : 5;
+  } else if (sid === 'ENTREGA' || sid === 'RETIRA') {
+    // Situação da faixa já é Entrega/Retira — não marcar Expedição por PRONTO_RETIRADA.
+    activeIndex = 5;
+  } else if (/ENTREGA|RETIR/.test(status)) {
+    activeIndex = 5;
+  } else if (/SEPAR|ROMANE|EXPED/.test(status)) {
+    activeIndex = 4;
   } else if (sid === 'ENTREGUES' || /ENTREGUE/.test(status)) {
     activeIndex = 5;
   } else if (sid === 'FINALIZADOS' || /FINALIZ/.test(status)) {

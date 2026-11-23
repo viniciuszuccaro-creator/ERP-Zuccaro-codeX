@@ -1,3 +1,12 @@
+## Cursor — Central360 Bugbot P3 (cliente/Retira/Desmembrar) (2026-11-23 America/Sao_Paulo)
+
+Branch `cursor/comercial-360-frontend-v6-3cfd` (PR #599). Correções no existente:
+`notifyCentralSelect` enriquece `cliente_nome`/`clienteNome` (barra sticky);
+`resolveCentralFluxoState` RETIRA/ENTREGA → índice 5 (não Expedição por
+PRONTO_RETIRADA); Ação Rápida Desmembrar abre `central360-mais-acoes`.
+Testes `central-vendas360-layout-v6-591` 16/16 PASS. Sem Completo/deploy.
+Próximo: browser desktop/mobile + promote financeiro Codex.
+
 ## Cursor — Central360 frontend v6 (DOCX) (2026-11-23 America/Sao_Paulo)
 
 Branch `cursor/comercial-360-frontend-v6-3cfd`. Melhoria no shell existente:

@@ -191,7 +191,12 @@ test('CentralVendas360Shell: faixa, situações, grades dual, Cliente360', () =>
   assert.match(parts, /central360-grade-corte/);
   assert.match(parts, /central360-grade-revenda/);
   assert.match(parts, /central360-acoes-rapidas/);
+  assert.match(parts, /central360-qa-desmembrar/);
+  // Desmembrar no aside abre Mais Ações (item do menu não está no DOM fechado).
+  assert.match(parts, /runCentralAction\('central360-mais-acoes'/);
   assert.match(parts, /CentralCliente360Panel/);
+  assert.match(src, /meta\.clienteNome/);
+  assert.match(src, /sem nome na seleção/);
   assert.match(src, /OrcamentosTab/);
   assert.match(src, /PedidoCanonicoPanel/);
   assert.match(src, /Atendimento Unificado/);
@@ -211,6 +216,13 @@ test('resolveCentralFluxoState mapeia situação sem inventar status', () => {
   assert.equal(producao.activeIndex, 3);
   const entregues = resolveCentralFluxoState({ id: 'ENTREGUES', kind: 'pedido' }, { status: 'ENTREGUE' });
   assert.equal(entregues.activeIndex, 5);
+  // RETIRA / PRONTO_RETIRADA → Entrega/Retira (5), não Expedição (4)
+  const retira = resolveCentralFluxoState({ id: 'RETIRA', kind: 'pedido' }, { status: 'PRONTO_RETIRADA' });
+  assert.equal(retira.activeIndex, 5);
+  const entregaSit = resolveCentralFluxoState({ id: 'ENTREGA', kind: 'pedido' }, { status: 'PRONTO_ENTREGA' });
+  assert.equal(entregaSit.activeIndex, 5);
+  const soExped = resolveCentralFluxoState({ id: '', kind: 'pedido' }, { status: 'ROMANEIO' });
+  assert.equal(soExped.activeIndex, 4);
 });
 
 test('invokeCentralDataAction só clica botão habilitado existente', () => {
@@ -248,6 +260,8 @@ test('OrcamentosTab: tabela 12 colunas no centralLayout; seleção sem gravaçã
   assert.match(src, /CENTRAL_VENDAS360_COLUMNS/);
   assert.match(src, /onDoubleClick/);
   assert.match(src, /notifyCentralSelect/);
+  assert.match(src, /clienteNome: resolvedClienteNome/);
+  assert.match(src, /cliente_nome: resolvedClienteNome/);
   assert.match(src, /Validade do orçamento \(≠ prazo de entrega\)/);
   assert.match(src, /central360-prefs-colunas/);
   assert.match(src, /writeCentralColumnHiddenKeys/);

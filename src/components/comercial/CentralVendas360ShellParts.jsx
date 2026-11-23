@@ -201,7 +201,8 @@ export function Cliente360Aside({
             label="Desmembrar"
             action="central360-qa-desmembrar"
             disabled={!hasSelection || proposalMode}
-            onClick={() => runCentralAction('central360-desmembrar', 'Desmembrar exige seleção e alçada na barra Mais Ações.')}
+            title="Abre Mais Ações (item Desmembrar fica no menu — não está no DOM fechado)"
+            onClick={() => runCentralAction('central360-mais-acoes', 'Abra Mais Ações na barra do documento para Desmembrar.')}
           />
           <QuickAction
             icon={Package}

@@ -953,9 +953,16 @@ const convertToPedido = async () => {
     const link = masters.clientesEmpresa.find((item) => item.id === row?.cliente_empresa_id);
     const cond = masters.condicoes.find((item) => item.id === row?.condicao_pagamento_id);
     const tab = (masters.tabelas || []).find((item) => item.id === row?.tabela_preco_id);
+    const resolvedClienteNome = row?.cliente_nome
+      || row?.nome_cliente
+      || (typeof row?.cliente === 'string' ? row.cliente : undefined)
+      || (row?.cliente_empresa_id ? clienteLabel(row.cliente_empresa_id) : undefined)
+      || undefined;
     const enriched = row
       ? {
         ...row,
+        cliente_nome: resolvedClienteNome,
+        nome_cliente: row.nome_cliente || resolvedClienteNome,
         condicao_pagamento_codigo: row.condicao_pagamento_codigo || cond?.codigo || undefined,
         condicao_pagamento_nome: row.condicao_pagamento_nome || cond?.nome || undefined,
         condicao_pagamento_label: row.condicao_pagamento_label || (cond ? condicaoLabel(cond.id) : undefined),
@@ -964,7 +971,11 @@ const convertToPedido = async () => {
         tabela_preco_label: row.tabela_preco_label || (tab ? tabelaLabel(tab.id) : undefined),
       }
       : row;
-    onCentralSelect(enriched, { clienteId: link?.cliente_id || row?.cliente_id || null, selectionEpoch: epoch });
+    onCentralSelect(enriched, {
+      clienteId: link?.cliente_id || row?.cliente_id || null,
+      clienteNome: resolvedClienteNome || null,
+      selectionEpoch: epoch,
+    });
   };
   /** Clique simples: seleciona já e sempre GET canônico (lista pode trazer itens stub sem total/parcelas). Sem mutation gate. */
   const selectCentralRow = async (row) => {
