@@ -157,9 +157,9 @@ export default function GrupoProdutoForm({ grupo, grupoProduto, item, data, init
           <Input
             type="number"
             step="0.01"
-            value={formData.margem_sugerida}
+            value={formData.margem_sugerida ?? ''}
             disabled={camposBloqueados}
-            onChange={(e) => setFormData({...formData, margem_sugerida: parseFloat(e.target.value)})}
+            onChange={(e) => setFormData({...formData, margem_sugerida: e.target.value === '' ? null : e.target.valueAsNumber})}
             data-action="editar-margem-grupo-produto"
           />
         </div>

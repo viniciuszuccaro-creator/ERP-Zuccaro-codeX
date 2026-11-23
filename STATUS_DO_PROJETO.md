@@ -1,3 +1,15 @@
+## CPA3: 91 Grupos com margem nula preservada no clone
+
+Contrato, repositorios e formulario distinguem nulo de zero. Omitir
+na criacao preserva o default anterior; migration 046 retira so NOT NULL.
+Manifesto privado f6f1add9: 91/91 margem NULL, 51 inativos e isolamento
+por empresa no PG16 restaurado. Retomada apos commit 40: 40 reusos e
+51 insercoes; replay 91. Reversao 39 inativados, 51 ja inativos, 1
+edicao preservada; 221 auditorias no ensaio, 17.472 mestres intactos.
+
+Aguardando gate de HML: pacote executavel e ACL por empresa, backup
+pos-Setores restauravel e autorizacao especifica. Sem escrita ou deploy.
+
 ## CPA3: 11 Setores aplicados e conciliados na HML
 
 Backup 86f0c514/ACK revalidado; 19 tabelas iguais antes do DDL.

@@ -104,7 +104,7 @@ export function createInMemoryGrupoProdutoRepo() {
       nome_grupo: data.nome_grupo,
       codigo: reserveMemoryCodigo(scope.groupId, 'GrupoProduto', rows, data.codigo),
       natureza: data.natureza ?? 'Revenda',
-      ncm_padrao: data.ncm_padrao ?? null, margem_sugerida: data.margem_sugerida ?? 0,
+      ncm_padrao: data.ncm_padrao ?? null, margem_sugerida: data.margem_sugerida === undefined ? 0 : data.margem_sugerida,
       icone: data.icone ?? null, cor: data.cor ?? null, observacoes: data.observacoes ?? null,
       ativo: data.ativo ?? true, created_at: ts, updated_at: ts,
     }),

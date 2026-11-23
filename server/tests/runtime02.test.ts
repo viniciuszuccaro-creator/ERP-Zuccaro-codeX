@@ -34,6 +34,17 @@ const EMPRESA_B = '44444444-4444-4444-8444-444444444444';
 const ACTOR_A = '77777777-1111-4111-8111-777777777777';
 const ACTOR_B = '66666666-2222-4222-8222-666666666666';
 
+test('GrupoProduto preserves an explicit null margin without changing the omitted default', async () => {
+  const repo = createInMemoryGrupoProdutoRepo();
+  const scope = { groupId: GROUP_A, empresaId: EMPRESA_A };
+  const absent = await repo.create(scope, grupoProdutoCreateSchema.parse({ nome_grupo: 'Sem sugestao', margem_sugerida: null }));
+  assert.equal((await repo.getById(scope, absent.id))?.margem_sugerida, null);
+  const omitted = await repo.create(scope, grupoProdutoCreateSchema.parse({ nome_grupo: 'Padrao anterior' }));
+  assert.equal(omitted.margem_sugerida, 0);
+  assert.equal((await repo.update(scope, absent.id, grupoProdutoUpdateSchema.parse({ nome_grupo: 'Editado' })))?.margem_sugerida, null);
+  assert.equal((await repo.update(scope, absent.id, grupoProdutoUpdateSchema.parse({ margem_sugerida: 0 })))?.margem_sugerida, 0);
+});
+
 function linkedRbac() {
   const guard = new InMemoryRbacGuard();
   const permissions = { Cadastros: { produto: ['visualizar', 'criar', 'editar', 'inativar'],

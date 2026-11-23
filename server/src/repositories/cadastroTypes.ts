@@ -49,7 +49,7 @@ export const grupoProdutoCreateSchema = z.object({
   codigo: z.string().trim().max(64).optional().nullable(),
   natureza: z.string().trim().max(60).optional().default('Revenda'),
   ncm_padrao: z.string().trim().max(20).optional().nullable(),
-  margem_sugerida: z.number().finite().optional().default(0),
+  margem_sugerida: z.number().finite().nullable().optional().default(0),
   icone: z.string().trim().max(80).optional().nullable(),
   cor: z.string().trim().max(32).optional().nullable(),
   observacoes: z.string().trim().max(2000).optional().nullable(),
@@ -65,7 +65,7 @@ export type GrupoProduto = {
   codigo: string | null;
   natureza: string;
   ncm_padrao: string | null;
-  margem_sugerida: number;
+  margem_sugerida: number | null;
   icone: string | null;
   cor: string | null;
   observacoes: string | null;

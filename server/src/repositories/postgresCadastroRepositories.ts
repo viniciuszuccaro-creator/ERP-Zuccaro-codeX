@@ -65,7 +65,7 @@ function mapGrupo(row: Record<string, unknown>): GrupoProduto {
     empresa_id: row.empresa_id == null ? null : String(row.empresa_id),
     nome_grupo: String(row.nome_grupo), codigo: row.codigo == null ? null : String(row.codigo),
     natureza: String(row.natureza), ncm_padrao: row.ncm_padrao == null ? null : String(row.ncm_padrao),
-    margem_sugerida: Number(row.margem_sugerida ?? 0),
+    margem_sugerida: row.margem_sugerida == null ? null : Number(row.margem_sugerida),
     icone: row.icone == null ? null : String(row.icone), cor: row.cor == null ? null : String(row.cor),
     observacoes: row.observacoes == null ? null : String(row.observacoes),
     ativo: Boolean(row.ativo), ...ts(row),
@@ -157,7 +157,7 @@ export class PostgresGrupoProdutoRepository implements TenantEntityRepository<Gr
         group_id, empresa_id, nome_grupo, codigo, natureza, ncm_padrao, margem_sugerida, icone, cor, observacoes, ativo
       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *`,
       [scope.groupId, data.empresa_id ?? scope.empresaId ?? null, data.nome_grupo, codigo,
-       data.natureza ?? 'Revenda', data.ncm_padrao ?? null, data.margem_sugerida ?? 0,
+       data.natureza ?? 'Revenda', data.ncm_padrao ?? null, data.margem_sugerida === undefined ? 0 : data.margem_sugerida,
        data.icone ?? null, data.cor ?? null, data.observacoes ?? null, data.ativo ?? true],
     );
     return mapGrupo(result.rows[0] as Record<string, unknown>);
