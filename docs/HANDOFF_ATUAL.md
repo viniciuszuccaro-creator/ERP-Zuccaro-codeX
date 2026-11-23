@@ -1,6 +1,6 @@
 ## Cursor — merge #599 com Casa tip 0ee16ad62 (2026-11-23 America/Sao_Paulo)
 
-Conflitos só STATUS/HANDOFF — prepends Cursor #599 + CPA3 Casa .
+Conflitos só STATUS/HANDOFF — prepends Cursor #599 + CPA3 Casa `0ee16ad62`.
 Sem conflito de código.
 
 ## Cursor — AttentionStrip + Cadastros escopo (2026-11-23 America/Sao_Paulo)
