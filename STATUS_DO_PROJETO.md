@@ -1,3 +1,8 @@
+## Cursor — merge #598 com Casa tip 0ee16ad62 (2026-11-23 America/Sao_Paulo)
+
+Conflitos só STATUS/HANDOFF — prepends complementares (HANDOFF retomada #598 + CPA3 Casa).
+Sem conflito de código. Tip Casa .
+
 ## Cursor — merge #598 com Casa tip 56222f6cc (2026-11-23 America/Sao_Paulo)
 
 Conflitos só em STATUS/HANDOFF — prepends complementares (Cursor handoff
@@ -23,6 +28,85 @@ P1 Codex #598: fila 5.423 reconciliada como **ENCERRADA** (5384+39; não
 reaplicar) — próximo Casa = backup/faturamento/Obras, não reimportar.
 Sem Completo/deploy/DDL. Próximo Cursor: Central360 visual + contrato
 financeiro HTTP (§7 do HANDOFF) só com indisponível até promote Casa.
+
+## CPA3: Unidades autorizadas, preflight bloqueado por margem
+
+Manifesto 43dfafc5: 14 unidades, 7.265 bytes, SHA e modo 600 conferidos
+no canal privado da VPS. Backup 044e14ad e ACK externo conferidos;
+snapshot vivo igual nas 18 tabelas, 17.472 mestres. API a305a143 e
+principal restrito; criar, visualizar e inativar autorizados no RBAC.
+
+Livre 22.772.314.112 bytes; piso 22.737.990.725; sobra 34.323.387.
+Dois segmentos WAL de 16 MiB deixam 768.955 bytes sobre o piso, sem
+margem adequada para tabela, indices, temporarios e variacao do host.
+Gate de planejamento: piso + 40 MiB; margem adicional 7.619.653 bytes
+ate o alvo na amostra. Revalidar antes de executar. Sem nova limpeza.
+Zero DDL, grants ou unidades gravadas; sem deploy ou operacional.
+
+## CPA3: backup fresco verificado para o gate de Unidades
+
+Removidas somente tres arvores node_modules duplicadas e reinstalaveis,
+conferidas por SHA com copias preservadas; sem mounts ou uso em processo.
+Livre antes 21.627.281.408; apos 22.820.106.240; ganho 1.192.824.832 bytes.
+Sem remover acervo, backup, volume, codigo ou versao de reversao.
+
+Avulso 23/11, 47.636.480 bytes: restore de 18 tabelas e ACK externo
+confirmados por SHA. Retencao nao executada; agendador inalterado.
+Livre apos backup 22.772.445.184. Reconfirmar capacidade e estado antes
+de aplicar para garantir que este recibo continua pre-intervencao.
+
+Gate: 14 Unidades Grupo CPA no schema HML, DDL/ACL minimo e reversao
+por postimage, sem Produtos/Precos/deploy. Aguardando aprovacao especifica.
+Nenhuma escrita no banco servido nem mudanca no operacional.
+
+## CPA3: Unidades validadas no clone e suite Linux verde
+
+Manifesto de 14 Unidades processado pelo servico canonico no PG16
+restaurado, com papel restrito, RLS e RBAC. Interrupcao apos commit 7:
+7 reaproveitadas e 7 inseridas na retomada. Replay 14 sem duplicatas;
+13 inativadas e 1 edicao preservada. 41 auditorias, 17.472 mestres.
+
+Chrome headless recusava sandbox no namespace com UID root. No WSL
+normal, sem mudar testes, suite 3041/3041 e teste focado 1/1.
+Delta candidato: somente Unidade de 005, codigo/indice aplicavel de 038
+e ACL/RLS restritas de unidade, sequencia, perfil e auditoria.
+Falta backup fresco: 21.627.408.384 bytes livres, piso de 21.743.271.936
+antes do dump. Avulso de 23/11 restauravel; agendador segue falho.
+Sem escrita, deploy, schema ou grants na HML. Pacote nao autorizado.
+
+## CPA3: gate de retomada de Unidades e backup avulso verificado
+
+O piloto canonico de Produtos exige branch e aprovacao do piloto antigo.
+Nao aceita o manifesto isolado de 14 Unidades: cria dependencias antes
+de gravar state.units no arquivo; falha apos commit deixa o ID sem
+checkpoint e o preflight seguinte recusa UNREVIEWED_UNIT_TARGET_ID.
+A reversao do piloto cobre Produtos, nao Unidades. Nao contornar guards.
+
+Backup avulso de 23/11: 46.028.800 bytes na VPS e na copia externa, SHA
+igual e recibos de restauro e copia conferidos. Nao prova frescor para
+uma intervencao futura. Ultima agenda: exit-code 1 / SNAPSHOT_READ_FAILED.
+
+Gate: acoplar o manifesto segregado ao servico existente com checkpoint
+duravel atomico e reversao por postimage; ensaiar falha apos commit com
+ACL efetiva. Revalidar estado atual e backup antes de pedir aprovacao.
+Nenhuma gravacao, mudanca de permissao ou agendador na HML.
+
+## CPA3: Grupo fixado e 14 unidades ensaiadas em PostgreSQL
+
+UUID do Grupo fixado privadamente apos leitura pelo principal efetivo
+da HML a305a143, sem superuser/BYPASSRLS. Candidato pinado: 14 linhas.
+No PG16 restaurado sem rede, prova SQL com papel restrito: 14 insercoes,
+14 auditorias, repeticao na mesma transacao sem novas linhas, rollback
+com zero auditorias do ensaio e 17.472 mestres preservados.
+
+Nao e ensaio pelo importador, checkpoint apos commit ou reversao de
+dados gravados. Falta acoplar manifesto ao fluxo canonico com ACL efetiva
+e validar backup fresco antes do pedido de escrita. Nenhuma carga HML.
+
+Produto: grupo/setor opcionais no schema generico; importador legado
+continua exigindo prova de classe, tipo e unidade. Sem liberar por omissao.
+Backup: timer ativo, servico falho; nenhuma alteracao no agendador.
+
 
 ## CPA3: manifesto privado e prova HTTP das 14 unidades
 
