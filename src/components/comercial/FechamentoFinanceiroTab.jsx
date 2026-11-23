@@ -16,6 +16,9 @@ import { useUser } from '@/components/lib/UserContext';
 import { faturarPedidoCompleto } from '@/components/lib/useFluxoPedido';
 import { assertFaturamentoDentroDoPedido } from '@/components/lib/pedidoFaturamentoPolicy';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { isHttpBackendMode } from '@/api/base44Client';
+
+const faturamentoHttpIndisponivel = 'Faturamento indisponível neste ambiente: o pedido não pode gerar títulos pela API atual.';
 
 /**
  * V21.1 - Aba 7: Fechamento Financeiro
@@ -55,6 +58,10 @@ export default function FechamentoFinanceiroTab({ formData, setFormData, onNext 
     }
   };
   const abrirModalNFe = async () => {
+    if (isHttpBackendMode) {
+      toast.error(faturamentoHttpIndisponivel);
+      return;
+    }
     if (!contextoValido || !empresaId || !canEmitirNFe) {
       await auditFechamento('nfe_fechamento_abrir_bloqueada', { motivo: !empresaId ? 'empresa_faturadora_obrigatoria' : 'contexto_ou_permissao' }, false);
       return;
@@ -115,11 +122,11 @@ export default function FechamentoFinanceiroTab({ formData, setFormData, onNext 
               </Alert>
             )}
 
-            {(!contextoValido || !empresaId || !canEmitirNFe) && (
+            {(isHttpBackendMode || !contextoValido || !empresaId || !canEmitirNFe) && (
               <Alert className="border-red-300 bg-red-50 p-3">
                 <AlertTriangle className="w-4 h-4 text-red-600" />
                 <AlertDescription className="text-sm text-red-700 ml-6">
-                  Para emitir NF-e, selecione empresa faturadora e confirme permissao fiscal no contexto atual.
+                  {isHttpBackendMode ? faturamentoHttpIndisponivel : 'Para emitir NF-e, selecione empresa faturadora e confirme permissao fiscal no contexto atual.'}
                 </AlertDescription>
               </Alert>
             )}
@@ -129,7 +136,7 @@ export default function FechamentoFinanceiroTab({ formData, setFormData, onNext 
               onClick={abrirModalNFe}
               className="w-full bg-sky-600 hover:bg-sky-700"
               size="lg"
-              disabled={!contextoValido || !empresaId || !canEmitirNFe}
+              disabled={isHttpBackendMode || !contextoValido || !empresaId || !canEmitirNFe}
               data-action="Fiscal.NotaFiscal.emitir"
               data-permission="Fiscal.NotaFiscal.emitir"
               data-context-required="true"
@@ -416,6 +423,7 @@ export default function FechamentoFinanceiroTab({ formData, setFormData, onNext 
         groupId={groupId}
         onAudit={auditFechamento}
         onEmitir={async (dadosNFe) => {
+          if (isHttpBackendMode) throw new Error(faturamentoHttpIndisponivel);
           if (!formData?.id) {
             toast.error('Salve o pedido antes de emitir a NF-e.');
             throw new Error('Pedido ainda nao gravado.');

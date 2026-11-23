@@ -39,6 +39,19 @@ for (const [file, expected] of [
   assert.equal(hash(financialUiBoundaryRemainder(path, text)), expected);
 });
 
+test('FechamentoFinanceiroTab: HTTP mode blocks emit with explicit unavailable (authorized hunk only)', () => {
+  const path = 'src/components/comercial/FechamentoFinanceiroTab.jsx';
+  const text = read(path);
+  const msg = 'Faturamento indisponível neste ambiente: o pedido não pode gerar títulos pela API atual.';
+  assert.match(text, /isHttpBackendMode/);
+  assert.match(text, new RegExp(msg.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+  assert.match(text, /disabled=\{isHttpBackendMode \|\| !contextoValido/);
+  const restored = financialUiBoundaryRemainder(path, text);
+  assert.equal(restored.includes('isHttpBackendMode'), false);
+  assert.equal(restored.includes(msg), false);
+  assert.equal(hash(restored), 'ae386c90edc5194049336d95e493a01c868496b5e91dd78b2bf9240ad8e0ea21');
+});
+
 function bind(text, { formas = [], bancos = [], gateways = [], filtros = {}, loading = {} } = {}) {
   const ast = ts.createSourceFile(path, text, ts.ScriptTarget.Latest, true, ts.ScriptKind.JSX);
   const fn = ast.statements.find(node => ts.isFunctionDeclaration(node) && node.name.text === 'useFormasPagamento');

@@ -1,3 +1,13 @@
+## Cursor — continuidade bc-d973: faturamento HTTP indisponível (2026-11-23 America/Sao_Paulo)
+
+Retomada após handoff canônico [#598](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/598)
+(`HANDOFF.md`). Porta o guard Casa de `FechamentoFinanceiroTab` para a tip
+PR596: em `isHttpBackendMode` o emitir NF-e/faturar fica bloqueado com
+mensagem explícita de indisponível (sem fingir sucesso). Remainder
+`financialUiBoundaryRemainder` preserva pin stage49. Testes
+`payment-config-projection` 22 PASS. Sem Completo/DDL/deploy. Contrato
+HTTP §7 do HANDOFF só após promote Casa.
+
 ## Cursor — PR596 OrcamentosTab sessão monotônica (2026-11-15 America/Sao_Paulo)
 
 Continuidade 15/11: **Cursor** — Cadastros/Dash/C360 sem Completo.
