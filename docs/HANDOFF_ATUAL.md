@@ -1,3 +1,18 @@
+## CPA3: retomada e reversao dos 11 Setores no clone
+
+Manifesto SetorAtividade 67256abe conferido na VPS; 11 no PG16 isolado.
+Papel restrito e servico canonico: interrupcao apos 5 commits, 5 reusos
+e 6 insercoes na retomada; replay 11 sem duplicar. Reversao: 8 inativados,
+2 ja inativos e 1 editado preservado. 30 auditorias; 17.472 mestres.
+Prova de clone, nao executor publicado. Gate pendente: empacotar delta
+005/038 de Setores, ACL por empresa e executor; backup e aprovacao HML.
+
+Base44 5a8c26fa: Produto retencao da margem anterior na ausencia de
+sugestao; formulario Grupo inicia em 0, mas nao prova motivo do nulo.
+91 valores nulos preservados; contrato atual nao distingue ausencia.
+Sem novo vinculo de Produtos, Obras ou vigencias de Precos.
+Agendador em exit-code. Sem carga, DDL, deploy ou mudanca operacional.
+
 ## CPA3: cadastro de Setores ensaiado e candidatos centralizados
 
 Base44: 91 Grupos e 11 Setores com chaves/codigos e empresas conciliados.
