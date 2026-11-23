@@ -1,3 +1,9 @@
+## Cursor — merge #599 com Casa tip 56222f6cc (2026-11-23 America/Sao_Paulo)
+
+Conflitos só em STATUS/HANDOFF — prepends complementares (Cursor Central360/
+Cadastros UX + CPA3 manifesto/inventário). Sem conflito de intenção em código.
+Tip Casa `56222f6cc`.
+
 ## Cursor — Bugbot escopo POST + chips … (2026-11-23 America/Sao_Paulo)
 
 PR #599. (1) POST faturar/baixa stale após troca grupo/empresa: `scopeAtStart`
@@ -149,6 +155,38 @@ P1 Codex #598: fila 5.423 reconciliada como **ENCERRADA** (5384+39; não
 reaplicar) — próximo Casa = backup/faturamento/Obras, não reimportar.
 Sem Completo/deploy/DDL. Próximo Cursor: Central360 visual + contrato
 financeiro HTTP (§7 do HANDOFF) só com indisponível até promote Casa.
+
+## CPA3: manifesto privado e prova HTTP das 14 unidades
+
+HML a305a143: leitura pelo principal efetivo, sem superuser/BYPASSRLS,
+confirmou um Grupo, duas empresas correspondentes por CNPJ e ausencia
+da tabela de Unidades. Nenhuma escrita na HML.
+
+Manifesto candidato privado: 14 ativos, siglas e codigos distintos; os
+14 payloads passaram no schema canonico. Flag de producao preservada
+na fonte, nao persistida pelo contrato atual; nenhuma marcada true.
+API local em memoria: 14 POST 201, 14 reaberturas 200, 14 leituras em
+outro Grupo 404 e 14 auditorias. Testes focados: 10/10.
+
+Falta ensaio do manifesto no importador com PostgreSQL restaurado, pin
+explicito do UUID alvo, replay/reversao e delta de ACL antes do gate.
+
+## CPA3: inventario Base44 autenticado e vinculo de Grupo no clone
+
+Paginacao por ID ate pagina vazia, sem filtro de status, nas 48 entidades
+do mapa de contagens dos seis blocos. Totais, na ordem do mapa: 26, 1016, 97, 16, 33, 20.
+Isso nao e export de campos, contagem independente nem cobertura de relacoes.
+
+Base44: 14 unidades no Grupo das duas empresas; 2/2 empresas com match
+unico por CNPJ no backup restaurado, ambas no mesmo Grupo de destino.
+871 produtos com unidade de venda unica no Grupo. Das classes, 817 IDs
+sem alvo no recorte ativo da fonte e 54 omitidos. Nao inferir por nome.
+
+VPS: volume compartilhado com 21.627.904.000 bytes livres e 12.230.436
+inodes livres. Socket da HML responde, mas psql sem credencial falhou;
+a prova de Grupo vale no restauro. Proximo: revalidar pelo principal
+restrito existente, export privado de Unidades e ensaio via servico/API.
+Sem transferir, gravar ou repetir cargas. HML e operacional intactos.
 
 ## CPA3: codigo de Unidade e auditoria no restauro isolado
 
