@@ -125,6 +125,8 @@ test('commercial billing persists the NF instead of logging it', async () => {
   assert.doesNotMatch(painelHttp, /import[\s\S]{0,200}SYNTHETIC_PEDIDO_TITULOS/);
   assert.doesNotMatch(painelHttp, /publicarTitulos\(SYNTHETIC_/);
   assert.match(painelHttp, /publicarTitulos\(\[\], geracao\)/);
+  assert.match(painelHttp, /mapped\.code === 'HTTP_ERROR' && mapped\.status === 404/);
+  assert.doesNotMatch(painelHttp, /mapped\.code === 'HTTP_ERROR' \|\| mapped\.status === 404/);
   assert.match(fluxo, /assertFaturamentoDentroDoPedido/);
   assert.match(fluxo, /reservarEstoqueItemAprovacao/);
   assert.match(fluxo, /evaluatePedidoCredito|validarLimiteCredito/);

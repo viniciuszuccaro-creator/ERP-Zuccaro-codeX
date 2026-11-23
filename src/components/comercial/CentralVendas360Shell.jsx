@@ -42,6 +42,7 @@ const PedidoCanonicoPanel = React.lazy(() => import('./PedidoCanonicoPanel'));
 // Janelas externas: import dinâmico no clique (não passar React.lazy a openWindow — suspende fora de Suspense).
 
 const money = (value) => {
+  if (value === null || value === undefined || value === '') return '—';
   const n = Number(value);
   if (!Number.isFinite(n)) return '—';
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n);
@@ -96,10 +97,11 @@ export default function CentralVendas360Shell({
   canViewDocumentRef.current = canViewDocument;
   const selectionForView = canViewDocument ? selected : null;
   const clienteForView = canViewDocument ? selectedClienteId : null;
-  const contextoLabel = empresaAtual?.nome_fantasia
-    || empresaAtual?.razao_social
-    || grupoAtual?.nome
-    || (contexto === 'grupo' ? 'Grupo' : 'Empresa');
+  const estaNoGrupo = contexto === 'grupo' || (!empresaId && Boolean(groupId));
+  const contextoLabel = estaNoGrupo
+    ? (grupoAtual?.nome_do_grupo || grupoAtual?.nome || 'Grupo')
+    : (empresaAtual?.nome_fantasia || empresaAtual?.razao_social || 'Empresa');
+  const contextoEscopoLabel = estaNoGrupo ? 'Grupo' : 'Empresa';
 
   const onSelectDocument = useCallback((row, meta = {}) => {
     if (!canViewDocumentRef.current) return;
@@ -482,7 +484,10 @@ export default function CentralVendas360Shell({
         role="status"
       >
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-700">
-          <span>Empresa: <strong className="text-sky-950">{contextoLabel}</strong></span>
+          <span>
+            {contextoEscopoLabel}:{' '}
+            <strong className="text-sky-950">{contextoLabel}</strong>
+          </span>
           <span>
             Cliente:{' '}
             <strong className={clienteNome ? 'text-sky-950' : 'text-slate-400'}>

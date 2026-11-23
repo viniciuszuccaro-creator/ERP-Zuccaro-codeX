@@ -142,9 +142,11 @@ export default function FechamentoPedidoFinanceiroHttp({ formData, onTitulosChan
         const mapped = mapPedidoFinanceiroHttpError(error);
         setCentros([]);
         setPlanos([]);
-        setAviso(mapped.message + (mapped.code === 'HTTP_ERROR' || mapped.status === 404
+        // Só sugere contrato não publicado em 404 genérico (HTTP_ERROR), não em PEDIDO_NAO_ENCONTRADO etc.
+        const unpublishedHint = mapped.code === 'HTTP_ERROR' && mapped.status === 404
           ? ' (GET /vinculos-contabeis ainda pendente no servidor — Codex.)'
-          : ''));
+          : '';
+        setAviso(mapped.message + unpublishedHint);
       })
       .finally(() => {
         if (!ac.signal.aborted && geracao === operacaoGeracaoRef.current) setLoadingVinculos(false);

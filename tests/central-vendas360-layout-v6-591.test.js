@@ -202,7 +202,10 @@ test('CentralVendas360Shell: faixa, situações, grades dual, Cliente360', () =>
   assert.match(parts, /central360-grade-revenda/);
   assert.match(parts, /tabular-nums/);
   assert.match(parts, /columns=\{\['item', 'descricao', 'qtde', 'un', 'peso', 'unit', 'desc', 'total'\]\}/);
+  assert.match(parts, /value === null \|\| value === undefined \|\| value === ''/);
   assert.match(parts, /focus-visible:ring-2 focus-visible:ring-sky-500/);
+  assert.match(src, /nome_do_grupo/);
+  assert.match(src, /contextoEscopoLabel/);
   assert.match(parts, /central360-acoes-rapidas/);
   assert.match(parts, /central360-qa-desmembrar/);
   assert.match(src, /central360-pagamento-condicao-alerta|Condição pendente/);

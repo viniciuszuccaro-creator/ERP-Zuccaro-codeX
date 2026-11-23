@@ -32,6 +32,8 @@ import { partitionCentralItens } from './centralVendas360Layout';
 const CentralCliente360Panel = React.lazy(() => import('./CentralCliente360Panel'));
 
 const money = (value) => {
+  // null/'' ≠ zero confirmado (alinha sticky: ausente → "—").
+  if (value === null || value === undefined || value === '') return '—';
   const n = Number(value);
   if (!Number.isFinite(n)) return '—';
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n);
