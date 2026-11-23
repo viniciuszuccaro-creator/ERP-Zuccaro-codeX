@@ -1,3 +1,8 @@
+## Cursor — Central360 Bugbot baixas concorrentes (2026-11-23 America/Sao_Paulo)
+
+PR #599: serializa faturar/baixa (`mutacaoLockRef` + UI); sucesso POST não
+exige geração. Aceite HML = Codex (§7 + mapa CR).
+
 ## Cursor — Central360 Bugbot stale GET (2026-11-23 America/Sao_Paulo)
 
 PR #599 vs Casa `aaf6eac5a`: MERGEABLE, sem conflitos. Fix: abort GET títulos

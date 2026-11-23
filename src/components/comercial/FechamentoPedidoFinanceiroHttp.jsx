@@ -65,6 +65,8 @@ export default function FechamentoPedidoFinanceiroHttp({ formData, onTitulosChan
   const scopeAtGeracaoRef = useRef({ groupId: formGroupId || '', empresaId: formEmpresaId || '' });
   /** Abort do GET /titulos em voo — faturar/baixar não pode ser sobrescrito por 404/lista stale. */
   const titulosAbortRef = useRef(/** @type {AbortController | null} */ (null));
+  /** Trava síncrona: evita dois POSTs antes do re-render (state sozinho não serializa). */
+  const mutacaoLockRef = useRef(false);
   const reactId = useId();
   const onTitulosChangeRef = useRef(onTitulosChange);
   onTitulosChangeRef.current = onTitulosChange;
@@ -122,6 +124,7 @@ export default function FechamentoPedidoFinanceiroHttp({ formData, onTitulosChan
     setLoadingVinculos(false);
     setLoadingTitulos(false);
     tentativaBaixaRef.current = {};
+    mutacaoLockRef.current = false;
     if (typeof onTitulosChangeRef.current === 'function') onTitulosChangeRef.current([]);
   }, [pedidoId, formGroupId, formEmpresaId]);
 
@@ -210,6 +213,8 @@ export default function FechamentoPedidoFinanceiroHttp({ formData, onTitulosChan
     return <Badge variant="outline" className="text-slate-400" data-sit="indisponivel">—</Badge>;
   };
 
+  const mutacaoEmCurso = faturando || baixandoParcela != null;
+
   const handleFaturar = async () => {
     if (!pedidoId) {
       toast.error('Salve o pedido antes de faturar.');
@@ -219,12 +224,14 @@ export default function FechamentoPedidoFinanceiroHttp({ formData, onTitulosChan
       toast.error('Sem permissão Comercial.pedidos.faturar.');
       return;
     }
+    if (mutacaoEmCurso || mutacaoLockRef.current) return;
     if (!centroId || !planoId) {
       toast.error('Selecione centro de custo e plano de contas.');
       return;
     }
     const geracao = operacaoGeracaoRef.current;
     const scopedPedidoId = pedidoId;
+    mutacaoLockRef.current = true;
     setFaturando(true);
     setAviso('');
     try {
@@ -232,7 +239,8 @@ export default function FechamentoPedidoFinanceiroHttp({ formData, onTitulosChan
         centro_custo_id: centroId,
         plano_contas_id: planoId,
       });
-      if (geracao !== operacaoGeracaoRef.current || pedidoIdRef.current !== scopedPedidoId) return;
+      // Sucesso: publicar se o pedido ainda é o atual (geração sobe no publish — não dropar o POST).
+      if (pedidoIdRef.current !== scopedPedidoId) return;
       const rows = Array.isArray(result?.titulos) ? result.titulos : [];
       publicarTitulosAposMutacao(rows);
       toast.success(result?.replay
@@ -244,6 +252,7 @@ export default function FechamentoPedidoFinanceiroHttp({ formData, onTitulosChan
       setAviso(mapped.message);
       toast.error(mapped.message);
     } finally {
+      mutacaoLockRef.current = false;
       // Após mutação a geração sobe — limpar loading se o pedido ainda é o atual.
       if (pedidoIdRef.current === scopedPedidoId) setFaturando(false);
     }
@@ -259,6 +268,8 @@ export default function FechamentoPedidoFinanceiroHttp({ formData, onTitulosChan
       toast.error('Sem permissão Financeiro.contas_receber.baixar.');
       return;
     }
+    // Uma mutação por vez: evita POST paralelo cujo resultado seria descartado pelo bump de geração.
+    if (mutacaoEmCurso || mutacaoLockRef.current) return;
     const sit = classifyTituloSituacao(titulo);
     if (sit === 'quitado') {
       toast.message('Título já quitado (saldo zero).');
@@ -287,6 +298,7 @@ export default function FechamentoPedidoFinanceiroHttp({ formData, onTitulosChan
     });
     const geracao = operacaoGeracaoRef.current;
     const scopedPedidoId = pedidoId;
+    mutacaoLockRef.current = true;
     setBaixandoParcela(parcela);
     setAviso('');
     try {
@@ -295,7 +307,8 @@ export default function FechamentoPedidoFinanceiroHttp({ formData, onTitulosChan
         evento,
         valor: valorInformado,
       });
-      if (geracao !== operacaoGeracaoRef.current || pedidoIdRef.current !== scopedPedidoId) return;
+      // Sucesso: não exigir geração — o bump em publicarTitulosAposMutacao invalidaria o próprio POST.
+      if (pedidoIdRef.current !== scopedPedidoId) return;
       delete tentativaBaixaRef.current[parcela];
       const rows = Array.isArray(result?.titulos) ? result.titulos : [];
       publicarTitulosAposMutacao(rows);
@@ -316,7 +329,10 @@ export default function FechamentoPedidoFinanceiroHttp({ formData, onTitulosChan
       setAviso(mapped.message);
       toast.error(mapped.message);
     } finally {
-      if (pedidoIdRef.current === scopedPedidoId) setBaixandoParcela(null);
+      mutacaoLockRef.current = false;
+      if (pedidoIdRef.current === scopedPedidoId) {
+        setBaixandoParcela((cur) => (cur === parcela ? null : cur));
+      }
     }
   };
 
@@ -376,7 +392,7 @@ export default function FechamentoPedidoFinanceiroHttp({ formData, onTitulosChan
         <Button
           type="button"
           className="w-full bg-emerald-700 hover:bg-emerald-800"
-          disabled={!canFaturar || !pedidoId || !centroId || !planoId || faturando}
+          disabled={!canFaturar || !pedidoId || !centroId || !planoId || mutacaoEmCurso}
           onClick={handleFaturar}
           data-action="Comercial.pedidos.faturar"
           data-permission="Comercial.pedidos.faturar"
@@ -430,13 +446,13 @@ export default function FechamentoPedidoFinanceiroHttp({ formData, onTitulosChan
                         value={baixaValor[parcela] || ''}
                         onChange={(e) => setBaixaValor((prev) => ({ ...prev, [parcela]: e.target.value.replace(/[^0-9.]/g, '') }))}
                         aria-label={`Valor da baixa parcela ${parcela}`}
-                        disabled={!canBaixar || baixandoParcela === parcela}
+                        disabled={!canBaixar || mutacaoEmCurso}
                       />
                       <Button
                         type="button"
                         size="sm"
                         variant="outline"
-                        disabled={!canBaixar || baixandoParcela === parcela}
+                        disabled={!canBaixar || mutacaoEmCurso}
                         onClick={() => handleBaixar(titulo)}
                         data-action="Financeiro.contas_receber.baixar"
                         data-permission="Financeiro.contas_receber.baixar"

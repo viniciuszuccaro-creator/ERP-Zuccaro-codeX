@@ -1,3 +1,10 @@
+## Cursor — Central360 Bugbot baixas concorrentes (2026-11-23 America/Sao_Paulo)
+
+PR #599. Medium: baixas paralelas dropariam o 2º POST após bump de geração.
+Fix: `mutacaoLockRef` + `mutacaoEmCurso` (desabilita todas Baixar/Faturar);
+sucesso de POST publica só com `pedidoId` (não exige geração).
+Testes policy PASS. Sem Completo/deploy. CR canônica ainda bloqueada.
+
 ## Cursor — Central360 Bugbot stale GET + Desc. (2026-11-23 America/Sao_Paulo)
 
 PR #599. Merge com Casa `aaf6eac5a`: **MERGEABLE** (sem conflitos). Bugbot High:

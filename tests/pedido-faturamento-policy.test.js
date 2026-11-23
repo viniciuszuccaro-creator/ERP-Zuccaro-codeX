@@ -129,6 +129,11 @@ test('commercial billing persists the NF instead of logging it', async () => {
   assert.doesNotMatch(painelHttp, /mapped\.code === 'HTTP_ERROR' \|\| mapped\.status === 404/);
   assert.match(painelHttp, /publicarTitulosAposMutacao/);
   assert.match(painelHttp, /titulosAbortRef/);
+  assert.match(painelHttp, /mutacaoLockRef/);
+  assert.match(painelHttp, /mutacaoEmCurso/);
+  // Sucesso de baixa/faturar não deve dropar o POST por bump de geração.
+  assert.match(painelHttp, /Sucesso: não exigir geração|Sucesso: publicar se o pedido ainda é o atual/);
+  assert.match(painelHttp, /disabled=\{!canBaixar \|\| mutacaoEmCurso\}/);
   assert.match(fluxo, /assertFaturamentoDentroDoPedido/);
   assert.match(fluxo, /reservarEstoqueItemAprovacao/);
   assert.match(fluxo, /evaluatePedidoCredito|validarLimiteCredito/);
