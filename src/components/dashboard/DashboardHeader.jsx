@@ -4,10 +4,28 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "lucide-react";
 
-export default function DashboardHeader({ empresaAtual, estaNoGrupo, grupoAtual, autoRefresh, setAutoRefresh, periodo, setPeriodo, canSeeDashboard = true }) {
-  const contextoLabel = estaNoGrupo
-    ? (grupoAtual?.nome_do_grupo || 'Grupo')
-    : (empresaAtual?.nome_fantasia || empresaAtual?.razao_social || 'Empresa');
+export default function DashboardHeader({
+  empresaAtual,
+  estaNoGrupo,
+  grupoAtual,
+  autoRefresh,
+  setAutoRefresh,
+  periodo,
+  setPeriodo,
+  canSeeDashboard = true,
+  hasContextoAtivo,
+}) {
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const contextoValido = typeof hasContextoAtivo === 'boolean'
+    ? hasContextoAtivo
+    : Boolean(groupId && (estaNoGrupo || empresaId));
+  const contextoNome = estaNoGrupo
+    ? (grupoAtual?.nome_do_grupo || null)
+    : (empresaAtual?.nome_fantasia || empresaAtual?.razao_social || null);
+  const contextoLabel = contextoValido
+    ? (contextoNome || (estaNoGrupo ? 'Grupo' : 'Empresa'))
+    : null;
   return (
     <div className="w-full space-y-2" data-permission="Dashboard.visualizar" data-block="dashboard-header">
       <div
@@ -18,18 +36,22 @@ export default function DashboardHeader({ empresaAtual, estaNoGrupo, grupoAtual,
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-700">
           <span>
             Escopo:{' '}
-            <strong className="text-sky-950">
-              {estaNoGrupo ? 'Grupo (consolidado)' : 'Empresa'}
+            <strong className={contextoValido ? 'text-sky-950' : 'text-amber-800'}>
+              {contextoValido
+                ? (estaNoGrupo ? 'Grupo (consolidado)' : 'Empresa')
+                : 'incompleto'}
             </strong>
           </span>
           <span>
             Contexto:{' '}
-            <strong className={contextoLabel ? 'text-sky-950' : 'text-slate-400'}>
+            <strong className={contextoValido ? 'text-sky-950' : 'text-amber-800'}>
               {contextoLabel || 'selecione grupo/empresa'}
             </strong>
           </span>
-          <span className="text-slate-500">
-            KPIs e gráficos abaixo usam somente este escopo autorizado.
+          <span className={contextoValido ? 'text-slate-500' : 'text-amber-800'}>
+            {contextoValido
+              ? 'KPIs e gráficos abaixo usam somente este escopo autorizado.'
+              : 'Sem grupo/empresa autorizado — KPIs não carregam.'}
           </span>
         </div>
       </div>
@@ -37,9 +59,9 @@ export default function DashboardHeader({ empresaAtual, estaNoGrupo, grupoAtual,
         <div className="min-w-0">
           <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-1 truncate">Dashboard Executivo</h1>
           <p className="text-sm text-slate-600 truncate">
-            {estaNoGrupo
-              ? `Visão consolidada • ${contextoLabel}`
-              : contextoLabel}
+            {contextoValido
+              ? (estaNoGrupo ? `Visão consolidada • ${contextoLabel}` : contextoLabel)
+              : 'Selecione grupo ou empresa para carregar o dashboard'}
           </p>
         </div>
         <div className="flex flex-wrap gap-3 items-center">
