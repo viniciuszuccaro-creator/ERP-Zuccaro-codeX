@@ -27,7 +27,7 @@ export const consolidation81Hunks={
         "import {\n  HTTP_PILOT_ENTITIES,\n  isHttpExpedicaoEnabled as expedicaoFlag,\n  resolveErpApiBaseUrl,\n  resolveErpBackendMode,\n  resolveHttpPilotEntities,\n} from './runtimeBackend.js';"
       ],
       [
-        "export const isHttpCliente360Enabled = isHttpBackendMode && import.meta.env.VITE_ERP_HTTP_CLIENTE_360 === 'true';\n/** Listagem Cliente via BFF (CLIENTE_360 ou CLIENTE). Sem flag: store local ≠ API. */\nexport { isHttpClienteListEnabled };\n/** @type {boolean} */\nexport const isHttpClienteListMode = isHttpClienteListEnabled(import.meta.env);\n",
+        "export const isHttpCliente360Enabled = isHttpBackendMode && import.meta.env.VITE_ERP_HTTP_CLIENTE_360 === 'true';\n/** Opt-in do contrato §7 (faturar/títulos/baixa). HML permanece desligado até promote Casa. */\nexport const isHttpPedidoFinanceiroEnabled = isHttpBackendMode\n  && import.meta.env.VITE_ERP_HTTP_PEDIDO_FINANCEIRO === 'true';\n/** Listagem Cliente via BFF (CLIENTE_360 ou CLIENTE). Sem flag: store local ≠ API. */\nexport { isHttpClienteListEnabled };\n/** @type {boolean} */\nexport const isHttpClienteListMode = isHttpClienteListEnabled(import.meta.env);\n",
         "export const isHttpCliente360Enabled = isHttpBackendMode && import.meta.env.VITE_ERP_HTTP_CLIENTE_360 === 'true';\n"
       ]
     ]

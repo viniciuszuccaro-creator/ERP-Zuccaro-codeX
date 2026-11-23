@@ -32,6 +32,48 @@ export function clienteLocalOperationalRemainder(file, text) {
   const changes = file === 'src/api/httpApiClient.js' ? [
     ["import { createClienteLocalBatchHttpApi } from './clienteLocalBatchHttp.js';\n", ''],
     ['    ...createClienteLocalBatchHttpApi({ request, getScope, createHttpError }),\n', ''],
+    // listLocais fail-closed + contrato §7 (pedidos) — peel para ancestral operacional.
+    [
+      '      // Vazio confirmado (data:[]) ≠ envelope inválido/incompleto (nunca virar []).\n'
+      + '      if (!page || typeof page !== \'object\' || !Array.isArray(/** @type {{ data?: unknown }} */ (page).data)) {\n'
+      + '        throw createHttpError(502, { error: { code: \'CLIENTE_LOCAIS_LIST_INVALID\', message: \'Resposta de locais inválida\' } }, undefined);\n'
+      + '      }\n'
+      + '      const meta = /** @type {{ meta?: Record<string, unknown>, partial?: unknown, incomplete?: unknown }} */ (page);\n'
+      + '      if (meta.partial === true || meta.incomplete === true\n'
+      + '        || meta.meta?.partial === true || meta.meta?.incomplete === true) {\n'
+      + '        throw createHttpError(502, { error: { code: \'CLIENTE_LOCAIS_LIST_INCOMPLETE\', message: \'Resposta de locais incompleta\' } }, undefined);\n'
+      + '      }\n'
+      + '      const rows = /** @type {{ data: unknown[] }} */ (page).data;\n'
+      + '      return rows;\n',
+      '      const rows = page && typeof page === \'object\' && Array.isArray(/** @type {{ data?: unknown }} */ (page).data)\n'
+      + '        ? /** @type {{ data: unknown[] }} */ (page).data\n'
+      + '        : [];\n'
+      + '      return rows;\n',
+    ],
+    [
+      '    convertOrcamento(id, payload, { signal } = {}) { return request(`/api/v1/orcamentos/${encodeURIComponent(id)}/converter-pedido`, { method: \'POST\', body: payload, signal }); },\n'
+      + '    /** Contrato §7 — GET centros/planos da empresa (pode 404 até Codex publicar a rota). */\n'
+      + '    /** @param {string} id @param {{ signal?: AbortSignal }} [options] */\n'
+      + '    vinculosContabeis(id, { signal } = {}) {\n'
+      + '      return request(`/api/v1/pedidos/${encodeURIComponent(id)}/vinculos-contabeis`, { signal });\n'
+      + '    },\n'
+      + '    /** Contrato §7 — POST faturar (centro/plano); parcelas no servidor. */\n'
+      + '    /** @param {string} id @param {{ centro_custo_id: string, plano_contas_id: string }} payload @param {{ signal?: AbortSignal }} [options] */\n'
+      + '    faturar(id, payload, { signal } = {}) {\n'
+      + '      return request(`/api/v1/pedidos/${encodeURIComponent(id)}/faturar`, { method: \'POST\', body: payload, signal });\n'
+      + '    },\n'
+      + '    /** Contrato §7 — GET títulos (valores string decimal). */\n'
+      + '    /** @param {string} id @param {{ signal?: AbortSignal }} [options] */\n'
+      + '    titulos(id, { signal } = {}) {\n'
+      + '      return request(`/api/v1/pedidos/${encodeURIComponent(id)}/titulos`, { signal });\n'
+      + '    },\n'
+      + '    /** Contrato §7 — POST baixa (parcela + evento estável + valor). */\n'
+      + '    /** @param {string} id @param {{ parcela: number, evento: string, valor: string }} payload @param {{ signal?: AbortSignal }} [options] */\n'
+      + '    baixarTitulo(id, payload, { signal } = {}) {\n'
+      + '      return request(`/api/v1/pedidos/${encodeURIComponent(id)}/titulos/baixa`, { method: \'POST\', body: payload, signal });\n'
+      + '    },\n',
+      '    convertOrcamento(id, payload, { signal } = {}) { return request(`/api/v1/orcamentos/${encodeURIComponent(id)}/converter-pedido`, { method: \'POST\', body: payload, signal }); },\n',
+    ],
   ] : file === 'server/src/api/router.ts' ? [
     ['service.snapshot(ctxFromReq(req), req.params.clienteId, req.query.include_review === \'true\')',
       'service.snapshot(ctxFromReq(req), req.params.clienteId)'],
