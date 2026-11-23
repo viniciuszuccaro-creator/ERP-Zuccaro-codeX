@@ -833,7 +833,6 @@ export default function Dashboard() {
         empresaAtual={empresaAtual}
         estaNoGrupo={estaNoGrupo}
         grupoAtual={grupoAtual}
-        hasContextoAtivo={hasContextoAtivo}
         autoRefresh={autoRefresh}
         setAutoRefresh={(value) => {
           setAutoRefresh(value);
