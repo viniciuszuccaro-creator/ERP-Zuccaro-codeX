@@ -1,3 +1,17 @@
+## CPA3: pacote dos 11 Setores pronto para aprovacao
+
+Manifesto 67256abe, executor e82801a4 e delta 2ca2e629 centralizados
+na area privada, hashes conferidos. Kit exato no PG16 restaurado: 11
+reaproveitados no replay; reversao 8/2 inativos de origem/1 editado.
+RLS rejeitou leitura cruzada. HML a305a143: perfil com criar, inativar
+e visualizar nas duas empresas; grants auxiliares existentes conferidos.
+
+DDL candidato somente Setor de 005/038 e ACL da tabela por empresa.
+Avulso pos-Unidades 86f0c514, 47.646.720 bytes, restore 19 tabelas
+e ACK externo por SHA. Sem retencao; agendador nao alterado.
+Revalidar identidade, igualdade com backup e folga antes da escrita.
+Aguardando aprovacao de lote e delta. Nenhum DDL, carga ou deploy HML.
+
 ## CPA3: retomada e reversao dos 11 Setores no clone
 
 Manifesto SetorAtividade 67256abe conferido na VPS; 11 no PG16 isolado.
