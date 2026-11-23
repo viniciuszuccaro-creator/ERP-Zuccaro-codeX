@@ -1,3 +1,17 @@
+## CPA3: 14 unidades aplicadas e conciliadas na HML
+
+Removido somente o indice binario reconstruivel pkgcache.bin do APT.
+Ganho observado 59.416.576 bytes; sem tocar pacotes ou reversoes.
+Backup 044e14ad revalidado por SHA/ACK e igualdade viva em 18 tabelas.
+DDL apenas de Unidade e ACL de sua tabela; sem ampliar grants existentes
+de sequencia, perfil ou auditoria. Escopo Grupo CPA, RLS forcada.
+
+Manifesto 43dfafc5: 14 inseridas, 14 conciliadas, 14 checkpoints,
+14 auditorias create; replay 14 reutilizadas. 17.472 mestres preservados.
+Menor folga amostrada na carga 22.831.448.064 bytes. Recibo privado.
+Reversao por checkpoint/postimage preservada, nao executada na HML.
+HML API a305a143; sem deploy ou mudanca no ERP operacional.
+
 ## CPA3: Unidades autorizadas, preflight bloqueado por margem
 
 Manifesto 43dfafc5: 14 unidades, 7.265 bytes, SHA e modo 600 conferidos
