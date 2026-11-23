@@ -1,3 +1,8 @@
+## Cursor — merge #599 com Casa tip af375376d (2026-11-23 America/Sao_Paulo)
+
+Conflitos só STATUS/HANDOFF — prepends Cursor #599 + CPA3 Casa `af375376d`.
+Sem conflito de código.
+
 ## Cursor — Dashboard 1º ganho Base44 (2026-11-23 America/Sao_Paulo)
 
 PR #599: alertas acionáveis + KPI strip + lazy secundários. Evidência
@@ -72,6 +77,23 @@ frontend/Central360; Completo/endereços/HML/deploy = Casa. Contrato
 financeiro clone documentado no HANDOFF §7; UI HTTP permanece indisponível
 até promote. P1 #598: lote 5.423 = encerrado (5384 revisão + 39 histórico);
 **não reaplicar** — alinhado ao recibo deste tip.
+
+## CPA3: Grupo fixado e 14 unidades ensaiadas em PostgreSQL
+
+UUID do Grupo fixado privadamente apos leitura pelo principal efetivo
+da HML a305a143, sem superuser/BYPASSRLS. Candidato pinado: 14 linhas.
+No PG16 restaurado sem rede, prova SQL com papel restrito: 14 insercoes,
+14 auditorias, repeticao na mesma transacao sem novas linhas, rollback
+com zero auditorias do ensaio e 17.472 mestres preservados.
+
+Nao e ensaio pelo importador, checkpoint apos commit ou reversao de
+dados gravados. Falta acoplar manifesto ao fluxo canonico com ACL efetiva
+e validar backup fresco antes do pedido de escrita. Nenhuma carga HML.
+
+Produto: grupo/setor opcionais no schema generico; importador legado
+continua exigindo prova de classe, tipo e unidade. Sem liberar por omissao.
+Backup: timer ativo, servico falho; nenhuma alteracao no agendador.
+
 
 ## CPA3: manifesto privado e prova HTTP das 14 unidades
 
