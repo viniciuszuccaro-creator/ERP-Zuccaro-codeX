@@ -251,3 +251,10 @@ Não tocar sem coordenação: `CadastroClienteCompleto.jsx`, payload sync locais
 ---
 
 *Gerado na retomada do agent bc-d973626e em 2026-11-23 (America/Sao_Paulo). Evidências privadas e recibos permanecem fora do GitHub.*
+
+## 13. Retomada frontend 23/11 (DOCX Central 360)
+
+Branch: `cursor/comercial-360-frontend-v6-3cfd`.
+Referência visual: `docs/evidence/comercial-360-ref-v6-docx-20261123.png` (DOCX v6).
+Entregue no shell existente: barra de contexto, fluxo, ações rápidas, saldo CR.
+Faturamento HTTP HML ainda indisponível (mensagem explícita).

@@ -26,6 +26,7 @@ import useEntityListSorted from "@/components/lib/useEntityListSorted";
 import useBackendPagination from "@/components/lib/useBackendPagination";
 import usePersistedSort from "@/components/lib/usePersistedSort";
 import { isSafeHttpUrl } from "@/lib/utils";
+import { isHttpBackendMode } from "@/api/base44Client";
 import {
   buildFinanceiroQueryScopeKey,
   buildFinanceiroTitulosScopeSwitchReset,
@@ -435,6 +436,15 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
   const content = (
     <div className="space-y-1.5">
       <HeaderReceberCompacto />
+      {isHttpBackendMode ? (
+        <Alert className="border-amber-200 bg-amber-50" data-block="contas-receber-pedido-http-gate">
+          <AlertDescription className="text-xs text-amber-950">
+            Baixa por pedido/parcela canônica (<code className="font-mono">POST /api/v1/pedidos/:id/titulos/baixa</code>)
+            {' '}ainda não está publicada nesta HML — a grade usa ContaReceber existente. Exiba recebido/saldo quando a API informar;
+            sem inventar quitação. Promote e vínculo pedido↔título: Codex.
+          </AlertDescription>
+        </Alert>
+      ) : null}
       <KPIsReceber totais={totais} />
       <FiltrosReceber
         searchTerm={searchTerm}

@@ -13,12 +13,15 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import {
   CENTRAL_VENDAS360_COLUMNS,
   CENTRAL_VENDAS360_DEFAULT_SITUACAO,
+  CENTRAL_VENDAS360_FLUXO_STEPS,
   CENTRAL_VENDAS360_SITUACOES,
   CENTRAL_VENDAS360_TITLE,
   centralColumnPrefsStorageKey,
+  invokeCentralDataAction,
   isCentralVendas360Module,
   partitionCentralItens,
   readCentralColumnHiddenKeys,
+  resolveCentralFluxoState,
   sumCentralPesoKg,
   writeCentralColumnHiddenKeys,
 } from '../src/components/comercial/centralVendas360Layout.js';
@@ -51,21 +54,23 @@ test('Shell invalida callback antigo apos negar e restaurar permissao no mesmo c
 test('Shell real oculta selecao carregada sem permissao da entidade ativa', async () => {
   const require = createRequire(import.meta.url);
   const source = read('src/components/comercial/CentralVendas360Shell.jsx');
+  const partsSrc = read('src/components/comercial/CentralVendas360ShellParts.jsx');
   const marker = 'const [selected, setSelected] = useState(null);';
   assert.ok(source.includes(marker));
   // Seed somente do estado previamente carregado; render e policies continuam reais.
   const seeded = source.replace(marker, 'const [selected, setSelected] = useState(globalThis.__centralFixture.row);')
     .replace('useState(CENTRAL_VENDAS360_DEFAULT_SITUACAO)', 'useState(globalThis.__centralFixture.situacao)');
-  const uiNames = [...new Set([...source.matchAll(/import\s*\{([^}]+)\}\s*from\s*'@\/components\/ui\/[^']+'/g)]
+  const uiNames = [...new Set([...`${source}\n${partsSrc}`.matchAll(/import\s*\{([^}]+)\}\s*from\s*'@\/components\/ui\/[^']+'/g)]
     .flatMap((m) => m[1].split(',').map((s) => s.trim()).filter(Boolean)))];
-  const icons = [...source.matchAll(/import\s*\{([^}]+)\}\s*from\s*'lucide-react'/g)]
-    .flatMap((m) => m[1].split(',').map((s) => s.trim()).filter(Boolean));
+  const icons = [...new Set([...`${source}\n${partsSrc}`.matchAll(/import\s*\{([^}]+)\}\s*from\s*'lucide-react'/g)]
+    .flatMap((m) => m[1].split(',').map((s) => s.trim()).filter(Boolean)))];
   const mocks = {
     ui: `import React from 'react';const leaf=({children})=>React.createElement('div',null,children);${uiNames.map((n) => `export const ${n}=leaf;`).join('')}`,
     icons: icons.map((n) => `export const ${n}=()=>null;`).join(''),
     context: "export const useContextoVisual=()=>({grupoAtual:{id:'synthetic-group'},contexto:'empresa'});",
     window: "export const useWindow=()=>({openWindow:()=>{throw Error('Unexpected external action')}});",
     session: "export const readErpHttpSession=()=>({token:'synthetic-token'});",
+    sonner: 'export const toast={message(){},error(){},success(){}};',
     leaf: 'export default()=>null;',
   };
   const built = await build({
@@ -74,6 +79,7 @@ test('Shell real oculta selecao carregada sem permissao da entidade ativa', asyn
     plugins: [{ name: 'real-shell-synthetic-leaves', setup(b) {
       b.onResolve({ filter: /^react$/ }, () => ({ path: require.resolve('react'), external: true }));
       b.onResolve({ filter: /^lucide-react$/ }, () => ({ path: 'icons', namespace: 'fixture' }));
+      b.onResolve({ filter: /^sonner$/ }, () => ({ path: 'sonner', namespace: 'fixture' }));
       b.onResolve({ filter: /^\.\/(OrcamentosTab|PedidoCanonicoPanel|CentralCliente360Panel|CentralAprovacoesManager|PedidosEntregaTab)$/ }, () => ({ path: 'leaf', namespace: 'fixture' }));
       b.onResolve({ filter: /^@\// }, (a) => ({
         path: a.path.includes('/ui/') ? 'ui' : a.path.includes('useContextoVisual') ? 'context'
@@ -91,7 +97,7 @@ test('Shell real oculta selecao carregada sem permissao da entidade ativa', asyn
     ['PRODUCAO', 'orcamento', false],
   ]) {
     const module = { exports: {} };
-    runInNewContext(built.outputFiles[0].text, { module, exports: module.exports, require, console,
+    runInNewContext(built.outputFiles[0].text, { module, exports: module.exports, require, console, process,
       __centralFixture: { situacao, row: { id: 'PRIVATE-SELECTION', numero: 'PRIVATE-SELECTION',
         condicao_pagamento_id: 'PRIVATE-CONDITION-ID', condicao_pagamento_nome: 'PRIVATE-CONDITION',
         tabela_preco_id: 'PRIVATE-TABLE-ID', tabela_preco_nome: 'PRIVATE-TABLE',
@@ -170,13 +176,18 @@ test('Comercial launchpad monta CentralVendas360Shell; PedidosTab HTTP permanece
 
 test('CentralVendas360Shell: faixa, situações, grades dual, Cliente360', () => {
   const src = read('src/components/comercial/CentralVendas360Shell.jsx');
+  const parts = read('src/components/comercial/CentralVendas360ShellParts.jsx');
   assert.match(src, /data-layout="versao6"/);
   assert.match(src, /central360-faixa-compacta/);
   assert.match(src, /central360-situacoes/);
-  assert.match(src, /central360-grades-simultaneas/);
-  assert.match(src, /central360-grade-corte/);
-  assert.match(src, /central360-grade-revenda/);
-  assert.match(src, /CentralCliente360Panel/);
+  assert.match(src, /central360-contexto-venda/);
+  assert.match(src, /central360-fluxo-pedido/);
+  assert.match(src, /central360-proxima-acao/);
+  assert.match(parts, /central360-grades-simultaneas/);
+  assert.match(parts, /central360-grade-corte/);
+  assert.match(parts, /central360-grade-revenda/);
+  assert.match(parts, /central360-acoes-rapidas/);
+  assert.match(parts, /CentralCliente360Panel/);
   assert.match(src, /OrcamentosTab/);
   assert.match(src, /PedidoCanonicoPanel/);
   assert.match(src, /Atendimento Unificado/);
@@ -184,6 +195,45 @@ test('CentralVendas360Shell: faixa, situações, grades dual, Cliente360', () =>
   assert.match(src, /Entregas do Dia/);
   assert.match(src, /Aprovações pendentes/);
   assert.doesNotMatch(src, /CentralVendas360Nova|OrcamentosV2/);
+  assert.doesNotMatch(parts, /CentralVendas360Nova|OrcamentosV2/);
+});
+
+test('resolveCentralFluxoState mapeia situação sem inventar status', () => {
+  assert.equal(CENTRAL_VENDAS360_FLUXO_STEPS.length, 6);
+  const aberto = resolveCentralFluxoState({ id: 'ORCAMENTOS_ABERTOS', kind: 'orcamento' }, { status: 'EM_ABERTO' });
+  assert.equal(aberto.activeIndex, 0);
+  assert.match(aberto.nextLabel, /Validação/);
+  const producao = resolveCentralFluxoState({ id: 'PRODUCAO', kind: 'pedido' }, { status: 'EM_PRODUCAO' });
+  assert.equal(producao.activeIndex, 3);
+  const entregues = resolveCentralFluxoState({ id: 'ENTREGUES', kind: 'pedido' }, { status: 'ENTREGUE' });
+  assert.equal(entregues.activeIndex, 5);
+});
+
+test('invokeCentralDataAction só clica botão habilitado existente', () => {
+  const root = {
+    querySelector(sel) {
+      if (sel === '[data-action="central360-imprimir"]') {
+        return { disabled: false, getAttribute: () => null, click() { this.clicked = true; }, clicked: false };
+      }
+      if (sel === '[data-action="central360-fechar-orcamento"]') {
+        return { disabled: true, getAttribute: () => null, click() { this.clicked = true; }, clicked: false };
+      }
+      return null;
+    },
+  };
+  assert.equal(invokeCentralDataAction('central360-imprimir', root), true);
+  assert.equal(invokeCentralDataAction('central360-fechar-orcamento', root), false);
+  assert.equal(invokeCentralDataAction('central360-inexistente', root), false);
+});
+
+test('TabelaReceber exibe Recebido/Saldo fail-closed; ContasReceber informa gate HTTP', () => {
+  const tabela = read('src/components/financeiro/contas-receber/TabelaReceber.jsx');
+  const tab = read('src/components/financeiro/ContasReceberTab.jsx');
+  assert.match(tabela, /key: 'valor_recebido'/);
+  assert.match(tabela, /key: 'saldo'/);
+  assert.match(tabela, /≠ zero/);
+  assert.match(tab, /contas-receber-pedido-http-gate/);
+  assert.match(tab, /titulos\/baixa/);
 });
 
 test('OrcamentosTab: tabela 12 colunas no centralLayout; seleção sem gravação', () => {

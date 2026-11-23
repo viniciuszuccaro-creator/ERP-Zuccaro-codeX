@@ -71,6 +71,43 @@ export default function TabelaReceber({
       }
     },
     { key: 'valor', label: 'Valor', isNumeric: true, render: (r) => (<span className="font-semibold">R$ {(r.valor||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>) },
+    { key: 'valor_recebido', label: 'Recebido', isNumeric: true, render: (r) => {
+        const raw = r.valor_recebido;
+        if (raw === null || raw === undefined || raw === '') {
+          return <span className="text-xs text-slate-400" title="Campo não informado pela API (≠ zero)">—</span>;
+        }
+        const n = Number(raw);
+        if (!Number.isFinite(n)) {
+          return <span className="text-xs text-slate-400">—</span>;
+        }
+        return <span className="text-sm">R$ {n.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>;
+      }
+    },
+    { key: 'saldo', label: 'Saldo', isNumeric: true, render: (r) => {
+        // Preferir saldo canônico da API; senão derivar só com valor + recebido finitos.
+        if (r.saldo !== null && r.saldo !== undefined && r.saldo !== '') {
+          const s = Number(r.saldo);
+          if (Number.isFinite(s)) {
+            return (
+              <span className={`font-semibold ${s <= 0 ? 'text-green-700' : 'text-amber-800'}`}>
+                R$ {s.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </span>
+            );
+          }
+        }
+        const valor = Number(r.valor);
+        const recebido = Number(r.valor_recebido);
+        if (!Number.isFinite(valor) || !Number.isFinite(recebido)) {
+          return <span className="text-xs text-slate-400" title="Saldo indisponível sem valor/recebido da API">—</span>;
+        }
+        const saldo = valor - recebido;
+        return (
+          <span className={`font-semibold ${saldo <= 0 ? 'text-green-700' : 'text-amber-800'}`} data-block="conta-receber-saldo">
+            R$ {saldo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+          </span>
+        );
+      }
+    },
     { key: 'status', label: 'Status', render: (r) => (<Badge className={statusColors[r.status] || 'bg-gray-100 text-gray-800'}>{r.status}</Badge>) },
     { key: 'canal_origem', label: 'Canal', render: (r) => (<Badge variant="outline" className="text-xs">{r.canal_origem || 'Manual'}</Badge>) },
     { key: 'marketplace', label: 'Marketplace', render: (r) => (r.marketplace_origem && r.marketplace_origem !== 'Nenhum' ? (<Badge className="bg-purple-100 text-purple-700 text-xs">{r.marketplace_origem}</Badge>) : <span className="text-xs text-slate-400">-</span>) },

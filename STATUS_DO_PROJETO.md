@@ -1,3 +1,12 @@
+## Cursor — Central360 frontend v6 (DOCX) (2026-11-23 America/Sao_Paulo)
+
+Branch `cursor/comercial-360-frontend-v6-3cfd`. Melhoria no shell existente:
+contexto sticky da venda, fluxo visual, Ações Rápidas (reusa toolbar),
+grades/Cliente360 em `CentralVendas360ShellParts`, Contas a Receber com
+Recebido/Saldo fail-closed + gate HTTP, FechamentoFinanceiro mensagem HML.
+Testes `central-vendas360-layout-v6-591` 16/16 PASS. Sem Completo/deploy.
+Próximo: browser desktop/mobile + promote financeiro Codex.
+
 ## Cursor — retomada bc-d973626e + HANDOFF.md (2026-11-23 America/Sao_Paulo)
 
 Agent anterior `bc-d973626e` travou no limite de uso em 15/11 no tip PR596

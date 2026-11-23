@@ -18,7 +18,8 @@ import { assertFaturamentoDentroDoPedido } from '@/components/lib/pedidoFaturame
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { isHttpBackendMode } from '@/api/base44Client';
 
-const faturamentoHttpIndisponivel = 'Faturamento indisponível neste ambiente: o pedido não pode gerar títulos pela API atual.';
+const faturamentoHttpIndisponivel =
+  'Faturamento/títulos/baixa HTTP ainda não habilitados nesta HML: o contrato do clone (/api/v1/pedidos/:id/faturar|titulos) aguarda promote Codex. Sem simular sucesso.';
 
 /**
  * V21.1 - Aba 7: Fechamento Financeiro

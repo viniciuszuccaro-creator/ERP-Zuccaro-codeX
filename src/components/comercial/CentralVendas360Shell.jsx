@@ -2,6 +2,7 @@ import React, { Suspense, useCallback, useEffect, useMemo, useRef, useState } fr
 import {
   AlertCircle,
   Bot,
+  CheckCircle2,
   ChevronRight,
   LayoutDashboard,
   MapPinned,
@@ -12,19 +13,12 @@ import {
   ShieldCheck,
   ShoppingCart,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import { useWindow } from '@/components/lib/useWindow';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import { readErpHttpSession } from '@/api/erpHttpSession';
@@ -35,113 +29,25 @@ import {
   CENTRAL_VENDAS360_DEFAULT_SITUACAO,
   CENTRAL_VENDAS360_SITUACOES,
   CENTRAL_VENDAS360_TITLE,
+  invokeCentralDataAction,
   partitionCentralItens,
+  resolveCentralFluxoState,
   situacaoById,
   sumCentralPesoKg,
 } from './centralVendas360Layout';
+import { Cliente360Aside, FaixaTile, GradesSimultaneas } from './CentralVendas360ShellParts';
 
 const OrcamentosTab = React.lazy(() => import('./OrcamentosTab'));
 const PedidoCanonicoPanel = React.lazy(() => import('./PedidoCanonicoPanel'));
-const CentralCliente360Panel = React.lazy(() => import('./CentralCliente360Panel'));
 const CentralAprovacoesManager = React.lazy(() => import('./CentralAprovacoesManager'));
 const PedidosEntregaTab = React.lazy(() => import('./PedidosEntregaTab'));
+const ContasReceberTab = React.lazy(() => import('@/components/financeiro/ContasReceberTab'));
 
 const money = (value) => {
   const n = Number(value);
   if (!Number.isFinite(n)) return '—';
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n);
 };
-
-const dateLabel = (value) => {
-  if (!value) return '—';
-  try {
-    return new Intl.DateTimeFormat('pt-BR').format(new Date(value));
-  } catch {
-    return '—';
-  }
-};
-
-function GradesSimultaneas({ itens, hasSelection = false }) {
-  const list = Array.isArray(itens) ? itens : [];
-  const { corte, revenda } = useMemo(() => partitionCentralItens(list), [list]);
-  const semItensCarregados = hasSelection && list.length === 0;
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 min-h-[160px]" data-block="central360-grades-simultaneas">
-      {semItensCarregados ? (
-        <div
-          className="lg:col-span-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900"
-          data-block="central360-grades-sem-itens"
-          role="status"
-        >
-          Itens ainda não disponíveis nesta seleção. Aguarde a consulta ou reabra o documento. Grades vazias não confirmam estoque zerado.
-        </div>
-      ) : null}
-      <GradeItens
-        title="Corte e Dobra / Montagem"
-        rows={corte}
-        testId="central360-grade-corte"
-        columns={['item', 'descricao', 'qtde', 'un', 'peso', 'total']}
-      />
-      <GradeItens
-        title="Materiais de Revenda"
-        rows={revenda}
-        testId="central360-grade-revenda"
-        columns={['item', 'descricao', 'qtde', 'un', 'unit', 'total']}
-      />
-    </div>
-  );
-}
-
-function GradeItens({ title, rows, testId, columns }) {
-  return (
-    <div className="border border-sky-100 rounded-md bg-white overflow-hidden flex flex-col min-h-[140px]" data-testid={testId}>
-      <div className="px-3 py-1.5 bg-sky-50 border-b border-sky-100 flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-sky-900">{title}</h3>
-        <Badge variant="secondary" className="text-[10px]">{rows.length}</Badge>
-      </div>
-      <div className="overflow-auto flex-1">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              {columns.includes('item') && <TableHead className="text-xs">Item</TableHead>}
-              {columns.includes('descricao') && <TableHead className="text-xs">Descrição</TableHead>}
-              {columns.includes('qtde') && <TableHead className="text-xs">Qtde</TableHead>}
-              {columns.includes('un') && <TableHead className="text-xs">Un.</TableHead>}
-              {columns.includes('peso') && <TableHead className="text-xs">Peso (Kg)</TableHead>}
-              {columns.includes('unit') && <TableHead className="text-xs">Valor Unit.</TableHead>}
-              {columns.includes('total') && <TableHead className="text-xs text-right">Total</TableHead>}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {rows.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} className="text-xs text-slate-400 text-center py-6">
-                  Sem itens nesta grade para a seleção atual.
-                </TableCell>
-              </TableRow>
-            ) : rows.map((item, idx) => (
-              <TableRow key={item.id || `${idx}-${item.produto_id || item.descricao}`}>
-                <TableCell className="text-xs font-mono">{item.codigo || item.produto_codigo || idx + 1}</TableCell>
-                <TableCell className="text-xs">{item.descricao || item.nome || '—'}</TableCell>
-                <TableCell className="text-xs">{item.quantidade ?? '—'}</TableCell>
-                <TableCell className="text-xs">{item.unidade_sigla || item.unidade || '—'}</TableCell>
-                {columns.includes('peso') && (
-                  <TableCell className="text-xs">
-                    {item.peso_kg ?? item.peso ?? '—'}
-                  </TableCell>
-                )}
-                {columns.includes('unit') && (
-                  <TableCell className="text-xs">{money(item.preco_unitario ?? item.valor_unitario)}</TableCell>
-                )}
-                <TableCell className="text-xs text-right font-medium">{money(item.total ?? item.subtotal)}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-    </div>
-  );
-}
 
 /**
  * Shell visual versão 6 sobre OrcamentosTab + PedidoCanonicoPanel + CentralCliente360Panel.
@@ -255,9 +161,39 @@ export default function CentralVendas360Shell({
   };
 
   const pesoSelecionado = sumCentralPesoKg(selectionForView?.itens);
+  const fluxo = useMemo(
+    () => resolveCentralFluxoState(situacao, selectionForView),
+    [situacao, selectionForView],
+  );
+  const clienteNome = selectionForView?.cliente_nome
+    || selectionForView?.nome_cliente
+    || selectionForView?.cliente
+    || null;
+  const proximaAcaoLabel = situacao.kind === 'orcamento'
+    ? (selectionForView?.status === 'EM_ABERTO' ? 'Fechar Orçamento' : 'Reabrir / editar documento')
+    : (situacao.id === 'PRODUCAO' || situacao.id === 'ENTREGA' || situacao.id === 'RETIRA'
+      ? 'Ajustar Pedido (tela da situação)'
+      : fluxo.nextLabel);
+
+  const runCentralAction = useCallback((action, fallbackMessage) => {
+    const ok = invokeCentralDataAction(action);
+    if (!ok) {
+      toast.message(fallbackMessage || 'Ação indisponível nesta visão ou sem seleção.');
+    }
+  }, []);
+
+  const openContasReceber = () => {
+    openWindow(ContasReceberTab, { windowMode: true }, {
+      title: 'Contas a Receber',
+      width: 1400,
+      height: 850,
+      uniqueKey: 'central360-contas-receber',
+    });
+  };
+
   const mainPanel = (
     <div className="w-full h-full min-h-0 flex flex-col gap-2 overflow-hidden">
-      <Suspense fallback={<div className="flex-1 flex items-center justify-center text-sm text-slate-500">Carregando superfície…</div>}>
+      <Suspense fallback={<div className="flex-1 flex items-center justify-center text-sm text-slate-500" role="status">Carregando superfície…</div>}>
         {situacao.kind === 'orcamento' ? (
           <OrcamentosTab
             groupId={groupId}
@@ -492,56 +428,127 @@ export default function CentralVendas360Shell({
         </Badge>
       </div>
 
-      {/* Centro + Cliente360 */}
-      <div className="flex-1 min-h-0">
-        <ResizablePanelGroup direction="horizontal" className="w-full h-full rounded-md border border-sky-100 bg-white">
-          <ResizablePanel defaultSize={clientePanelOpen ? 72 : 100} minSize={45}>
-            <div className="h-full overflow-hidden p-2">{mainPanel}</div>
-          </ResizablePanel>
-          {clientePanelOpen && (
-            <>
-              <ResizableHandle withHandle className="bg-sky-50" />
-              <ResizablePanel defaultSize={28} minSize={18} maxSize={42}>
-                <aside className="h-full overflow-auto border-l border-sky-100 bg-white" data-block="central360-cliente-panel">
-                  <div className="px-3 py-2 border-b border-sky-100 flex items-center justify-between bg-sky-50">
-                    <h3 className="text-sm font-semibold text-sky-950">Cliente 360°</h3>
-                    <ChevronRight className="w-4 h-4 text-sky-600" aria-hidden />
-                  </div>
-                  {!clienteForView ? (
-                    <p className="text-xs text-slate-500 p-3">
-                      Selecione um orçamento/pedido para carregar o Cliente360 contextual (RBAC do módulo dono).
-                    </p>
-                  ) : (
-                    <Suspense fallback={<p className="p-3 text-xs text-slate-500">Carregando Cliente360…</p>}>
-                      <CentralCliente360Panel
-                        clienteId={clienteForView}
-                        groupId={groupId}
-                        empresaId={empresaId}
-                        actorId={actorId}
-                        actorEmail={actorEmail}
-                        token={readErpHttpSession()?.token || ''}
-                      />
-                    </Suspense>
-                  )}
-                  <div className="p-2 border-t border-sky-100 grid grid-cols-2 gap-1" data-block="central360-atalhos-comunicacao">
-                    <Button type="button" size="sm" variant="outline" className="text-xs" onClick={openHub} data-action="central360-com-atendimento">
-                      Atendimento
-                    </Button>
-                    <Button type="button" size="sm" variant="outline" className="text-xs" onClick={openChatbot} data-action="central360-com-chatbot">
-                      Chatbot
-                    </Button>
-                    <Button type="button" size="sm" variant="outline" className="text-xs" disabled title="E-mail: use o provedor conectado do Hub" data-action="central360-com-email">
-                      E-mail
-                    </Button>
-                    <Button type="button" size="sm" variant="outline" className="text-xs" disabled title="GoTo: apenas com provedor conectado" data-action="central360-com-goto">
-                      GoTo
-                    </Button>
-                  </div>
-                </aside>
-              </ResizablePanel>
-            </>
-          )}
-        </ResizablePanelGroup>
+      {/* Contexto da venda — sempre visível durante a operação */}
+      <div
+        className="mb-2 sticky top-0 z-10 rounded-md border border-sky-200 bg-white/95 backdrop-blur px-3 py-2 shadow-sm"
+        data-block="central360-contexto-venda"
+        role="status"
+      >
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-700">
+          <span>Empresa: <strong className="text-sky-950">{contextoLabel}</strong></span>
+          <span>
+            Cliente:{' '}
+            <strong className={clienteNome ? 'text-sky-950' : 'text-slate-400'}>
+              {clienteNome || (selectionForView ? 'sem nome na seleção' : 'selecione um documento')}
+            </strong>
+          </span>
+          <span>
+            Condição:{' '}
+            <strong className={selectionForView?.condicao_pagamento_id ? 'text-sky-950' : 'text-amber-800'}>
+              {selectionForView?.condicao_pagamento_id
+                ? (selectionForView.condicao_pagamento_nome || selectionForView.condicao_pagamento_codigo || 'definida')
+                : (selectionForView ? 'pendente' : '—')}
+            </strong>
+          </span>
+          <span>
+            Total:{' '}
+            <strong className="font-mono text-sky-950">
+              {selectionForView
+                ? (selectionForView.total == null && selectionForView.total !== 0 ? '—' : money(selectionForView.total))
+                : '—'}
+            </strong>
+          </span>
+          <span className="ml-auto text-sky-800 font-medium" data-block="central360-proxima-acao">
+            {selectionForView ? proximaAcaoLabel : 'Selecione um orçamento/pedido'}
+          </span>
+        </div>
+      </div>
+
+      {/* Fluxo do pedido (visual — status do backend / situação da faixa) */}
+      <nav
+        className="mb-2 overflow-x-auto"
+        data-block="central360-fluxo-pedido"
+        aria-label="Fluxo do pedido"
+      >
+        <ol className="flex items-center gap-1 min-w-max px-1">
+          {fluxo.steps.map((step, idx) => {
+            const done = idx < fluxo.activeIndex;
+            const active = idx === fluxo.activeIndex;
+            return (
+              <li key={step.id} className="flex items-center gap-1">
+                <span
+                  className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium border
+                    ${active ? 'bg-sky-700 text-white border-sky-700'
+                      : done ? 'bg-sky-50 text-sky-900 border-sky-200'
+                        : 'bg-white text-slate-400 border-slate-200'}`}
+                  data-fluxo-step={step.id}
+                  data-fluxo-state={active ? 'ativo' : done ? 'feito' : 'pendente'}
+                >
+                  {done || active ? <CheckCircle2 className="w-3 h-3" aria-hidden /> : null}
+                  {step.label}
+                </span>
+                {idx < fluxo.steps.length - 1 ? (
+                  <ChevronRight className="w-3.5 h-3.5 text-slate-300 shrink-0" aria-hidden />
+                ) : null}
+              </li>
+            );
+          })}
+        </ol>
+      </nav>
+
+      {/* Centro + Cliente360 — empilha no mobile */}
+      <div className="flex-1 min-h-0 flex flex-col lg:block">
+        <div className="hidden lg:block h-full min-h-0">
+          <ResizablePanelGroup direction="horizontal" className="w-full h-full rounded-md border border-sky-100 bg-white">
+            <ResizablePanel defaultSize={clientePanelOpen ? 72 : 100} minSize={45}>
+              <div className="h-full overflow-hidden p-2">{mainPanel}</div>
+            </ResizablePanel>
+            {clientePanelOpen && (
+              <>
+                <ResizableHandle withHandle className="bg-sky-50" />
+                <ResizablePanel defaultSize={28} minSize={18} maxSize={42}>
+                  <Cliente360Aside
+                    clienteForView={clienteForView}
+                    groupId={groupId}
+                    empresaId={empresaId}
+                    actorId={actorId}
+                    actorEmail={actorEmail}
+                    openHub={openHub}
+                    openChatbot={openChatbot}
+                    openEntregas={openEntregas}
+                    openContasReceber={openContasReceber}
+                    runCentralAction={runCentralAction}
+                    situacao={situacao}
+                    hasSelection={Boolean(selectionForView)}
+                    proposalMode={proposalMode}
+                  />
+                </ResizablePanel>
+              </>
+            )}
+          </ResizablePanelGroup>
+        </div>
+        <div className="lg:hidden flex-1 min-h-0 flex flex-col gap-2 overflow-auto">
+          <div className="min-h-[320px] rounded-md border border-sky-100 bg-white p-2">{mainPanel}</div>
+          {clientePanelOpen ? (
+            <div className="min-h-[280px] rounded-md border border-sky-100 bg-white overflow-auto">
+              <Cliente360Aside
+                clienteForView={clienteForView}
+                groupId={groupId}
+                empresaId={empresaId}
+                actorId={actorId}
+                actorEmail={actorEmail}
+                openHub={openHub}
+                openChatbot={openChatbot}
+                openEntregas={openEntregas}
+                openContasReceber={openContasReceber}
+                runCentralAction={runCentralAction}
+                situacao={situacao}
+                hasSelection={Boolean(selectionForView)}
+                proposalMode={proposalMode}
+              />
+            </div>
+          ) : null}
+        </div>
       </div>
 
       {/* Referência das 12 colunas (contrato visual — tabela operacional nos painéis embutidos) */}
@@ -549,24 +556,5 @@ export default function CentralVendas360Shell({
         {CENTRAL_VENDAS360_COLUMNS.map((c) => c.label).join(' | ')}
       </div>
     </div>
-  );
-}
-
-function FaixaTile({ icon: Icon, label, badge = null, onClick, action, disabled = false }) {
-  return (
-    <button
-      type="button"
-      disabled={disabled}
-      onClick={onClick}
-      data-action={action}
-      className={`flex items-center gap-2 rounded-md border px-3 py-1.5 text-left text-sm transition
-        ${disabled
-          ? 'border-slate-200 bg-slate-100 text-slate-400 cursor-not-allowed'
-          : 'border-sky-100 bg-white hover:bg-sky-50 text-sky-950'}`}
-    >
-      <Icon className="w-4 h-4 text-sky-700 shrink-0" />
-      <span className="font-medium">{label}</span>
-      {badge ? <Badge className="bg-rose-600 text-white text-[10px] ml-1">{badge}</Badge> : null}
-    </button>
   );
 }
