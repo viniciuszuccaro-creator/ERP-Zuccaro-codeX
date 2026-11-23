@@ -1,3 +1,22 @@
+## CPA3: cruzamento de codigos de Precos e fonte empresarial de Obras
+
+Export Base44 Produto (871 linhas) com tamanho e SHA conferidos.
+Dos 1040 materiais de origem, 861 tem candidato unico por codigo
+textual exato, cobrindo 4342 dos 5162 itens. Sem candidato duplicado;
+179 materiais e 820 itens sem igualdade. Codigo igual nao prova
+identidade no ERP novo, unidade comercial, empresa ou vigencia.
+Proximo: validar procedencia dos candidatos, crosswalk e calendario.
+
+Obras: leitor isolado READ_ONLY, busca em tabelas preenchidas por
+aliases de cliente, obra/local e empresa/filial. So parametros de
+Empresas, sem relacao por obra. Leitor desligado. Sem lote apto.
+Manter classificacoes anteriores e buscar fonte empresarial distinta.
+
+Recibo 5423 confirmado, 12 checkpoints e 17472 mestres preservados.
+Sem reaplicacao, carga ou deploy. HML a305a143. Backup em exit-code;
+livre 21629419520 bytes, deficit 1108571205 contra a reserva instalada.
+Comercial/PR595 seguem no checkpoint anterior; WIP preservado.
+
 ## CPA3: prazo da prova de backup agendado
 
 PostgreSQL registrou cancelamento por statement timeout na prova
