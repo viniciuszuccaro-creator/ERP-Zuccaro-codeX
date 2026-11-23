@@ -1,3 +1,11 @@
+## Cursor — Central360 Bugbot stale GET + Desc. (2026-11-23 America/Sao_Paulo)
+
+PR #599. Merge com Casa `aaf6eac5a`: **MERGEABLE** (sem conflitos). Bugbot High:
+faturar/baixa aborta GET `/titulos` em voo + bump geração (`publicarTitulosAposMutacao`)
+para não sobrescrever POST com 404/lista stale; loading limpo no finally por pedido.
+Low: coluna Desc. prioriza `desconto`/`valor_desconto` sobre `%` (inclui 0%).
+Testes focados 24/24 PASS. Sem Completo/deploy. CR baixa ainda bloqueada (Codex).
+
 ## Cursor — Central360 COMPLETE frontend (2026-11-23 America/Sao_Paulo)
 
 PR #599 tip completo no escopo frontend/visual sobre tip Casa `0cb6783b`.

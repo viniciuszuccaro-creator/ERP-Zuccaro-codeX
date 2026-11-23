@@ -203,6 +203,8 @@ test('CentralVendas360Shell: faixa, situações, grades dual, Cliente360', () =>
   assert.match(parts, /tabular-nums/);
   assert.match(parts, /columns=\{\['item', 'descricao', 'qtde', 'un', 'peso', 'unit', 'desc', 'total'\]\}/);
   assert.match(parts, /value === null \|\| value === undefined \|\| value === ''/);
+  assert.match(parts, /item\?\.desconto \?\? item\?\.valor_desconto/);
+  assert.match(parts, /item\?\.percentual_desconto/);
   assert.match(parts, /focus-visible:ring-2 focus-visible:ring-sky-500/);
   assert.match(src, /nome_do_grupo/);
   assert.match(src, /contextoEscopoLabel/);

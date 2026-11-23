@@ -41,15 +41,18 @@ const money = (value) => {
 
 
 const itemDescontoLabel = (item) => {
-  const raw = item?.desconto ?? item?.valor_desconto ?? item?.percentual_desconto;
-  if (raw === null || raw === undefined || raw === '') return '—';
-  const n = Number(raw);
-  if (!Number.isFinite(n) || n === 0) return '—';
-  // Percentual tipicamente 0–100; valores monetários usam o mesmo formatador.
-  if (n > 0 && n <= 100 && (item?.percentual_desconto != null || String(raw).includes('%'))) {
-    return `${n}%`;
+  // Monetário (desconto/valor_desconto) tem prioridade — não misturar com % só porque percentual_desconto existe (inclui 0).
+  const mon = item?.desconto ?? item?.valor_desconto;
+  if (mon != null && mon !== '') {
+    const n = Number(mon);
+    if (Number.isFinite(n) && n !== 0) return money(n);
   }
-  return money(n);
+  const pct = item?.percentual_desconto;
+  if (pct != null && pct !== '') {
+    const p = Number(pct);
+    if (Number.isFinite(p) && p !== 0) return `${p}%`;
+  }
+  return '—';
 };
 
 export function GradesSimultaneas({ itens, hasSelection = false }) {

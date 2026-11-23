@@ -1,3 +1,8 @@
+## Cursor — Central360 Bugbot stale GET (2026-11-23 America/Sao_Paulo)
+
+PR #599 vs Casa `aaf6eac5a`: MERGEABLE, sem conflitos. Fix: abort GET títulos
+após faturar/baixa + Desc. monetário primeiro. Aceite HML = Codex (§7 + mapa CR).
+
 ## Cursor — Central360 COMPLETE (2026-11-23 America/Sao_Paulo)
 
 PR #599 frontend/visual completo vs tip Casa `0cb6783b` / bf2f0281.

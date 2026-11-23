@@ -63,6 +63,8 @@ export default function FechamentoPedidoFinanceiroHttp({ formData, onTitulosChan
   const pedidoIdRef = useRef(pedidoId);
   /** Escopo no momento da geração atual — resposta stale de outro grupo/empresa não publica. */
   const scopeAtGeracaoRef = useRef({ groupId: formGroupId || '', empresaId: formEmpresaId || '' });
+  /** Abort do GET /titulos em voo — faturar/baixar não pode ser sobrescrito por 404/lista stale. */
+  const titulosAbortRef = useRef(/** @type {AbortController | null} */ (null));
   const reactId = useId();
   const onTitulosChangeRef = useRef(onTitulosChange);
   onTitulosChangeRef.current = onTitulosChange;
@@ -92,6 +94,15 @@ export default function FechamentoPedidoFinanceiroHttp({ formData, onTitulosChan
     const next = Array.isArray(rows) ? rows : [];
     setTitulos(next);
     if (typeof onTitulosChangeRef.current === 'function') onTitulosChangeRef.current(next);
+  };
+
+  /** Publica títulos do POST e invalida GET em voo (nova geração). */
+  const publicarTitulosAposMutacao = (rows) => {
+    titulosAbortRef.current?.abort();
+    titulosAbortRef.current = null;
+    operacaoGeracaoRef.current += 1;
+    setLoadingTitulos(false);
+    publicarTitulos(Array.isArray(rows) ? rows : [], operacaoGeracaoRef.current);
   };
 
   // Troca de pedido OU escopo grupo/empresa: invalidar geração e limpar UI (fail-closed).
@@ -162,6 +173,7 @@ export default function FechamentoPedidoFinanceiroHttp({ formData, onTitulosChan
     const geracao = operacaoGeracaoRef.current;
     const scopedPedidoId = pedidoId;
     const ac = new AbortController();
+    titulosAbortRef.current = ac;
     setLoadingTitulos(true);
     client.pedidos.titulos(scopedPedidoId, { signal: ac.signal })
       .then((rows) => {
@@ -182,7 +194,10 @@ export default function FechamentoPedidoFinanceiroHttp({ formData, onTitulosChan
       .finally(() => {
         if (!ac.signal.aborted && geracao === operacaoGeracaoRef.current) setLoadingTitulos(false);
       });
-    return () => ac.abort();
+    return () => {
+      ac.abort();
+      if (titulosAbortRef.current === ac) titulosAbortRef.current = null;
+    };
   }, [client, pedidoId, canVerTitulos]);
 
   if (!isHttpPedidoFinanceiroEnabled) return null;
@@ -219,7 +234,7 @@ export default function FechamentoPedidoFinanceiroHttp({ formData, onTitulosChan
       });
       if (geracao !== operacaoGeracaoRef.current || pedidoIdRef.current !== scopedPedidoId) return;
       const rows = Array.isArray(result?.titulos) ? result.titulos : [];
-      publicarTitulos(rows, geracao);
+      publicarTitulosAposMutacao(rows);
       toast.success(result?.replay
         ? 'Faturamento já existente (replay).'
         : 'Títulos gerados pelo servidor.');
@@ -229,7 +244,8 @@ export default function FechamentoPedidoFinanceiroHttp({ formData, onTitulosChan
       setAviso(mapped.message);
       toast.error(mapped.message);
     } finally {
-      if (geracao === operacaoGeracaoRef.current) setFaturando(false);
+      // Após mutação a geração sobe — limpar loading se o pedido ainda é o atual.
+      if (pedidoIdRef.current === scopedPedidoId) setFaturando(false);
     }
   };
 
@@ -282,7 +298,7 @@ export default function FechamentoPedidoFinanceiroHttp({ formData, onTitulosChan
       if (geracao !== operacaoGeracaoRef.current || pedidoIdRef.current !== scopedPedidoId) return;
       delete tentativaBaixaRef.current[parcela];
       const rows = Array.isArray(result?.titulos) ? result.titulos : [];
-      publicarTitulos(rows, geracao);
+      publicarTitulosAposMutacao(rows);
       toast.success(result?.replay
         ? 'Baixa reenviada (mesmo evento — replay).'
         : 'Baixa registrada.');
@@ -300,7 +316,7 @@ export default function FechamentoPedidoFinanceiroHttp({ formData, onTitulosChan
       setAviso(mapped.message);
       toast.error(mapped.message);
     } finally {
-      if (geracao === operacaoGeracaoRef.current) setBaixandoParcela(null);
+      if (pedidoIdRef.current === scopedPedidoId) setBaixandoParcela(null);
     }
   };
 
