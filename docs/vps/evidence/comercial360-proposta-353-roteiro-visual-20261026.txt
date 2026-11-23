@@ -1,0 +1,38 @@
+Roteiro avaliação visual — candidata #353 / issue #347
+======================================================
+SHA tip evidência visual (medido neste runner): e670c1a222f2cd528920a697138bf7fc3075fa59
+Checkpoint verde posterior: 0bd89333 (+ pacotes 1–4 na mesma #353; ver STATUS)
+Base consolidação tip publication: 118e8438f6ba5c5ae97a31482e6a083fb98fb81d
+CI candidata: frontend+backend+compose SUCCESS (tip e670c1a2 / 0bd89333)
+Ambiente: Cursor Cloud Agent runner — vite http://127.0.0.1:5173
+Codespace: NÃO medido / NÃO declarar URL-SHA Codespace a partir deste turno
+Perguntas owner: comercial360-proposta-353-avaliacao-visual-perguntas-20261026.txt
+Handoff Codespace: codespace-handoff-candidata353-20261026.txt
+
+Evidência runner (capturas)
+- docs/evidence/comercial360-e670c1a2/desktop.png
+- docs/evidence/comercial360-e670c1a2/tablet.png
+- docs/evidence/comercial360-e670c1a2/novo-orcamento-dialog.png
+- /opt/cursor/artifacts/comercial360-e670c1a2/ (cópias artefato)
+
+Pré-condições
+- Query ?proposta=comercial360
+- Dados sintéticos; banner demonstração sem gravação
+- Salvar/ações reais bloqueadas na proposta
+
+Passos (owner / Codespace)
+1. git fetch && git checkout e670c1a2 (ou tip atual da #353)
+2. Confirmar `git rev-parse HEAD` == tip remoto da #353
+3. npm run dev; abrir /Comercial?proposta=comercial360
+4. Desktop ≥1280 / tablet ~1024 / celular se necessário
+5. Orçamentos → Novo orçamento; alternar painéis; rascunho permanece
+6. Salvar desabilitado; fechar sem persistência
+
+Critérios
+- Azul-claro + painéis úteis
+- Sem alegar dados recuperados
+- Aprovação visual ampla ainda pendente
+
+Não declarar
+- Codespace atualizado sem prova do SHA servido no Codespace
+- Merge/deploy/VPS

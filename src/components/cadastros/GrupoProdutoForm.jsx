@@ -9,6 +9,7 @@ import { Loader2, Package, Trash2, Power, PowerOff } from "lucide-react";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
+import useCadastroReopenOnIdentity from "@/components/cadastros/useCadastroReopenOnIdentity";
 
 /**
  * V21.1.2 - WINDOW MODE READY
@@ -22,26 +23,27 @@ export default function GrupoProdutoForm({ grupo, grupoProduto, item, data, init
   const podeCriar = hasPermission?.("Cadastros.GrupoProduto.criar") || hasPermission?.("Cadastros.Produto.criar");
   const podeEditar = hasPermission?.("Cadastros.GrupoProduto.editar") || hasPermission?.("Cadastros.Produto.editar");
   const podeExcluir = hasPermission?.("Cadastros.GrupoProduto.excluir") || hasPermission?.("Cadastros.Produto.excluir");
-  const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState(dadosIniciais || {
+    const emptyFormData = {
     nome_grupo: '',
     codigo: '',
     natureza: 'Revenda',
     ncm_padrao: '',
     margem_sugerida: 0,
     ativo: true
-  });
+  };
+  const [formData, setFormData] = useState(dadosIniciais || emptyFormData);
 
-  const prevIdRef = useRef(dadosIniciais?.id);
-  useEffect(() => {
-    if (dadosIniciais?.id && dadosIniciais.id !== prevIdRef.current) {
-      prevIdRef.current = dadosIniciais.id;
-      setFormData({ ...dadosIniciais });
-    }
-  }, [dadosIniciais?.id]);
+  const { boundId: grupoProdutoBoundId } = useCadastroReopenOnIdentity(dadosIniciais, {
+    formData,
+    setFormData,
+    emptyForm: emptyFormData,
+    mapToForm: (record) => record || emptyFormData,
+  });
+  const podeSalvar = grupoProdutoBoundId ? podeEditar : podeCriar;
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
     if (!formData.nome_grupo || !formData.natureza) {
       alert('Preencha os campos obrigatórios');
       return;
@@ -56,6 +58,7 @@ export default function GrupoProdutoForm({ grupo, grupoProduto, item, data, init
     }
     onSubmit({
       ...formData,
+      ...(grupoProdutoBoundId ? { id: grupoProdutoBoundId } : {}),
       group_id: groupId || formData.group_id,
       empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id,
       nome: formData.nome_grupo
@@ -85,8 +88,8 @@ export default function GrupoProdutoForm({ grupo, grupoProduto, item, data, init
   const formContent = (
     <form onSubmit={handleSubmit} className="space-y-4">
       <CadastroCodigoRegistroField
-        hasId={Boolean(dadosIniciais?.id)}
-        entityId={dadosIniciais?.id}
+        hasId={Boolean(grupoProdutoBoundId)}
+        entityId={grupoProdutoBoundId}
         value={formData.codigo}
         action="codigo-registro-grupo-produto"
       />
@@ -184,7 +187,7 @@ export default function GrupoProdutoForm({ grupo, grupoProduto, item, data, init
         <Button
           type="submit"
           disabled={isSubmitting || !contextoValido || !podeSalvar}
-          data-permission={dadosIniciais?.id ? "Cadastros.GrupoProduto.editar" : "Cadastros.GrupoProduto.criar"}
+          data-permission={grupoProdutoBoundId ? "Cadastros.GrupoProduto.editar" : "Cadastros.GrupoProduto.criar"}
           data-action="salvar-grupo-produto"
           data-sensitive="true"
         >

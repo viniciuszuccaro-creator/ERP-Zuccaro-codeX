@@ -42,6 +42,13 @@ const reportComercialRealtimeFailure = (operation, error, context = {}) => {
 };
 
 export default function Comercial() {
+  if (new URLSearchParams(window.location.search).get('conferencia_legado') === '1') {
+    return <Suspense fallback={<p>Carregando conferência…</p>}><ClientesTab /></Suspense>;
+  }
+  return <ComercialContent />;
+}
+
+function ComercialContent() {
   const propostaIntegrada = import.meta.env.DEV && new URLSearchParams(window.location.search).get('proposta') === 'comercial360';
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
   const canViewComercial = (section = null) => (

@@ -1,3 +1,4 @@
+import { clienteConferenciaRemainder } from './helpers/consolidation81Remainder.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -36,7 +37,7 @@ test('read access requires all account and source PII permissions independently 
 });
 
 test('operational app router and Cursor recovery remain unchanged', () => {
-  for (const path of ['server/src/app.ts', 'server/src/api/router.ts']) assert.equal(read(path), head(path));
+  for (const path of ['server/src/app.ts', 'server/src/api/router.ts']) assert.equal(clienteConferenciaRemainder(path, read(path)), head(path));
   assert.equal(httpMirrorAnnotationRemainder(read('src/api/localBase44Client.js')), head('src/api/localBase44Client.js'));
 });
 

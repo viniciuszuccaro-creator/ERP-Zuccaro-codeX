@@ -15,6 +15,14 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 import usePermissions from "@/components/lib/usePermissions";
 import useCadastroFormScopeGuard from "./hooks/useCadastroFormScopeGuard";
+import {
+  CADASTRO_DIRTY_REOPEN_CONFIRM,
+  CADASTRO_DIRTY_SWITCH_CONFIRM,
+  cadastroFormMatchesIncoming,
+  cadastroFormSnapshot,
+  decideCadastroReopen,
+  isCadastroFormDirty,
+} from "@/components/cadastros/cadastroReopenPolicy";
 
 const sanitizeText = (value, max = 500) => String(value ?? "").replace(/[<>]/g, "").slice(0, max).trim();
 const sanitizeCode = (value, max = 80) => String(value ?? "").replace(/[^0-9A-Za-z_.\-/\s#]/g, "").slice(0, max).trim();
@@ -42,6 +50,9 @@ export default function RegiaoAtendimentoForm({ regiaoId, regiaoAtendimento, ite
   const [loadFailed, setLoadFailed] = useState(false);
   const [loading, setLoading] = useState(Boolean(regiaoId && !dadosIniciaisProps));
   const prevIdRef = useRef(dadosIniciaisProps?.id || null);
+  const prevUpdatedRef = useRef(dadosIniciaisProps?.updated_date);
+  const baselineRef = useRef(cadastroFormSnapshot(dadosIniciaisProps || {}));
+  const formDataRef = useRef(null);
   const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciaisProps?.empresa_id || dadosIniciaisProps?.group_id);
   const podeCriar = canCreate("Cadastros", "RegiaoAtendimento") || canCreate("Logistica", "RegiaoAtendimento") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "RegiaoAtendimento") || canEdit("Logistica", "RegiaoAtendimento") || canEdit("Cadastros", null);
@@ -80,6 +91,7 @@ export default function RegiaoAtendimentoForm({ regiaoId, regiaoAtendimento, ite
   });
 
   const [novaCidade, setNovaCidade] = useState({ cidade: "", estado: "", cep_inicial: "", cep_final: "" });
+  formDataRef.current = formData;
 
   const { data: vendedores = [] } = useQuery({
     queryKey: ['colaboradores-vendedores', empresaAtual?.id || grupoAtual?.id || 'sem-contexto'],
@@ -97,8 +109,35 @@ export default function RegiaoAtendimentoForm({ regiaoId, regiaoAtendimento, ite
     if (!(open || windowMode) || !isFormScopeCurrent()) return;
     let cancelled = false;
     const nextId = dadosIniciaisProps?.id || regiaoId || null;
-    if (dadosIniciaisProps && nextId && nextId !== prevIdRef.current) {
+    const propsUpdatedChanged = Boolean(
+      dadosIniciaisProps?.id
+        && dadosIniciaisProps?.updated_date
+        && dadosIniciaisProps.updated_date !== prevUpdatedRef.current,
+    );
+    if (dadosIniciaisProps && nextId && (nextId !== prevIdRef.current || propsUpdatedChanged)) {
+      const idChanged = nextId !== prevIdRef.current;
+      const decision = decideCadastroReopen({
+        idChanged,
+        updatedChanged: propsUpdatedChanged && !idChanged,
+        isDirty: isCadastroFormDirty(formDataRef.current, baselineRef.current),
+        matchesIncoming: cadastroFormMatchesIncoming(formDataRef.current, dadosIniciaisProps),
+        confirmDiscard: () => window.confirm(CADASTRO_DIRTY_REOPEN_CONFIRM),
+        confirmSwitch: () => window.confirm(CADASTRO_DIRTY_SWITCH_CONFIRM),
+      });
+      if (decision === "acknowledge") {
+        if (propsUpdatedChanged && !idChanged) {
+          prevUpdatedRef.current = dadosIniciaisProps.updated_date;
+        }
+        setLoadFailed(false);
+        setLoading(false);
+        return;
+      }
+      if (decision === "keep") {
+        return;
+      }
       prevIdRef.current = nextId;
+      prevUpdatedRef.current = dadosIniciaisProps.updated_date;
+      baselineRef.current = cadastroFormSnapshot(dadosIniciaisProps);
       setLoadFailed(false);
       setLoading(false);
       setFormData(dadosIniciaisProps);
@@ -108,7 +147,14 @@ export default function RegiaoAtendimentoForm({ regiaoId, regiaoAtendimento, ite
       getInContext('RegiaoAtendimento', regiaoId).then(regiao => {
         if (cancelled || !isFormScopeCurrent()) return;
         if (regiao?.id === regiaoId && regiao.nome_regiao) {
+          const dirty = isCadastroFormDirty(formDataRef.current, baselineRef.current);
+          if (dirty && prevIdRef.current && prevIdRef.current !== regiaoId
+            && !window.confirm(CADASTRO_DIRTY_SWITCH_CONFIRM)) {
+            return;
+          }
           prevIdRef.current = regiaoId;
+          prevUpdatedRef.current = regiao.updated_date;
+          baselineRef.current = cadastroFormSnapshot(regiao);
           setFormData(regiao);
         } else {
           setLoadFailed(true);
@@ -122,10 +168,7 @@ export default function RegiaoAtendimentoForm({ regiaoId, regiaoAtendimento, ite
         if (!cancelled && isFormScopeCurrent()) setLoading(false);
       });
     } else if (!regiaoId && !dadosIniciaisProps && prevIdRef.current !== null) {
-      prevIdRef.current = null;
-      setLoadFailed(false);
-      setLoading(false);
-      setFormData({
+      const emptyRegiao = {
         nome_regiao: "",
         codigo_regiao: "",
         descricao: "",
@@ -153,10 +196,16 @@ export default function RegiaoAtendimentoForm({ regiaoId, regiaoAtendimento, ite
         },
         ativo: true,
         observacoes: ""
-      });
+      };
+      prevIdRef.current = null;
+      prevUpdatedRef.current = undefined;
+      baselineRef.current = cadastroFormSnapshot(emptyRegiao);
+      setLoadFailed(false);
+      setLoading(false);
+      setFormData(emptyRegiao);
     }
     return () => { cancelled = true; };
-  }, [regiaoId, dadosIniciaisProps?.id, open, windowMode, groupId, empresaAtual?.id]);
+  }, [regiaoId, dadosIniciaisProps?.id, dadosIniciaisProps?.updated_date, open, windowMode, groupId, empresaAtual?.id]);
 
   const buildPayload = () => ({
     ...formData,

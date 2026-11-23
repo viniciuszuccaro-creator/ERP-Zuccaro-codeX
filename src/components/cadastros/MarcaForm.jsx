@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -9,9 +9,12 @@ import { Loader2, Award, Trash2, Power, PowerOff } from "lucide-react";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
+import useCadastroReopenOnIdentity from "@/components/cadastros/useCadastroReopenOnIdentity";
 
 /**
  * V21.1.2 - WINDOW MODE READY
+ * Reopen canônico (#353): useCadastroReopenOnIdentity — anti-wipe em troca de
+ * registro/updated_date/Grupo-Empresa; código/ID vinculados ao boundId.
  */
 export default function MarcaForm({ marca, item, data, initialData, defaultValues, onSubmit, isSubmitting, windowMode = false }) {
   const dadosIniciais = item || data || initialData || defaultValues || marca;
@@ -22,8 +25,7 @@ export default function MarcaForm({ marca, item, data, initialData, defaultValue
   const podeCriar = hasPermission?.("Cadastros.Marca.criar") || hasPermission?.("Cadastros.Produto.criar");
   const podeEditar = hasPermission?.("Cadastros.Marca.editar") || hasPermission?.("Cadastros.Produto.editar");
   const podeExcluir = hasPermission?.("Cadastros.Marca.excluir") || hasPermission?.("Cadastros.Produto.excluir");
-  const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState(dadosIniciais || {
+  const emptyFormData = {
     nome_marca: '',
     descricao: '',
     cnpj: '',
@@ -31,18 +33,20 @@ export default function MarcaForm({ marca, item, data, initialData, defaultValue
     site: '',
     categoria: 'Aço',
     ativo: true
-  });
+  };
+  const [formData, setFormData] = useState(dadosIniciais || emptyFormData);
 
-  const prevIdRef = useRef(dadosIniciais?.id);
-  useEffect(() => {
-    if (dadosIniciais?.id && dadosIniciais.id !== prevIdRef.current) {
-      prevIdRef.current = dadosIniciais.id;
-      setFormData({ ...dadosIniciais });
-    }
-  }, [dadosIniciais?.id]);
+  const { boundId: marcaBoundId } = useCadastroReopenOnIdentity(dadosIniciais, {
+    formData,
+    setFormData,
+    emptyForm: emptyFormData,
+    mapToForm: (record) => record || emptyFormData,
+  });
+  const podeSalvar = marcaBoundId ? podeEditar : podeCriar;
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
     if (!formData.nome_marca) {
       alert('Preencha o nome da marca');
       return;
@@ -57,6 +61,7 @@ export default function MarcaForm({ marca, item, data, initialData, defaultValue
     }
     onSubmit({
       ...formData,
+      ...(marcaBoundId ? { id: marcaBoundId } : {}),
       group_id: groupId || formData.group_id,
       empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id,
       nome: formData.nome_marca
@@ -72,7 +77,7 @@ export default function MarcaForm({ marca, item, data, initialData, defaultValue
       return;
     }
     if (onSubmit) {
-      onSubmit({ ...formData, _action: 'delete' });
+      onSubmit({ ...formData, ...(marcaBoundId ? { id: marcaBoundId } : {}), _action: 'delete' });
     }
   };
 
@@ -84,8 +89,8 @@ export default function MarcaForm({ marca, item, data, initialData, defaultValue
   const formContent = (
     <form onSubmit={handleSubmit} className="space-y-4">
       <CadastroCodigoRegistroField
-        hasId={Boolean(dadosIniciais?.id)}
-        entityId={dadosIniciais?.id}
+        hasId={Boolean(marcaBoundId)}
+        entityId={marcaBoundId}
         value={formData.codigo}
         action="codigo-registro-marca"
       />
@@ -169,7 +174,7 @@ export default function MarcaForm({ marca, item, data, initialData, defaultValue
       </div>
 
       <div className="flex justify-end gap-3 pt-4 border-t">
-        {dadosIniciais && (
+        {marcaBoundId && (
           <>
             <Button
               type="button"
@@ -203,12 +208,12 @@ export default function MarcaForm({ marca, item, data, initialData, defaultValue
         <Button
           type="submit"
           disabled={isSubmitting || !contextoValido || !podeSalvar}
-          data-permission={dadosIniciais?.id ? "Cadastros.Marca.editar" : "Cadastros.Marca.criar"}
+          data-permission={marcaBoundId ? "Cadastros.Marca.editar" : "Cadastros.Marca.criar"}
           data-action="salvar-marca"
           data-sensitive="true"
         >
           {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-          {dadosIniciais ? 'Atualizar' : 'Criar Marca'}
+          {marcaBoundId ? 'Atualizar' : 'Criar Marca'}
         </Button>
       </div>
     </form>
@@ -219,8 +224,8 @@ export default function MarcaForm({ marca, item, data, initialData, defaultValue
       <div className="w-full h-full overflow-auto bg-white p-6">
         <div className="mb-4 pb-4 border-b">
           <h2 className="text-xl font-bold flex items-center gap-2">
-            <Award className="w-5 h-5 text-blue-600" />
-            {dadosIniciais ? 'Editar Marca' : 'Nova Marca'}
+            <Award className="w-5 h-5 text-sky-600" />
+            {marcaBoundId ? 'Editar Marca' : 'Nova Marca'}
           </h2>
         </div>
         {formContent}

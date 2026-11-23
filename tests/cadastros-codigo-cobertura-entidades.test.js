@@ -97,6 +97,7 @@ test('forms auxiliares MASTER_CODE expoem codigo-registro readonly', async () =>
     ['VeiculoForm.jsx', 'codigo-registro-veiculo'],
     ['MotoristaForm.jsx', 'codigo-registro-motorista'],
     ['FormaPagamentoForm.jsx', 'codigo-registro-forma-pagamento'],
+    ['RotaPadraoForm.jsx', 'codigo-registro-rota-padrao'],
   ]) {
     const src = await readFile(new URL(`../src/components/cadastros/${file}`, import.meta.url), 'utf8');
     assert.match(src, new RegExp(action));
@@ -115,11 +116,43 @@ test('ClienteCompleto e Produto V22 expõem código e ID técnico na edição', 
   assert.match(produto, /readOnly=\{Boolean\(produto\?\.id\)\}/);
 });
 
+test('MarcaForm vincula código/ID ao boundId do reopen canônico', async () => {
+  const src = await readFile(new URL('../src/components/cadastros/MarcaForm.jsx', import.meta.url), 'utf8');
+  assert.match(src, /useCadastroReopenOnIdentity/);
+  assert.match(src, /CadastroCodigoRegistroField/);
+  assert.match(src, /codigo-registro-marca/);
+  assert.match(src, /entityId=\{marcaBoundId\}/);
+  assert.match(src, /isSubmitting/);
+  assert.doesNotMatch(src, /prevIdRef/);
+});
+
+test('PlanoContasForm expõe ID técnico sem substituir código hierárquico', async () => {
+  const src = await readFile(new URL('../src/components/cadastros/PlanoContasForm.jsx', import.meta.url), 'utf8');
+  assert.match(src, /CadastroCodigoRegistroField/);
+  assert.match(src, /idOnly/);
+  assert.match(src, /id-tecnico-plano-contas/);
+  assert.match(src, /entityId=\{planoBoundId\}/);
+  assert.match(src, /editar-codigo-plano-contas/);
+});
+
+test('TabelaPreco forms expõem código de registro e ID técnico (≠ só legado)', async () => {
+  const completo = await readFile(new URL('../src/components/cadastros/TabelaPrecoFormCompleto.jsx', import.meta.url), 'utf8');
+  const simples = await readFile(new URL('../src/components/cadastros/TabelaPrecoForm.jsx', import.meta.url), 'utf8');
+  for (const [label, src] of [['Completo', completo], ['Form', simples]]) {
+    assert.match(src, /CadastroCodigoRegistroField/, `${label} deve usar campo canônico`);
+    assert.match(src, /codigo-registro-tabela-preco/, `${label} action codigo`);
+    assert.match(src, /entityId=\{/, `${label} deve expor ID técnico`);
+    // Legado permanece; não substitui o código numérico reservado no backend.
+    assert.match(src, /codigo_tabela_legado/, `${label} preserva código legado`);
+  }
+});
+
 test('FornecedorCompleto e RepresentanteCompleto expõem código e ID técnico', async () => {
   const fornecedor = await readFile(new URL('../src/components/cadastros/CadastroFornecedorCompleto.jsx', import.meta.url), 'utf8');
   const representante = await readFile(new URL('../src/components/cadastros/RepresentanteFormCompleto.jsx', import.meta.url), 'utf8');
   assert.match(fornecedor, /codigo-registro-fornecedor-completo/);
-  assert.match(fornecedor, /entityId=\{fornecedor\?\.id\}/);
+  // P1 switch-reject: Fornecedor vincula código/ID ao boundId do rascunho.
+  assert.match(fornecedor, /entityId=\{fornecedorBoundId\}/);
   assert.match(representante, /codigo-registro-representante-completo/);
   assert.match(representante, /entityId=\{representante\?\.id\}/);
 });

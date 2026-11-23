@@ -6,6 +6,53 @@ Este documento transforma a evolução do ERP Zuccaro em uma sequência objetiva
 
 O objetivo imediato não é “terminar tudo que um ERP pode ter”. O objetivo é liberar o núcleo operacional com segurança, migrar os dados do ERP antigo de forma controlada e depois evoluir as funções avançadas sem interromper a empresa.
 
+## Prioridade vigente: entrada em uso (proprietario, 2026-10-26)
+
+Esta decisao reprioriza ESTE plano, sem criar outro programa nem substituir
+AGENTS.md/Regra-Mae. O objetivo imediato e uma versao estavel na VPS existente
+para trabalhar; nao e concluir todas as ondas Comercial360/omnicanal.
+Os Gates abaixo continuam sendo criterios de prova, nao autorizacoes de execucao.
+
+| ordem | entrega prioritaria | vinculo aos Gates existentes |
+|---|---|---|
+| 1 | Homologacao integrada: login, Grupo/Empresas, permissoes, Cadastros, fluxo comercial inicial, versao servida, backup/restore, menor privilegio e retorno | Gates0-6/19/20 e dependencias reais; sem substituir o par atual antes da aprovacao |
+| 2 | Primeira carga real controlada de ate100 clientes, somente apos gates e autorizacao especifica; conferir no ERP e reconciliar/reverter por lote | Gates18/19; sem sobrescrever preexistentes ou reativar historicos |
+| 3 | Clientes, fornecedores e produtos em escala, lotes retomaveis/idempotentes e dados auxiliares comprovados | Gates5/18; pendencias com situacao/motivo e bloqueio proporcional |
+| 4 | Atendimento, orcamento, pedido e dependencias necessarias de estoque, producao, entrega, financeiro e fiscal | Gates6-11, somente percursos do escopo inicial homologado |
+| 5 | Compras/vendas, documentos/itens, receber/pagar abertos e baixados, cartoes e demais historicos/saldos | Gate18 e contratos7/8/9; consulta/conferencia nao cria cobranca, baixa, disponibilidade ou emissao |
+
+VPS = versao operacional especificamente aprovada; Codespace = desenvolvimento,
+integracao, testes e proxima versao; GitHub = codigo/historico; dados reais e
+backups = privado. O alvo conhecido ainda e VPS DEV, nao producao homologada.
+Comercial360 avancado, site/app, marketplaces, chatbots/telefonia, logistica,
+corte/dobra, CAD, fabricacao/montagem e demais evolucoes continuam no programa,
+sem misturar pacotes nao homologados ao nucleo que entrar em uso.
+
+### Recuperacao obrigatoria, nao substituicao do ERP
+Reutilizar a comparacao existente com erp-integra-novo: recuperar capacidades
+comprovadamente perdidas e o visual azul-claro aprovado COM suas funcionalidades,
+preservando solucoes superiores atuais. Antes de restaurar recurso/registros,
+distinguir ausencia de codigo de versao/configuracao/tenant/RBAC/leitura.
+Entidade no Git nao prova registros; fontes Base44, snapshots/exports privados
+exigem procedencia, contexto e reconciliacao. Nao copiar auth permissiva,
+substituir a arvore inteira ou recriar exemplos como registros recuperados.
+
+### Responsaveis e controle unico
+Codex: legado, compatibilidade, menor privilegio, preparacao da disponibilizacao
+e cargas/reconciliacao por gate. Cursor: candidata integrada, recuperacao
+funcional/visual e Cadastros Gerais. Revisao cruzada por SHA no GitHub e um
+escritor por checkout, sem editar a branch do outro.
+A lista UNICA vigente de pronto para uso / bloqueador / dados / melhoria
+posterior fica no topo de STATUS_DO_PROJETO.md. HANDOFF aponta para ela;
+inventarios/evidencias anteriores nao constituem outro plano ou aceite.
+
+Proximo marco: versao integrada demonstravel, escopo inicial explicitamente
+homologado/indisponivel e pacote concreto para decidir HML/primeira carga.
+Esta repriorizacao autoriza preparacao, NAO merge, deploy, permissao, migration,
+carga operacional, contratacao ou cobranca. Checkboxes historicos abaixo nao
+equivalem a aprovacao do SHA/ambiente atual.
+
+
 ---
 
 # 1. DEFINIÇÃO DE GO-LIVE
@@ -1146,7 +1193,13 @@ IA avançada, agentes, marketplaces completos, chatbot omnichannel e otimizaçõ
 
 ---
 
-# 26. ARQUITETURA DE PRODUCAO APROVADA
+# 26. HISTORICO - proposta de arquitetura de 2026-09-14
+
+Esta secao preserva a decisao antiga como historico. A prioridade vigente de
+2026-10-26 usa a VPS existente e nao autoriza Supabase Pro, projeto pago,
+contratacao ou cobranca. Referencias a provedor pago e desenvolvimento local
+abaixo NAO sao requisitos/ordens atuais; valem os gates tecnicos e autorizacoes
+do escopo aprovado, sem inferir que o alvo DEV ja e producao.
 
 Decisao aprovada em 2026-09-14 para evitar dependencia definitiva da infraestrutura Base44 e manter os dados operacionais sob uma plataforma PostgreSQL portavel.
 

@@ -1,3 +1,42 @@
+test('CANAL selected reference preserves previous hashes and rejects mutations inside outside omitted duplicated hunks', async () => {
+  const { readFileSync } = await import('node:fs');
+  const { clienteConferenciaRemainder, clienteSelectedReferenceHunks } = await import('./helpers/consolidation81Remainder.js');
+  for (const [file,entry] of Object.entries(clienteSelectedReferenceHunks)) {
+    const source=readFileSync(file,'utf8');
+    assert.doesNotThrow(()=>clienteConferenciaRemainder(file,source));
+    assert.throws(()=>clienteConferenciaRemainder(file,source+'\n// outside approved hunk\n'));
+    for (const [after,before] of entry.hunks) {
+      assert.equal(source.split(after).length,2);
+      assert.throws(()=>clienteConferenciaRemainder(file,source.replace(after,before)));
+      assert.throws(()=>clienteConferenciaRemainder(file,source.replace(after,after+after)));
+      assert.throws(()=>clienteConferenciaRemainder(file,source.replace(after,after+'// mutation\n')));
+    }
+  }
+});
+
+test('HTTP mestres resolve vinculo selecionado por identidade exata sem busca ou varrer paginas', async () => {
+  const { createHttpApiClient } = await import('../src/api/httpApiClient.js');
+  const linkId = '88888888-aaaa-4aaa-8aaa-888888888888', urls = [];
+  const client = createHttpApiClient({
+    baseUrl: 'https://erp.synthetic.test',
+    getScope: () => ({ token:'synthetic-only',groupId:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',empresaId:'cccccccc-cccc-4ccc-8ccc-cccccccccccc',actorId:'11111111-aaaa-4aaa-8aaa-111111111111' }),
+    fetchImpl: async url => {
+      urls.push(new URL(String(url)));
+      return new Response(JSON.stringify({data:[],meta:{total:0,limit:1,offset:0,hasMore:false}}), {status:200});
+    },
+  });
+  await client.comercialMasters.list({clienteEmpresaId:linkId});
+  const selected = urls.filter(url => url.pathname === '/api/v1/clientes');
+  assert.equal(selected.length,1);
+  assert.equal(selected[0].searchParams.get('cliente_empresa_id'),linkId);
+  assert.equal(selected[0].searchParams.get('limit'),'1');
+  assert.equal(selected[0].searchParams.get('offset'),'0');
+  assert.equal(selected[0].searchParams.get('search') || '', '');
+  const count = urls.length;
+  await assert.rejects(client.comercialMasters.list({clienteEmpresaId:linkId,clienteSearch:'outro'}));
+  assert.equal(urls.length,count);
+});
+
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
@@ -529,6 +568,8 @@ test('Cliente HTTP update strips commercial/extra form fields to master-data all
   assert.equal(body.endereco_principal, undefined);
   assert.equal(body.group_id, undefined);
   assert.equal(body.id, undefined);
+  assert.equal(body.contatos, undefined);
+  assert.equal(body.email, 'a@b.c');
 });
 
 test('Cliente filter: status Ativo não vira ativo=false; retorna sempre array', async () => {
@@ -569,4 +610,111 @@ test('ProdutoEmpresa facade preparada: GET/PUT usam tenant/Bearer/CAS/AbortSigna
   assert.equal(new URL(seen[0].url).pathname,'/api/v1/produtos/synthetic%2Fproduct/empresa-operacao');
   assert.equal(seen[1].init.method,'PUT');assert.deepEqual(JSON.parse(seen[1].init.body),payload);
   for(const call of seen){assert.equal(call.init.headers.Authorization,'Bearer synthetic-token');assert.equal(call.init.headers['X-Empresa-Id'],'synthetic-company');assert.equal(call.init.signal,controller.signal);assert.equal(call.url.includes('synthetic-token'),false);}
+});
+
+test('CANAL exact Cliente filters cannot silently broaden and malformed selectors do not fetch',async()=>{
+ const calls=[];const client=createHttpApiClient({baseUrl:'https://erp.synthetic.test',fetchImpl:async(url)=>{calls.push(new URL(url));return new Response(JSON.stringify({data:[]}),{status:200});}});
+ await client.entities.Cliente.filter({documento:'11.222.333/0001-81',codigo:'001'},undefined,1);
+ assert.equal(calls[0].searchParams.get('documento'),'11.222.333/0001-81');assert.equal(calls[0].searchParams.get('codigo'),'001');
+ for(const query of [{documento:''},{documento:'garbage'},{documento:[]},{codigo:' '},{codigo:{}}]){const before=calls.length;await assert.rejects(client.entities.Cliente.filter(query));assert.equal(calls.length,before);}
+});
+test('CANAL captures scope, rejects late/revoked/aborted responses and never falls back',async()=>{
+ const input={identidades:[{documento:'11222333000181'}]};
+ for(const change of [s=>{s.groupId='other';},s=>{s.token='new';},s=>{s.actorId='other';},s=>{s.empresaId='company';}]){
+  let finish;const scope={groupId:'synthetic-group',actorId:'synthetic-profile',token:'synthetic-token'};let calls=0;
+  const client=createHttpApiClient({baseUrl:'https://erp.synthetic.test',getScope:()=>scope,fetchImpl:async(url,init)=>{calls++;assert.equal(new URL(url).pathname,'/api/v1/clientes/conferencia-legado');assert.equal(init.method,'POST');assert.equal(init.headers['X-Actor-Id'],undefined);return new Promise(r=>{finish=r;});}});
+  const promise=client.clientes.conferirLegado(input);change(scope);finish(new Response(JSON.stringify({data:[{indice:0,documento:null,legado:null}]}),{status:200}));await assert.rejects(promise,e=>e.code==='CONTEXT_CHANGED');assert.equal(calls,1);
+ }
+ const scope={groupId:'synthetic-group',actorId:'synthetic-profile',token:'synthetic-token'};
+ let calls=0;const ok=createHttpApiClient({baseUrl:'https://erp.synthetic.test',getScope:()=>scope,fetchImpl:async()=>{calls++;return new Response(JSON.stringify({data:[{indice:0,documento:null,legado:null}]}),{status:200});}});
+ assert.deepEqual(await ok.clientes.conferirLegado(input),[{indice:0,documento:null,legado:null}]);
+ for(const body of [{identidades:[]},{identidades:[{}]},{identidades:Array(101).fill({documento:'11222333000181'})}])await assert.rejects(ok.clientes.conferirLegado(body));assert.equal(calls,1);
+ const aborted=new AbortController();aborted.abort();await assert.rejects(ok.clientes.conferirLegado(input,{signal:aborted.signal}));assert.equal(calls,1);
+ const denied=createHttpApiClient({baseUrl:'https://erp.synthetic.test',getScope:()=>scope,fetchImpl:async()=>new Response(JSON.stringify({error:{code:'PERMISSION_DENIED'}}),{status:403})});await assert.rejects(denied.clientes.conferirLegado(input),e=>e.status===403);
+});
+
+test('CANAL actual consumer does not auto-read and clears late results on session change',async()=>{
+ const {readFile}=await import('node:fs/promises');const {default:ts}=await import('typescript');const vm=await import('node:vm');
+ const source=await readFile(new URL('../src/components/comercial/ClienteConferenciaLegado.jsx',import.meta.url),'utf8');
+ const slots=[];let cursor=0,effects=[],listener,finish,calls=0;
+ const react={createElement:(type,props,...children)=>({type,props:{...props,children:children.flat()}}),useState:init=>{const i=cursor++;if(!(i in slots))slots[i]=init;return[slots[i],v=>{slots[i]=v;}];},useRef:init=>{const i=cursor++;if(!(i in slots))slots[i]={current:init};return slots[i];},useEffect:(fn,deps)=>{const i=cursor++;if(!slots[i]||deps.some((v,n)=>v!==slots[i][n])){slots[i]=deps;effects.push(fn);}}};
+ const session={groupId:'synthetic-group',actorId:'synthetic-profile',token:'synthetic-token'};
+ const modules={react:{__esModule:true,default:react,...react},'@/api/httpApiClient':{clienteConferenciaApi:{conferirLegado:()=>{calls++;return new Promise(r=>{finish=r;});}}},'@/api/erpHttpSession':{readErpHttpSession:()=>session,HTTP_CONTEXT_CHANGED:'context'},'@/components/lib/usePermissions':{__esModule:true,default:()=>({hasPermission:()=>true,isLoading:false})}};
+ const exports={};vm.runInNewContext(ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.React}}).outputText,{exports,require:id=>{assert.ok(modules[id],id);return modules[id];},window:{addEventListener:(_name,fn)=>{listener=fn;},removeEventListener:()=>{}},AbortController});
+ let tree;const render=()=>{cursor=0;tree=exports.default();effects.splice(0).forEach(fn=>fn());};const walk=node=>!node||typeof node!=='object'?[]:[node,...(node.props?.children||[]).flatMap(walk)];
+ render();assert.equal(calls,0);walk(tree).find(n=>n.type==='textarea').props.onChange({target:{value:JSON.stringify({identidades:[{documento:'11222333000181'}]})}});render();const run=walk(tree).find(n=>n.type==='button').props.onClick();assert.equal(calls,1);session.token='new';listener();finish([{indice:0,documento:null,legado:null}]);await run;render();assert.equal(walk(tree).some(n=>n.type==='table'),false);assert.equal(calls,1);
+ const tab=await readFile(new URL('../src/components/comercial/ClientesTab.jsx',import.meta.url),'utf8');assert.ok(tab.indexOf('if (conferencia) return')<tab.indexOf('<VisualizadorUniversalEntidadeV24'));assert.match(tab,/conferencia_legado/);const commercial=await readFile(new URL('../src/pages/Comercial.jsx',import.meta.url),'utf8');const ast=ts.createSourceFile('Comercial.jsx',commercial,ts.ScriptTarget.Latest,true,ts.ScriptKind.JSX);const wrapper=ast.statements.find(n=>ts.isFunctionDeclaration(n)&&n.name?.text==='Comercial');assert.ok(wrapper);const exported={};vm.runInNewContext(ts.transpileModule(wrapper.getText(ast),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.React}}).outputText,{exports:exported,window:{location:{search:'?conferencia_legado=1'}},URLSearchParams,React:react,Suspense:'Suspense',ClientesTab:'EXACT_ONLY',ComercialContent:'BROAD'});const route=exported.default();assert.equal(route.props.children[0].type,'EXACT_ONLY');assert.equal(route.type,'Suspense');
+});
+
+test('CANAL integrity rejects unregistered changes inside and outside approved hunks',async()=>{
+ const {clienteConferenciaRemainder,clienteConferenciaHunks,clienteSelectedReferenceRemainder,clienteConferenciaHistoricalRemainder}=await import('./helpers/consolidation81Remainder.js');
+ const {readFile}=await import('node:fs/promises');
+ for(const path of Object.keys(clienteConferenciaHunks)){
+  const raw=await readFile(path,'utf8');
+  assert.ok(clienteConferenciaRemainder(path,raw));
+  const source=clienteSelectedReferenceRemainder(path,raw);
+  assert.ok(clienteConferenciaHistoricalRemainder(path,source));
+  assert.throws(()=>clienteConferenciaHistoricalRemainder(path,source+'\n// unregistered mutation\n'));
+  const after=clienteConferenciaHunks[path].hunks[0][0];
+  assert.equal(source.split(after).length,2);
+  const mutation=source.replace(after,()=>'!'+after.slice(1));
+  assert.notEqual(mutation,source);
+  assert.throws(()=>clienteConferenciaHistoricalRemainder(path,mutation));
+ }
+});
+
+test('CANAL malformed session primitives fail before fetch or legacy actor headers',async()=>{
+ const input={identidades:[{documento:'11222333000181'}]};
+ for(const token of [{},123,true,'','   ']){let calls=0;const api=createHttpApiClient({getScope:()=>({groupId:'synthetic-group',actorId:'synthetic-profile',token}),fetchImpl:async()=>{calls++;return new Response(JSON.stringify({data:[{indice:0,documento:null,legado:null}]}),{status:200});}});await assert.rejects(api.clientes.conferirLegado(input));assert.equal(calls,0);}
+});
+
+
+test('commercial masters HTTP: five bounded canonical GETs use one company/session snapshot', async () => {
+  const calls = [], scope = { token: 'synthetic-picker-token', actorId: 'synthetic-actor', groupId: 'synthetic-group', empresaId: 'synthetic-company' };
+  const api = createHttpApiClient({ baseUrl: 'https://erp.synthetic.test', getScope: () => scope,
+    fetchImpl: async (url, init) => { calls.push({ url: new URL(url), init }); return new Response(JSON.stringify({ data: [], meta: {total:0,limit:50,offset:0,hasMore:false} }), {status:200}); },
+  });
+  const pages = await api.comercialMasters.list({ clienteSearch: '001', produtoSearch: 'SYNTHETIC' });
+  assert.equal(calls.length, 5); assert.deepEqual(Object.keys(pages).sort(), ['clientes','condicoes','produtos','tabelas','unidades']);
+  for (const { url, init } of calls) {
+    assert.equal(init.method, 'GET'); assert.equal(init.body, undefined);
+    assert.equal(init.headers.Authorization, 'Bearer synthetic-picker-token');
+    assert.equal(init.headers['X-Group-Id'], scope.groupId); assert.equal(init.headers['X-Empresa-Id'], scope.empresaId);
+    assert.ok(Number(url.searchParams.get('limit')) <= 200);
+  }
+  assert.deepEqual(calls.map(c => c.url.pathname).sort(), ['/api/v1/clientes','/api/v1/condicoes-pagamento','/api/v1/produtos','/api/v1/tabelas-preco','/api/v1/unidades-medida'].sort());
+  for (const path of ['/api/v1/clientes','/api/v1/produtos']) assert.equal(calls.find(c => c.url.pathname===path).url.searchParams.get('operacao'), 'true');
+});
+test('commercial masters HTTP: missing company, late context, failure and abort never fall back locally', async () => {
+  let scope = { token: 'synthetic-picker-token', actorId: 'synthetic-actor', groupId: 'synthetic-group', empresaId: '' }, calls = 0;
+  const controller = new AbortController();
+  const api = createHttpApiClient({ baseUrl: 'https://erp.synthetic.test', getScope: () => scope,
+    fetchImpl: async () => { calls++; if(calls===5)scope={...scope,empresaId:'other-company'};return new Response(JSON.stringify({data:[]}),{status:200}); },
+  });
+  await assert.rejects(api.comercialMasters.list(), e => e.status===401); assert.equal(calls,0);
+  scope={...scope,empresaId:'synthetic-company'};
+  await assert.rejects(api.comercialMasters.list(), e => e.code==='CONTEXT_CHANGED'); assert.equal(calls,5);
+  controller.abort(); await assert.rejects(api.comercialMasters.list({signal:controller.signal}), e=>e.code==='CONTEXT_CHANGED'); assert.equal(calls,5);
+  await assert.rejects(api.comercialMasters.list({clienteSearch:'x'.repeat(201)}), e=>e.status===422); assert.equal(calls,5);
+  const denied = createHttpApiClient({baseUrl:'https://erp.synthetic.test',getScope:()=>scope,
+    fetchImpl:async()=>new Response(JSON.stringify({error:{code:'PERMISSION_DENIED'}}),{status:403})});
+  await assert.rejects(denied.comercialMasters.list(), e=>e.status===403);
+});
+
+test('canonical masters: exact source guards reject missing, repeated and modified approved hunks', async () => {
+  const { readFileSync } = await import('node:fs');
+  const { clienteConferenciaHunks, clienteConferenciaRemainder: composed, clienteSelectedReferenceRemainder, clienteConferenciaHistoricalRemainder: clienteConferenciaRemainder } = await import('./helpers/consolidation81Remainder.js');
+  for (const path of ['server/src/api/router.ts','server/src/services/clienteService.ts','src/api/httpApiClient.js']) {
+    const raw = readFileSync(path, 'utf8');
+    assert.doesNotThrow(() => composed(path, raw));
+    const source = clienteSelectedReferenceRemainder(path, raw);
+    assert.doesNotThrow(() => clienteConferenciaRemainder(path, source));
+    for (const [after, before] of clienteConferenciaHunks[path].hunks) {
+      assert.equal(source.split(after).length,2);
+      assert.throws(() => clienteConferenciaRemainder(path, source.replace(after, before)));
+      assert.throws(() => clienteConferenciaRemainder(path, source.replace(after, after + after)));
+      assert.throws(() => clienteConferenciaRemainder(path, source.replace(after, after + '\nvoid "SYNTHETIC_OUT_OF_SCOPE";\n')));
+    }
+    assert.throws(() => clienteConferenciaRemainder(path, source + '\nvoid "SYNTHETIC_OUTSIDE";\n'));
+  }
 });

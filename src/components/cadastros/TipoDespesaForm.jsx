@@ -10,8 +10,9 @@ import { useQuery } from "@tanstack/react-query";
 import usePermissions from '@/components/lib/usePermissions';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
+import useCadastroReopenOnIdentity from "@/components/cadastros/useCadastroReopenOnIdentity";
 
-export default function TipoDespesaForm({ tipo, tipoDespesa, item, data, onSubmit, onSave, onClose, windowMode = false }) {
+export default function TipoDespesaForm({ tipo, tipoDespesa, item, data, onSubmit, onSave, onClose, isSubmitting, windowMode = false }) {
   const dadosIniciais = item || data || tipoDespesa || tipo;
   const { canCreate, canEdit } = usePermissions();
   const { empresaAtual, grupoAtual, contexto, filterInContext } = useContextoVisual();
@@ -20,23 +21,23 @@ export default function TipoDespesaForm({ tipo, tipoDespesa, item, data, onSubmi
   const contextKey = empresaAtual?.id ? `empresa-${empresaAtual.id}` : groupId ? `grupo-${groupId}` : "sem-contexto";
   const podeCriar = canCreate("Cadastros", "TipoDespesa") || canCreate("Financeiro", "TipoDespesa") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "TipoDespesa") || canEdit("Financeiro", "TipoDespesa") || canEdit("Cadastros", null);
-  const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState(dadosIniciais || {
+    const emptyFormData = {
     codigo: '', nome: '', categoria: 'Operacional',
     conta_contabil_padrao_id: '', conta_contabil_padrao_nome: '',
     centro_resultado_padrao_id: '', centro_resultado_padrao_nome: '',
     exige_aprovacao: false, limite_aprovacao_automatica: 0,
     pode_ser_recorrente: false, ativo: true
-  });
+  };
+  const [formData, setFormData] = useState(dadosIniciais || emptyFormData);
 
   // Garante sincronização quando o mesmo componente é reutilizado (ex: abrir outro registro sem desmontar)
-  const prevIdRef = React.useRef(dadosIniciais?.id);
-  useEffect(() => {
-    if (dadosIniciais?.id && dadosIniciais.id !== prevIdRef.current) {
-      prevIdRef.current = dadosIniciais.id;
-      setFormData({ ...dadosIniciais });
-    }
-  }, [dadosIniciais?.id]);
+  const { boundId: tipoDespesaBoundId } = useCadastroReopenOnIdentity(dadosIniciais, {
+    formData,
+    setFormData,
+    emptyForm: emptyFormData,
+    mapToForm: (record) => record || emptyFormData,
+  });
+  const podeSalvar = tipoDespesaBoundId ? podeEditar : podeCriar;
 
   const { data: contasContabeis = [] } = useQuery({
     queryKey: ['tipo-despesa-plano-contas', contextKey],
@@ -54,6 +55,7 @@ export default function TipoDespesaForm({ tipo, tipoDespesa, item, data, onSubmi
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
     if (dadosIniciais?.id && !podeEditar) {
       alert("Sem permissao para editar tipos de despesa.");
       return;
@@ -68,6 +70,7 @@ export default function TipoDespesaForm({ tipo, tipoDespesa, item, data, onSubmi
     }
     const payload = {
       ...formData,
+      ...(tipoDespesaBoundId ? { id: tipoDespesaBoundId } : {}),
       group_id: groupId || formData.group_id,
       empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id,
     };
@@ -83,8 +86,8 @@ export default function TipoDespesaForm({ tipo, tipoDespesa, item, data, onSubmi
     <form onSubmit={handleSubmit} className={windowMode ? "space-y-4 p-4 h-full overflow-auto" : "space-y-4 p-4"}>
       <div className="grid grid-cols-2 gap-4">
       <CadastroCodigoRegistroField
-        hasId={Boolean(dadosIniciais?.id)}
-        entityId={dadosIniciais?.id}
+        hasId={Boolean(tipoDespesaBoundId)}
+        entityId={tipoDespesaBoundId}
         value={formData.codigo}
         action="codigo-registro-tipo-despesa"
       />
@@ -164,7 +167,7 @@ export default function TipoDespesaForm({ tipo, tipoDespesa, item, data, onSubmi
       <Button
         type="submit"
         className="w-full bg-sky-600 hover:bg-sky-700"
-        disabled={!contextoValido || !podeSalvar}
+        disabled={isSubmitting || !contextoValido || !podeSalvar}
         data-permission="Cadastros.TipoDespesa.salvar"
         data-action="salvar-tipo-despesa"
         data-sensitive

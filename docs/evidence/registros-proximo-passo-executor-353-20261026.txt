@@ -1,0 +1,25 @@
+REGISTROS CADASTROS GERAIS — próximo passo executável (#353)
+============================================================
+Sem inventar exemplos · sem declarar recuperado por abrir a tela.
+Runner Cursor: sem staging/HD privado montado.
+
+| Fonte já identificada | Entidade | Escopo | IDs | Formato | Próximo passo EXECUTÁVEL |
+|-----------------------|----------|--------|-----|---------|---------------------------|
+| Matriz 20261009/10 | Cliente | group+empresa | codigo_legado/source | staging CSV/SQL privado | Codex: confirmar path staging + import_authorized; piloto ≤N com relatório divergência |
+| Matriz Fornecedor | Fornecedor | group+empresa | codigo | ops schema ausente | Codex: gate migration ops + crosswalk; NÃO seed Git |
+| Base44/snapshot UI | Marca/UM/Grupo/Setor | grupo | codigo interno | export Base44 privado | Executor privado: export filtrado por groupId; Cursor classifica oculto vs ausente |
+| SYNTH/GATE-D | auxiliares ensaio | DEV | SYNTH* | já no ERP novo | Preservar; NÃO misturar com legado |
+| erp-integra paths | telas | — | — | código | Já classificado; auth permissiva NÃO copiar |
+
+Requisito mínimo ao executor privado (GitHub / #353+#344)
+---------------------------------------------------------
+1. Confirmar acesso read-only ao staging/backup (hash, path, janela).
+2. Listar entidades auxiliares alvo do roteiro inicial (UM, marca, condição,
+   tabela preço, forma pagamento) com contagem por groupId.
+3. Entregar mapa antigo→novo (sem PII no Git): codigo_legado, group_id,
+   conflito, ação (mapear/pendente/ignorar).
+4. Autorização explícita de piloto isolado (não VPS operacional).
+
+Se (1) falhar: registrar BLOQ_ACESSO_PRIVADO e manter UI/código; não inventar.
+
+Piloto neste runner: NÃO executável (sem fonte privada).

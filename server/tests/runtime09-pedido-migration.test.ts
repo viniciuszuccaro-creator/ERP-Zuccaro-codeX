@@ -39,3 +39,37 @@ test('repositorio nao serializa chave ou fingerprint da intencao no Pedido publi
   assert.match(source, /delete safe\.payload_fingerprint/);
   assert.match(source, /fingerprint: String\(result\.rows\[0\]\.payload_fingerprint\)/);
 });
+
+test('044 compensador: contraprova NULL, rollback e preservacao em engine isolada', async () => {
+  const { PGlite } = await import('@electric-sql/pglite');
+  const fixture = new PGlite();
+  const exec = async (sql: string) => { await fixture.exec(sql); };
+  const rows = async (sql: string) => (await fixture.query(sql)).rows;
+  try {
+    const original = await readFile(new URL('../migrations/044_pedidos_idempotencia_direta.sql', import.meta.url), 'utf8');
+    const candidate = await readFile(new URL('../schema-candidates/pedido_idempotency_pair.sql', import.meta.url), 'utf8');
+    await exec('CREATE TEMP TABLE pedidos(group_id uuid NOT NULL, empresa_id uuid NOT NULL, marker text NOT NULL)');
+    await exec(original);
+    const group = '11111111-1111-4111-8111-111111111111';
+    const company = '22222222-2222-4222-8222-222222222222';
+    const key = '33333333-3333-4333-8333-333333333333';
+    await exec(`INSERT INTO pedidos VALUES ('${group}','${company}','incomplete','${key}',NULL)`);
+    // Counterproof: original CHECK admits UNKNOWN. Candidate must refuse without repairing data.
+    await assert.rejects(exec(candidate), /pedidos_idempotency_pair_complete_check/);
+    await exec('ROLLBACK');
+    assert.equal((await rows("SELECT marker FROM pedidos WHERE marker='incomplete'")).length, 1);
+    assert.equal((await rows("SELECT 1 FROM pg_constraint WHERE conrelid='pedidos'::regclass AND conname='pedidos_idempotency_pair_complete_check'")).length, 0);
+    await exec("DELETE FROM pedidos WHERE marker='incomplete'"); // Disposable synthetic row only.
+    await exec(`INSERT INTO pedidos VALUES ('${group}','${company}','legacy',NULL,NULL),
+      ('${group}','${company}','valid','${key}','${'a'.repeat(64)}')`);
+    const before = await rows('SELECT * FROM pedidos ORDER BY marker');
+    await exec(candidate);
+    assert.deepEqual(await rows('SELECT * FROM pedidos ORDER BY marker'), before);
+    for (const [k, fingerprint] of [[`'${key}'`, 'NULL'], ['NULL', `'${'a'.repeat(64)}'`], [`'${key}'`, "'bad'"]]) {
+      await assert.rejects(exec(`INSERT INTO pedidos VALUES ('${group}','${company}','invalid',${k},${fingerprint})`), /pedidos_idempotency_pair/);
+    }
+    await assert.rejects(exec(`INSERT INTO pedidos VALUES ('${group}','${company}','duplicate','${key}','${'a'.repeat(64)}')`), /uq_pedidos_idempotency_scope/);
+    await exec(`INSERT INTO pedidos VALUES ('44444444-4444-4444-8444-444444444444','${company}','other-group','${key}','${'a'.repeat(64)}')`);
+    assert.equal((await rows('SELECT * FROM pedidos')).length, 3);
+    } finally { await fixture.close(); }
+});

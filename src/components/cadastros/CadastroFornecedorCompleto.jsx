@@ -20,6 +20,7 @@ import useContextoVisual from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import useCadastroFormScopeGuard from "./hooks/useCadastroFormScopeGuard";
 import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
+import useCadastroReopenOnIdentity from "@/components/cadastros/useCadastroReopenOnIdentity";
 import { normalizeFornecedorCadastro } from "@/api/localCadastroMasterPolicy";
 import { FornecedorContatoEnderecoSection, FornecedorDadosGeraisSection, FornecedorFiscalFinanceiroSection } from "@/components/cadastros/fornecedor/FornecedorFormSections";
 
@@ -110,6 +111,51 @@ export default function CadastroFornecedorCompleto({ fornecedor: fornecedorProp,
     group_id: groupId
   });
 
+
+  const { boundId: fornecedorBoundId } = useCadastroReopenOnIdentity(fornecedor, {
+    formData,
+    setFormData,
+    emptyForm: {
+      nome: "",
+      razao_social: "",
+      nome_fantasia: "",
+      tipo_pessoa: "Pessoa Juridica",
+      cpf_cnpj: "",
+      cpf: "",
+      cnpj: "",
+      rg: "",
+      inscricao_estadual: "",
+      simples_nacional: false,
+      rntrc: "",
+      email: "",
+      telefone: "",
+      whatsapp: "",
+      contato_responsavel: "",
+      endereco: "",
+      bairro: "",
+      cidade: "",
+      estado: "",
+      cep: "",
+      website: "",
+      endereco_cobranca: { endereco: "", bairro: "", cidade: "", estado: "", cep: "" },
+      dados_bancarios: { banco: "", agencia: "", conta: "", tipo_conta: "Corrente" },
+      tipo_fornecedor: "Matéria-Prima",
+      categoria: "Matéria Prima",
+      prazo_entrega_padrao: 0,
+      status_fornecedor: "Em Análise",
+      status: "Ativo",
+      avaliacoes: [],
+      nota_media: 0,
+      empresa_id: empresaAtual?.id,
+      empresa_dona_id: empresaAtual?.id,
+      group_id: groupId,
+    },
+    mapToForm: (record) => ({
+      ...record,
+      avaliacoes: record.avaliacoes || [],
+    }),
+  });
+
   const buildPayload = (data = formData) => {
     const enderecoCobranca = data.endereco_cobranca || {};
     const dadosBancarios = sanitizeDadosBancarios(data.dados_bancarios);
@@ -174,9 +220,11 @@ export default function CadastroFornecedorCompleto({ fornecedor: fornecedorProp,
 
       const payload = buildPayload(data);
 
-      if (fornecedor?.id) {
+      // Identidade do rascunho (boundId), não props — evita salvar A em B após reject switch.
+      const targetId = fornecedorBoundId || formData?.id || null;
+      if (targetId) {
         if (!podeEditar) throw new Error("Seu perfil nao permite editar fornecedores.");
-        return updateInContext('Fornecedor', fornecedor.id, payload, 'empresa_dona_id');
+        return updateInContext('Fornecedor', targetId, payload, 'empresa_dona_id');
       }
 
       if (!podeCriar) throw new Error("Seu perfil nao permite criar fornecedores.");
@@ -185,7 +233,7 @@ export default function CadastroFornecedorCompleto({ fornecedor: fornecedorProp,
     onSuccess: () => {
       if (!isFormScopeCurrent()) return;
       queryClient.invalidateQueries({ queryKey: ['fornecedores'] });
-      toast({ title: `✅ Fornecedor ${fornecedor?.id ? 'atualizado' : 'criado'} com sucesso!` });
+      toast({ title: `✅ Fornecedor ${formData?.id ? 'atualizado' : 'criado'} com sucesso!` });
       if (onSuccess) onSuccess();
       if (onSubmit) onSubmit(buildPayload(formData));
       if (onCloseNorm) onCloseNorm();
@@ -229,7 +277,8 @@ export default function CadastroFornecedorCompleto({ fornecedor: fornecedorProp,
     if (!window.confirm(`Tem certeza que deseja excluir o fornecedor "${formData.nome}"? Esta ação não pode ser desfeita.`)) {
       return;
     }
-    deleteMutation.mutate(fornecedor.id);
+    if (!formData?.id) return;
+    deleteMutation.mutate(formData.id);
   };
 
   const handleAlternarStatus = () => {
@@ -305,66 +354,6 @@ export default function CadastroFornecedorCompleto({ fornecedor: fornecedorProp,
     }
   };
 
-  const prevIdRef = useRef(fornecedor?.id || null);
-  const prevUpdatedRef = useRef(fornecedor?.updated_date);
-  useEffect(() => {
-    const nextId = fornecedor?.id || null;
-    const idChanged = nextId !== prevIdRef.current;
-    const updatedChanged = Boolean(
-      nextId && fornecedor?.updated_date && fornecedor.updated_date !== prevUpdatedRef.current,
-    );
-    if (!nextId) {
-      if (prevIdRef.current !== null) {
-        prevIdRef.current = null;
-        prevUpdatedRef.current = undefined;
-        setFormData({
-          nome: "",
-          razao_social: "",
-          nome_fantasia: "",
-          tipo_pessoa: "Pessoa Juridica",
-          cpf_cnpj: "",
-          cpf: "",
-          cnpj: "",
-          rg: "",
-          inscricao_estadual: "",
-          simples_nacional: false,
-          rntrc: "",
-          email: "",
-          telefone: "",
-          whatsapp: "",
-          contato_responsavel: "",
-          endereco: "",
-          bairro: "",
-          cidade: "",
-          estado: "",
-          cep: "",
-          website: "",
-          endereco_cobranca: { endereco: "", bairro: "", cidade: "", estado: "", cep: "" },
-          dados_bancarios: { banco: "", agencia: "", conta: "", tipo_conta: "Corrente" },
-          tipo_fornecedor: "Matéria-Prima",
-          categoria: "Matéria Prima",
-          prazo_entrega_padrao: 0,
-          status_fornecedor: "Em Análise",
-          status: "Ativo",
-          avaliacoes: [],
-          nota_media: 0,
-          empresa_id: empresaAtual?.id,
-          empresa_dona_id: empresaAtual?.id,
-          group_id: groupId,
-        });
-      }
-      return;
-    }
-    if (idChanged || updatedChanged) {
-      prevIdRef.current = nextId;
-      prevUpdatedRef.current = fornecedor.updated_date;
-      setFormData({
-        ...fornecedor,
-        avaliacoes: fornecedor.avaliacoes || [],
-      });
-    }
-  }, [fornecedor?.id, fornecedor?.updated_date, empresaAtual?.id, groupId]);
-
   const content = (
     <>
       <div className="border-b pb-4 px-6 pt-6 flex-shrink-0 bg-white sticky top-0 z-10">
@@ -372,9 +361,9 @@ export default function CadastroFornecedorCompleto({ fornecedor: fornecedorProp,
           <div>
             <h2 className="text-2xl font-bold flex items-center gap-2">
               <Building2 className="w-6 h-6 text-sky-600" />
-              {fornecedor?.id ? 'Editar Fornecedor' : 'Novo Fornecedor'}
+              {fornecedorBoundId ? 'Editar Fornecedor' : 'Novo Fornecedor'}
             </h2>
-              {fornecedor?.id && (
+              {fornecedorBoundId && (
                 <div className="flex items-center gap-2 mt-2">
                   <Badge className={
                     formData.status === 'Ativo' ? 'bg-green-100 text-green-700' :
@@ -388,7 +377,7 @@ export default function CadastroFornecedorCompleto({ fornecedor: fornecedorProp,
             </div>
             
           <div className="flex items-center gap-2">
-            {fornecedor?.id && (
+            {fornecedorBoundId && (
               <>
                 <Button
                   type="button"
@@ -428,7 +417,7 @@ export default function CadastroFornecedorCompleto({ fornecedor: fornecedorProp,
               onClick={handleSave} 
               data-permission="Cadastros.Fornecedor.salvar"
               data-sensitive
-              disabled={saveMutation.isPending || !contextoValido || (fornecedor?.id ? !podeEditar : !podeCriar)}
+              disabled={saveMutation.isPending || !contextoValido || (fornecedorBoundId ? !podeEditar : !podeCriar)}
               className="bg-cyan-600 hover:bg-cyan-700"
             >
               <Save className="w-4 h-4 mr-2" />
@@ -458,8 +447,8 @@ export default function CadastroFornecedorCompleto({ fornecedor: fornecedorProp,
           <div className="px-6 pb-6">
             <TabsContent value="dados-gerais" className="space-y-6 m-0 mt-4">
               <CadastroCodigoRegistroField
-                hasId={Boolean(fornecedor?.id)}
-                entityId={fornecedor?.id}
+                hasId={Boolean(fornecedorBoundId)}
+                entityId={fornecedorBoundId}
                 value={formData.codigo ?? fornecedor?.codigo}
                 action="codigo-registro-fornecedor-completo"
               />

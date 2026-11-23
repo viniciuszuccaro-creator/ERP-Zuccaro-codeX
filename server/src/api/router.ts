@@ -15,6 +15,8 @@ import type { CondicaoPagamentoService } from '../services/condicaoPagamentoServ
 import type { OrcamentoService } from '../services/orcamentoService.js';
 import type { OportunidadeService } from '../services/oportunidadeService.js';
 import { mountOportunidadeRoutes } from './oportunidadeRoutes.js';
+import { mountFornecedorRoutes } from './fornecedorRoutes.js';
+import type { FornecedorService } from '../services/fornecedorService.js';
 import type { PedidoService } from '../services/pedidoService.js';
 import type { ExpedicaoService } from '../services/expedicaoService.js';
 import type { MarcaService } from '../services/marcaService.js';
@@ -49,6 +51,7 @@ export type ApiDeps = {
   pedidoService: PedidoService;
   expedicaoService: ExpedicaoService;
   oportunidadeService?: OportunidadeService | null;
+  fornecedorService?: FornecedorService | null;
 };
 
 function ctxFromReq(req: Request) {
@@ -420,6 +423,14 @@ function mountClienteRoutes(
   central360: ClienteCentral360Service,
 ) {
   const relationshipPath = '/api/v1/clientes/:clienteId/empresas';
+  const operationalClienteQuery = z.object({
+    operacao: z.literal('true'), ativo: z.literal('true').optional(),
+    cliente_empresa_id: z.string().uuid().optional(),
+    search: z.string().trim().max(200).optional(),
+    order_by: z.enum(['codigo','nome']).optional(), order_dir: z.enum(['asc','desc']).optional(),
+    limit: z.string().regex(/^[1-9]\d{0,2}$/).transform(Number).refine(n => n <= 200).optional(),
+    offset: z.string().regex(/^(0|[1-9]\d*)$/).transform(Number).refine(Number.isSafeInteger).optional(),
+  }).strict();
 
   router.get('/api/v1/clientes/:id/central-360', requireTenantScope, async (req, res, next) => {
     try {
@@ -551,11 +562,18 @@ function mountClienteRoutes(
 
   router.get('/api/v1/clientes', requireTenantScope, async (req, res, next) => {
     try {
+      const operacao = parseProdutoOperation(req.query.operacao);
+      if (operacao) {
+        if (!operationalClienteQuery.safeParse(req.query).success) throw new AppError(422, 'VALIDATION_ERROR', 'Invalid operational customer selector');
+        res.setHeader('Cache-Control', 'no-store');
+      }
       const orderByRaw = req.query.order_by ? String(req.query.order_by) : undefined;
       const orderBy = orderByRaw === 'nome' || orderByRaw === 'codigo' ? orderByRaw : undefined;
       const orderDirRaw = req.query.order_dir ? String(req.query.order_dir).toLowerCase() : undefined;
       const orderDir = orderDirRaw === 'desc' || orderDirRaw === 'asc' ? orderDirRaw : undefined;
       const page = await service.list(ctxFromReq(req), {
+        operacao,
+        clienteEmpresaId: typeof req.query.cliente_empresa_id === 'string' ? req.query.cliente_empresa_id : undefined,
         ativo: parseAtivoQuery(req.query.ativo),
         search: req.query.search ? String(req.query.search) : undefined,
         codigo: req.query.codigo ? String(req.query.codigo) : undefined,
@@ -569,6 +587,14 @@ function mountClienteRoutes(
     } catch (error) {
       next(error);
     }
+  });
+
+  router.post('/api/v1/clientes/conferencia-legado', requireTenantScope, async (req, res, next) => {
+    try {
+      if (req.authVerified !== true) throw new AppError(401, 'AUTH_REQUIRED', 'Verified Supabase session required');
+      res.set('cache-control', 'no-store');
+      res.json({ data: await service.conferirLegado(ctxFromReq(req), req.body) });
+    } catch (error) { next(error); }
   });
 
   router.get('/api/v1/clientes/sugestao-vinculo', requireTenantScope, async (req, res, next) => {
@@ -629,6 +655,16 @@ function mountClienteRoutes(
 
 function mountClienteLocalRoutes(router: Router, service: ClienteLocalService) {
   const basePath = '/api/v1/clientes/:clienteId/locais';
+
+  router.get(`${basePath}/snapshot`, requireTenantScope, async (req, res, next) => {
+    try { res.json(await service.snapshot(ctxFromReq(req), req.params.clienteId)); }
+    catch (error) { next(error); }
+  });
+
+  router.post(`${basePath}/sync`, requireTenantScope, async (req, res, next) => {
+    try { res.json(await service.sync(ctxFromReq(req), req.params.clienteId, req.body)); }
+    catch (error) { next(error); }
+  });
 
   router.get(basePath, requireTenantScope, async (req, res, next) => {
     try {
@@ -1428,6 +1464,7 @@ export function createApiRouter(deps: ApiDeps) {
   mountPedidoRoutes(router, deps.pedidoService);
   mountExpedicaoRoutes(router, deps.expedicaoService);
   mountOportunidadeRoutes(router,deps.oportunidadeService,ctxFromReq);
+  mountFornecedorRoutes(router, deps.fornecedorService, ctxFromReq);
 
   return router;
 }

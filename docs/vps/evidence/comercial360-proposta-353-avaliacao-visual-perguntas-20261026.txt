@@ -1,0 +1,18 @@
+Roteiro curto + perguntas — Comercial360 (candidata #353)
+==========================================================
+Capturas publicadas (tip runner e670c1a2; tip docs 0bd89333+):
+- docs/evidence/comercial360-e670c1a2/desktop.png
+- docs/evidence/comercial360-e670c1a2/tablet.png
+- docs/evidence/comercial360-e670c1a2/novo-orcamento-dialog.png
+
+Pré-condição da captura: /Comercial?proposta=comercial360 · dados sintéticos · salvar bloqueado.
+
+Perguntas objetivas (responda S/N + nota 1 linha)
+------------------------------------------------
+1. Desktop: o azul-claro e a hierarquia dos painéis estão aprovados para ir a main?
+2. Tablet (~1024): algum corte/overflow crítico nos painéis ou abas?
+3. Diálogo “Novo orçamento”: o rascunho e os campos essenciais estão legíveis/úteis?
+4. Falta algum painel/campo operacional que você espera ver nesta proposta (liste só o essencial)?
+5. Pode seguir para validação Codespace na MESMA candidata sem redesign amplo?
+
+Não declarar Codespace/VPS atualizados neste arquivo — ver handoff Codespace separado.

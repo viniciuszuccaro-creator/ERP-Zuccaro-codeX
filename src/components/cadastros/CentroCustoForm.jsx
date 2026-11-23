@@ -8,6 +8,7 @@ import { Receipt, Trash2, Power, PowerOff } from "lucide-react";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
+import useCadastroReopenOnIdentity from "@/components/cadastros/useCadastroReopenOnIdentity";
 
 /**
  * V21.1.2 - WINDOW MODE READY
@@ -21,8 +22,7 @@ export default function CentroCustoForm({ centroCusto, item, data, initialData, 
   const podeCriar = canCreate("Cadastros", "CentroCusto") || canCreate("Financeiro", "CentroCusto") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "CentroCusto") || canEdit("Financeiro", "CentroCusto") || canEdit("Cadastros", null);
   const podeExcluir = canDelete("Cadastros", "CentroCusto") || canDelete("Financeiro", "CentroCusto") || canDelete("Cadastros", null);
-  const podeSalvar = dadosCentroCusto?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState(dadosCentroCusto || {
+    const emptyFormData = {
     codigo: "",
     descricao: "",
     tipo: "Despesa",
@@ -31,23 +31,25 @@ export default function CentroCustoForm({ centroCusto, item, data, initialData, 
     orcamento_mensal: "",
     status: "Ativo",
     observacoes: ""
-  });
+  };
+  const [formData, setFormData] = useState(dadosCentroCusto || emptyFormData);
 
-  const prevIdRef = React.useRef(dadosCentroCusto?.id);
-  useEffect(() => {
-    if (dadosCentroCusto?.id && dadosCentroCusto.id !== prevIdRef.current) {
-      prevIdRef.current = dadosCentroCusto.id;
-      setFormData({ ...dadosCentroCusto });
-    }
-  }, [dadosCentroCusto?.id]);
+  const { boundId: centroBoundId } = useCadastroReopenOnIdentity(dadosCentroCusto, {
+    formData,
+    setFormData,
+    emptyForm: emptyFormData,
+    mapToForm: (record) => record || emptyFormData,
+  });
+  const podeSalvar = centroBoundId ? podeEditar : podeCriar;
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (dadosCentroCusto?.id && !podeEditar) {
+    if (isSubmitting) return;
+    if (centroBoundId && !podeEditar) {
       alert("Sem permissao para editar centros de custo.");
       return;
     }
-    if (!dadosCentroCusto?.id && !podeCriar) {
+    if (!centroBoundId && !podeCriar) {
       alert("Sem permissao para criar centros de custo.");
       return;
     }
@@ -57,6 +59,7 @@ export default function CentroCustoForm({ centroCusto, item, data, initialData, 
     }
     const dataToSubmit = {
       ...formData,
+      ...(centroBoundId ? { id: centroBoundId } : {}),
       orcamento_mensal: formData.orcamento_mensal ? parseFloat(formData.orcamento_mensal) : null,
       // Injeta 'nome' para o Visualizador Universal (CentroCusto usa 'descricao' como nome)
       nome: formData.nome || formData.descricao || '',
@@ -92,8 +95,8 @@ export default function CentroCustoForm({ centroCusto, item, data, initialData, 
   const formContent = (
     <form onSubmit={handleSubmit} className="space-y-4">
       <CadastroCodigoRegistroField
-        hasId={Boolean(dadosCentroCusto?.id)}
-        entityId={dadosCentroCusto?.id}
+        hasId={Boolean(centroBoundId)}
+        entityId={centroBoundId}
         value={formData.codigo}
         action="codigo-registro-centro-custo"
       />

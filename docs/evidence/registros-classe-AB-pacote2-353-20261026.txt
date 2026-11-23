@@ -1,0 +1,23 @@
+REGISTROS A vs B — pacote 2 #353
+================================
+Modalidade: runner Cursor · sem staging privado montado
+
+Classe A (existe; UI/API não apresentava corretamente) — corrigido
+----------------------------------------------------------------
+| Item | Mecanismo | Correção |
+|------|-----------|----------|
+| Marca reopen fraco | só prevIdRef | useCadastroReopenOnIdentity + boundId |
+| Histórico Produtos no Painel Cliente | TabsTrigger sem TabsContent | montar conteúdo no Tabs |
+
+Classe A — diagnosticar antes de ETL (já documentado)
+-----------------------------------------------------
+- Lista vazia com DB n>0: contexto/RBAC/filtro Visualizador
+- Badge 0: contagem local (histórico #254)
+- Sem grant visualizar: fail-closed esperado
+
+Classe B (ausente da base) — BLOQ neste runner
+---------------------------------------------
+- Fornecedor ops schema ausente (to_regclass)
+- Staging #211 import_authorized=0 (volumes privados)
+- Fonte: registros-sumidos + matrizes 20261009/10 + executor
+Não recriar fictícios. Reconciliação = Codex Legado + staging isolado.

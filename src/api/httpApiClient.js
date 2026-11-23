@@ -1,5 +1,5 @@
 import { HTTP_PILOT_ENTITIES, resolveErpApiBaseUrl } from './runtimeBackend.js';
-import { toClienteMasterHttpPayload } from './clienteHttpPayload.js';
+import { toClienteMasterHttpPayload, withHydratedContatos } from './clienteHttpPayload.js';
 import { readErpHttpSession } from './erpHttpSession.js';
 import { parseA1CertificateMetadata } from './a1CertificateContract.js';
 import { createBankStatementApi } from './bankStatementHttp.js';
@@ -259,8 +259,20 @@ export function createHttpApiClient(options = {}) {
           if (['1', 'true', 'yes', 'ativo', 'ativa', 'active'].includes(raw)) ativoQuery = true;
           else if (['0', 'false', 'no', 'inativo', 'inativa', 'inactive'].includes(raw)) ativoQuery = false;
         }
+        const exact = {};
+        if (basePath === '/api/v1/clientes') {
+          for (const key of ['documento','codigo']) {
+            if (!Object.prototype.hasOwnProperty.call(query,key)) continue;
+            const value = query[key];
+            if (typeof value !== 'string' || !value || value !== value.trim() || value.length > (key === 'documento' ? 32 : 80)
+              || (key === 'documento' && (!/^[0-9.\/\- ]+$/.test(value) || ![11,14].includes(value.replace(/\D/g,'').length)))) {
+              throw createHttpError(422,{error:{code:'VALIDATION_ERROR',message:'Explicit exact selector required'}}, undefined);
+            }
+            exact[key] = value;
+          }
+        }
         return request(basePath, {
-          query: { limit, offset, search, ativo: ativoQuery, ...normalizeOrderByQuery(orderBy) },
+          query: { limit, offset, search, ativo: ativoQuery, ...exact, ...normalizeOrderByQuery(orderBy) },
           unwrap,
         });
     }
@@ -454,11 +466,22 @@ SeparacaoConferencia: {
       });
       return {
         ...base,
+        async get(id) {
+          return withHydratedContatos(await base.get(id));
+        },
+        async list(orderBy, limit = 100) {
+          const rows = await base.list(orderBy, limit);
+          return Array.isArray(rows) ? rows.map(withHydratedContatos) : rows;
+        },
+        async filter(query = {}, orderBy, limit = 100, skip = 0) {
+          const rows = await base.filter(query, orderBy, limit, skip);
+          return Array.isArray(rows) ? rows.map(withHydratedContatos) : rows;
+        },
         async create(data) {
-          return base.create(toClienteMasterHttpPayload(data));
+          return withHydratedContatos(await base.create(toClienteMasterHttpPayload(data)));
         },
         async update(id, data) {
-          return base.update(id, toClienteMasterHttpPayload(data));
+          return withHydratedContatos(await base.update(id, toClienteMasterHttpPayload(data)));
         },
       };
     })(),
@@ -605,6 +628,39 @@ SeparacaoConferencia: {
     })(),
   };
 
+  const comercialMasters = {
+    /** @param {{clienteSearch?:string,produtoSearch?:string,clienteEmpresaId?:string,signal?:AbortSignal}} [options] */
+    async list({ clienteSearch = '', produtoSearch = '', clienteEmpresaId, signal } = {}) {
+      const before = Object.freeze({ ...(getScope() || {}) });
+      const matches = current => current.token === before.token && current.groupId === before.groupId
+        && current.empresaId === before.empresaId && current.actorId === before.actorId;
+      const failure = (status, code) => createHttpError(status, { error: { code } }, undefined);
+      if (!before.token || !before.groupId || !before.empresaId || !before.actorId) throw failure(401, 'AUTH_COMPANY_REQUIRED');
+      if ([clienteSearch, produtoSearch].some(value => typeof value !== 'string' || value.length > 200 || value !== value.trim())) {
+        throw failure(422, 'VALIDATION_ERROR');
+      }
+      if (signal?.aborted) throw failure(409, 'CONTEXT_CHANGED');
+      if (clienteEmpresaId !== undefined && (typeof clienteEmpresaId !== 'string'
+        || clienteEmpresaId.length !== 36 || clienteEmpresaId !== clienteEmpresaId.trim() || clienteSearch)) {
+        throw failure(422, 'VALIDATION_ERROR');
+      }
+      let pages, caught;
+      try {
+        pages = await Promise.all([
+          request('/api/v1/clientes', { query: { operacao: true, ativo: true, cliente_empresa_id: clienteEmpresaId, search: clienteSearch, limit: clienteEmpresaId ? 1 : 50, offset: 0, order_by: 'codigo' }, signal, unwrap: false }, before),
+          request('/api/v1/produtos', { query: { operacao: true, ativo: true, search: produtoSearch, limit: 50, offset: 0 }, signal, unwrap: false }, before),
+          request('/api/v1/condicoes-pagamento', { query: { ativo: true, limit: 200, offset: 0 }, signal, unwrap: false }, before),
+          request('/api/v1/unidades-medida', { query: { ativo: true, limit: 200 }, signal, unwrap: false }, before),
+          request('/api/v1/tabelas-preco', { query: { ativo: true, limit: 200, offset: 0 }, signal, unwrap: false }, before),
+        ]);
+      } catch (error) { caught = error; }
+      if (signal?.aborted || !matches(getScope() || {})) throw failure(409, 'CONTEXT_CHANGED');
+      if (caught) throw caught;
+      if (!pages) throw failure(502, 'COMERCIAL_MASTERS_INVALID');
+      return { clientes: pages[0], produtos: pages[1], condicoes: pages[2], unidades: pages[3], tabelas: pages[4] };
+    },
+  };
+
   const orcamentos = {
     /** @param {{ limit?: number, offset?: number, search?: string, status?: string, clienteEmpresaId?: string, validadeDe?: string, validadeAte?: string, signal?: AbortSignal }} [options] */
     list({ limit = 50, offset = 0, search, status, clienteEmpresaId, validadeDe, validadeAte, signal } = {}) {
@@ -674,6 +730,48 @@ SeparacaoConferencia: {
   };
 
   const clientes = {
+    /** Read exact cohort inside the application; never exports the session.
+     * @param {{identidades: Array<Record<string,string>>}} input
+     * @param {{signal?: AbortSignal}} [options]
+     */
+    async conferirLegado(input, { signal } = {}) {
+      const fail = (status, code) => createHttpError(status, { error: { code, message: code } }, undefined);
+      const before = Object.freeze({ ...(getScope() || {}) });
+      const matches = current => current.groupId === before.groupId && current.actorId === before.actorId
+        && (current.empresaId || null) === null && current.token === before.token;
+      if (typeof before.token !== 'string' || !before.token.trim()
+        || typeof before.groupId !== 'string' || !before.groupId.trim()
+        || typeof before.actorId !== 'string' || !before.actorId.trim() || before.empresaId) throw fail(401, 'AUTH_GROUP_REQUIRED');
+      if (!input || Object.keys(input).some(k => k !== 'identidades') || !Array.isArray(input.identidades)
+        || input.identidades.length < 1 || input.identidades.length > 100) throw fail(422, 'VALIDATION_ERROR');
+      const body = JSON.parse(JSON.stringify(input));
+      for (const item of body.identidades) {
+        if (!item || typeof item !== 'object' || Array.isArray(item)
+          || Object.keys(item).some(k => !['documento','sourceSystem','codigoLegado'].includes(k))
+          || (!item.documento && !(item.sourceSystem && item.codigoLegado))
+          || Boolean(item.sourceSystem) !== Boolean(item.codigoLegado)
+          || Object.values(item).some(v => typeof v !== 'string' || !v || v !== v.trim() || v.length > 80)
+          || (item.documento && (!/^[0-9.\/\- ]{1,32}$/.test(item.documento)
+            || ![11,14].includes(item.documento.replace(/\D/g,'').length)))) throw fail(422,'VALIDATION_ERROR');
+      }
+      if (signal?.aborted) throw fail(409, 'CONTEXT_CHANGED');
+      let result, failure;
+      try { result = await request('/api/v1/clientes/conferencia-legado', { method:'POST', body, signal }, before); }
+      catch (error) { failure = error; }
+      if (signal?.aborted || !matches(getScope() || {})) throw fail(409, 'CONTEXT_CHANGED');
+      if (failure) throw failure;
+      if (!Array.isArray(result) || result.length !== body.identidades.length) throw fail(502,'INVALID_RESPONSE');
+      return result.map((row, indice) => {
+        if (row?.indice !== indice || Object.keys(row).some(k=>!['indice','documento','legado'].includes(k))) throw fail(502,'INVALID_RESPONSE');
+        const match = value => {
+          if (value === null) return null;
+          if (!value || Object.keys(value).some(k=>!['id','codigo','ativo'].includes(k))
+            || typeof value.id !== 'string' || typeof value.codigo !== 'string' || typeof value.ativo !== 'boolean') throw fail(502,'INVALID_RESPONSE');
+          return { id:value.id, codigo:value.codigo, ativo:value.ativo };
+        };
+        return { indice, documento:match(row.documento), legado:match(row.legado) };
+      });
+    },
     /**
      * Read-model Central Cliente 360 (opt-in UI via VITE_ERP_HTTP_CLIENTE_360).
      * Paginação canônica por bloco: *_limit / *_offset (servidor já valida).
@@ -829,6 +927,7 @@ SeparacaoConferencia: {
         unwrap: false,
       });
     },
+    comercialMasters,
     orcamentos,
     pedidos,
     expedicao,
@@ -886,3 +985,5 @@ export const httpApiClient = createHttpApiClient();
 export const a1CertificateApi = createHttpApiClient({ getScope: () => readErpHttpSession() || {} }).a1Certificates;
 export const bankStatementApi = createHttpApiClient({ getScope: () => readErpHttpSession() || {} }).bankStatements;
 export const financialMovementApi = createHttpApiClient({ getScope: () => readErpHttpSession() || {} }).financialMovements;
+
+export const clienteConferenciaApi = createHttpApiClient({ getScope: () => readErpHttpSession() || {} }).clientes;

@@ -4,3 +4,33 @@ import fs from 'node:fs';
 const panel=fs.readFileSync(new URL('../src/components/comercial/PedidoCanonicoPanel.jsx',import.meta.url),'utf8');const tab=fs.readFileSync(new URL('../src/components/comercial/PedidosTab.jsx',import.meta.url),'utf8');const comercial=fs.readFileSync(new URL('../src/pages/Comercial.jsx',import.meta.url),'utf8');const quote=fs.readFileSync(new URL('../src/components/comercial/OrcamentosTab.jsx',import.meta.url),'utf8');
 test('PedidosTab integra painel HTTP preservando operacao legada',()=>{assert.match(tab,/PedidoCanonicoPanel/);assert.match(tab,/PedidosOperacaoLegada/);assert.match(comercial,/canonicalHttp: true/);assert.doesNotMatch(panel,/base44\.entities|createInContext|updateInContext/);});
 test('painel Pedido cobre filtros formulario historico estados e contexto',()=>{for(const marker of ['pedidos-http','cliente_empresa_id','data_entrega_solicitada','requer_producao','Histórico','nextPedidoStatus','Comercial.pedido.visualizar'])assert.match(panel,new RegExp(marker));assert.match(quote,/convertOrcamento/);assert.match(quote,/O orçamento original será preservado/);});
+test('janela Pedido captura sessao canonica sem inventar token e separa cache por sessao',()=>{
+  const identity=panel.match(/const sessionIdentity=([^;]+);/);
+  assert.ok(identity,'consumidor deve capturar a identidade da sessao');
+  const resolve=new Function('sessionToken','readErpHttpSession',`return (${identity[1]});`);
+  assert.equal(resolve(undefined,()=>({token:'synthetic-current'})),'synthetic-current');
+  assert.equal(resolve('synthetic-explicit',()=>({token:'synthetic-other'})),'synthetic-explicit');
+  assert.equal(resolve(undefined,()=>null),null);
+  assert.equal(resolve(undefined,()=>({})),null);
+  let current={token:'synthetic-first'};
+  assert.equal(resolve(undefined,()=>current),'synthetic-first');
+  current={token:'synthetic-replaced'};
+  assert.equal(resolve(undefined,()=>current),'synthetic-replaced');
+  current=null;
+  assert.equal(resolve(undefined,()=>current),null);
+  assert.match(panel,/token:sessionIdentity/);
+  assert.match(panel,/actorEmail,sessionIdentity\]\)/);
+  assert.match(panel,/queryKey:\['pedidos-http',groupId,empresaId,actorId,sessionIdentity,/);
+  assert.doesNotMatch(panel,/token:sessionToken/);
+});
+
+test('Pedido canonical nao usa facade local nos mestres e bloqueia save sem referencias verificadas',()=>{
+  assert.match(panel,/http\.comercialMasters\.list/);
+  assert.match(panel,/resolveComercialMasterPages/);
+  assert.match(panel,/http\.clientes\.central360/);
+  assert.match(panel,/resolveComercialAuxiliaryView/);
+  assert.doesNotMatch(panel,/filterInContext\(/);
+  assert.match(panel,/if\(!mastersReady\)/);
+  assert.match(panel,/queryKey:\['pedido-masters',groupId,empresaId,actorId,sessionCacheKey,/);
+  assert.match(panel,/queryKey:\['pedido-auxiliary',groupId,empresaId,actorId,sessionCacheKey,/);
+});

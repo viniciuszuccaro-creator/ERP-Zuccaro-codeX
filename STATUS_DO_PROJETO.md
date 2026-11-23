@@ -1,3 +1,3857 @@
+## CURSOR — #350 remarge consolidação `5d1fa0fc` (2026-11-23)
+
+| Item | Valor |
+|---|---|
+| branch | `cursor/comercial360-proposta-347-evolucao-392b` (PR #350) |
+| base | `codex/consolidacao-infra-20261017` tip **`5d1fa0fc`** |
+| conflitos | só `STATUS_DO_PROJETO.md` + `docs/HANDOFF_ATUAL.md` — ambos lados preservados |
+| runtime | auto-merge sem marcadores (`OrcamentosTab` / testes orçamento) |
+| handoff | `HANDOFF.md` na raiz (continuidade CANAL + remarge) |
+| fora | sem merge/deploy · branch Codex não editada fora deste remarge |
+
+## Estado vigente - matriz restante e preparacao Cliente-only (2026-11-11)
+
+DECISAO COMERCIAL posterior do proprietario: ENDERECO do mestre e FISCAL
+(residencia PF/sede PJ); nao presumir tambem outras finalidades. ENDERECOCOBRANCA
+dispensado da migracao ativa; manter raw/procedencia, nao apagar eventual dado
+manual/preexistente. ClientesObras sao locais de ENTREGA, potencialmente varios
+por cliente: preservar CODIGOCLIENTE/ITEM/SEQUENCIA, sem fundir enderecos.
+Essa ambiguidade de finalidade foi encerrada; numero/pais/CEP/conflitos/RBAC
+continuam gates distintos. Nao reescrever provas antigas de finalidade pendente.
+Latitude/longitude ja existem no contrato/repositorios de ClienteLocal; interfaces
+existentes oferecem link de mapa. Isto NAO comprova upload/anexo persistido nem
+integracao homologada com roteirizador. Coordenar com Cursor no fluxo existente:
+coordenadas manuais com origem, mapa privado vinculado ao local e preservacao
+dos multiplos locais; sem geocodificar/inventar coordenadas ou contratar servico.
+
+Publicado87fe18bb9b4f2425579f83c1cb38162cb4ccfcbf, CI6915/6916SUCCESS.
+PG real do candidato Cliente-only executado na suite dirigida3PASS/0FAIL/0SKIP;
+revisao de endereco incompleto passa no Ubuntu. Sem aplicacao operacional.
+
+Sem repetir5extensoes/cargas/contatos. Derivados os156campos nativos dos MESMOS
+1600 a partir de3artefatos pinados existentes, sem nova consulta ao SQL legado.
+Matriz privada unica: scale-validation-efbde32d/remaining-matrix-after-master-482fd666/
+matrix.private.json; por campo conserva fonte/chave/quantidade/destino/regra/
+implementacao/decisao e continuidade independente. Motivos por registro privados.
+85campos com algum valor(inclusive zeros),71vazios neste recorte; nao equivale
+a85campos aprovados. COMENTARIO/STRINGLIVRE6 dispensados do mapa ativo, raw intacto.
+
+Lista restante prioritaria, sem valores identificaveis:
+- Principal: ENDERECO/CIDADE/BAIRRO/CODIGOUF/CEPCLIENTE presentes1600cada;1585CEP
+  passam somente formato,15nao passam. UF1600com2letras nao prova pais. Numero,
+  pais e finalidade nao segregados/comprovados; nao extrair por suposicao.
+- Cobranca: ENDERECOCOBRANCA/CEPCOBRANCA15cada; bairro/cidade/UF14cada. Complementos
+  vazios neste recorte NAO autorizam apaga-los quando outra fonte os comprovar.
+- Obras:117propostas do recorte original100 preservadas; nao extrapolar a1600,
+  nao reextrair nem inferir entrega.0aptas no plano anterior, sem nova carga.
+- Vendedor1600refs/20chaves; tabela1599naozero/5chaves; regiao1600/9chaves;
+  condicao5naozero/4chaves. Exigem crosswalk autoritativo e escopo, nao nome.
+ 1595zeros de condicao nao sao prazo aprovado.62campos preenchidos ainda sem
+ regra/target aprovado incluem controles/placeholders, nao62requisitos comerciais.
+
+HML fisica/permissoes conferidas READONLY/ROLLBACK: no recorte1600 ha0locais e
+0cliente_empresas, NAO destino global vazio. Perfil pode visualizar locais,
+criar/editar/inativar DENIED; sem ampliar acesso. ClienteGrupo nao exige vinculo
+empresarial inventado. Completos comprovados0;1600parciais por implementacao e
+tambem por componentes/semantica faltantes(motivos sobrepostos, nao somar).
+Conflitos operacionais globais ainda desconhecidos, nao0liberados automaticamente.
+
+Defeito reproduzido na revisao existente: complemento/referencia sumiam da
+projecao. Corrigida allowlist e protecao, mantendo raw/NULL/zeros e bloqueios;
+nao gravaLocais nem relaxa contrato. Novo teste antesFAIL/depoisPASS; focados17PASS/
+1falha infraWindows(getuid). Audit/lint/typecheck/build PASS; Linux fechado naCI
+6915/6916 pela excecao draft vigente, sem pular teste. Novo SQL candidato Cliente-only
+reutiliza exatamente o indice043, recusa nome preexistente/duplicidades, sem
+produtos/roles/journal; testePG realPASS. Sem aplicacaoHML/VPS.
+
+## Estado anterior - pacote5extensoes aplicado na HML (2026-11-11)
+
+Codigo482fd666ba33251c813e72b1afaea1dcddbdf647:CI6909/6910SUCCESS, todos3jobs.
+TestePG real de extensoes restritas/CAS/replay/rollback/reversao2PASS/0FAIL/0SKIP;
+nao confundir com41SKIP do backend local. Bundle22arquivos/imports relativos e
+manifest integral conferidos.4negativas sinteticas do executorPASS, semDBreal.
+Revisao independente de agente read-only fechou achados de identidade fisica,
+bytes revisados e retomada atomica; nao e parecerCursor nem teste de queda.
+
+Executado somente no banco/schemaHML autorizados:5colunas nullable semdefault,
+CAS novo aposDDL e1316clientes/1317valores via servico canonico existente.
+Reconciliacao integral1600rows;4200contatos e1500inativos preservados. Replay
+individual sem novas escritas; amostra revertida/reaplicada e replayPASS.
+Nenhum mestre novo/reativacao/grant/VPS. Recibos antigos intactos e continuam
+exigindo seus snapshots originais, nao ignoram os campos adicionados.
+Resultado privado master-execution-482fd666/result.private.json no mesmo
+scale-validation-efbde32d. AplicacaoHML continuaSTOPPED; nenhum aceiteUI inferido.
+Cadastro permanece parcial; demais campos/relacoes e projecaoUI sao separados.
+Checkpointposlote concluido:1315RG+1numero+1CEP de caixa postal;0candidatos nos
+outros2campos, sem inventar. Replay do pacote inteiro preservou hash de TODAS
+as linhas e auditorias (0novas escritas/0novas auditorias). Backupnovo3099029bytes,
+SHA/lista CUSTOM verificados, mesmo cluster pelo socket e caminho interno do dump.
+Este novo arquivo NAO foi restaurado; prova anterior de recuperacao reutilizada.
+checkpoint-after.private.json preserva detalhes; locks proprios liberados.
+
+## Delta anterior - preservar contatos omitidos no enriquecimento (2026-11-11)
+
+Autorizacao agrupada das5extensoes recebida: somenteHML,1316clientes/1317valores,
+condicionada a revisao/backup/revalidacao/CASnovo. Nao pedir novamente nem
+confundir com autorizacaoVPS. NenhumDDL/enriquecimento desse pacote executado.
+Ao preparar o operador, detectado risco NULL->[] em comando escalar. Corrigido
+o contrato existente: contatos omitidos preservam o valor integral anterior;
+comando sem contatos nem campos e rejeitado. Testes PGlite apply/replay/reverse
+incluem NULL verdadeiro; testePG candidato tambem omite contatos.
+Preservacao: camada externa exata recompõe o fonte58 antes da camada anterior,
+sem alterar pins ancestrais.27contraprovasPASS. Nao e homologacaoUI.
+Revisao independente automatizada somente leitura encontrou guardas faltantes
+no operador privado (identidade/bytes/arquivos atomicos); correcoes reavaliadas
+sem achado residual concreto, nao teste de queda/DB nem parecerCursor.
+Auditbaseline/lint/typecheck/build e backendbuild locaisPASS; lint tem1aviso
+anterior fora do lote. RaizWindows interrompida em precheckPOSIX sem resultado
+terminal: NAO PASS. Usar autorizacao vigente de commitdraft para fechamento
+Ubuntu, sem remover testes. ExecucaoHML aguarda CI e pins do novo runtime.
+Backend local completo618PASS/0FAIL/41SKIP; SKIP nao comprovaPostgreSQL.
+
+## Estado anterior - extensoes do mesmo Cliente e delta VPS (2026-11-11)
+
+Codigo58c927e0d157ad09b3e9506ad324d651cac7c70f publicado: CI6897/6898SUCCESS.
+RaizUbuntu2467PASS/0FAIL/0SKIP. RunnerPG existente2PASS/0FAIL/0SKIP inclui
+o NOVO teste master extensions com LOGIN restrito/concorrencia/CAS/replay/
+reversao; nao confundir comSKIP local ou prova browser.
+
+NOVA prova da populacao, sem reabrir pilotos:22895chaves iguais ao recibo anterior,
+18458exportadas e4437fora. Rotulos literais SITUACAO da fonte, apenas trim de
+padding:4276Ativo/159Potencial/2Inativo FORA do export. Logo4437nao sao inativos.
+4414sem documento estruturalmente valido;23com documento valido, NAO aptidao
+automatica:19Ativo/4Potencial,8documentos distintos e22registros envolvidos em
+repeticao dentro desses23. Nenhum desses documentos esta no export aprovado.
+Preservada fila adicional23 para campos completos/duplicidades/reconciliacao
+no destino, sem escolher/fundir identidades;1sem repeticao nesse recorte continua
+pendente de verificacoes. Causa exata do filtroCSV continua NAO provada.
+FonteSQL copiada emREAD_ONLY/ROLLBACK, sem rede/portas/originais; leitor iniciado
+somente para esta leitura NOVA e parado nofinally. Recibos privados em
+address-native-20261110-followup/population-status-20261111: source-status-rows,
+export-status-coverage,reader-final,document-overlap-review,outside-export-review-
+queue.private.json. Driver ESM corrigido antes de derivar o ultimo relatorio,
+sem reexecutarSQL.0novosmestres/contatos/reativacoes/DDL/escritasVPS.
+
+658d8cca CI6887/6888SUCCESS, fechamento confirmado; contatos NAO reaplicados.
+1600mestres/1500INATIVOS/4200canais e recibos1504 preservados. Nenhum dado novo,
+DDL, grant ou reativacao executados neste pacote; HMLAPP permaneceSTOPPED.
+
+Contrato backend ampliado no Cliente existente: rg, numero_caixa_postal,
+cep_caixa_postal, caixa_postal_cobranca, inscricao_produtor_rural. Campos opcionais,
+nullable/sem defaults; omissao nao limpa e schema antigo recusa escrita explicita
+com503. Reutilizados CRUD/repositorios e enrichLegacyContacts, agora com masterFields
+opcional, CAS/fullsnapshot/lock/RBAC/auditoria/replay/reversao; contatos continuam
+append-only. Enriquecimento so preenche campos vazios; edicao manual bloqueia
+sobrescrita/reversao. RG mascarado na auditoria CRUD ordinaria. Sem endpoint novo.
+
+Mapper existente reexporta auxiliar puro de5campos (necessario para nao ampliar
+o arquivo ja grande): identidade nativa tipada, zeros a esquerda, trim de borda
+declarado, proveniencia e pendencia por campo; nao toca observacoes/historicos,
+COMENTARIO/STRINGLIVRE6/WhatsApp ou vinculos. Novo helper de esquema/parametros
+reutilizado pelos repositorios evita SQL duplicado e identifica storage ausente.
+SQL cliente_master_extras.sql e CANDIDATO fora do migrador: NAO aplicado.
+
+Preflight privado dos MESMOS1600 pelo mapper/schema reais:1315RG candidatos,
+1numero/1CEP de caixa postal,1316clientes com candidatos;5RG-placeholder retidos.
+284sem candidato nesses5campos nao significam cadastro vazio. Os outros2campos
+de extensao estao vazios nesta populacao, nao foram inventados.0campos liberados
+para escrita antes do gateDDL,1317valores candidatos com storage pendente.
+Recibo master-extras-preflight.private.json junto dos ensaios existentes, sem
+novo lote/coorte. TODOS1600 continuam parciais; endereco/Obras/finalidade/numero/
+pais e crosswalks vendedor/tabela/regiao seguem seus contratos comprovados.
+
+PGlite17PASS e raiz168PASS afetados, incluindo falha->correcao de3contraprovas
+de preservacao: camada exata nova, mesmos hashes ancestrais/comparacao integral,
+mutacoes reais rejeitadas por TODOS os entrypoints antigos. Novo testePG isolado
+no runner existente exige LOGIN NOSUPER/NOBYPASS, concorrencia/CAS/replay/reversao
+e conserva inativo. PG novo e suite Linux completa fechados na CI6897/6898;
+publicacao draft pela excecao de validacao ja autorizada, nao homologacao.
+Audit/lint/typecheck/build frontend e typecheck/build backendPASS; lint1aviso previo.
+
+VPSconsole recuperado: catalogos reais de9relacoes/165colunas/76constraints/
+46indices/0policies, READONLY/ROLLBACK, recibo privado schema-contract-20261111.
+RLS/FORCE presentes mas API usa o MESMO login postgres com BYPASSRLS, nao leitor
+restrito. Cliente carece dos6campos (contatos+5extensoes); indice unico de origem
+legada ausente. Reutilizar apenas fatiaCliente da043 apos conflitos, nao toda
+migration/produtos. Fornecedor ausente. Nomes de journal nao provam SQL igual.
+PacoteVPS ainda NAO pronto para autorizacao: falta fechar principal/policies,
+conflitos da selecao exata/frescorbackup e parAPI/web revisado. Nenhuma escritaVPS.
+
+Gate imediato agrupadoHML: revisar SHA/SQL, backup atual e autorizar somente
+5colunas nullable+check no schemaHML e enriquecimento auditado dos1316candidatos.
+FreshCAS obrigatorio APOS DDL; antigos recibos/fullpostimages continuam imutaveis
+e BLOQUEIAM replay se schema mudou, nao ignoram novos camposNULL. Reversao das
+novas operacoes restaura os campos anteriores sem apagar historicos/colunas;
+retorno estrutural exige backup/plano separado, nunca DROP automatico.
+
+## Historico - contatos enriquecidos nos MESMOS1500 inativos (2026-11-11)
+
+10144c3b encerrou CI6877/6878SUCCESS. Sem repetir carga500/1000 ou reativar:
+os MESMOS1500 receberam3869 canais no PostgreSQL HML privado, pelo mapper
+mapLegadoClienteContatos e ClienteService.enrichLegacyContacts existentes.
+5arquivos auxiliares verificados por bytes/SHA/cardinalidade;3255linhas nativas
+ligadas por CODIGOCLIENTE/SEQUENCIA aos mesmosIDs/documentos. Historicos nao foram
+promovidos a contatos; nao houve inferencia de WhatsApp, preferencia ou status.
+1493ready/7partial;9campos em quarentena preservada, sem bloquear canais validos.
+
+Banco continua1600clientes:100originais integralmente iguais+1500INATIVOS.
+Contatos totais4200=331originais+3869novos. CAS/snapshot completo, locks/RBAC,
+auditoria transacional e replay canonicos;1504recibos/1500clientes, incluindo
+2reversoes amostrais exatas com replay e reaplicacao auditada.0novas escritas no
+replay;0outros campos alterados alem de contatos/updated_at. Sem DDL/grants/VPS.
+BackupsCUSTOM antes de cada enriquecimento com hash/listagem; recuperacao anterior
+reutilizada, NAO alegar restauracao destes novos arquivos. HMLAPP segueSTOPPED.
+
+Provas privadas: scale-validation-efbde32d/auxiliary-source-verified-20261111,
+contacts-{preflight,commands,result,final-check}.private.json; segundo lote em
+run1000. Raw, NDJSON, snapshots e journals fora do Git/build. Nao repetir aplicacao:
+rever recibos canonicos antes de qualquer retomada. Codigo executado efbde32d,
+sem alterar runtime nesta entrega. Nova contraprova mapper->servico/PGlite exige
+inatividade, baseline ordenado, replay sem auditoria extra e reversao integral.
+14testes focadosPASS; audit/lint/typecheck/frontendbuild/server-typecheck e
+diffcheckPASS (lint0erros/1aviso existente). RaizWindows2414PASS/5FAIL:2Python
+ausente,1getuid indisponivel,1provisionador exigePython real e1arquivoVPS
+interrompido apos307s de verificacao local ja falha. NAO contar como PASS nem
+falha funcional nova. Teste/guardas preservados; validacao Ubuntu da mesmaPRdraft
+usa a excecao de publicacao sanitizada ja autorizada, sem homologacao/merge/deploy.
+CI desseSHA658d8cca fechou6887/6888SUCCESS (recibo342/6802033620).
+
+Cadastro NAO completo: RG/extensoes/endereco/Obras e vinculos comerciais seguem
+contratos/gates individuais. COMENTARIO/STRINGLIVRE6 continuam dispensados do mapa
+ativo, raw preservado.22895nativos/18458CSV/4437foraCSV nao indicam inatividade.
+VPS: console administrativo existente RECUPERADO; configuracao efetiva da API e
+SQL comprovaram banco postgres/schema public/principal postgres, sem superuser
+mas COM BYPASSRLS. READ ONLY/ROLLBACK concluido,0dados de negocio lidos/escritos.
+4tabelas-base presentes; clientes.contatos AUSENTE. Journal observa001-024/038/039;
+IDs nao provam SQL igual nem autorizam marcar036/037/040-044 aplicadas. ImageID
+local da API preservado no recibo privado, nao e digest de registry nem SHA app.
+Proximo gateVPS: delta minimo de schema/menor privilegio/reconciliacao atual e
+backup revisados antes da proposta unica de promocao. Nenhum grant/DDL/deploy.
+
+## Historico - ensaios REAIS500/1000 concluidos, sem cargaVPS (2026-11-11)
+
+Decisao do dono: COMENTARIO e STRINGLIVRE6 nao tinham uso. Ficam EXCLUIDOS do
+mapeamento ativo, nao vao para observacoes e nao bloqueiam a migracao. Valores
+brutos preservados privadamente; nao autoriza apagar campos/historicos existentes.
+Matriz14 reconciliada:6componentes candidatos/4extensoes/2historicos/2dispensados.
+Owner-decision e matriz anterior conservadas;0escritas de cadastro nesta decisao.
+Codigo5f5813c5 CI6875/6876SUCCESS: tambem comprovou PG1001em500/500/1 no mesmoRUN,
+com replay e reversao. Ensaios REAIS abaixo continuam vinculados ao efbde32d.
+
+Codigo funcional efbde32d: CI6859/6860SUCCESS, inclusive PostgreSQL real500/1000
+SINTETICOS com concorrencia/COMMITgap/replay/reversao. Depois executados500 e1000
+REAIS no MESMO hml344_restore_20261104/hml344_cpa_20261104 privado persistente,
+GrupoCPA/perfiluser/Auth existente comprovados, sem novo namespace/role/grant/DDL.
+Principal SQL administrativo existente, NAO leitor estrito; RBAC/tenant canonicos
+foram testados separadamente. API/web nao atualizados:15173 continuaSTOPPED.
+
+500: aplicar6175.62ms, replay2837.05ms/0novos, reversao4633.03ms/500inativados.
+1000: aplicar10231.22ms, replay3168.53ms/0novos, reversao6055.03ms/1000inativados.
+Contagens100->600->1600. Originais100 integralmente iguais; lote1000 tambem preservou
+o500anterior.1500inativos de ensaio foram CONSERVADOS com IDs/codigos/campos/auditoria;
+nao apagar nem reativar automaticamente. Nenhuma carga operacional, seed ou reload100.
+Cada candidato: bytes CSV/SHA/parser -> JSON/linha/payload; codigo nativo+documento
+conferidos na copia SQLREADONLY,156campos originais por cliente guardados privadamente.
+Nenhum conflito no preflight500/1000 por codigo/documento/identidade, incluindo
+inativos e outrosGrupos do schema. Isto NAO prova ausencia de conflitos na VPS.
+
+BackupsCUSTOM atuais antes de cada ensaio, hashes/listagem verificados; recuperacao
+anterior reutilizada. NAO restaurados esses dois novos arquivos. Locks exclusivos,
+recibosRUN/lote noDB atomicos e todas as postimagens confrontadas no replay/reversao.
+RBAClido antes/depois, perfilroleuser/Auth/Grupo e clusterID/OIDs/principal positivos.
+LeitorSQLlegado parado apos500/1000;0originais/0VPS alterados. Private:
+scale-validation-efbde32d/{trial500,combined-trials}.private.json e run1000/trial1000;
+raw156/sourceproofs em address-native-20261110-followup/scale{500,1000}-native-*.
+
+CADASTRO PARCIAL, nao completo:1500documentos,1243nomesPF/257razoesPJ,
+1500fantasias,205IE e80emails no payload canonico confrontado com DB.0telefones/
+celulares nesses exports selecionados,0contatos auxiliares novos importados;
+nao e ausencia no backup!331canais/20IE dos100 originais permanecem intactos.
+Raw156 de500 observou6dos14campos adicionais; raw1000 observou9dos14. Componentes
+de enderecos, RG e vinculos comerciais continuam privados/pendentes sem inventar
+numero/pais/WhatsApp/finalidade ou promoverhistorico/credito/estoque/preco.
+
+Taxa observada SOMENTE mestres parciais HML:5485.52clientes/min (1500/16.4068s).
+Extrapolacao aritmetica17471mestresCSV:3.18min de aplicacao pura NESSE contexto;
+NAO inclui extracao/auxiliares/backup/replay/reversao/UI, NAO e prazo completo nem
+benchmarkVPS. PicosRSS:679MB/800MB; workspace livre apos1000:4118122496bytes.
+
+RUN nao fica limitado a1000: selecao agora limitada pelos bytes da fonte(64MiB)
+e quantidade real de rows, mas transacoes continuam<=1000. Auxiliares indexados
+porindice para evitar filtro quadratico. Prova nova1001em500/500/1 no mesmoRUN
+adicionada ao PostgreSQL; PGlite2PASS. CI do novo delta deve fechar no SHA atual.
+
+Outras entidades: originaisCSV->JSON conferidos tambem para fornecedor/produto/
+unitMap;790fornecedores passam no seletor (sem conflito statusInativo/flag), ainda
+sem gate/binding de destino;1208produtos,0liberados/1208pendentes de classificacao/
+unidade/escopo. Nao confundir com exportBase44 de outra frente/fonte.
+
+VPS identificada viaMCP autenticado: host bate com DNS da API, projetoerp-zuccaro,
+api-dev saudavel/health200 versao0.1.0-runtime-01 (semSHAexposto),web eSupabase17.6
+emexecucao. Metricas12h49Brasilia:CPU12.77%,RAM2170019840B,disco70162038784B usados.
+Nao e df/livre comprovado, nem DB/schema/principal efetivo fresco. Detalhes no
+recibo privado vps-migration-target-20261111.0alteracoesVPS/0cobranca/0deploy.
+Proximo lote: enriquecer canais/contatos/enderecos dos MESMOS registros pelos joins
+nativos; fechar RG/crosswalks e14campos; preparar minimo schema/RBAC/backup e SQL
+atual do destinoVPS ANTES de pedir a liberacao operacional especifica.
+
+## Historico imediato - persistencia retomavel canonica em validacao (2026-11-11)
+
+Entrada existente staging-checkpoint agora expoe coordenacao PostgreSQL auxiliar
+staging-persistence. Nao cria endpoint, cadastro, mapper, repositorio, tabela ou
+principal: reutiliza selectFunctionalRows/persistirClienteGrupoLegado/ClienteService,
+PostgresClienteRepository, DbClient ALS e audit_logs. Arquivo auxiliar necessario
+para separar checkpoint filesystem da transacao canonica, sem tocar consumidor
+e guardas ancestrais. Nenhum arquivo UI/composicao Cursor editado;591e3 inalterada.
+
+Derivacao agora VERIFICADA: bytesCSV reais+SHA256+parsercsv-parse estrito/UTF8fatal
+->igualdade integral com rows do stagingJSON pinned->selecao/mapper canônicos
+->hash de cada linha/payload/manifesto. Backup original->exportCSV continua prova
+separada; nao confundir as duas. Campos nao mapeados ficam pendentes explicitamente,
+sem despejar historico em observacoes. Selecao estavel/limite e lote<=1000.
+
+Identidade fisica exige clusterIdentifier PG nao nulo, database/schema e OIDs,
+principal, Grupo/ator e manifesto imutaveis. Recibo de RUN e lote em audit_logs na
+MESMA transacao de criar+auditar; advisorylocks do RUN/lote (inclusive ausentes),
+RBAC antes/depois e consultas tenant canonicas. Replay le recibo DB, compara todas
+as postimagens proprias/compativeis e nao repete escrita. Manifesto nao pode mudar
+no meio do RUN, nem em lote ainda nao executado. Preexistentes/conflitos preservados,
+sem sobrescrever, fundir, restaurar inativos ou mudar codigo alheio.
+
+Reversao canonica inativa SOMENTE inseridos pelo lote, exige postimagem integral
+inalterada/procedencia e preserva campos; auditoria atomica/replay da reversao.
+PGlite: PASS com falha antes/durante transacao, auditoria, COMMIT->recibo externo,
+checkpoint, derivacao adulterada, alvo/manifesto divergente, revogacao, permissao,
+escopo, zeros de telefone, preexistentes, alteracao manual e reversao sem apagar.
+Isto NAO e prova PostgreSQL. Suite nova dedicada PG500/1000 SINTETICOS registrada
+no runner test:postgres existente; nao ha dados reais na CI. Aguardar resultado.
+
+Fechamento local:70raiz focadosPASS; backend612PASS/0FAIL/40SKIP (novo PG e antigos
+condicionais, nao aprovados por SKIP). Audit/lint/typecheck/build raiz e build/type
+backendPASS. Linux completo fecha na CI draft conforme excecao vigente, sem mudar
+assertions para obter verde. Sem carga real500/1000, schema/grants/deploy operacional.
+
+Reconciliacao de ESCOPO por chave: export18458/18458unicas, todas na copiaSQL22895;
+4437chaves nativas fora do export,0chaves export ausentes no nativo. Motivo do filtro
+AINDA desconhecido: nao chamar4437inativos. Export tem17471Ativo/950Prospect/37Inativo;
+isso nao significa17471aptos. Artefatos privados population-key-scope-20261111,
+leitor parado/readOnly/0writes; nao houve extracao integral de registros.
+
+14campos privados classificados:6componentes suportados candidatos (logradouro,
+bairro,cidade,UF,CEP cobranca e complemento), dependentes de join/finalidade/campos
+obrigatorios;4extensoes (caixaspostais e inscricao produtor rural);2historicos
+(HISTORICO/REGISTROCONSULTASERASA) sem entidade/vinculo comprovados;2ambiguos
+(COMENTARIO/STRINGLIVRE6). Nenhuma associacao/aplicacao automatica por nome.
+Recibo fourteen-field-contract-review.private.json junto do perfil agregado.
+RG e crosswalks vendedores/tabelas/regioes continuam pendentes por contrato/evidencia.
+
+Proximo: fechar PG500/1000 sintetico no SHA publicado; provar derivacao do export
+e selecionados500 no destino privado, joins auxiliares/contratos e backup antes
+de aplicar reais. Mesma100 preservada. VPS operacional: escrita continua proibida;
+nao pedir liberacao generica de um pacote/destino ainda nao fechado.
+
+## Historico imediato - escala do staging e fechamento CI6827 (2026-11-11)
+
+CI6827 falhou por comparar HTML integral em segundos diferentes (14:27:12/13).
+Harness agora injeta o MESMO relogio nas duas implementacoes; comparacao integral,
+HTML, timer e hashes anteriores preservados. Contraprova detecta segundo distinto.
+20 testes de consumidores PASS; nenhuma mudanca de produto para ocultar a falha.
+
+Helper staging-checkpoint.mjs expoe consumirLotesStagingRetomavel, chamando o
+consumidor existente sem altera-lo. Consumidor protegido tem mais de500linhas;
+nao havia checkpoint equivalente; helper reutiliza mapper,
+classificacao e fingerprints existentes. Lotes1..1000(default500), ordem lexical
+pela chave nativa textual explicita, manifesto de selecao/opcoes/fonte/run,
+recibos privados fsync/hash encadeado e trava exclusiva. Retoma lotes concluidos;
+mudanca de fonte/opcoes/conteudo ou recibo divergente bloqueia. Interrupcao abrupta
+que deixe lock/recibo incompleto exige inspecao: nao ha remocao forcada automatica.
+E STAGING, nao persistencia de negocio, importacaoPG, auditoria transacionalPG ou
+reversaoPG homologadas. SourceSha256 e pin informado pelo chamador; nao comprova
+sozinho derivacao dos rows. Nenhuma permissao operacional decorre desse manifesto.
+CI do9d57 revelou guarda transitiva do teste de consolidacao. Integracao ajustada
+sem mexer em pins/peels: consumidor E teste de consolidacao ficaram BYTE A BYTE
+iguais a fa11aa1e.70 testes mapper/checkpoint/fornecedor/HTTP PASS, incluindo
+contraprovas ancestrais de alteracao indevida. Nenhuma guarda enfraquecida.
+Caso positivo usa registros comprovados pelo mapper: empresa_id ausente continua
+omitido no JSON privado, nunca preenchido com null/empresa ficticia. Inputs JSON
+invalidos continuam rejeitados; nao confundir ausente de objeto com array invalido.
+
+Perfil agregado NOVO da copia legada isolada:22895linhas/22895chaves distintas,
+156campos/90com algum valor;14campos com valores fora da cobertura do piloto100.
+Isto nao e22895aptos: elegibilidade continua DESCONHECIDA ate contrato/reconciliacao.
+Tentativa1 parou com SQL904 (master pronto, banco fonte ainda iniciando). Driver
+agora exige leitura TOP0 do proprio banco; tentativa2 concluiu READONLY/ROLLBACK,
+leitor parado/networknone/zeroportas/0writes. Sem nova coorte/extracao de registros.
+Recibos privados population-profile-20261111[-ready02], sourceProfileSha256
+064498224f27ef100975ec34c7f33ce639b4761782b5ec0d97dc4ce14faddbc2.
+
+Audit/lint/typecheck/build PASS; Windows2449PASS/4FAIL (Python ausente3 e getuid1).
+Nao e suite aprovada; fechamento Ubuntu na mesma PR342 draft pela excecao de
+validacao ja registrada. CI do SHA publicado deve ser conferida separadamente.
+591 continua e3b32276, sem novo delta.100HML/331canais/20IE intactos, sem carga.
+Proximo: mapear os14campos adicionais e crosswalks6/4/9; completar contratos ricos
+antes de ensaioPG500/1000. Velocidade real de importacao/previsao NAO medidas.
+VPS operacional continua sem autorizacao de escrita/DDL/deploy neste lote.
+
+## Historico imediato - leitura granular de locais na HML (2026-11-11)
+
+Autorizacao especifica do dono aplicada SOMENTE Cadastros.cliente_local visualizar
+no perfiluser HMLCPA existente. Sem endpointIAMnovo: profiles/audit_logs canônicos
+via procedimento administrativo privado, com lock/CAS integral, backup, ensaio
+PGlite e PostgreSQL rollback, revisao independente e auditoria transacional.
+Replay nao duplicouevento; reverse-trial PostgreSQL rollbackpreservou concessao.
+Demais capacidades/roleuser preservadas;0grantsSQL/0escritasclientesouenderecos.
+Fontes sanitizadas344/6797920338 e6798163177; planos/identidades/reversao privados.
+Login real confirmado: mesma amostra mestreGET200 e locaisGET200(antes403),
+0locais nesse escopoHML e100clientes na lista,0Add/Save. Nao e ausencia na origem.
+UI de inclusao em rascunho ainda usa Cliente.editar; coordenado591/6798362673,
+sem prova de bypass ou escrita backend e sem ampliar permissoes para encobrir.
+
+Timer da janela81598 encerrouNORMAL,100fullrows iguais/checkpointfinal/0writes;
+retomada98849 ate11h31Brasilia,API/web8650/15173PRIVATE. Dono entrou e leitura passou.
+App eba68f2f CI6819/6820SUCCESS; checkpoint0424210a CI6823/6824SUCCESS. Matriz
+156campos Clientes/34contatos e fonte100 preservadas; nada foi reimportado.
+Proximo: contrato RG/mappings auxiliares; schema/escrita nova seguem gates.
+Dependencias nativas conferidas:6vendedores/4tabelas/9regioes por codigo, ainda
+sem associacao canonica aprovada; condicao pagamento zero em100 nao vira padrao.
+Fonte/captura anterior coincidem100/100; plano privado preservado sem nova carga.
+RG77brutos inclui2zeros/75naozero,23vazios; sem suporteBD/backend ainda.
+Nascimento e condicao pagamento zero nas100 nao viram datas/prazos inventados.
+
+## Historico imediato - recuperacao HML e matriz nativa completa de Clientes (2026-11-11)
+
+Codigo eba68f2f, CI6819/6820SUCCESS;14contraprovasPASS, audit/lint/typecheck/build
+PASS e revisoes independentes favoraveis. Recuperacao Linux explicita arquivou
+artefatos antigos apos conservacao100/pins/PID/socket/porta; nao limpou lock por
+forca. Negativa com HML viva passou. Stop com HTTP proprio aberto concluiu1255ms,
+100fullrows iguais/0writes/checkpoint final. Retomada/status/replay sem duplicacao.
+API/web8650, bootstrap revisado de14e28f, patch344/6797170363, controles antigos
+guardados privadamente.15173PRIVATE/login Auth real/GrupoCPA/listagem20de100
+confirmados; mesmo PJ GET200/CNPJ14 iguais banco->HTTP->campo apos carga,
+3contatos HTTP/UI e0Save. Janela ate10h54Brasilia. Sem nova importacao ou VPS.
+
+Fonte privada MESMA100:156campos Clientes auditados;76com algum valor(inclui0),
+80vazios na coorte, nao ausencia global.34campos de232contatos auxiliares;
+210nomes/3cargos conferidos nos canais persistidos.326canais auxiliares iguais,
+1pendente preservado;331canais totais e20IE intactos. Coletor/SQLreadonly/reader
+isolado parado; nao tocou originais. Matriz privada por campo/chave/transformacao
+e destino/pendencia preparada, sem preencher lacunas ou promover dados financeiros.
+Campos sem crosswalk/contrato e117Obras continuam em revisao; cadastros100 ainda
+NAO completos/aceitos. Zero dados novos escritos nos clientes neste lote.
+
+Cursor591/e3 sem novo delta: documento com props cruas reproduz defeito inicial,
+mas HTTP/list/get hidratam e V24 refaz GET/remount; vazio NAO persistiu na amostra
+autenticada atual. Atualizado591/6797509163, sem edicao UI alheia. Locais403 nao
+vira endereco ausente; permissao granular e mappings nativos permanecem gates.
+Proximo P0: mappings156/auxiliares com associacoes/contratos comprovados;
+fornecedores/produtos conforme fila existente, sem alterar operacional.
+
+## Historico - encerramento e recuperacao inspecionada HML (2026-11-11)
+
+Mesmo controlador: close HTTP/Vite concorrente, sockets proprios rastreados,
+drain limitado e traces sanitizados.14testesPASS, incluindo HTTP/upgrade reais,
+servidor alheio conservado e falha/timeout sem falso clean. Recovery explicito
+exige conservacao100 fresca apos parada, baseline aprovada, hashes, PID morto,
+porta/socket inativos; arquiva recursos antigos com barreira contra interrupcao.
+Revisao independente do controlador favoravel; CI/ensaio Linux ainda pendentes.
+Bootstrapprivado candidato/freeze8650 permanece sem aplicacao ate revisao e CI.
+Nao reiniciar por forca, apagar lock, importar100 ou restaurar backup.
+
+Coletor privado existente ampliado para leitura dirigida dos156campos Clientes
+na MESMA100 nativa; fonte READONLY, containerisolado anterior semoriginais.
+Resultado em andamento. Matriz nao pode chamar coluna nao lida de ausente.
+Documento: helper/HTTP sinteticospassam; montagem com props nao normalizadas
+pode ficar vazia, mas consumidor real da amostra ainda exige rastreio browser.
+
+## Historico imediato - publicacao verde e protecao de parada HML (2026-11-11)
+
+0ea74eaf publicado342,CI6813/6814SUCCESS. Classificador existente preserva
+117referencias Obras sem inferir endereco;2grupos pendentes,0writes. Matriz
+privada100:documentos100/IE20/canais331 conservados; formulario completo nao
+homologado. Projecao documento8650 passou com fixture sintetica/zeros iniciais;
+isso nao explica por si a amostra real vazia nem substitui HTTP/browser.
+Linux audit/lint/typecheck/build PASS; arquivos historicos187/188PASS com GIT_DIR,
+residual financeiro encerrado5/5 com GIT_WORK_TREE da validacao explicito. Sem
+alterar testes, SQL ou pins. CI completa do codigo confirma sucesso do checkout.
+
+HML32692 encerrou em STOPPED_EMERGENCY_REQUIRES_INSPECTION; PID ausente e
+checkpoint final nao produzido. Nao forcar start/limpar lock. Full-row read-only
+apos emergencia comprova100/100 iguais ao baseline,0writes,ROLLBACK; nao houve
+perda/carga/restore. Causa da demora no close HTTP/Vite ainda nao demonstrada.
+P0 seguinte: ensaio/instrumentacao do close e recuperacao revisada dos proprios
+recursos. Atalho reutiliza controlador e permanece fail-closed nesse estado.
+Nao apresentar15173 atualmente disponivel. Banco privado/backup preservados.
+
+Revisao Cursor591/e3b32276 atualizada6796010811,CI terminalsuccess. Fechar->cancel
+encerrado; novoP1 associa documento antigo ao contexto novo apos await (tentativa
+API simulada, nao prova de escrita backend). Unidade e fontes continuam pendentes.
+Freeze8650 preservado; sem merge/deploy/DDL/grants/carga operacional.
+
+## Historico imediato - launcher e classificacao nativa sem escrita (2026-11-11)
+
+ENTREGUE:22ccb386/CI6807/6808SUCCESS; start/replay/status reais pelo GitHubCLI
+oficial. Atalho desktop Iniciar HML ERP reutiliza controlador com OAuth somente
+desktop,15173PRIVATE,pins e lease. API/web8650fd4d, mesmos100, sem carga/restore.
+Nova verificacao browser interrompida por timeout; sessao atual nao aceita por
+inferência de READY. Janela anterior encerrou preservando fingerprint100/0writes.
+
+Completude privada conferida:100documentos,20IE,331canais;0divergencias canonicas
+de nome PF/PJ. Uma amostra PJ com CNPJ persistido apareceu vazio no formulario:
+investigar projecao sem reimportar. WhatsApp/celular nao comprovados; cadastro
+completo ainda NAO aceito.117Obras continuam referencias, nao enderecos de entrega.
+Classificador existente ampliado sem novo importador: preserva identidade/hash/
+texto, distingue campos e pendencias, nao infere numero/pais/finalidade/recebedor.
+Plano privado117 classificado em2grupos,0liberados/0writes;23testes focados PASS.
+Windows:2444PASS/4FAIL (Python indisponivel e APIs POSIX ausentes); nao e verde.
+Linux: blobs de codigo identicos ao WIP; audit PASS; primeira execucao2448testes
+teve2366PASS/82FAIL por arquivo sem metadados Git nas comparacoes historicas.
+Reexecucao SOMENTE desses arquivos com GIT_DIR existente somente leitura e
+lint/typecheck/build em andamento. Publicacao draft de validacao usa autorizacao
+preexistente; CI terminal do SHA novo ainda obrigatoria, sem aceite antecipado.
+
+Revisao591/e3b32276 em6796010811: Fechar->cancelar ENCERRADO; novoP1 de await
+reassocia documento antigo a Empresa/ator/sessao novos (tentativa API simulada,
+nao escrita backend). Unidade reinterpretada sem fator e fonte Pedidos403
+bloqueando Orcamentos autorizados permanecem. Nao integrar esses hunks sem
+correcao; freeze8650 preservado. Proximo: documento API/UI e
+semantica dos locais, com Cursor mantendo autoria UI/composicao. Sem operacional.
+
+## Historico - retomada idempotente e matriz de completude (2026-11-11)
+
+Conservacao da janela anterior comprovada100antes/depois/fingerprint igual,
+0writes. Mesmo controlador HML adaptado para OAuth no DESKTOP e SSH sem tokens
+remotos, sem nova estrutura de dados. Alvo/repositorio/maquina/estado, tunel
+privado antes/depois, proof curta e lease preservados.10testes focados PASS;
+audit/lint/typecheck/build PASS. CI e ensaio real do novo delta pendentes,
+nao declarar launcher homologado antes deles. Sem nova limpeza/importacao.
+Em paralelo: matriz100 completa por evidencias e revisao Central apos8650;
+77PF/23PJ/documento100/IE20/331canais ja persistidos,117Obras ainda propostas.
+
+## Historico imediato - espaco liberado e HML real reaberta (2026-11-11)
+
+Conexao recuperada pelo GitHubCLI oficial/OAuth aprovado, mesmo Codespace
+2cores/8GB/32GB, sem novo ambiente/custo/maquina. Chrome tambem voltou.
+Disco92%/2.6Glivre ->87%/4276002816bytes livres apos preparo da versao.
+Removidos SOMENTE7pacotes antigos Copilot sem referencias; fonte/manifests
+conferidos,2recentes retidos. df registra1650491392bytes recuperados no cleanup.
+PGdata/backups/Playwright/recibos preservados. Docker system df continua falhando
+por snapshot de container ANTIGO, nao remover esse historico. Apoio atual opera.
+Orcamento excedente Codespaces US$0/bloqueio confirmado no painel, inalterado;
+nao foi comprovada franquia computacao esgotada.
+
+HML15173PRIVATE recuperada, API/web8650fd4d/CI6785/6786SUCCESS, Auth real/login
+do dono, GrupoCPA/empresas existentes. Marcador200; UI100clientes,2paginas20+20
+sem sobreposicao e abertura de cadastro/3contatos na amostra, sem salvar.
+Preflight compara100IDs/codigos/procedencia/fingerprint pos-IE/331canais/20IE;
+backup345276bytes SHA256 conferido. Nao recarregou coorte nem alterou operacional.
+Janela ate08h54Brasilia11/11, nao24h. Banco persistente/workspaces/.erp-private-344/pgdata.
+Detalhes privados permanecem privados; codigo bootstrap sanitizado344/6794991729.
+
+PENDENTE REAL: task/botao de partida via controlador com OAuth desktop (gh remoto
+sem auth; nao transmitir token); validar lifecycle ao encerrar janela; campos
+UI/documentos/enderecos ainda parciais;117Obras aguardam semantica. CI/contagem100
+nao provam cadastro completo. Sem importacao/DDL/grants/merge/deploy operacional.
+Checkout remoto b5cb34e1/.vscode preservado; servido snapshot oficial8650, nao
+checkout antigo. Referencia de retomada no OPERACAO_DEV_VPS, sem manual paralelo.
+
+## Historico imediato - capacidade/retomada HML ainda sem canal remoto (2026-11-11)
+
+Codigo0ee98b5b publicado, CI6797/6798 SUCCESS. Controlador validado, nao aplicado
+na HML; nao declarar espaco recuperado ou ERP acessivel. Reserva encerrada.
+
+Aviso de espaco: causa/total/usado/livre/inodes/cota/computacao DESCONHECIDOS,
+nao medidos por falta de controle (kernel assets os error3 antes das abas).
+Nenhuma limpeza, remocao, rebuild, troca de maquina, custo ou carga100.
+Avanco independente: controlador fino existente-bootstrap em
+scripts/legado/hml-control.mjs + teste, sem novo ERP/IdP/importador. Diagnostico
+somente leitura; startup idempotente por lease e identidade/saude, bootstrap
+privado hash/reviewedSHA/pins, porta15173privada obrigatoria.6testes focados PASS,
+incluindo exclusao concorrente/lease preservada e liberacao apos falha. Audit,
+lint,typecheck,build e diff-check PASS; CI Linux6797/6798 SUCCESS no0ee98b5b. Reutilizar
+suite/base a92efc44/CI6787/6788 para codigo inalterado, nao para este delta.
+NAO prova de HML/browser; nao atribuir CI de codigo ao fechamento documental.
+Detalhes no procedimento canonico OPERACAO_DEV_VPS, sem manual paralelo.
+Cursor conserva UI/composicao; .vscode remoto nao alterado. HTTP externo anonimo
+15173 /cadastros e /__erp_hml retornou404 sem redirect em11/11 10:38Z; NAO e
+teste autenticado, causa do aviso ou prova de dados perdidos.0bytes removidos.
+Proximo: medir ambiente real, conferir reservas e pins, atualizar bootstrap
+revisado e validar acesso externo/mesmos100/331/20IE; nao repetir importacao.
+Proprietario pediu execucao pelos agentes, nao comandos manuais: solicitacao
+dirigida ao Cursor591/6793482990 para leituras pelo seu canal existente; envio
+NAO comprova recebimento/execucao. Nenhum recibo remoto recebido ate este ponto.
+
+## Historico imediato - protecao comportamental do contrato Cliente (2026-11-11)
+
+FECHADO: codigo a92efc44 remoto, CI6787/6788 SUCCESS.591 atual8650fd4d,
+CI6785/6786 SUCCESS: peel delimitado revisado,14/14contraprovas PASS,
+golden/assertions conservados (parecer591/6792852157). As2falhas353 abaixo
+sao historicas, nao achados abertos do novo SHA. Alcances memoria/HTTP loopback
+na revisao591 nao equivalem a PostgreSQL/HML/browser desse snapshot.
+PROXIMO: bootstrap API+web revisado na mesma15173, mesma100/331/20IE intacta.
+Bloqueio local reproduzido: cua_repl e node_repl/sky nao preparam kernel assets
+(os error3), inclusive reset suportado. Reabrir apenas Codex Desktop para
+restabelecer o controle; nao reiniciar Chrome/Codespace/PG ou repetir carga.
+
+Lote sobre7d803e99: duas contraprovas no teste canonico existente, sem mudanca
+de runtime. GET precisa reautorizar apos leitura/revogacao; UPDATE precisa
+capturar contexto/payload antes do primeiro await, conservar ator da auditoria
+e reabrir o valor original. Focado9PASS; backend611PASS/0FAIL/39SKIP; build e
+typecheck backend PASS. Raiz inicial2432PASS/4FAIL, com3precondicoes Python e
+1process.getuid indisponivel no Windows. Rechecagem Python integrado25testes:
+24PASS/1FAIL por permissoes/symlink POSIX; CSV/provision resolvidos sem editar
+testes. Audit:baseline/lint/typecheck/build raiz e diff--check PASS. CI Linux
+pendente no fechamento; nao apresentar skips ou suite inicial como aprovacao.
+
+591 avancou353cfa46 durante o lote. Snapshot exato/locks iguais:46contratos de
+adapter/formulario,10servico/HTTP e9contraprovas Codex PASS. Captura/reautorizacao,
+delegacao e3residuos UI encerrados nesse alcance, nao PG/browser. CI6783/6784
+FAILURE:frontend testes291/292 remainder/stage48 expected1/actual0; backend e
+composicao verdes. Cursor mantem UI/composicao, Codex nao editou sua branch.
+Gate de peels/CI encerrado em8650 conforme fechamento acima;
+projecao parcial da fonte e HTTP/PG/browser continuam distintos antes15173.
+100clientes,331canais e20IE preservados.117Obras pendentes de semantica/campos,
+sem nova extracao, importacao, DDL, grants ou operacao na VPS.
+
+## Historico imediato -117registros nativos de obras recuperados; port rico ainda sob correcao (2026-11-10)
+
+Sem recarga100, replay de contatos/IE, DDL ou escrita de negocio neste lote.
+Recorte nativo limitado aos mesmos100: pais/CPF-CGC conferidos,0linhas na tabela
+internacional e117registros ClientesObras, com chaves nativas/unicidade conservadas.
+Contagem FK declarada0 APENAS nos pares consultados, nao ausencia global de relacoes.
+Catalogo dirigido ampliado somente por metadados:31tabelas candidatas, sem ler seus
+dados indiscriminadamente. Leitores privados existentes, READ_ONLY/ROLLBACK,
+imagem/volume/caminhos/rede none/zero portas conferidos; sem tocar originais.
+
+Nos117registros:117textos de endereco/cidade/bairro/UF/CEP/referencia,29contatos
+em texto;0complementos/telefones/emails de recebedor preenchidos.1CEP com formato
+invalido. Numero/pais/finalidade nao comprovados:117propostas privadas PENDENTES,
+0locais criados e0enderecos completos declarados. Nao converter Obra em Entrega
+ou contato de recebedor em contato mestre por suposicao. Fonte original preservada.
+
+Leitura fisica HML confirmou banco/schema/principal/perfil e os mesmos100IDs,
+codigos/procedencia/documentos/status/20IE/331canais contra baseline pos-IE.
+Locais:0visiveis ao principal nesse recorte, NAO prova de ausencia global.
+Sessao administrativa residual continua NAO leitor estrito; nao houve prova
+nova de sessao HTTP/browser. Plano/matriz/recibos em address-native-20261110-followup
+privado. PG/leitor SQL parados e reserva liberada; nenhum backup repetido.
+
+Codigo sanitizado dos dois wrappers publicado em342/6779772012, hashes b37de840
+e1c521b07; node--check/revisao independente e leituras reais acima. Nao importer
+ou codigo de build. Primeira consulta falhou sem detalhe SQL capturado; tentativa
+seguinte passou com captura completa, nao classificar a primeira como PASS.
+
+PR591 revisada ate6b3c84c2. Guardas200/201, IDs/principais/B2B/metadata e CAS do
+adapter corrigidos no alcance sintetico;12probes reproduzidos, incluindo3residuos:
+UI corta2001->2000, NULL carregado nao e omitido, POSTnovo exige versao CAS.
+Backend get/update perderam captura/reautorizacao/parse antes de await e delegacao
+enrichLegacyContacts frente29726; service/adapter identicos ao fc1, apesar dos
+peels novos. Delta UI6b3 de tipagem e preferencias nao corrigiu os3residuos.
+Pareceres591/6779554174 e6779707769; nao trocar pins para esconder a perda.
+CAS transacional apenas inspecionado, nao homologado HTTP/PostgreSQL concorrente.
+1partial/quarentena da fonte nao tem projecao API/UI comprovada.
+
+Base44: canal MCP autenticado confirmou app ERP Integra e4schemas especificos
+(Cliente/Produto/GrupoProduto/UnidadeMedida), sem sandbox/builder/escrita ou leitura
+de registros. Relacoes de grupo/unidade e cadastro rico documentadas; isto NAO
+recupera registros nem resolve crosswalk historico. Nao repetir os100IDs sem match
+ja consultados, mapear por nome ou tratar descricao de unidade como fator aprovado.
+
+Bootstrap seguinte apenas PREPARADO de fonte ef65, nao ativado nem snapshot/build
+produzido: depende da correcao/revisao/CI do par unico.15173 nao anunciada ativa.
+Proximo: restaurar protecoes e corrigir3residuos com Cursor; depois snapshot e
+prova privada. Enderecos dependem de semantica Obras e componentes comprovados,
+sem defaults ficticios. Carga operacional, merge e deploy continuam gates.
+
+## Historico imediato - IE20 concluida na HML; aceite do port rico bloqueado por contraprovas (2026-11-10)
+
+Mesmo runtime canonico29726d3d/CI6692 reutilizado, sem novo delta de aplicacao.
+IE20 executada exclusivamente na HML existente por enrichLegacyStateRegistration:
+PLAN/APPLY/REPLAY/REVERSE/FINAL_APPLY/FINAL_REPLAY PASS,20inscricoes preenchidas,
+100IDs/clientes e331canais conservados;60eventos novos de auditoria, replays sem
+incremento. Reversao restaurou os valores anteriores; estado final reaplicado.
+Nenhum novo cliente, grant, DDL, original ou banco operacional alterado.
+
+Preflight corrigido sem enfraquecer guardas: fileSha256 do detalhe identifica o
+staging congelado, NAO os bytes CSV; ordem de chaves do JSON FINAL nao equivale
+a ordem das colunas CSV. Conferidos separadamente100valores integrais,100rowSHA,
+bytes/tamanho do CSV, pin do staging no FINAL e pin JSON antigo. Driver privado
+688e3708 revisado independentemente; planos antigos/erros preservados. Baseline
+novo encadeado apos IE; NAO repetir comandos de contatos com fingerprints antigos.
+Backup do schema HML345276bytes, SHA256/TOC verificados; nao novo restore desse
+arquivo. Apoio PG parado apos conexoes fechadas. Recibos somente privados.
+
+Catalogo nativo dirigido:6tabelas/252colunas, copia SQL READ_ONLY, caminhos
+isolados, rede none/zero portas, volume local sem bind de originais. Driver
+inicial falhou ao parsear a mensagem USE; JSON ja retornado recuperado do
+diagnostico exato/hash sem repetir SQL. Resultado FK omitido continua NAO
+COMPROVADO, nao equivale a ausencia de vinculos.0novas linhas de endereco
+extraidas/gravadas. Leitor SQL parado e reserva propria liberada. Proximo recorte
+deve provar chaves/joins e semantica antes de extrair os componentes da mesma100.
+
+PR591 bd7f2f06/CI6757SUCCESS: port rico existe, superando parecer ancestral de
+ausencia. Contraprovas sinteticas em memoria encontraram CAS ausente, truncamento
+51->50 e900->500, null/ausente->[] no mapper PG e guardas ricas incompletas.
+Parecer591/6778237293; Cursor continua escritor e deve reutilizar contrato/CAS
+29726d3d. Nao atualizar15173 com par API/web incompativel. Banco enriquecido nao
+comprova formulario homologado; nenhuma URL ativa ou novo aceite browser alegado.
+Cinco blobs/probes sinteticas reproduzidos pelo revisor e pelo executor principal;
+positivos de hidratacao rica e omissao conservados. Complemento591/6778347806.
+HEAD401 reconferido5d9a7e37, tip documental sobre pacote76cd4e299: isto nao e
+nova aprovacao do conjunto nem autorizacao de integra-lo/deployar.
+
+Decisao Comercial10/11 reconciliada em COMERCIAL_360 e programa existente:
+Central ocupa Pedidos, nao Orcamentos; preservar entidades e acessos por
+compatibilidade. Versao6 azul/branca, duas grades simultaneas; texto prevalece
+sobre imagem. Coordenacao591/6778157606 publicada; ACK nao presumido.
+
+Proximo: corrigir/revisar CAS e preservacao do port rico por SHA; snapshot unico
+API/web e prova real15173. Enderecos ainda exigem campos/joins/finalidades nativos;
+nao inferir numero/pais/entrega nem chamar textos de locais completos.
+
+## Historico imediato - HML recuperada; contatos100 aplicados e reversao comprovada (2026-11-10)
+
+Runtime29726d3d/CI6692SUCCESS3jobs, sem novo delta runtime. Gates especificos de
+recuperacao do apoio PG e coluna canonica contatos autorizados e executados.
+RWLayer nil/imagem ausente resolvidos com imagem privada pinada e mesmos binds;
+copia fria349552640bytes SHA256/tar-compare, antigo PARADO preservado, nenhuma
+porta/rede externa ou novo grant. Identidade fisica e100linhas integrais conferidas.
+
+Somente HML: contatos JSONB nullable/CHECK<=200, sem default/backfill; backup e
+revisao previos, CAS/locks/catalogo no COMMIT. Apply/replay/reverse/final_apply/
+final_replay canonicos PASS:100clientes/100IDs preservados,331canais
+(230telefones/101emails),99ready/1partial/1canal invalido em quarentena,
+300auditorias; replays sem incremento,0novo cliente,5emails escalares conservados.
+Origem deste recorte:5emails no mestre (corrige55 registrado antes),232linhas
+auxiliares/97emails/230telefones/210nomes/3cargos. Nao inferir WhatsApp ou finalidade.
+
+Backup final812040bytes SHA256/TOC verificado; nao novo restore desse arquivo.
+Reversao do enriquecimento executada e estado final reaplicado. Recibos e dados
+privados, apoio parado ocioso, conexoes fechadas e reserva liberada. Originais e
+operacional intactos; Cursor nao editado. Proxima acao: integrar UI/CAS do mesmo
+contatos[] com Cursor591/6773254795, depois API/web mesmoSHA e prova na15173.
+Banco enriquecido NAO significa formulario homologado ou cadastro completo.
+Enderecos100em texto ainda requerem campos/joins/finalidades comprovados.
+
+## Historico imediato - codigo29726d3d/CI6692SUCCESS, HML sem nova escrita naquele checkpoint (2026-11-10)
+
+CI Ubuntu final3/3jobs aprovada no mesmo SHA funcional remoto; nao repetir POSIX,
+transporte/publicacao ou usar suite Windows interrompida como PASS. Coorte fonte
+100validada e confrontada na HML:100IDs/matches unicos codigo/documento/procedencia,
+0ausentes/ambiguos, READ ONLY/ROLLBACK com contexto app.group_id exigido pela RLS.
+Role efetiva sem super/BYPASS, sessao administrativa residual NAO leitor estrito.
+
+232linhas nativas contem230telefones/97emails/210nomes/3cargos; mestre nativo
+55emails/100enderecos principais. Dados continuam privados; nao inferir validade,
+WhatsApp ou endereco completo.5emails escalares existentes na HML preservados.
+Proprietario apontou corretamente contato ja existente no ERP novo: formulario
+contatos[] existe, mas HML PostgreSQL tem apenas email/telefone/celular neste
+contrato. Nao criar cadastro paralelo. DDL candidata pendente de decisao
+especifica, resposta do dono nao e aprovacao; nenhum enriquecimento aplicado.
+Proximo: concluir espelhamento do mesmo contrato e gate de persistencia HML,
+depois apply/replay/reversao canonicos. Nao reimportar os100 nem alterar originais.
+
+## Historico imediato - vinculos nativos100 e contatos canonicos candidatos (2026-11-10)
+
+Mesma fonte FINAL, sem recarga:100pais/100identidades conferidas,0quarentenas,
+232linhas auxiliares com PKs/documentos/34valores e hashes verificados. Contrato
+nativo CODIGOCLIENTE->codigo_legado comprovado; nao alegar FK ou associar por nome.
+READY/hash conferidos e leitor restaurado PARADO. Recibos reais somente privados.
+
+Lote de codigo: contatos no mestre existente, CAS/lock/RBAC/auditoria; enriquecimento
+legado apenas aditivo e reversivel. Mapper conserva baseline/manual e quarentena
+divergencias. Sem cadastro/importador paralelo.13persistencia+27mapper PASS;
+guardas99root+8bulk e27focados apos ajuste PASS. Builds/typechecks aprovados no
+alcance registrado no HANDOFF; Linux completo pendente, suite interrompida nao PASS.
+Publicacao de validacao draft autorizada; CI nova nao equivale a HML aplicada.
+
+HMLwrites0: recuperar configuracao/principal documentados, comprovar schema,
+baseline e backup antes de executar. SQL candidato nullable/CHECK nao aplicado.
+Numeros/pais/finalidades e WhatsApp nao inferidos. Proximo item unico: canal e
+gate do enriquecimento da mesma100; Cursor permanece escritor UI/composicao.
+
+## Historico imediato - extracao auxiliar concluida sem carga HML (2026-11-10)
+
+Leitor isolado executado no Codespace existente apos aceite EULA. Master limpo,
+READ_ONLY, rede none/zero portas/sem mounts dos originais; somente volume privado.
+Motor nao-root, NoNewPrivs1, dropALL+NET_BIND_SERVICE especifico do binario.
+DBCC filelist2/2 e hashes internos antes do attach; referencia privada inalterada
+ao encerrar. Servico Windows segue PARADO e ambos leitores privados PARADOS.
+
+5arquivos/53412linhas/35281985bytes com contagens/campos/SHA256 conferidos:
+auditoria4805, diarios39, oportunidades contatos0/telefones0, telefones48568.
+Campos preenchidos nos telefones: telefone48245, email11412, nome46650,
+cargo1542. Nao sao clientes unicos nem WhatsApp identificado. Dados/receipts
+privados fora Git/build/CI; leitura ROLLBACK, HMLwrites0, sem nova carga100.
+Metadados nativos258colunas/30colunas de chaves/0FK no recorte; vinculo nativo
+ao mestre ainda exige contrato autoritativo. Proxima acao: mapear/enriquecer
+mesmos clientes pelo existente, preservando origem e pendencias de endereco;
+nao inferir relacionamento/finalidade nem declarar cadastro completo.
+Codigo de aplicacao e4802061/CI6604 preservado; este recibo nao e nova CI runtime.
+
+## Historico imediato - isolamento auxiliar preparado, aceite EULA pendente (2026-11-10)
+
+Catalogo privado confirmado:2arquivos/8650752bytes/SHA256, sem recopia.
+Leitor Windows bloqueado por isolamento incompleto; servico segue PARADO.
+Canal Chrome do mesmo Codespace recuperado; checkout/WIP preservados. Imagem
+oficial SQL2025 baixada, exit0, sem partida/container/transferencia de dados.
+Alternativa revisada: clean master em container none/sem portas ou mounts
+dos originais; somente copia de trabalho verificada, filelist antes de attach,
+READ_ONLY e metadados PK/FK antes dos dados. Nao e extracao concluida.
+Proxima acao depende somente do aceite explicito EULA solicitado; depois
+fixar digest e reconferir capacidade/isolamento. Nenhuma mudanca operacional,
+carga100, IE20, grant, firewall ou copia do catalogo executada.
+Codigo e4802061/CI6604 preservado, sem novos testes de runtime neste recibo.
+
+## Historico imediato - CI6604 verde e concorrencia PG comprovada (2026-11-10)
+
+Codigoe4802061 remoto,CI6604SUCCESS/3jobs. Lote locais: prova realPostgres
+1PASS/0SKIP,2conexoes bloqueadas/umCASvencedor e rollback na falha de auditoria.
+PGlite9PASS e contrato contatos6PASS permanecem provas distintas. Contatos ricos
+ainda NAO persistidos/habilitados no MASTER; schema e gates explicitos no
+procedimento existente. Revisao/port coordenados com Cursor sem tocar sua branch.
+Linux desbloqueado via CI existente, sem Chrome/instalacao/nova candidata.
+SQL: preparo administrativo de copia privada do catalogo e consulta restrita
+PK/FK prontos; ainda sem partida/leitura das5auxiliares. T3608 nao substitui
+isolamento de arquivos. IE20/100clientes/HML/VPS nao alterados. Proxima acao:
+receber catalogo privado, fechar isolamento e revisar port/API+web antes de HML.
+
+## Historico imediato - CI Linux de locais encerrada (2026-11-10)
+
+63ca3eff remoto/CI6600SUCCESS,3jobs; raiz2427PASS/0FAIL/0SKIP. Bloqueio Linux
+resolvido pelo workflow existente, sem Chrome ou instalar ambiente. Locais
+disponivel para revisao porSHA, ainda nao integrado/HML/navegador homologados.
+Delta seguinte: contrato canais Cliente.contatos preserva metadata e omissao,
+sem nova entidade ou escrita habilitada;6sinteticosPASS. Prova2conexoesPG do lote
+incluida no runner existente, pendenteCI; focoWindows15PASS/1SKIP (naoPGreal).
+SQL imagem recebida: parado/sem vinculo usuario provado. Preparacao privada da
+copia master/mastlog sem partida entregue; partida exige isolamento de todos
+caminhos, nao apenasT3608. IE20/100clientes/backup/VPS intocados.
+
+## Historico imediato - publicacao para validacao Linux autorizada (2026-11-10)
+
+Autorizacao especifica do proprietario: publicar snapshot sanitizado de locais
+na PR342 draft para CI Ubuntu existente antes do fechamento Linux. Nao e aceite
+HML/merge/deploy/DDL/grants/carga. Nove blobs conferidos contra artefato421;
+acompanhar CI do novoSHA. Dados100/IE20/historicos e VPS intocados.
+
+## Historico imediato - atomicidade locais implementada em WIP (2026-11-10)
+
+Contrato canonico snapshot/sync reutiliza CRUD, lock/CAS, contexto imutavel,
+RBAC e auditoria no mesmo executor; ate50operacoes/200locais, sem delete inferido.
+PGlite9PASS/backend inicial587PASS/38SKIP; demais checks compilacao/lint/build
+PASS. Guardas53PASS/afetados45PASS apos peel exato, pins historicos preservados.
+Raiz inicial2412PASS/14FAIL; negativas alteradas revalidadas, fechamento Linux
+do snapshot exato ainda pendente (sem reabrir desbloqueios POSIX historicos).
+Artefato sanitizado421/6764180902,9arquivos/arvore369ccbdb,patchSHA256ea1e6402...
+NAO commit funcional/CI nova/HTTPPG/navegador. Base publicada continua cbafa81b.
+Cursor5916572b9ae coordenado, sem edicao da branch dele ou troca de snapshotHML.
+SQL copia integra mas vinculo fisico pendente: script administrativo somente
+leitura preparado; servico nao iniciado/ACL intacta. IE20/auxiliares/HML pendentes
+nos gates especificos;100clientes/backup/historicos preservados sem nova carga.
+Proximo: receber validacao Linux por hash e fechar revisao antes de commit/push;
+comprovar catalogo SQL antes da leitura das cinco tabelas. Detalhes no HANDOFF.
+
+## Historico imediato - backup integralmente verificado; auxiliares bloqueados (2026-11-09)
+
+Verificacao atual em leitura:2836arquivos/48359509373bytes, SHA256 completo,
+zero faltantes/divergentes/ilegiveis/extras;50objetos cifrados tambem integros.
+Conjunto selecionado completo, nao HD integral;5instaladores excluidos preservados.
+Inventario original1857 integralmente contemplado; sem novo inventario do HD.
+MDF/LDF TID_EXETPS da copia local tambem conferidos por SHA256. Instancia parada:
+DATA/ERRORLOG inacessiveis ao executor impedem provar os caminhos anexados;
+nenhum inicio/attach/ACL alterado. Cinco tabelas auxiliares ainda sem leitura.
+591 segue bde45554 sem delta; parecer6748871085 preservado, sem novos testes
+identicos. IE20 nao aplicado/HML nao iniciada/100clientes nao recarregados.
+Proxima acao: obter evidencia administrativa do vinculo fisico da copia SQL,
+sem apontar ao original; correcoes de locais dependem do novo SHA do Cursor.
+Este lote apenas registra provas reais:git diff --check, sem runtime alterado.
+
+## Historico imediato - lifecycle IE validado em Linux, dados nao alterados (2026-11-09)
+
+Canal do mesmo Codespace recuperado, checkout/WIP antigos preservados, sem
+restart/rebuild/pull. HML15173 sem listener, PGparados e ultimo checkpoint
+encerrado com preservacao; sem nova carga100 ou remapeamento.
+Lifecycle IE20 passou9checks no snapshot exato base9ae+patch421/6747908307:
+raiz2426PASS/0FAIL/0SKIP, backend592PASS/0FAIL/26SKIP, audit/lint/typecheck/build
+root e typecheck/build backend/diffPASS. TS2742 foi reproduzido na base e
+resolvido SO por copia fisica dos mesmos pacotes de dependencia no snapshot,
+sem flags/config/pins/codigo alterados; somente2checks repetidos. Blobs intactos.
+Publicacao funcional deste lote e distinta de IE20 aplicado:20pendentes no
+plano v2, exigem binding/fonte/ator/namespace e baseline versionado para nao
+invalidar o preflight de preservacao. SHA remoto/CI no recibo daPR342.
+
+59194d49ab3/CI6572SUCCESS: novos P1 de fidelidade/atomicidade/contexto de locais,
+reproduzidos e enviados ao Cursor; nao liberar escrita ou trocar snapshotHML
+por inferencia. Detalhes/alcance das provas no topo HANDOFF. Endpoints individuais
+transacionais nao comprovam lote atomico; sem prova Reactmontado/HTTPPG nova.
+Base44 leitura restaurada:150schemas;100IDs de classe referenciados pelos871
+produtos consultados sem match, controle de ID do export91grupos1match. Sem
+equivalencia por nome, recuperacao declarada ou promocao de estoque/preco/fiscal.
+Auxiliares: fonte SQL localERPZLEGACY PARADA; parametros MDF/LDF sem acesso ao
+registro. Nao iniciar antes de comprovar copia privada fora original. Campos
+reais de contato/endereco permanecem pendentes, nao substituidos por defaults.
+
+## Historico imediato - IE20 implementado em WIP, nao aplicado (2026-11-09)
+
+Lifecycle canonico existente ampliado somente para IE ausente, com rowlock/CAS,
+identidade/procedencia, RBAC editar+importar, auditoria atomica/replay/reversao.
+Sem endpoint, schema, grants, novo importador ou alteracao no ClienteService.
+7testes lifecycle e8bulkPASS;49contraprovas preservacaoPASS, nenhum pin trocado.
+Typecheck/build backend e audit/lint/typecheck/build raiz PASS; lint1warning.
+Revisao estatica independente sem achados; PGduasconexoes/fonte real nao provados.
+Fechamento completo pendente, nao commitar como funcional: primeira raiz
+interrompida apos falhas; guardas da delegacao removida ja revalidadas, CSV com
+Python existente10PASS, POSIX historicos nao reabertos como novo bloqueio.
+Backend final sequencial580PASS/0FAIL/38SKIP; snapshot Linux exato solicitado pelo artefato
+PUBLICO sanitizado421/6747908307. Base9ae868ce; pins e retomada no HANDOFF.
+Dados reais/IE20/100clientes intactos, sem nova carga. Editor remoto sem shell.
+Cursor59189eabf78: alias CPF/CNPJ2PASS no helper real; formatos ricos invalidos
+ainda perdem campo, parecer591/6747739206. Nao generalizar para React/HML atual.
+
+## Historico imediato - conexoes recuperadas parcialmente (2026-11-09)
+
+Config TOML valido; clone desktop canonico limpo no7e5cbefc e remoto igual.
+GitHub autenticado/leitura/escrita comprovados. Chrome controla editor/HML,
+mas shell remoto nao entrega prompt/saida e marcador HTTP novo15173 falhou.
+Uma recarga apenas da janela VS Code nao resolveu; nao reiniciar Codespace/PG
+por tentativa. DOM com100 nao confirma disponibilidade atual. Banco e carga
+nao foram alterados; persistencia historica abaixo nao foi reensaiada.
+
+Tip591063a89b2 revisado no modulo real JS:3assertsPASS; dois formatos invalidos
+de campos ricos descartados silenciosamente. Parecer591/6746649125 ao Cursor,
+sem edicao da branch dele; nao confundir com React/HTTP/PG. Documento100 ja
+persistido e lacuna de projecao UI distinta; IE20 aguarda CAS/auditoria/reversao.
+Prioridade segue cadastro completo e dados auxiliares comprovados, sem recarga.
+Proximo passo exato no topo do HANDOFF; sem mudanca operacional ou novos grants.
+Lote exclusivamente documental: git diff --check; suites runtime inalteradas
+reutilizadas, sem nova alegacao de CI funcional ou homologacao completa.
+
+## Historico imediato - armazenamento HML remapeado e retomada comprovada (2026-11-09)
+
+Aprovacao especifica do proprietario executada: PG privado substituido somente
+como container de apoio, mesma imagemID/configuracao, rede none/0ports/readonly,
+sem mudar papeis/schema/dados. PGdata e socket agora em/workspaces/.erp-private-344
+sobreext4; antigo e15c2c2d23d0 permanece PARADO para retorno, novo94c7cf0723b1.
+Checkpoint frio355694592bytes teve extracao integral conferida por SHA256 de
+cada arquivo; clusteridentity igual e100IDs/fingerprint de campos iguais apos
+partida. Parada/inicio do PG/API NOVOS noext4 repetiu100/100 sem seed/carga.
+Reconstrucao completa/rebuild do Codespace NAO foi ensaiada.
+
+Gates de seguranca aplicados antes da troca: revisao independente encerrouP1
+de interrupcao/resultado incerto;14binding+6TAR+7main/resume sinteticosPASS.
+Falha real psql exit2 por senha NAO fornecida reteve lock e ambosPG parados;
+resolvida com configuracao existente DENTRO do container, sem senha emargv,
+grants/trust/rotacao. Lock de manutencao estreitado pelo mesmoFD para0600;
+sete fixtures finaisPASS, sem flexibilizar assercoes. Novo bootstrapef65c492 e
+helperf30ef492 publicados como codigo sanitizado344/6689846342 e6743376734.
+
+API/web continuam2e2ccfeb, mesma HML/FINAL100. Sessao200 e clientes200 observados
+no navegador aposretomada sem capturar tokens; a ultima sessao foi aceita, nao
+generalizar exigencia de login a todo restart. Grupo CPA/empresas preservados.
+Selecionar o proprio Grupo no seletor resolveu o contexto visual inicial; Abrir
+NAO e bloqueio persistente. Listagem100total,2paginas20+20/0sobreposicao,
+buscaHTTP200 com1resultado esperado, depoislimpa. Sem Save real. Na amostraPJ,
+formulario ainda omite documento CNPJ/nome generico apesar de razao/fantasia/ID
+carregados: parecer591/6743223860; verificar tip, nao atribuir2e ao novoHEAD.
+
+Recuperacao privada: PGdata vivo + checkpoint frio + imagem/controle, com
+recovery-manifest.private.json0600. Bundle adicional2TAR/175587328bytes com
+SHA256/estrutura conferidos; nao backup publico/imagem com dados. Procedimento
+em OPERACAO_DEV_VPS. Importadores historicos ficam suspensos ate resolverem o
+binding ATIVO; nao conectar copia antiga nem rodar --apply novamente.
+
+B continua parcial: matriz28campos, IE20validas/0persistidas/plano20pendente de
+CAS/auditoria/replay/reversao canonicos; dados e joins das5tabelas auxiliares ainda
+nao lidos. Nao chamar metadata, contagem ou tela de cadastro completo. Sem carga
+operacional/DDL/grants/deployVPS.7261bb04/CI6547-6548SUCCESS e checkpoint anterior;
+fechamento deste delta documental exige diff-check e CI do novoSHA separado.
+
+## Historico - HML retomada e completude ainda parcial (2026-11-09)
+
+Proprietario confirmou os100clientes na HML privada15173. API/web servidas no
+mesmo2e2ccfebe6273c2e856f0a8881599f9c1d1fcb40; codigo funcional Codex publicado
+5ef66b55/CI6539-6540SUCCESS. Publicacao591de3fe267 nao significa troca da
+versao servida. Nao repetir carga/selecionar coorte ou atribuir CI antiga ao tip.
+
+Parada SIGTERM apenas do bootstrap proprio5393: APP_STOPPED_RECORDS_PRESERVED,
+100linhas/100identidades e fingerprint integral antes/depois iguais. Reinicio
+proprio13177 validou de novo100/100 e mesmos campos; marcador HTTP200, mesma
+origem FINAL100, sem seed/importacao/restore. Sessao exige novo login depois do
+reinicio; nao e perda de clientes nem autorizacao para copiar token. Inspecao UI
+confirmou Grupo CPA, duas empresas e contagem100, mas Abrir Clientes estava
+desabilitado com Grupo selecionado no2e servido. Coordenacao591/6742739783;
+nao promover admin nem remover isolamento para contornar.
+
+CORRECAO de qualificacao anterior: bindPG em/home esta sobreoverlay/, nao e
+prova de volume duravel contra rebuild. /workspaces eext4. Checkpoint frio
+privado fora do checkout,0700/0600,2TAR/355694592bytes com SHA256 e estrutura
+reconferidos, preserva PG parado + configuracao/recibos/FINAL; nao inclui Git ou
+node_modules. Restore DESTE checkpoint ainda nao executado. Restore logico
+anterior135978bytes/15tabelas continua prova separada. Remapear armazenamento
+PG vivo para/workspaces exige decisao especifica antes de substituir container;
+nao executado. Procedimento vigente em docs/OPERACAO_DEV_VPS.md, nao outro plano.
+
+Completude: matriz privada28campos, backup original/API/formulario ainda com
+etapas desconhecidas por campo.20IE presentes noFINAL/20validas/0no banco;
+plano v2 com20patches, IDs/codigos/procedencia e fingerprint por registro,
+READ ONLY/ROLLBACK,0escritas. Plano inicial com0propostas e driver invalido para
+liberacao; v2 e a referencia. Aplicacao exige CAS canonico sob lock, auditoria
+transacional, replay/reversao e baseline de conservacao versionada, nao update
+direto nem nova importacao. Cinco tabelas auxiliares identificadas no catalogo
+original; dados/joins nativos ainda nao conferidos. Celular nao implica WhatsApp;
+endereco cadastral nao implica entrega/cobranca. Cadastro completo NAO declarado.
+
+Proximos gates finitos: armazenamento duravel aprovado -> acesso UI no Grupo ->
+contrato canonico de enriquecimento/auxiliares -> matriz fonte/banco/API/form ->
+aceite -> pacote VPS separado. Sem DDL/grants/carga/deploy operacional. Reserva
+Codex somente docs342 e artefatos privados; Cursor segue dono da UI/composicao.
+
+## Historico - coorte conservada e perda escalar corrigida (2026-11-09)
+
+Mesma FINAL100 e pins confrontados aos recibos; consulta privada por Grupo,
+lote e100codigos confirmou100ativos/100identidades correspondentes no banco
+hml344_restore_20261104/schema hml344_cpa_20261104. READ ONLY/ROLLBACK,
+0businessWrites nesta consulta NAO desfazem100inseridos/replay100/0novos do
+recibo de carga. Reversao100 historica foi ensaiada comROLLBACK, mantendoativos;
+historicos anteriores inativos preservados. PG networknone/0portas/bindprivado
+persistente, devolvidoSTOPPED/lock e socket ausentes. Sem recarga/restore.
+Recibos client-persistence-20261109 e hml100-continuity-history-20261109 privados
+0600: datas/executor ausentes nao foram inferidos do mtime. API/UI reais ainda
+nao observadas nesta rodada; parada/inicio da aplicacao continua gate separado.
+
+Matriz parcial fonteFINAL/payload/banco: nomePF77/77/77, razaoPJ23 no payload e
+banco, fantasia100/100/100, documento100payload/banco, email5/5/5. Inscricao
+estadual20nafonte/0payload/0banco: omissao do mapeador existente identificada.
+Correcao em pilot-functional-policy preserva escalares explicitamente presentes
+e aceitos pelo schema canonico; vazio omitido, invalido gera pendencia porcampo
+sem bloquear mestres independentes. Nao alteraFINAL/coorte/pins ou banco atual.
+Enriquecimento dos20 ainda exige preflight/CAS/auditoria/reversao no mesmo lote.
+Endereco cadastral tem componentes em100registros da extracao, nao numero/pais;
+sem copiar para entrega/cobranca. Telefone/celular/WhatsApp ausentes no recorte
+resumido NAO provam ausencia no backup: auxiliares originais ainda pendentes.
+Nao declarar cadastro completo ou restauracao de dados por contagem/tela.
+
+5912e2ccfeb/CI6535-6536SUCCESS revisada no delta: tresports backend e residuos
+antigos contagens/upsert fechados no alcance registrado. Seis contraprovas
+helperFunil preservamgoldens e rejeitam mudancas foraescopo; nao saoReact/PG.
+Pareceres6740133176/6740157638 distinguem P1createClienteHTTPoff->local e
+locais_entrega nao transportados. Cursor unico escritor da candidata/UI.
+Tela5173 aberta eSINTETICA (bannerexplicito/EmpresaDEV A/2clientes), naoHMLCPA;
+harness5788 preservado. Nao trocar snapshot0afd durante teste ativo nem servir
+dadosreais em portaPublic. HML real requer parAPI/webmesmoSHA e janelaPrivate.
+
+WIP2blobs a5b1fb9b/cb662fbe:6focados+5schemaZodreal PASS; audit/typecheck/build
+PASS, lintPASS/1warning preexistente. Controle recuperado: logsLinux inexistentes
+e blobsantigos comprovados antes de aplicar6740261877 no snapshotPROPRIO ocioso;
+2150sources/configs conferidos byteabyte contra baseb2d07dc3,2hashesnovos iguais
+aoDesktop. SuiteLinux FINAL2426PASS/0FAIL/0SKIP/exit0,346032.873605ms,
+Nodev24.21.0/Linux;2hashes reconferidos DEPOIS e nenhumrun-tests ativo.
+Recibo enrichment-scalar-20261109.result.private.json0600. Sem dado real no teste.
+Nao interferiu checkoutCodespaceb5cb/.vscode, Cursor,0afd ou dadosHML.
+
+## Historico - revisao591 e diagnostico HML comprovados (2026-11-06)
+
+Setor publicado221b6822, CI6479/6480 SUCCESS; nao repetir Linux2424PASS ou
+backend573PASS/38SKIP sem delta. Desktop limpo antes deste lote documental.
+Cursor segue escritor da candidata/UI. Preparacao5913fc45c32 encontrada,
+CI6481/6482 SUCCESS; nao manter a espera antiga por inexistencia de correcao.
+Parecer por SHA em591/6694327032: faltam ports f51376fa (pool/preflight),
+2f588154 (guardGrupo granular) e9b5de2bc (snapshotFornecedor). Contraprovas
+nos blobs reais com ports sinteticos confirmaram os tres; crossGrupo negado.
+Nao equivalem a HTTP/PostgreSQL/browser. Novos residuos: upsertConfig ainda
+despacha persistencia local em HTTP (estatico); total parcial confirmado e
+fatia vazia sem sondagens individuais (reproduzidos em memoria). Mapping
+Comercial e protecao Integracoes fechados no alcance estatico. Sem port aqui.
+
+HML: probe fisico READ ONLY/ROLLBACK, consulta canonica LIMIT0, businessRows0,
+comprovou42P01: setores_atividade ausente no schema HML e presente em public.
+Sem fallback, DDL ou grants. Numero SQLSTATE do log original nao existia;
+42P01 e reproducao atual equivalente, nao retroatribuir ao log. Principal
+NOSUPER/NOBYPASS nao significa leitor global estrito. PG devolvido STOPPED,
+PID/lock/socket encerrados; API/web nao iniciadas. Nao recarregar a coorte100.
+
+Base44: tresCSV privados871/91/14,711990bytes, hashes preservados.817refs de
+classe =100IDs nativos,0matches exatos nos91Grupos;54refs ausentes. Nenhum
+crosswalk nesses exports. Datas sugerem populacoes distintas, nao equivalencia
+ou exclusao comprovada. Necessaria fonte historica dos100IDs ou crosswalk
+autoritativo auditado, nunca similaridade de nome. Plano privado reutiliza
+projectAssistedLegacyReview:870REVIEW_REQUIRED/1HISTORY_ONLY,0elegiveis,
+destino UNKNOWN_NOT_COMPARED871,0gravações mestre. Reuso do artefato conferido;
+nao chamar isso de idempotencia de carga/restauracao. Unidades por sigla exata
+nao autorizam conversoes ou mapeamento do destino. Dados foraGit/build/CI.
+
+Proximo executavel: Cursor corrige591 pelos hunks/testes; Codex revisa novoSHA
+antes de API/web no MESMO SHA e login/listagem/detalhes reais. Bootstrap privado
+catalog8ac9773c preservado, recibo privado0600. Sem misturar API antiga/webnova,
+promoveruser, restaurar registros por seed ou liberar operacao pela CI.
+
+## Historico - Setor RBAC validado no snapshot Linux (2026-11-06)
+
+ControleChrome recuperado na mesma aba750, sem reinicio/rebuild. Codespace
+canonico continua b5cb34e1 com apenas??.vscode/, sem sincronizacao. Processo
+copilot-runtime sem filhos/descritores de escrita no checkout; nao interrompido.
+HML anterior comprovada STOPPED, PID morto/lock e socket ausentes, sem recarga100.
+
+Snapshot7 a909abcb conferido antes/depois, base3b4c856b, doislockfiles iguais as
+dependencias existentes,0instalacoes. Suite raiz Linux COMPLETA2424PASS0FAIL0SKIP,
+exit0,327694ms, Nodev24.21.0; timeout6min anterior preservado. Recibo privado
+setor-a909abcb-result.private.json e logs0600. Nenhum dado real no ensaio.
+Demais checks do MESMO codigo reutilizados abaixo: backend573PASS0FAIL38SKIP,
+focados13/35/5PASS, audit/lint/typechecks/buildserver/diff-check PASS. Buildweb
+inalterado reutilizado. Publicacao funcional deste lote inclui os7arquivos;
+nao chamar CI documental6475/6476 de CI desse codigo. CI propria por SHA no PR.
+
+FonteBase44: UnidadeMedida tambem exportada/verificada,14IDs distintos/3857bytes.
+TresCSV privados total711990bytes. Produto871 campos unidade_medida/principal/
+estoque/venda coincidem por siglaEXATA com o cadastro nativo; unidade_compra
+ausente871. Isso NAO aprova fatores, equivalenciaPC/UN ou carga. Lixeira de
+GrupoProduto respondeu200/arrayvazio; nao prova ausencia em backups/fora30dias.
+Marca teve consultas429; export nao confirmado, nao insistir nem inventarvazio.
+Recibos privados preservados. Nenhum registro restaurado no ERP atual.
+
+Proximo: CI/revisao/portSetor na candidata pelo Cursor, depois correcao granular
+UIGrupo6690425383 e listagem/detalhes reais. Parecer4016691042172 permanece
+separado; sem resposta/port novo comprovados. SQLSTATE originalHML ainda pendente,
+nao afirmar que todos500 foram resolvidos por RBAC. Sem DDL/grants/carga/deploy.
+
+## Historico - fonte Base44 preservada; Setor RBAC em WIP (2026-11-06)
+
+3423b4c856b/CI6464-6465 e4015d9a7e37/CI6461 reconferidos; sem port novo
+observado. Cursor segue escritor da candidata/UI. Pedido de correcao granular
+erpHttpSession6690425383 ainda sem recebimento/correcao comprovados. Nao
+promoveruser. Sessao HML/total100 anteriores validos no alcance; UI ainda nao
+homologada. Nao repetir carga100, replay, backup/restauracao ou transporte.
+
+Base44 navegador autenticado: appERP Integra/conta proprietaria/Grupo CPA
+conferidos. MCP separadamente retornou reauthentication/UNAUTHORIZED nesta
+retomada; nao chamar navegador de inacessivel por causa do conector. Exportacao
+nativa privada preservada fora do Git: Produto871/871IDs distintos,870ativos,
+1inativo,0codigo ausente/duplicado; GrupoProduto91/91IDs distintos. DoisCSV,
+708133bytes, SHA256 origem/copia iguais, diretorio com ACL restrita. Download
+event expirou mas arquivos nativos efetivamente recebidos e conferidos em disco.
+Confronto exato fonte-fonte:817referencias de classe nao resolvidas,54ausentes;
+nao religar por nome. Uma origem de Grupo em ambos. Nenhum registro restaurado
+no ERP atual, nem estoque/preco/fiscal promovidos. Matriz existente atualizada.
+
+Reserva342/6690866419: Setor HTTP canonico nao chamava RBAC. WIP7 preservado
+por patch/manifesto a909abcbc2f37f10e0fe711ace0008741d2b221406ccafa9b92fa128902e7e40
+em421/6690965286 (PUBLICO, somente codigo sanitizado autorizado). TenantCrudService
+reutiliza guard existente por opcao especifica Setor:visualizar/criar/editar/
+inativar antes do repo, contexto copiado/congelado e wildcardglobal negado.
+Demais factories preservadas. Antes cliente-only retornava500 em vez de403;
+depois HTTP/runtime13PASS, guardas5PASS, raiz afetada35PASS; backend completo
+573PASS0FAIL38SKIP. Audit/lint/typechecks/buildserver/diff-check PASS; buildweb
+inalterado reutilizado. Perfil de fixture recebeu grant explicito, assertions
+preservadas. SQL autorizado com42501 continua500, nunca vazio/zero/403 falso.
+Causa SQLSTATE original HML ainda nao obtida. Sem DDL/grants/flag/deploy.
+
+Falta suite raiz completa no snapshot Linux exato; nao confundir artefato421
+com implementacao publicada. Chrome perdeu controle: Debugger unattached;
+reassumir mesma aba750 falhou em Emulation.setFocusEmulationEnabled. Nenhum
+reinicio/rebuild/instalacao; CLIgh/bash nao disponiveis no PATH desktop. Nao
+repetir POSIX/WSL. Intervencao minima solicitada: reconectar controle da mesma
+aba. Alternativa de validacao pelo executorCursor existente solicitada6691112770,
+sem alegar recebimento. WIP permanece fora do commit documental deste checkpoint.
+
+Revisao401/6691042172: LayoutComercialP1 continua por contraprova do mapa atual;
+rotaIntegracoes sem ProtectedSection granular e upsertConfig HTTP→local sao
+novos riscos estaticos, nao prova de bypassbackend ou persistencia homologada.
+P1remainder antigo continua encerrado. Gates finitos: contextoUI/nomes reais,
+raizLinux/WIPSetor, parecer/portCursor, auxiliares/schema/principal, backup,
+reconciliacao/carga especificamente aprovada, deploy e aceite. Proximo: validar
+snapshot7 no Linux existente apos reconexao, publicar somente quando gatesPASS;
+revisar correcao UI e comparar referencias Base44 por IDs sem inferencia.
+
+## Historico - sessao real HML aceita; contexto UI bloqueado (2026-11-06)
+
+Fornecedor HTTP publicado6b81004fc4edbf23f5b951a99c87225539a75a4f, push remoto
+conferido; CIs6462/6463 terminais SUCCESS no mesmo SHA. Reserva dos9arquivos
+liberada e solicitacao de revisao/port publicada na401, sem alegar recebimento.
+
+Login do proprietario concluido na HML: navegador observou GETauth/session200,
+perfil user/empresa_idNULL, Grupo CPA e2empresas aprovadas; GETclientes200,
+limit1/offset0/meta.total100/hasMoretrue, procedencia presente. Sem nomes,
+documentos ou token no recibo publico. Recibo agregado privado0600 em
+auth-browser-20261106.private.json; nao comprova edicao/reabertura nem E2E.
+Bootstrap finalc32ef95a usa WebSocket no MESMO listener privado5173; conectado
+no navegador. SIGTERM com HMR conectado PASS, lock/socket liberados e PG
+restituido parado. Janela20min reaberta, nao disponibilidade permanente.
+
+Bloqueio reproduzido: seletor UI so oferece empresas; Clientes exige contexto.
+erpHttpSession ainda exigeadmin em switchGrupo/buildUser/login/refresh apesar
+da permissao explicita do proprio Grupo aprovada. Mesmas guardas conferidas
+no HEAD4015d9a7e37; coordenacao6690425383, Cursor escritor da composicao.
+Nao promover user nem ampliar grants. Tambem observados contagem auxiliar500
+e negativa de Expedicao transformada em erro global, sem alegar causa unica
+ou recuperacao dos registros. Proximo: reconciliar guardas UI pela permissao
+servidor, validar contexto e nomes reais na listagem/detalhes. HML nao homologada.
+
+## Historico - Fornecedor HTTP validado e bootstrap HML (2026-11-06)
+
+Reserva342/6688424027: adapter HTTP opt-in reutiliza FornecedorService e
+PostgresFornecedorRepository, sem cadastro/importador paralelo. Importacao,
+leitura exata e reversao CAS exigem Auth verificado, escopo e RBAC canonicos;
+ENABLE_FORNECEDOR_HTTP permanece false por padrao. Sem CRUD generico nem
+troca do proprietario do formulario. Auditoria atomica, replay e rollback
+testados; nenhum flag, SQL, grant ou carga foi aplicado na VPS/HML.
+
+Snapshot9 arquivos pin590f178b conferido antes dos testes Linux e novamente
+antes da publicacao. Raiz2422PASS/0FAIL/0SKIP (Linux,350521.886ms); backend
+568PASS/0FAIL/38SKIP,606tests. Focados Fornecedor7PASS e preservacao/contexto
+56PASS; audit/lint/typechecks/builds raiz+server e diff-check PASS. Os38SKIP
+nao comprovam PostgreSQL real. PGlite/HTTP sintetico nao equivale a browser.
+Avisos lint/Browserslist/chunks anteriores preservados, sem supressoes.
+
+Anon EXISTENTE do Auth self-hosted conferida contra gateway e API, sem revelar
+valor. Transferida pelo SSH dedicado existente, destino privado0600/root0700,
+readback PASS; nenhuma chave gerada/rotacionada. Bootstrap privado pin6f1cc7d4:
+API50b60e46 + webb888b2c0, pool Auth/Data unico, schema HML e NOSUPER/NOBYPASS
+conferidos fisicamente. HTTP local web/proveniencia200, sem sessao401, arquivo
+privado403. SIGTERM real PASS apos corrigir encerramento Vite: lock/socket
+liberados e PG privado restituido parado. Nao repetir HML100/replay/restore.
+Janela privada limitada reaberta; sessao real, perfil/Grupo e nomes no navegador
+ainda NAO comprovados. HTTP externo alcanavel nao equivale a interface pronta.
+
+401: P1 remainder6684093828 encerrado por contraprova integral atual; novo P1
+DashboardFechamentoPedidos sem mapeamento Comercial no Layout publicado em
+401/6688337342. Revisao estatica, nao alegar vazamento backend. Cursor segue
+escritor da composicao. Proximo: login real HML e revisao/port deste adapter
+apos SHA/CI, sem merge/deploy/carga operacional por inferencia.
+
+## Historico - encaminhamento Auth concluido (2026-11-06)
+
+Gate especifico aprovado pelo proprietario aplicado: GET/auth/v1/user e
+POST/auth/v1/token no HTTPS existente, gateway8000 existente. Backup privado,
+caddy validate e reload PASS. Executor protegido PASS/exit0,4positivos,
+12negativos, TLS valido; API health/web preservados, Caddy ativo. Janela0.773s.
+Timer reversao temporario encerrado/inativo/not-found. Nenhum SQL/grant/porta
+nova/deploy ERP. Pins e primeira tentativa bloqueada registrados no HANDOFF.
+Configuracao aplicada SHA256 d34ec046512d4bd3f4ebcb7d64596a8a5a06ea3b8898dcd8a9fee6fa2bde32c2.
+Ainda falta sessao real aceita pela API HML, perfil/contexto e nomes reais no
+navegador; encaminhamento nao equivale a homologacao. Proximo item: bootstrap
+Auth/Data no namespace HML usando pool publicado e provedor real, sem fallback.
+HML100/historicos/backups preservados. P1 atual da guarda401 permanece separado.
+Lote documental: diff-check; provas de aplicacao existentes reutilizadas sem
+repetir suites ERP inalteradas. Validacao propria de Caddy/executor acima.
+
+## Historico - pool explicito e novo P1 da composicao (2026-11-06)
+
+Fornecedor9b5de2bc/CI6444 SUCCESS e Grupo granular2f588154/CI6448 SUCCESS publicados.
+Pool f51376fa46d725cdbaaf9197611b564eb859ef44/CI6450 terminal SUCCESS.
+Preflight FISICO no PostgreSQL HML privado existente PASS (recibo344/6684265740):
+descriptor canonicamente validado, imagem/mounts fixados, rede none/0portas,
+namespace/banco/role esperados, login/execucao NOSUPER/NOBYPASS. Arquivo executado
+igual ao blob publicado4e10224a97ec10a584c89e1a9d4295e675999a5c. Um pool REAL;
+identidade consultada READ ONLY/ROLLBACK,0writes de negocio. Estado do container
+reposto a parado e lock liberado. HML100/historicos/backups nao repetidos.
+Nao e AuthHTTP, API READY ou nomes reais na interface. Proximo: gate de rota
+Auth proposto no procedimento, sessao real e port controlado na candidata.
+
+Reserva6684002998: createRuntimeDbClients existente reutiliza UM MESMO cliente
+somente quando DATABASE_URL e AUTH_DATABASE_URL sao strings explicitamente iguais.
+Nao e fallback, comparacao NULL=NULL ou relaxamento de config. Roles de login/
+execucao continuam NOSUPER/NOBYPASS; banco/schema devem existir e coincidir.
+URLs diferentes continuam pools separados, enderecos/portas NULL rejeitados;
+fechamento encerra cliente compartilhado uma vez. Sem grants/DDL/config VPS.
+Teste novo antes4PASS1FAIL, depois Auth/session/data13PASS e contexto11PASS,
+0FAIL0SKIP; factory/HTTP sinteticos, nao prova fisica HML. Backend completo599:
+561PASS0FAIL38SKIP,187300.8085ms; audit/lint/typecheck/build backend PASS.
+Root2419PASS e frontend checks inalterados reutilizados; nenhum consumidor root
+le client.ts diretamente no conjunto pesquisado. Preflight real privado acima
+executado depois da publicacao, sem carga100/replay/restore; canal Auth pendente.
+
+401 avancou para b3609bdf (CI push6445 SUCCESS em d44ad52c, nao inferir para HEAD).
+Novo P1 executado6684093828: monitoramentoCanaisScopeRemainder devolve STAGE44
+integral depois de poucos marcadores. Fonte real + throw fora do escopo produz
+MESMO remainder, ocultando alteracao indevida. Cursor deve corrigir peel/preservacao
+integral e negativos; nao editar sua branch nem integrar pela CI. Os11montados
+do runtime4f76d3de3/0c4 permanecem validos; nao reabrir542/544/545 antigos.
+
+## Historico - permissao explicita do proprio Grupo (2026-11-06)
+
+Fornecedor ja publicado9b5de2bc9cdbe65f62f74311a8bcc911183dd87e, push conferido;
+CI6444 terminal SUCCESS. Reserva6683858625: authSessionService.ts
+e auth-session-http-exact.test.ts, sem editar branch Cursor. Decisao especifica
+do proprietario permite perfil vinculado ao proprio Grupo, empresa_idNULL e
+permissao explicita da entidade/acao, sem exigir admin. Guard advisory existente
+reconciliado; RBAC/RLS de dominio, identidade Auth e permissoes NAO ampliados.
+HTTP real local com Auth/DB sinteticos: antes2FAIL/2PASS, depois12PASS0FAIL0SKIP
+nos3arquivos Auth/session/data. Positivos Grupo/user e Empresa autorizada;
+negativos outro Grupo/perfil/Empresa, escopo incoerente, acao nao concedida,
+revogacao imediata, token expirado e perfil retirado. Alteracao da expectativa
+antiga admin-only justificada pela decisao, nao por mascaramento de baseline.
+Backend completo598tests:560PASS0FAIL38SKIP,223200.2446ms; sem DATABASE_URL real.
+Audit/lint/typecheck/build backend PASS; aviso lint preexistente mantido.
+Raiz2419PASS e frontend/typecheck/build inalterados reutilizados do snapshot
+Fornecedor: nenhum arquivo frontend/root nem contrato POSIX mudou neste lote.
+Nao chamar isso de login HML, PG real ou clientes reais visiveis no navegador.
+
+Proximo gate concreto: endpoint real Auth com TLS valido e preflight fisico
+API/Auth/Data na HML. Proposta minima de roteamento/reversao, NAO aplicada,
+em OPERACAO_DEV_VPS. HML100, backups, historicos e operacao VPS intactos.
+Composicao4010c4a85c6 passou11contraprovas montadas (parecer6683772341), CI do
+conjunto ainda nao retornou pelo conector; pedir ao escritor Cursor a prova do
+SHA composto, sem reabrir achados individuais encerrados ou presumir deploy.
+
+## Historico - Fornecedor validado no Linux e composicao revisada (2026-11-06)
+
+Base bfb4416c/CI6439 SUCCESS. Mesmo Codespace recuperado pelo controle suportado;
+checkout b5cb34e1 e .vscode nao rastreado preservados, sem pull/rebuild/novo ambiente.
+Validacao isolada por git archive da base bfb4416c, patch publico4204bytes com
+SHA256 f6584735ec1b8582acf1e9ddc139f810185fcb023c4a8f4b87ea2b561d7d08ff.
+Blobs97f2fcf3/e079ae2e e lockfiles raiz/server conferidos; dependencias existentes,
+sem instalacao. POSIX atual12PASS0FAIL0SKIP; Fornecedor10PASS0FAIL0SKIP;
+raiz COMPLETA Linux2419PASS0FAIL0SKIP, ROOT_FULL_EXIT=0,283483.600734ms.
+Backend Windows560PASS0FAIL38SKIP/598 e audit/lint/typechecks/builds anteriores
+reutilizados porque codigo/dependencias nao mudaram. Skips nao aprovam PG real;
+avisos antigos de lint/chunks preservados. Nao e prova Fornecedor HTTP/HML.
+Correcao funcional publicada depois em9b5de2bc nesta branch, sem merge/deploy/carga.
+
+401 avancou para0c4a85c6 (runtime4f76d3de3), com542/544/545 incorporadas.
+Arquivos e auxiliares desses ports iguais aos runtimes revisados; backend nao
+alterado pelo delta b888..HEAD. Reteste REAL montado no composto:4+5+2=11PASS,
+0FAIL0SKIP; parecer6683772341. Fronteiras sinteticas, nao HTTP/PG/HML E2E.
+Conector nao retornou workflow dos dois SHAs compostos nesta leitura: CI propria
+nao inferida das PRs de origem. Cursor continua escritor da composicao.
+
+Roteamento VPS conferido SOMENTE leitura: Caddy tem hosts API DEV/web DEV;
+host externo declarado Auth nao consta no adapt e handshake local falha curl35.
+API DEV responde401 com TLS valido; web200 nesse caminho nao comprova Auth.
+Sem mudar proxy/firewall/grants/servicos. HML100/backups/historicos intactos;
+sem URL real homologada. Proximo: contrato granular de Grupo aprovado pelo
+proprietario (perfil do proprio Grupo + permissao explicita, sem admin), seguido
+de preflight fisico/API/Auth HML; nao usar NULL=NULL ou fallback operacional.
+
+## Historico - Fornecedor corrigido em WIP; gate Linux (2026-11-06)
+
+Base publicada34233b121cc/CI6204 SUCCESS e401b888 reconferidas. Durante o lote
+chegaram correcoes542e808598e/CI6433SUCCESS,5440a43dcd6/CI6437emexecucao e
+545ffcb08d8/CI6435SUCCESS. Reteste afetado REAL montado:4+5+2=11PASS0FAIL0SKIP;
+pareceres6682306934/7311/7659 encerram os defeitos anteriores nesse alcance.
+Controles antigos no MESMO driver continuam2FAIL542/3FAIL544. Novo driver limpa
+openWindow anterior e aceita desconhecido sem impor glifo; nao enfraquece teste.
+544/545 HEADs novos so documentais sobre o runtime testado, comprovados por diff.
+Date congelado544 preserva assertions integrais e restore finally, sem mudar PDF.
+Nao e prova HTTP/PG/HML ou composicao401; CI propria e negativos do conjunto pendem.
+Reserva6681724732 somente FornecedorService/teste, desktop inicialmente limpo.
+
+Defeito reproduzido: objeto RequestContext do chamador mudava ator/Grupo/requestId
+durante await do RBAC.3novos negativos com PostgresRbacGuard REAL e PGlite falharam
+antes (6PASS/4FAIL incluindo parent); copia Object.freeze no inicio de importar,
+get e softDelete, mesmo padrao Pedido. Depois10PASS/0FAIL/0SKIP, mantendo todas
+as assertions anteriores, registros inativos e auditoria sem mudanca indevida.
+Nao e prova PostgreSQL remoto/HTTP/HML, nao adiciona rota/importador ou permissao.
+
+Fechamento Windows: backend598tests/560PASS/0FAIL/38SKIP, sem DATABASE_URL real;
+raiz2419tests/2415PASS/4FAIL/0SKIP. Dois fails eram alias Windows Store de Python;
+Python3 real BUNDLED configurado so no processo, sem instalar/config global:
+recheck23tests/22PASS/1FAIL resolve CSV/provision, mantem fail de permissoes POSIX.
+Outro fail raiz e process.getuid inexistente no Windows. Nao enfraquecer essas
+guardas;12PASS Linux antigo nao valida o snapshot novo automaticamente.
+Audit PASS; lint PASS com1warning antigo EntregasListagem; typecheck raiz/server
+PASS; build raiz/server PASS, warning antigo chunks>500k; diff-check PASS.
+
+SEM COMMIT/PUSH FUNCIONAL enquanto gate restante falha. Patch publico sanitizado
+de VALIDACAO em421/6682058561, nao implementacao integrada: base33b121cc,
+4204bytes/SHA256f6584735ec1b8582acf1e9ddc139f810185fcb023c4a8f4b87ea2b561d7d08ff.
+Blobs: servico97f2fcf3b70a702ed7ceef7da45a47ecbe4ea7ad;
+testee079ae2e104dafb23d1c2ade66669944840a428b. Manifesto/patch/logs privados fora
+do checkout; transporte Base64 exato no recibo, pois diff Markdown nao fixa bytes.
+Pedido ao executor Linux existente nao comprova recebimento/execucao; sem ambiente
+novo, contorno de rede ou uso da VPS como laboratorio. WIP estacionado/preservado.
+
+Console VPS RECUPEROU shell real em06/11: hostname conferido, listeners22/443/8000,
+UFW ativo permite22/80/443 v4/v6;443 e caddy (nginx inativo), ssh ativo e API/Auth
+saudaveis. Somente leitura, sem restart/DDL/grant/dado real. Leitura de metadados
+Caddy enviada, resultado NAO observado antes da queda de controle. Nao repetir
+como se tivesse comprovado rota externa/AuthHML. Chrome apos reset lista Codespace,
+mas claim/getTab retornam Debugger unattached; reconexao suportada sem sucesso.
+Depois do aviso do proprietario, aba sintetica NOVA abriu pelo controle suportado:
+Chrome funciona. Nova ABA no MESMO Codespace (nao outro ambiente) tambem controlavel,
+mas terminal sem prompt/resposta pwd; logs reais: WebSocket channel request timed
+out e ExtensionHost socketFactory.connect failed/timed out. Nao pedir novamente
+para abrir Codespace ou reinstalar extensao. Aba original mantida intacta, sem
+restart/rebuild; bloqueio atual e conexao remota VSCode, nao Chrome genericamente.
+HML100 intacta; namespace/Auth/Data/visaoGrupo/URL real permanecem gates separados.
+
+## Historico - revisao montada544-547 e console sem shell (2026-11-05)
+
+Base342c96908f8/CI6160 terminal SUCCESS;401b888 inalterada. Desktop limpo e sem
+index.lock antes do lote. Nenhum arquivo Cursor/candidata ou dado HML editado.
+Review privado EXISTENTE ampliado no proprio arquivo, sem novo harness ERP/HML,
+dependencias ou instalacao. ReactDOM/QueryClient reais, alvos reais montados;
+contexto/RBAC/transporte/estatisticas/primitivas sinteticos, NAO HTTP/PG/HML E2E.
+
+Resultados por SHA, CI terminal SUCCESS de cada um conferida:
+-5440297b1d2/6174:2PASS/3FAIL; Pedido pending ainda0 no KPI/export, erro no export0.
+-54595e43aa9/6178:0PASS/2FAIL; auxiliares pending0 e estatistica tardiaEmpresaA emB.
+-5426516d5ed/6153:2PASS/1FAIL; acao REAL novoPedido entrega clientesA ao atorB.
+-546cfc15be9/6182:3PASS/0FAIL nos negativos tardiaEmpresa/erro do Aplicador.
+-5471d5d6cff/6190:5PASS/0FAIL no Badge; mais3PASS no peel/guard REAL, fonte inteira
+igual401 e alteracoes indevidas rejeitadas. Nao aceitar apenas pin atualizado.
+Total MONTADO12PASS/6FAIL/0SKIP; preservacao3PASS separada. Recibo sanitizado em
+docs/evidence/codex-mounted-544-547-20261105.json, inclusive limite do cleanup.
+Pareceres6668285181/5536/6078/6509/6998 e6668311865 publicados nas PRs respectivas.
+Pedido401/6668312529 solicita conjunto controlado, sem presumir recebimento/port.
+Nao compor544/545/542 enquanto os negativos falham.546/547 aceitos so no alcance.
+
+Console administrativo voltou a carregar a pagina, mas exibiu 'Conexao com o
+servidor perdida': NENHUM shell/comando VPS nesta retomada. Nao confundir HTML
+acessivel com terminal funcional. Suporte: mensagem concreta no procedimento
+existente; nao repetir sondas TCP, trocar chaves ou reiniciar servicos.
+100HML/carga/backup preservados. API/Auth/Data, Grupo e dados reais no navegador
+continuam pendentes; nenhuma nova URL real homologada ou dados recuperados alegados.
+Fornecedor: servico/repositorio/SQL candidato existentes; app.ts/api/router.ts
+inspecionados sem wiring dessa entidade, nao prova de ausencia global. Nao executar
+bootstrap sintetico historico sobre CPA nem aplicar DDL/grant por inferencia.
+Central de Vendas360 continua evolucao de Orcamentos, sem layout amplo novo.
+Fechamento documental/evidencia: diff-check; suites intactas nao repetidas.
+
+## Historico - rede anterior ao TLS e revisao542 (2026-11-05)
+
+342d493e54f/CI6063 terminal SUCCESS conferidos;401b888 preservada. Desktop limpo
+antes do lote. Codespace encontrado INTERROMPIDO: uma retomada suportada, sem
+rebuild/outro ambiente. Checkout b5cb34e1 e .vscode/ novo intactos; sem executor
+correspondente observado. Nao atribuir interrupcao a custo/OOM sem evidencia.
+
+Diagnostico novo: DNS resolve Auth (A/AAAA) e DEV (A), mesmo IPv4; sem proxy
+HTTP/HTTPS/ALL no Codespace. Duas sondas IPv4 limitadas: Auth e controle DEV
+HTTP000/curl28; resolucao <1ms, TCP/TLS nao estabelecidos. SSH dedicado via
+config verified existente:255/timeout TCP antes de autenticar. Nao trocar chave.
+Console administrativo existente: ERR_CONNECTION_RESET. API Hostinger conectada,
+vps_firewall_list total0; firewall interno/listeners/causa de rede DESCONHECIDOS.
+Nao e prova de Auth invalido, firewall ausente, VPS parada ou necessidade de grants.
+Sem alteracao de rede, VPS, dados, perfil ou efeitos externos;100HML preservados.
+
+Revisao542/6516d5ed:4contraprovas AST da queryKey REAL + QueryClient REAL,0FAIL;
+mesmo Grupo/Empresa reutiliza cache entre atores/sessoes, outra Empresa separada.
+Omissao preexistente, nao regressao nova atribuida ao port. Parecer6667098325 pede
+negativa montada antes da composicao; nao prova HTTP/React montado. CI6153 ainda
+em execucao na leitura.511 HEAD6b39973a segue sem delta de runtime, nao repetir
+as seis contraprovas intactas. Pedido401/6662691819 ainda sem resposta posterior
+na timeline consultada: publicacao nao comprova recebimento/port pelo Cursor.
+
+Proxima acao: recuperar acesso ao Console da Web existente para inspecionar
+listeners e firewall interno SOMENTE leitura. Se tambem falhar ao proprietario,
+encaminhar os erros exatos ao suporte Hostinger antes de propor regra/tunel.
+API/Auth/Data HML e visao Grupo continuam gates separados; Empresa autorizada
+pode provar apenas seu escopo quando o canal voltar, sem vinculos artificiais.
+Fornecedor/produto: nao executar o bootstrap historico sintetico sobre HML CPA;
+envelope/RBAC correspondente deve preceder persistencia. Nenhum ensaio repetido.
+Lote documental; diff-check PASS, sem repeticao de suites intactas.
+
+## Historico - Chrome comprovado; canal Auth HML pendente (2026-11-05)
+
+7074fa8f publicado e SHA remoto conferido; CI6050 terminal SUCCESS no mesmo SHA.
+401 permanece b888, sem nova composicao nesta rodada.
+Chrome Pessoa1/controle suportado recuperado, URL do mesmo Codespace conferida.
+Checkout remoto b5cb34e1, apenas .vscode/ nao rastreado, preservado sem sincronizar;
+runtime candidato continua no snapshot privado b888, nao no checkout antigo.
+Sem escritor/lock HML observado na verificacao; nenhuma carga, replay ou restore.
+Recibo privado confirma100 reconciliados e namespace/database HML ja existentes.
+
+Auth real: modo supabase_user e configuracao presente; healthcheck interno pela
+API DEV HTTP200, sem ler sessao/corpo ou expor chaves. URL externa declarada foi
+testada do Codespace com TLS normal: HTTP000, curl28, timeout de conexao5s.
+Nao comprova indisponibilidade global nem causa de rede; nao prova sessao HML.
+Sem porta aberta, tunel novo, segredo copiado, fallback ou alteracao operacional.
+Dois comandos de diagnostico tiveram erros de quoting/expansao shell; corrigidos
+antes dos resultados acima, nao eram falhas do ERP ou do provedor.
+
+Proximo desbloqueio: canal HTTPS/privado suportado do Codespace ao Auth existente;
+verificar roteamento/allowlist do endpoint declarado antes de propor exposicao.
+Separadamente, guard de Grupo ainda exige admin: proposta minima no procedimento,
+sem promocao de perfil ou permissao inventada. Preflight fisico antes de READY;
+dois enderecos socket NULL nao comprovam identidade. API/sessao/browser HML e
+aceite dos clientes reais seguem PENDENTES, nao repetir carga100 para resolvê-los.
+Reservas:344/6665115771 somente bootstrap privado/metadados; liberada no fechamento,
+sem arquivo runtime alterado ou processo proprio iniciado.511/508 mantem os
+alcances dos pareceres por SHA abaixo, sem alegar React montado ou persistencia.
+Mudanca documental: diff-check; suites intactas nao repetidas.
+
+## Historico - base Central de Vendas360 e revisao511 (2026-11-05)
+
+3420891a340/CI5897 SUCCESS e401b888 reconferidas; desktop limpo antes do lote.
+Decisao do proprietario incorporada ao programa/COMERCIAL_360 existentes:
+evoluir Orcamentos, desenho PENDENTE, sem reorganizacao visual ou nova central.
+Mapa dirigido12frentes distingue contratos/codigo/simulacao/integração pendente;
+Orcamento/Pedido distintos. Fornecedor: candidato SQL/servico/repo existentes,
+sem rota HTTP comprovada; Produto: reuso de pointers/pins, nao executar bootstrap
+historico para outra carga CPA. Nenhum novo DDL/grant/schema/servico criado.
+
+Canal mudou: kernel nativo voltou e listou janelas, mas leitura do Chrome foi
+INTERROMPIDA pela validacao de URL. Nenhuma acao UI posterior, sem contornar a
+barreira. Janela observada Multi360, nao Codespace comprovado. Acao unica pedida:
+selecionar aba Codespace existente/barra de enderecos visivel, sem restart/install.
+Nada executado no PG/HML/VPS; carga100 e provas anteriores NAO repetidas.
+
+Revisoes novas:511/26f96d1b,6contraprovas PASS de defeitos (nao aceite): pedidos
+pendentes exibidos0, metricas de falha ainda0 e cache sem ator/sessao. Parecer
+6662661405 pede correcao ao Cursor; CI5986 SUCCESS nao encerra os achados.508/bb273346,
+CI5973 SUCCESS,7checks handler consumidor REAL+WindowManager real/setters
+enfileirados, sem defeito novo nesse delta. Parecer6662691320, NAO React montado/
+persistencia.401/6662691819 organiza ports489/488/508 condicionados a negativos
+montados e CI propria; recebimento/execucao nao presumidos.401 continua b888.
+
+Proximo: recuperar controle com URL verificavel; conferir reservas/recibos sem
+reimport e provar provedor Auth REAL/pools/path/alvo HML. Perfil user continua
+sem autorizacao de visao Grupo: nao promover a admin. Base44 segue dependencia
+de reautenticacao, nao consultada novamente. Sem carga operacional/merge/deploy.
+Lote documental sanitizado; diff-check, sem repetir suites inalteradas.
+
+## Historico - bootstrap HML e revisoes direcionadas (2026-11-04)
+
+342cde57dd4/CI5880 SUCCESS e401b888 reconferidos; desktop limpo antes do lote.
+Carga HML100/replay/reversao/backup anteriores preservados, NAO repetidos.
+Sem acesso remoto nesta retomada: Browser anterior nao exposto; controle nativo
+node_repl falha antes de listar janelas com failed to write kernel assets,
+Windows erro3; reset suportado nao resolveu. Nao concluir Codespace parado ou
+dados perdidos. Intervencao solicitada: reabrir somente Codex Desktop, sem
+reiniciar Codespace/Chrome/PG nem instalar outro ambiente. Reserva344/6640062890.
+
+Contrato novo comprovado: authSessionService tem MESMO blob d03d5947 em342/401.
+Quatro contraprovas sinteticas no guard real: user+permissao cliente.visualizar
+nega Grupo, permite Empresa autorizada, nega Empresa estrangeira; admin com a
+mesma arvore permite Grupo. Teste vigente exige isso. Perfil HML user NAO foi
+promovido, guarda NAO relaxada. Falta definir solucao de acesso Grupo sem ampliar
+permissoes; primeiro provar sessao Auth HML no canal real, que ainda nao ocorreu.
+Pools distintos por Unix socket nao podem passar preflight por comparar NULLs;
+avaliar modo canonico de pool unico Auth/Data com guarda fisica antes de READY.
+
+Revisoes independentes:489/0a9d0ea1/CI5854 SUCCESS,12checks helpers PASS/0FAIL,
+declaracoes antigas integralmente preservadas por AST; nao prova React/browser
+ou recuperacao de registros.488/61a3ef73/CI5860 SUCCESS,11checks callback REAL
+openWindow com setters enfileirados, uma janela/rascunho preservado e chaves
+create separadas por Grupo/Empresa/ator. Nao e React montado/persistencia; edit/
+view apos troca de contexto/sessao ainda pedem prova no consumidor montado.
+Pareceres489/6640140082 e488/6640140486 publicados; nenhuma incorporacao a401.
+
+Proximo exato: recuperar canal de controle, conferir reserva/processos/recibos
+privados e ligar bootstrap canonico ao namespace HML ja carregado e ao provedor
+Auth REAL existente. Sem fallback operacional/IdP sintetico, nova carga ou
+renomear fixtures. API HML/browser/nomes reais visiveis seguem NAO comprovados.
+Nenhum dado privado ou runtime alterado; lote documental/diff-check apenas.
+
+## Historico - HML CPA100 persistida e recuperavel (2026-11-04)
+
+Base342a8398383/CI5858 SUCCESS reconferida; candidata401b888 preservada. A
+autorizacao posterior do proprietario liberou namespace separado exclusivamente
+no PostgreSQL privado existente, condicionado a backup, ensaio e revisao. Esse
+gate foi executado; o bloco anterior abaixo e historico, nao espera vigente.
+
+Backup integral privado7798535bytes restaurado com nove fingerprints de dados;
+schema inteiro no archive/TOC. Na copia restaurada, novo namespace HML recebeu
+15tabelas dos SQLs canonicos001/003/004/009/010/011/014, sem migrador geral.
+014 atende condicao_pagamento_id do contrato ClienteEmpresa; tabelas de condicoes
+vazias, sem concessao de escrita.045-049 e banco operacional intocados.
+Grupo CPA e2empresas espelhados dos IDs/dados comprovados; perfil da identidade
+Auth existente confirmado por sessao200/no-store, sem copiar bearer ou criar
+Auth/segredo. Perfil HML user com subconjunto de permissoes, nao copia de admin.
+
+MESMA FINAL100/bytes/pins:100processados/100inseridos/100reconciliados/0rejeitados;
+reexecucao100reutilizados/0novos, comparacao integral dos registros preservada.
+Auditoria:100create+100possible_duplicate da conferencia canonica, NAO100novas
+gravacoes de cliente. Reversao logica100 ensaiada por servico dentro de transacao
+revertida:100ativos permanecem APENAS na HML; historicos antigos inativos intactos.
+Mestres compartilhados,0vinculos empresariais/0enderecos inventados;5emails
+preservados.100enderecos incompletos/4CEP_FORMAT seguem revisao proporcional.
+
+Provas finais:15checks schema/RLS com rollback;8login SQL real/negativas;7retomada,
+servicos/cross-tenant e recuperacao. Backup do novo namespace135978bytes restaurado
+em outro DB logico do MESMO container isolado,15tabelas iguais por contagem e
+fingerprint.24artefatos privados8461411bytes inventariados com SHA256/0600/pai0700
+antes do proprio manifesto; nada enviado ao Git. Falhas intermediarias de driver
+(quoting/tipos/regclass/expectativa de auditoria) preservadas e corrigidas, sem
+enfraquecer comparacao ou modificar produto. Nao e nova suite global aprovada.
+
+RLS FORCE nas15tabelas, funcoes invoker/path fixado, PUBLIC revogado somente nos
+objetos novos. Login existente sem super/BYPASS/create-role/create-db e negativas
+comprovados; TEMP/lo_create PUBLIC preexistentes continuam riscos residuais, nao
+chamar essa role de leitor estrito. Exportacao com row_security=off continua fora
+do perfil/aceite. Container parado, networknone/0portas, checkout/WIP preservados.
+
+PROXIMO: API/Auth e Data no mesmo namespace HML com search_path explicito
+HML,pg_catalog,pg_temp e preflight fisico; reutilizar provedor Auth real existente,
+sem IdP sintetico nem fallback ao banco operacional. Login/binding confirmado nao
+prova sessao na API HML. Falta disponibilizar e aceitar dados reais no navegador;
+previa sintetica anterior nao mudou de origem. Sem carga operacional/merge/deploy.
+Lote publicado somente documental; diff-check e CI do novo SHA separados das
+provas PostgreSQL privadas. Recibos e retomada no HANDOFF/OPERACAO existentes.
+
+## Historico - prechecks100 e gate HML CPA identificado (2026-11-04)
+
+Base342999cafd5/401b888 reconferidas, trabalho alheio/WIP/historicos preservados.
+Nova consulta real READ ONLY/ROLLBACK:100 codigos da MESMA FINAL100 livres,
+0conflitos no Grupo CPA completo, incluindo inativos/empresas; constraint efetiva
+UNIQUE(group_id,codigo). Nao repetir a consulta100 por documento/nativeID nem
+tratar resultado atual como reserva permanente de codigo. Principal BYPASSRLS
+continua administrativo, sem grant/DDL/escrita ou liberacao operacional.
+
+Grupo CPA/2 empresas aprovadas reconferidos no alvo efetivo; sem renomear dados,
+excluir terceira linha ou usar fixture como origem real. No PG privado historico,
+Grupo CPA ausente e6policies vinculadas ao grupo anterior: binding/RBAC HML ainda
+NAO fechados. Role sem super/BYPASS/createdb/createrole nao prova toda a matriz
+efetiva. Colunas existentes comportam15campos do mestre, nao schema HML completo.
+
+Auxiliares FINAL100:100enderecos incompletos,4tambem com CEP_FORMAT; numero/pais/
+finalidade/nome do local nao inventados.5emails canonicos com procedencia direta.
+Pendencias bloqueiam acoes dependentes, nao autorizam paralisar mestres aptos.
+DEV web/API nao equiparados a candidata: asset/imageIDs/APP_VERSION registrados,
+SHA servido do DEV nao comprovado. Previa b888 permanece exclusivamente sintetica.
+
+Confirmacao especifica solicitada: namespace/binding CPA/perfil Auth existente e
+policies minimas apenas no PG privado, apos backup/ensaio/revisao; nada aplicado.
+Proximo: decisao desse gate, validar privilegios efetivos/PUBLIC/Auth, preparar
+patch isolado e so entao lote identificado/reexecucao/reversao/leitura API/tela.
+Dados reais ainda NAO disponibilizados na HML. Detalhes/recibos privados no HANDOFF.
+Sem runtime alterado, diff-check documental; sem merge/carga operacional/deploy.
+
+## Historico - previa privada e concorrencia complementar aprovadas (2026-11-04)
+
+342f41789f2/CI5812-5813 SUCCESS e401b888b2c0/CI5684 SUCCESS reconferidas.
+Mesmo Codespace/snapshot/WIP preservados; sem outro executor observado. URL privada
+externa voltou a carregar, login sintetico e SHA externo b888 comprovados. Local200,
+tunelPrivate e externo sem credenciais302 distinguidos; causa do404 anterior nao
+comprovada. Janela timeout3600 ate aproximadamente14:55 Brasilia, nao servico permanente.
+
+Cenario novo7checks/errors0: UI cria Orcamento;5PATCH concorrentes200 preservam
+seus itens;5conversoes1Pedido/4conflitos409; retry409; reabertura/vinculo/total.
+PG real da mesma fixture:1Orcamento/1item/1Pedido/1item, totais iguais,5auditorias
+de edicao e1historico, READ ONLY/ROLLBACK. Erros do driver SQL corrigidos, sem
+defeito novo de runtime/assertion enfraquecida. Nao equivale a cinco cliques no
+navegador/CAS/todas as intercalacoes. Contexto/tardias conservam prova montada anterior.
+Parecer401/6636933464, recibos detalhados privados; V5/100/pilotos nao repetidos.
+
+Dados reais ainda NAO disponibilizados nesta previa. Pacote de HML no OPERACAO:
+mesma FINAL100, sem reativar historicos; destino/binding CPA/schema/RBAC, conflitos
+globais de codigos e auxiliares pendentes antes de carga. NEW100 nao destino vazio.
+Fonte Base44 depende da reconexao existente; sem consultas recusadas repetidas.
+Sem mudanca de runtime/candidata/VPS operacional, merge/DDL/grants/carga/deploy.
+Validacao documental diff-check; suites intactas reutilizadas. Detalhes no HANDOFF.
+
+## Historico - FINAL100 e reversao preservadas no PG privado (2026-11-04)
+
+Base342 bcaf3d1b e401b888b2c0 reconferidas. CI5806/5807 inicialmente QUEUED;
+fechamento confirmou ambas SUCCESS no SHA exato. Sem alteracao de runtime/candidata,
+WIP Codespace preservado. Recursos proprios parados, sem previa ativa ao fechar.
+V5 recuperado:6 checks/errors0, navegador/HTTP/PG, unidade KG, unidade adulterada
+422, rascunho e contagens preservados. Nao repetir; conversao sem fator nao liberada.
+
+Destino PG privado existente: guardas de isolamento e identidade completa aprovadas,
+persistencia conservada. MESMA FINAL100 confrontada com journals anteriores:
+100 cargas/100 replay/100 reversoes; campos da fonte equivalentes100. PG atual
+confirma os100 IDs, campos preservados, inatividade apos reversao e auditorias.
+READ ONLY/ROLLBACK, novas escritas0; sem reativacao ou carga repetida. Binding do
+grupo sintetico/batch/source_system isolados nao comprova CPA operacional. Erro
+de tipo no driver de auditoria corrigido; detalhes e recibos privados no HANDOFF.
+
+Previa retomada local200/b888/5173 Private/HTTP. Acesso externo desta sessao404,
+mesmo apos reencaminhamento suportado; nao anunciar login atual aprovado. Prova
+externa anterior preservada como historica. Idle30 configurado nao prova causa da
+parada. Sem rebuild/recurso pago/visibilidade publica ou escrita na VPS operacional.
+
+Fila: encaminhamento privado -> concorrencia restante -> HML privada real com
+binding/permissoes/schema -> auxiliares -> backup/principal/carga aprovada ->
+cadeia/deploy/aceite. Consulta real anterior NEW100 permanece no recorte; nao
+destino vazio/codigos livres. Base44 pendente. Sem carga operacional/DDL/grants/
+deploy. Lote documental sanitizado, validacao diff-check; provas intactas reutilizadas.
+
+## Historico - reconciliacao real100 concluida no recorte (2026-11-04)
+
+3427fbc6122/CI5797-5798 SUCCESS e401b888b2c0/CI5684 SUCCESS reconferidos.
+Previa5173 PRIVATE, HTTP local200+URL externa autenticada+login sintetico ate
+Comercial comprovados no mesmo snapshot b888. Bloqueio404 anterior encerrado.
+Depois o Codespace entrou Stopping->Stopped sem comando deste executor; causa
+nao comprovada. URL agora suspensa, nao disponibilidade permanente ou homologacao
+operacional. WIP b5cb/??.vscode e candidata Cursor intactos.
+
+Legado344: canal administrativo recuperado, destino EFETIVO da API e binding CPA/
+2empresas conferidos; consulta fixa<=100 executada READ ONLY/REPEATABLE READ,
+timeouts e ROLLBACK. Classificador canonico b888: NEW100/COMPATIBLE0/DUPLICATE0/
+DIVERGENT0/BLOCKED0. Novos por documento/identidade nativa; nao destino vazio nem
+codigo livre fora do recorte. Executor postgres tem BYPASSRLS, NAO leitor restrito;
+nenhum grant/DDL/carga. Cinco artefatos privados600/pai700/nosymlink e hashes
+conferidos. Recibo344/6635287552, detalhes no HANDOFF; liberados operacionalmente0.
+
+Ensaio novo de unidade v5 interrompido antes da coleta final; nao PASS. Tentativas
+iniciais tiveram erros do driver, nao defeito de produto. Ler resultado privado
+v5 antes de repetir. Provas antigas estaveis preservadas, sem refazer ciclo inteiro.
+Fila finita: reserva/retomada do MESMO Codespace -> resultado unidade/concorrencia ->
+destino privado isolado da MESMA coorte e idempotencia/reversao -> codigo/auxiliares/
+schema/principal/backup atual -> autorizacao de carga -> cadeia/deploy/aceite.
+Piloto historico de grupo sintetico nao substitui FINAL100/CPA; Base44 ainda depende
+de reautenticacao, sem repetir consulta recusada. Nenhum dado declarado recuperado
+por cor/tela/contagem. Fonte e consulta100 nao sao mais bloqueios. Somente docs/
+diff-check neste lote; sem merge, carga operacional, DDL/grants ou deploy.
+
+## Historico - Central360 conferida; previa externa pendente (2026-11-03)
+
+342ef4ddf47 CI5757/5758 SUCCESS e401b888b2c0 CI5684 SUCCESS reconferidos.
+Resultado privado Central360 antes pendente:4 checks/errors0/quotePost0/
+conversionPost0 no snapshot b888, leitura sintetica HTTP/PG; nao e prova nova
+de conversao de unidade ou concorrencia completa. Recibos antigos preservados.
+Checkout Codespace b5cb/??.vscode intacto; desktop limpo atualizado por FF.
+Mesmo runner retomado com guardas/SHA/TTL, HTTP local200; URL externa404 e porta
+ausente no tunel, inclusive CLI visibility404. Nao anunciar previa utilizavel.
+Fixture propria encerrada; residual removido apos verificar label/nome/data/
+network none. ACTIVE=0/listeners5173=0 e WIP remoto ?? .vscode/ comprovados.
+Consulta100 real nao executada: canal hPanel expirou em Page.getFrameTree;
+fonteFINAL disponivel/100compativeis nao equivale a reconciliacao do destino.
+Proximos desbloqueios: registro PRIVADO5173 e console administrativo existente
+para identidade/principal/sessao/CPA + consulta fixa READONLY/ROLLBACK. Sem novos
+grants, carga/DDL/deploy/merge. Detalhes e limites no HANDOFF vigente; somente
+docs/diff-check neste lote, sem repetir provas estaveis ou criar outra fila.
+
+## Historico - previa401 comprovada e fonte100 compativel (2026-11-02)
+
+401 b888b2c00eaf571820e0594b96afd45837dc689a servido por snapshot imutável no
+Codespace ÚNICO; checkout/WIP preservados. Porta5173 PRIVADA, HTTP/Chrome/login
+sintético/API/PG17 efêmero network none comprovados, nenhum banco operacional.
+Budget0/Usage blocked mantidos, novembro0.23h/$0 consultado. Harness original
+preservado; adaptação privada de identidade/recibos com contraprova SHA errado.
+
+Navegador→HTTP→PG: orçamento salvar/reabrir/editar→conversão única→Pedido editar/
+reabrir em nova sessão PASS.1orçamento/1Pedido vinculado/1item cada, totais iguais,
+histórico1/auditorias6.401sem sessão/403outro Grupo/teto200 e SQL READ ONLY/ROLLBACK
+sem alterar contagens. Contatos:5casos montados reais PASS e contraprova anterior,
+revisão401/6582082078; bordas sintéticas. Cadeia completa ainda NÃO declarada:
+Central360 navegador, conversões de unidade e matriz concorrente faltam.
+Erro SELECT setores_atividade limita contagens na fixture, não prova perda real.
+
+VPS centralização disponível agora via console existente;2836/48359509373 é
+valor do recibo histórico, não novo rehash. FINAL/pins preservados:100/100 válidos
+no schema b888,0duplicidades internas/0pendências de contrato. Destino não lido,
+reconciliação0/importação0. Fonte/principal/sessão/Grupo são gates distintos.
+Base44 exige reautenticação; proprietário avisará, sem repetir consultas até lá.
+Fonte inacessível não significa registros perdidos. Dados/recibos privados fora Git.
+
+Próximo concreto: Central360 no snapshot sintético existente; depois matriz
+pendente. Fila/responsáveis/gates no HANDOFF. Automação PAUSED; prévia durante
+validação do proprietário, parar quando ociosa; sem disponibilidade permanente.
+Base342 adeee097/CI5692+5693 SUCCESS; este lote só documenta provas executadas,
+diff-check aplicável, sem repetir suítes runtime ou editar branch Cursor.
+
+## Histórico — revisão401 e recuperação privada (2026-11-02)
+
+342 cccf3223ea33c4661fd7f8a6489ebbbb5865f358/CI5678 SUCCESS e401
+57479b67ddd97bf9432d963191e95f2a7120a1f2/CI5683 SUCCESS reconferidos. Revisão
+dirigida posterior a075fc encerrada6580502544, sem novo achado: filtro estável,
+bailouts, windowMode/hostWindowMode e camada Radix;18 golden e API/backend sem
+delta. Montagem real WindowProvider/Renderer/Modal+framer-motion+Pedido+modal+
+calculador+Radix no57479:1 janela z100099000, Dialog1000000000 acima, hostWindow,
+1 consulta antes/depois de8 renders instáveis. Bordas sintéticas; NÃO E2E/API/PG.
+Tentativa adicional075fc terminou NO_REPORT dentro do limite, sem conclusão;
+não contar como teste aprovado ou prova de defeito. Provas válidas anteriores
+reutilizadas, não reexecutadas sem delta.
+
+Novembro efetivamente consultado no painel autenticado; budget Codespaces0 e
+Usage blocked preservados, sem compute listado na consulta inicial. Codespace
+ÚNICO retomado: terminal funciona, HEADb5cb34e1/branch342,??.vscode/ preservado,
+sem pull/reset. Processo Codex é app-server fora do checkout, não writer exec.
+FINALcoorte348850 bytes0600: outputSha256 contemporâneo EXATO PASS. Harness
+ORIGINAL9953 bytes0644/pais0700 encontrado/lido; hash atual preservado, pin
+histórico não encontrado na busca única pertinente. Cópias verificadas e recibo
+privado0700/0600 em resume-20261102; originais intactos, trava própria liberada.
+Destino reads0/business writes0/carga0. Recibo344/6580544004.
+
+Próximo concreto coordenado401/6580502544: executar MESMA401 por snapshot com
+identidade verificável e recibos exclusivos, pois harness fixa branch Codex e
+recibos antigos. Não relaxar guard, trocar branch Cursor ou usar snapshot antigo
+como prova atual. Fonte FINAL recuperada não libera consulta: principal/sessão,
+destino/Grupo e autorização atual continuam exigidos antes do SQL fixo<=100
+READ ONLY/ROLLBACK. Recuperação ERP novo separada, fonte/IDs/reconciliação ainda
+necessários; sem delta350 consultado. Fila e gates concretos no HANDOFF atual.
+Automação existente conferida PAUSED, sem polling criado ou autonomia permanente.
+Lote documental: diff-check obrigatório; nenhuma suíte runtime repetida por ele.
+
+## Histórico — composto401 aceito em CI própria (2026-10-31)
+
+Incorporacao seletiva REAL na MESMA401:075fc22602475209bb2b44a4bd06d14ed4320f82.
+Cursor confirmou recebimento6547987891 e publicou cadeia34c4->cda612->b4d8->
+80d139->075fc. FF preserva base;80d139->075fc somente documentos; src/api e
+server/src identicos34c4. Contatos/contagens e Painel keep-both preservados.
+CI5670/run41233542064 terminalSUCCESS frontend/backend/composicao. Frontend
+2693PASS/0FAIL/0SKIP; unitbackend604:578PASS/0FAIL/26SKIP declarados. PG real
+R40CRUD/concorrrencia/replay/auditrollback/RLS e R41ProdutoGrupo->Empresa->
+Orcamento->Pedido, backuprestore IDs/links/ACL/replay PASS semskip nesses casos.
+Jobs124632485114/124632485384. Toolsdump/restore16.15. Aceite dirigido6548035559,
+nao aprovacao visual/operacional. Diffcheckspan doport detectou1trailingwhitespace
+Modal578 herdado; nao declarar esse checkverde nem reabrirdefeito funcional.
+
+Independente B executado: PedidoCanonicoPanel/policies reais em80d139 montados
+ReactDOM/Query e transporte sintetico.2clicksSave comupdatependente=1request;
+retornoTabelaServidor->detalhe/formfecha/Editar reabre;2historyReads (abertura+
+possave). Rejeicao=1request,0success,formpreservado,1historyReadoriginal;
+trocaEmpresa/token ignora tabelaantiga/sem success e avisa contextooriginal.
+Parecer6548012017. Isto nao prova idempotenciaCreate/SQL,rollback ou navegador
+completo; essas camadas nao sao intercambiaveis. Montagens anteriores inalteradas
+reutilizadas por blobs/proveniencia, nao executadas de novo semdelta.
+
+Canal API voltou nesta retomada. Coordenacao direta no agenteCursor existente
+confirmou trabalho no composto; nao foi criado agente/candidata/ambiente novo.
+Frente C: painel autenticado readonly31/10 confirmou orcamentoCodespaceszero e
+Usageblocked; periodo deoutubro mostra60h2core. Nao ha renovacao01/11 comprovada
+hoje. Nenhumstart/cobranca alterada. Recuperar apenas FINALcoorte100/outputpins
+e harnessORIGINAL/pins pelo roteiroOPDEV aposfranquiaefetiva; depois ensaio
+navegador->API->PG noSHAcomposto e consulta fixa limitada com fonte/destino/ator/
+Grupo autorizados. Semfonteoriginal nao substituir porgerador/recibo/novaselecao.
+FrenteD:350 semnovo deltaautenticacao/fonte; nao repetirUNAUTHORIZED ouusar seeds.
+Proximo item selecionado: recuperar harnessoriginal+pins e validar ciclo completo;
+coorte/consulta e gates schemaprivilegios/backuprestore/reconciliacao/liberacao
+seguem separados. Semmerge/deploy/DDL/grants/carga ouagendamentopresumido.
+
+## Historico da fila A-E anterior ao composto401 (2026-10-31)
+
+Esta fila atualiza a continuidade anterior; nao cria outro manual/candidata.
+Git origin canonico, desktop temporario,3428e985ec2 limpo no inicio; AGENTS
+inalterado d33f830c. ConectorGitHub retornou403 rate-limit: sem insistencia ou
+credenciais alternativas; Git existente e abaGitHub autenticada permitiram
+HEADs, publicacao e verificacaoDOM. CapturaCDP falhou, nao e evidencia visual.
+
+| Pacote / responsavel | Arquivos / reserva | Dependencia e aceite | Proxima acao |
+|---|---|---|---|
+| A / Cursor port, Codex revisao | UI446/port453 pertencem Cursor; Codex somente provas privadas e topos destes documentos | 446900a3fcc delta43a38577 aceito na montagem; CI pagina6/6. 453cda61218 revisado, ainda FORA da40134c4 | Cursor incorporar hunks aprovados na MESMA401 e publicarSHA/CI; Codex rever composto |
+| B / Cursor formularios, Codex contratos/prova | OrcamentosTab454 pertence Cursor; API/server/src/PedidoFormCompleto preservados no port | 454b4d8c1e0 save/reabrir e negativa tardia montados; ciclo completo depende candidata401 e harnessORIGINAL | Rever401; executar cadeia integrada apenas com origem/hash/harness/ambiente sintetico comprovados |
+| C / Codex legado344 | Mapeadores/importadores e artefatos privados existentes; sem nova selecao ou transferencia | FINALcoorte100+outputpins e harnessORIGINAL+pins ainda noCodespaceunico;01/11/franquia efetiva/budgetzero nao confirmados | RoteiroOPDEV vigente: recuperar somente2artefatos e pins quando canal/franquia comprovados; depois consulta fixa<=100 READONLY/ROLLBACK com principal/escopo validos |
+| D / Cursor recuperacao, Codex reconciliacao | Fonte/export privado por entidade; nao confundir com legado | 350/6542266870 sem resposta nova observada; fonteBase44original naoidentificada/autenticacao nao renovada no checkpoint | Identificar fonte/versao/IDs via canal autorizado; reconciliar ocultoUI/omitidoAPI/outrodestino/ausente/fonteinacessivel antes de restauracao |
+| E / Codex fechamento | Somente topoSTATUS/HANDOFF nesta reserva; sem runtimeCursor | Provaspinadas foraGit; diffcheck documental; nao repetir suites intactas | Publicar checkpoint, liberar propria reserva/trava; retomar o primeiro gate liberado sem pedir proximo |
+
+A: contraprova ReactDOM REAL Pedido/modal/calculador/policy em900a3fcc: consulta
+iniciadaA, renderB comprometido com mesmos cliente/escopo/ator/tabelaT, liberar
+respostaA99, abrir/confirmar ->1item11, sem preco_tabela99. Residual6542258428
+ENCERRADO neste alcance, parecer446/6545437006. IDexato e trocas tabela/Grupo/
+Empresa/sessao anteriores preservados; nao reabrir ABA/duploclique/status/zero.
+Port453cda612: mesmo blobPedido0316031f e prova afetadaPASS; diff de34c4 mostra
+server/src,src/api e PedidoFormCompleto intactos; Painel keep-both Top10+Compras
+readonly. Parecer453/6545449667 publicado; recebimentoCursor NAO presumido.
+Pagina453 mostra6checksSUCCESS; isso nao incorpora automaticamente401.
+
+B: OrcamentosTab/policies reais pinados em454b4d8c1e0, ReactDOM+Query, bordas
+sinteticas. Editar->2clicksSalvar com updatependente=1chamada; retorno com
+observacao/tabela diferentes aparece no Dialog de detalhe; formfecha e Editar
+reabre. TrocaEmpresa+token antes da resposta: Dialog naoexibe retornoobsoleto,
+sem sucesso. Requestja-iniciado=1 nao significa rollbackPG ou bypassSQL.
+Coleta negativa inicial sobretexto global era inconclusiva (listagem); observacao
+corrigida paraDialog antes do parecer454/6545487624. AjustesstubUI/imports nao
+sao achadosproduto. Nao e navegador->API->PG; harnessprivado original nao foi
+substituido. CI454SUCCESS registradaCursor6542475753, nao executada nesta montagem.
+
+C/D: nenhum dado real lido/recriado, legado nao substitui registrosERPnovo.
+GrupoCPA compartilhado nao atribui fiscal/titulos/saldos aEmpresa porpalpite.
+Lote operacional depende destino/schema/journals/principal/duplicidades/backup,
+restore/reversao/reconciliacao e liberacao especifica; provas existentes nao
+viram autorizacao por esta fila. Semmerge/deploy/DDL/grants/carga. Codespace nao
+iniciado nemcobranca habilitada. Nenhuma automacao nova/execucao permanente.
+
+## Estado vigente - CI fechada e revisao exata da tabela446 (2026-10-31)
+
+342/0aa4c269: CI5610/run41191612010 e5611/run41191617006 SUCCESS terminal.
+Cliente psql/pg_dump/pg_restore16.15=servidor160015; backup restores ok4,
+test:postgres, guard, R07B e composicao passaram. Nao repetir reruns5595/5597.
+446/0a56894a: CI5621/5622 SUCCESS; port CI3arquivos feito pelo Cursor,
+sem implicar aceiteUI ou incorporacao401. 401 segue34c4c0ee, semultimoport.
+
+Revisao ReactDOM real de Pedido/modal/calculador/policy pinados em0a56894a,
+fronteiras sinteticas (NAO navegador->API->PostgreSQL): WRONG!=EXPECTED agora
+rejeitado, rascunho aceita preco comprovado11 sem preco_tabela99. RespostaA
+pendente apos troca tabelaID/Grupo/Empresa/sessao e descartada nos4casos.
+Residual6542258428: PedidoA->B, mesmo cliente/escopo/ator/tabelaT, respostaA
+liberada depois do renderB e aceita como tabela99; confirmacao grava1item no
+rascunhoB com99. Effect da resolucao nao observa formData.id/pedido.id.
+Cursor proprietario dos hunks: corrigir invalidacao/resposta tardia de Pedido,
+sem helper paralelo de sessao/contexto ou regra nova contra rascunho incompleto.
+Positivos ABA/duploclique/status/zero/unknown encerrados nao foram reabertos.
+
+Fila finita: Cursor corrigePedido446 -> Codexmontagemafetada/CI porSHA -> port
+seletivo Cursor na MESMA401 -> CIcomposta -> harness ORIGINAL integrado.
+Ciclo01/11 ainda futuro nesta verificacao; nao presumir franquia/budgetzero.
+CoorteFINAL100+outputpins e harnessORIGINAL+pins dependem Codespaceunico/canal
+comprovado. Roteiro existente em OPERACAO_DEV_VPS permanece pronto, nao executado.
+Consulta limitada READONLY/ROLLBACK depende fonte/destino/principal/Grupo; nao
+houve leitura real nem selecao nova. Mapeadores/gates existentes preservam
+IDs/codigos/inatividade/procedencia, sem operacoes fiscais/saldos por inferencia.
+RecuperacaoERPnovo: fonteoriginal segue inacessivel/naoidentificada no checkpoint;
+coordenacao direta350/6542266870 solicita delta, sem repetirUNAUTHORIZED ou usar
+seeds/legado como registros recuperados. Sem reconciliacao nao declarar perda
+ou recuperacao. Sem merge/deploy/DDL/grants/carga operacional. Desktoptemporario,
+sem nova automacao ou promessa de execucao permanente. Alteracao documental:
+diffcheck aplicavel; suites inalteradas nao repetidas.
+
+## Estado Vigente - CI PostgreSQL E Sessao446 (2026-10-31)
+
+CI5595/34201a312f0 e5597/446aa24ac8d lidas integralmente pelos jobs124503194753/
+124503638208. Mesma falha runtime40-crm-postgres-e2e backup restores, exit1;
+3F000 em cleanup crmPostgresFixture101/test263 mascara falha anterior do restore.
+Ambos PG16.15 rejeitam SET transaction_timeout=0. Duracoes do caso2.60s/2.39s,
+nao timeout60s; locktimeouts tambem presentes no5591SUCCESS, sao negativas.
+Comparacao com5591/backend124353925563: mesmo servidor160015 e helper/test/
+workflow intactos; runnerubuntu24.04/image20261025.353.1. Os falhos usaram
+ubuntu26.04/image20261025.179.1. Deriva ubuntu-latest/toolchain, nao defeito UI
+ou suposta indisponibilidade transitoria. Nao repetir runs antigos cegamente.
+
+Correcao Codex em342, coordenada comCursor6541893195/6541928316: backend CI
+pinado ubuntu-24.04 (ambiente valido anterior), diagnostico de versoes cliente/
+servidor; helper exige major pg_dump/pg_restore=servidor ANTES de snapshot/DROP.
+Ferramenta ausente/incompativel rejeita com erro minimo, sem stderr/credenciais.
+Cleanup IF EXISTS nao mascara falha original quando restore deixou schema ausente.
+Nenhum timeout aumentado, teste/golden/asserção de restauracao removido; snapshot,
+ACL/RLS, IDs/vinculos/replay/reconciliacao completos permanecem obrigatorios.
+Nao e backup operacional executado nem mudanca de runtime/API ou configuracaoVPS.
+
+Foco novo4PASS/0FAIL/0SKIP: major igual; 15/17/18 divergentes; ferramenta ausente/
+malformada; helper REAL recusa antes de snapshot/DROP/replay. Typechecks frontend/
+backend, audit, lint e build PASS no lock vigente. Backend local594testes:
+556PASS/0FAIL/38SKIP (nao aprovacao PG). npm ausente e dependencias antigas
+compartilhadas causaram primeira tentativa invalida; dependencias dos locks
+instaladas em espaco interno aprovado, sem alterar outros worktrees; vinculos
+antigos preservados. Root completo Windows tentou executar: dois contratos POSIX
+privados inalterados falham emNTFS; diagnostico dirigido confirmou WinError1314
+ao criar symlink, PRIVATE_DIRECTORY_PERMISSIONS_REQUIRED e process.getuid ausente.
+Tentativa completa foi interrompida pelo dono apos esses erros; nao declarada
+concluida/verdes. Nao simular owner/mode nem relaxar guardas; LinuxCI e o gate.
+Resultado Linux/PG real do NOVO SHA exige CI propria, sem declarar verde local
+ou usar CI anterior. Checks aplicaveis e limitacoes registrados no recibo final.
+
+UI446: contraprova ABA REAL montada noaa24ac8d agora modalAfterB=false,
+0writes/0success; no3536c04d tambem troca de token sem re-render do pai0/0.
+Pedido/modal/calculador/policy reais, ReactDOM flushSync/Query/Chrome existentes;
+bordas sinteticas, NAO harnessE2E/PG. Delta353 preco KG->UN sem preco comprovado:
+botao disabled/0writes; custo0comprovado com preco11: margem100/1write sem
+justificativa indevida. Positivos encerrados preservados; rascunho incompleto
+continua distinto de salvar/converter. Pareceres6541882423/6541916017.
+Port da MESMA40134c4 depende do fixCI publicado/aceite/CI composto, sem trocar
+backend/API/repos/RBAC ou dono da persistencia. Cursor devolveu helper àreserva
+Codex (6541928316); nao houve escrita na branch dele nem outra candidata.
+
+Roteiro concreto dos DOIS artefatos em OPDEV: ciclo01/11 informado, franquia e
+budgetzero ainda a reconfirmar antes do Codespaceunico; nao habilitar cobranca.
+Recuperar somente FINALcoorte100/outputpin e browser-harness ORIGINAL/pins,
+sem gerador/recibo substituto/reselecao/inventario ou transferencia integral.
+Conferir origem/hash/bytes/guardas e armazenamento privado; consulta fixa limitada
+READONLY/ROLLBACK somente com fonte/destino/ator/escopo comprovados. Nenhum dado
+real consultado ou recuperado nesta tarefa. E2E completo permanece separado da
+montagemReact. Sem usoVPS/DDL/grants/carga/merge/deploy ou execucao permanente.
+
+## Historico - Desktop Local E Revisao Montada446 (2026-10-31)
+
+Retomada em casa conforme decisao desktop temporario do programa. Reutilizado
+checkout local existente comercial-composicao-20261017, limpo, origin canonico;
+branch Codex atualizada para637420a9 sem reset/clone novo. Codespace reservado
+para navegacao/prova integrada, nao dependencia de cada alteracao. Sem instalar
+dependencias, WSL, recurso pago ou usar HD/VPS como laboratorio.
+
+HEAD446NOVO534c08c5d91691f8963938fed82de3086c7336d5 incorpora delta residualfebb;
+nao e o runtime611/3c. Prova NOVA local por gitshow desseSHA: PedidoTabsContainer,
+AdicionarItemRevendaModal, CalculadorPrecoItem e policy INTEIROS montados com
+ReactDOM createRoot/flushSync e QueryClientProvider reais/Chrome headless existente.
+Contexto/permissoes/catalogo/transporte nas bordas sinteticos; NAO harness original
+E2E nem navegador->API->PostgreSQL ou dado real recuperado.
+
+Resultados observados534c: PedidoA->B mesmo cliente/tenant/ator0writes/modalfecha;
+preco ausente botao disabledtrue/0writes; zeroCOMPROVADO enabled e1writepreco0;
+ausencia doID na pagina limitada nao declara inativo e aceita seed comprovado
+no rascunho, sem custo/saldo fabricados. Edicao do rascunho incompleto nao e
+aprovacao de salvar/converter ou de backend. Esses residuos foram fechados no
+alcance montado novo, preservando positivos anteriores sem reabrir todos.
+
+P1 REMANESCENTE: tokenA->B com renderB comprometido via flushSync e pausa de
+efeitos, depoisA: modalAfterB=true; confirmar gera1write/1success antigo.
+bumpSessionEpoch existe, mas so chamado em abrir/efeito/confirm; deps do efeito
+nao observam sessao. Teste helperA->B->A nao prova observacao na integracao.
+Corrigir reutilizando sessao/geracao canonicas existentes, sem outra identidade.
+Parecer446/6541764970 e coordenacao401/6541768924; Cursor escritor de codigo e
+composicao, Codex revisor.40134c4 mantida semport ate novoSHA/montagem/aceite.
+Depois portar somente hunks aprovados na MESMA401 comCI propria, sem trocar
+API/servicos/repos/RBAC ou proprietario da persistencia.
+
+Ensaio sintetico privado SHA2569D65DF01B5494BC907D835DF174E5B773946D988B5C395F8B912E32515CC546E;
+reciboSHA25662C9F39F631D4F6E5F660396EFE7CC82C04373C2534506E963D9626146B04F71.
+Pins dos quatro modulos conferidos no recibo privado fora do checkout/build.
+Nao e recuperacao do browser-harness.mjs privado original. Esse harness e o
+arquivo FINAL coorte100/pins seguem dependencias distintas: caminhos/limites no
+OPDEV e checkpoints anteriores reutilizados; sem busca identica, gerador/recibo
+substituto, reselecao ou transferencia integral. Sem fonte/canal/escopo comprovados,
+nao houve consulta de destino nem nova classificacao de registros reais.
+
+Fila finita preservada: fix/aceite446 -> port401/CI -> prova integrada com harness
+original -> cadeia -> schema/privilegios -> backup/restauracao -> reconciliacao ->
+carga especificamente aprovada -> deploy autorizado -> aceite. Registros do ERP
+novo exigem fonte/procedencia/reconciliacao e separar oculto/omitido/perdido/fonte
+inacessivel; codigo/visual isolados nao comprovam recuperacao. Sem operacaoVPS,
+DDL/grants/carga/deploy, limpezaHD ou promessa de execucao permanente.
+
+
+## Estado Vigente - Runtime446 Reavaliado E Residuos Precisos (2026-10-30)
+
+#40134c4 preservada. #446c2f3acb7e0434402ca700debb6feb04902d5f541 foi testada
+com Pedido/modal/calculador REAIS montados ReactDOM/ReactQuery/Chrome, bordas
+sinteticas, nao banco/E2E. Contextos cliente/Grupo/Empresa/ator e SO visualEmpresa
+(Pedido pinned) descartam0writes; ABA de ator com renderB comprometido0. Unknown
+custo/saldo/margem/situacao omitidos no item e UI sem justificativa ficticia; preco
+ausente0writes/alert, zero comprovado aceito, rejeicao preserva modal/draft. Unidade
+ausente omitida (naoUN), draft incompleto pode existir; nao homologa persistencia.
+Recibos6533069271/6533073948. Pareceres574/f8 nao foram reutilizados automaticamente.
+
+HEAD avancou611aaa6ee96be2a8f07e2717ab2d6b6888b74da0: renewsimples testado0writes,
+ENCERRADO. Porem Pedido A->B(id distintos, mesmo cliente/contexto/ator) ainda1write;
+sessao tokenA->B(renderB comprometido)->A tambem1write/1success. Chave nao inclui
+PedidoID e fingerprint final nao e geracao monotona. Recibos6533169161/6533175759.
+Usar captura/geracao canonica existente; nao outra implementacao paralela de sessao.
+Catalogo sintetico comprovado preservou custo7/saldo12/margem36.36; inativo encontrado
+bloqueia. Nova negativa: ausencia na pagina500 vira mensagem inativo/naovendavel;
+pagina limitada nao comprova inelegibilidade, exige lookup exato/unknown. Nao e
+prova de dado real perdido ou de autorizacao a PII. Botao precoausente ainda enabled
+mesmo com handler bloqueando; alinhar estado efetivo, nao justificativa como preco.
+CI611:5577SUCCESS/5576em execucao na consulta; sem reutilizar CI ancestral.
+
+Port401 continua bloqueado apenas residuos atuais; duploclique/status/readonly e
+positivos anteriores preservados. Cursor escritor, Codex revisor, sem outra candidata
+ou substituicao de API/repos/servicos/contexto/RBAC/persistencia/436-442.
+
+#4488684ba8b0ea57d563af36ba4d6a0c5878ddce729 CI5555/5556SUCCESS e
+#449c466b328963ca606f102a87f03c15b179ca4cb25 CI5570/5571SUCCESS: revisao AST
+preservou imports/logica NAO render e25/10/10/35propriedades interativas dos3Gestores
+e Contatos.12contraprovas (callback/disabled/forjaexterna) detectadas. Recibos6533119710/
+6533120111. Nao e JSX inteiro/visual equivalente, montagem, salvamento/reabertura,
+KPI confiavel ou dados recuperados. Mudancas de headers/classes/metadados declaradas
+revisadas em diff, sem pin cego; separados da candidata. Driver de mutacao foi
+corrigido por AST (regex nao atingia callbackarrow), nao alterou produto/testesERP.
+
+Harness E2E e coorte100 FINAL/pins permanecem bloqueios privados DISTINTOS sem
+mudanca de acesso; nenhuma busca identica/recorte/transferencia ou consulta real.
+Gates existentes: aceite446 -> composicao -> E2E -> cadeia -> schema/minpriv ->
+backup/restauracao -> reconciliacao -> carga aprovada -> deploy -> aceite. Sem
+grants/DDL/carga/deploy/VPS ou execucao permanente prometida.
+
+## Historico - CI446 Corrigida, Vinculo Do Modal Pendente (2026-10-30)
+
+#44654fcd026 corrigiu o TS anterior. HEAD574e2ea53692024debda527fc8eaac9b37871922
+CI5557/5558 SUCCESS confirmadas no SHA exato; falha5547/5548f8 e HISTORICA.
+Delta funcional f8->574 so SUGESTOES_VAZIAS readonly->mutavel estavel; Pedido,
+modal, calculador e policy iguais por diff exit0. Nao tratar CI verde como fix
+dos residuos funcionais sem delta. Aceites anteriores401/441/442/447 preservados.
+Provas NOVAS montadas Pedido+modal+calculador REAIS/React/Query/Chrome com bordas
+sinteticas: abrirEmpresaA, trocarB/resetdraft, confirmar ainda1write/1success;
+renovar SO sessao no mesmo ator/contexto/resetdraft tambem1write/1success. Recibo
+4466532337539. Rejeicao sincronica574:0writes/0success/draft preservado/modalretido,
+recibo6532366877. Uma coleta incompleta nao foi contada; processos encerrados.
+Unidade/preco/custo/saldo desconhecidos ainda pendentes no runtime identico,
+provas anteriores reutilizadas por blobs, sem reabrir duplicidade/Faturado/readonly.
+Port446 continua bloqueado SOMENTE residuos funcionais; mapa4016532367321.
+Solicitacao ao escritor Cursor publicada; recebimento/reserva nao presumidos.
+Sem edicao em branch Cursor, nova candidata, E2E/PG ou operacaoVPS. Harness E2E
+original e coorte100 final/pins seguem bloqueios privados distintos sem mudanca
+de acesso, busca repetida/recorte/transferencia ou consulta real. Gates vigentes
+inalterados; proxima acao concreta e fix de binding/unknowns no modulo existente,
+revisao montada porSHA e port controlado. Sem DDL/grants/carga/deploy.
+
+## Historico - Modal Canonico446 E Revisao447 (2026-10-30)
+
+#40134c4 e aceites anteriores preservados. #4467008a0e655b008974f6022e958044a11599da9d9
+CI5543/5544 SUCCESS confirmadas, mas revisao NOVA encontrou residuos. Pedido+
+Compras+AdicionarItemRevendaModal+CalculadorPrecoItem REAIS montados em Chrome/
+ReactDOM/ReactQuery, wrapper useState real de draft e bordas UI/contexto/rede
+sinteticas (nao PG/E2E). Historico200 abre modal comqtd1, input editado3 envia3;
+confirmar conhecido KG/preco11 altera1draft. Sem identidade/permissao/bloqueio
+explicito0writes; rejeicao sincronica preserva draft/modal e0success; zero comprovado
+preservado com justificativa sintetica de margem, aprovacao ainda false. Recibo6532017194.
+
+HEAD avancou a f8a20831e52c483f1cccc9684a1b67ff861baa6c. Repetidos so afetados:
+2clicks confirmacao agora1write/1sucesso, Faturado bloqueia, Detalhes/Painel reais
+readonly0botoesTop10 operacionais/0Compras/0success. Achados correspondentes
+ENCERRADOS, nao manter parecer antigo. bloquearEdicao em useOrigemPedido trava
+origem, nao e lock geral de itens; respeitar status/liberacoes canonicos. Recibo6532083063.
+
+Residuos ATUAIS f8 reproduzidos: modal abertoEmpresaA, trocaB/resetdraft, confirmar
+insere selecao antiga emB; sem unidade insere incompleto, sempreco calculador volta
+a0 e insere0 apos justificativa. Justificativa de margem nao valida preco inventado.
+Seed real descarta custo/saldo conhecidos da entrada sintetica; calculador gera
+custo0/margem0 e modal defaulta estoque0/SobEncomenda sem fonte. Parecer6532100106:
+consultar contrato no escopo/permissao devida ou manter desconhecido/bloquear so
+dependente, nunca copiar PII/custo por conveniencia ou ampliar acesso. Nao e escrita
+ou bypass de banco. Cliente/Grupo/Empresa/ator obsoletos tambem reproduzidos7008;
+f8 retestadoEmpresa. Port controlado401 continua bloqueado nesses residuos.
+
+CI f8:5547/5548 FAILURE, frontend SugestoesProdutos.jsx:123 TS2345 arrayreadonly
+no updater de estado mutavel. Audit/test/lintPASS; buildfrontendSKIP apos typecheck;
+backend/composeSUCCESS. Recibo6532119906. Corrigir tipo real preservando emptyestavel/
+antiloop, sem casts/any/supressoes/config frouxa. Nao usarCI5544 ancestral como prova.
+
+#447d29c07ae6efe94b4449541391d55bce74daa63a0 CI5545/5546 SUCCESS. Produto inteiro
+normalizado pelo peel REAL igualbase31e68, Enderecos inteiro igualbase+7trocas
+exatas sky;4contraprovas (omissao/duplicacao/forja dentro e fora visivel) passaram.
+Handlers/RBAC/contexto/salvar/reabrir preservados por comparacao, SEM ensaio de
+persistencia/reabertura/visual. Recibo6532051946, nao recuperacao de registros ou
+versao antiga. Mantida separada. Driver corrigiu marcadores repetidos sem alterar
+produto/peel; nao classificar erro de driver como falha de produto ou verde global.
+
+Harness E2E e coorte100 final/pins seguem gates privados DISTINTOS sem mudanca de
+canal; nenhuma busca repetida, recorte/transferencia ou consulta real. Gates vigentes
+preservados: aceite446 -> composicao -> E2E -> cadeia -> schema/minpriv -> backup/
+restauracao -> reconciliacao -> carga aprovada -> deploy -> aceite. Cursor escreve,
+Codex revisa; sem outra candidata, DDL/grants/carga/deploy/VPS ou background permanente.
+
+## Historico - Consumidor446 Testado, Negativos Pendentes (2026-10-30)
+
+#40134c4c0ee e aceites anteriores441/442 preservados, sem repetir casos encerrados.
+#446 HEADb161babac731bab890fe25636bbcfd5c79d49cc0 posteriorf7a, CI5531/5532
+SUCCESS confirmadas nesseSHA. Consumidor PedidoTabsContainer REAL + Compras REAL
+montados ReactDOM/ReactQuery/Chrome com wrapper useState real do draft, bordas
+UI/contexto/rede sinteticas. CliqueDOM agora gera item produto/KG/preco11/qtd1,
+mesmo quando historicoqtd200; defeito toastsemalteracao encerrado no positivo.
+Nao e persistencia banco/HTTP/PG/E2E, nem copia de demanda historica.
+
+Negativos REPRODUZIDOS em b161 (4466530876160): dois cliques imediatos geram2linhas/
+2sucessos; sem unidade/preco insere linha incompleta/sucesso; bloquearEdicao=true e
+statusFaturado ainda permitem insercao/sucesso. Nao alegar bypass backend. Permissao
+negada0writes/0success; setter rejeitando sincronicamente0writes/0success. Troca de
+cliente/Empresa/ator+reset real de draft e clique no DOM antigo destacado:0writes/
+0sucesso nesse cenario, nao prova todas callbacks tardias. Reutilizar guardas e
+handler canonico, sem fundir linhas legitimas automaticamente para resolver duploclique.
+
+DetalhesCliente REAL e Painel REAL com Top10/Compras REAIS montados: Compras sem
+callback ocultaAdicionar; Top10 ainda apresenta1botao enabled semcallback e clique
+nao faz nada (sucesso0). Pareceres4466530902136/6530942866. Nao chamar isso de falso
+toast, e controle operacional sem acao. Manter446 separada401 ate correcao/revisao.
+Mapa4016530943341: port por hunks apos negativos, preservar servicos/repos/API,
+proprietario persistencia/RBAC/contexto; Cursor escreve, Codex revisa, sem outra candidata.
+
+#44531e68ce1ed624e7ae15994cf2cb007edc6222733/basecfaf9bfa: formulario inteiro igual
+base+transformacao sky/ID-only declarada, goldenCANAL53ed9f42 inalterado;28mutacoes
+de preservacao rejeitadas. Parecer6530913483 sem bloqueador nesse alcance, separado
+da candidata; nao e React montado/aceite visual/persistencia/emissao boleto ou dado
+recuperado. Driver montado teve erros de stub lazy/icone corrigidos ANTES dos
+resultados acima; nao foram classificados como defeito do ERP nem suites aprovadas.
+
+Harness E2E original e coorte100 final/pins seguem bloqueios privados distintos sem
+mudanca de acesso: nenhuma busca repetida, selecao substituta ou transferencia.
+Consulta fixa pronta, nao executada sem bytes/canal. Gates existentes preservados:
+pacotes -> composicao -> E2E -> cadeia -> schema/minpriv -> backup/restauracao ->
+reconciliacao -> carga aprovada -> deploy -> aceite. Sem carga/DDL/grants/VPS.
+
+## Historico - Historicos Revisados E Percurso De Uso (2026-10-30)
+
+#40134c4c0ee/CI5482 e aceite montado6528606297 preservados, sem reteste.
+#44153d7e727c65ecebd32c7abb4d5dce31656527306 CI5517 SUCCESS; src/server
+identicos6b2e7e42 ja testado. #442dd619ff60997bcbeade3f35b04ef13a74e9f3a58
+CI5518 SUCCESS, base44153d7. Policy+loader identicos441 por diff exit0: reuse
+provas de datasHTTP/temporais, separacaoKG/PC e negativas Empresa/sessao, sem repetir.
+Seis cenarios afetados em Top10/Sugestoes REAIS montados ReactDOM/ReactQuery/Chrome,
+bordas sinteticas, IA externa proibida: preco conhecido11/KG preservados; desconhecido
+exibe—/omite preco; zero comprovado exibe/envia0; unidade desconhecida nao viraUN;
+ranking historico nao exibe mais score% de confianca. Parecer6530387026. Achados
+anteriores ENCERRADOS nesse alcance; nao e aceite E2E/banco ou todos consumidores.
+Top10 nao envia quantidade de demanda; Sugestoes manda agregado historico2 separado.
+
+Mapa ampliado (inclui lazy imports/JSX, nao so import estatico):
+| Capacidade | Consumidor no codigo | Alcance comprovado |
+|---|---|---|
+| DetalhesCliente | Visualizador -> openWindow | Fonte; acesso real nao homologado |
+| HistoricoClienteTab | PedidoFormCompleto/PedidoTabsContainer lazy, aba historico | Fonte; callback Adicionar executado por AST/VM |
+| HistoricoOrigem | Completo lazy, Painel, Detalhes, WizardEtapa1 | Fonte; nao equivale a montagem atual de todos pais |
+| HistoricoCompras comercial | Componente existente, referencias de uso nao encontradas na busca em src | Montagem isolada anterior; ausencia global NAO provada |
+| Top10 | Painel e AdicionarItemRevendaModal | Montagem isolada atual; consumidor real mantem quantidade propria |
+| SugestoesProdutos | Existente, referencias de uso nao encontradas na busca em src | Montagem isolada atual; ausencia global NAO provada |
+Portal usa HistoricoCompras de portal (distinto). RotasComercial/Cadastros/Portal
+registradas em pages.config; isso NAO prova login/tenant/permissao/rota acessivel.
+Corrige a limitacao historica do mapa que nao capturou lazyTab/OrigemCompleto.
+
+Novo achado DE USO emdd619, nao regressao de441/442: PedidoTabsContainer callback
+onAdicionarItemAoPedido so toast.success e muda aba; corpo REAL extraido/executado
+AST/VM produziu draftWrites0/success1. Callback40134c4 integralmente igual ao
+executado emdd619, comprovado por AST. HistoricoClienteTab so delega, nao persiste.
+Parecer4016530401052: Cursor reutilizar fluxo/handler/modal canonico, sem sucesso
+antes de alterar rascunho, preservando dono da persistencia/contexto/RBAC. Nao e
+Pedido montado/PG. Nao bloquear por defeito antigo inventado nem declarar fluxo pronto.
+Preparar port CONTROLADO dos hunks aprovados, mantendo401API/repos/servicos e
+capacidades436/437/portal; escritor Cursor, revisao Codex, sem outra candidata.
+
+Harness E2E original e coorte100 final/pins seguem bloqueios privados DISTINTOS,
+sem mudanca de acesso: nenhuma busca identica, nova selecao ou transferencia.
+Consulta fixa preparada, nao executada sem bytes/canal. Gates vigentes: pacotes ->
+composicao -> E2E -> cadeia -> schema/minpriv -> backup/restore -> reconciliacao ->
+carga aprovada -> deploy -> aceite. Sem DDL/grants/carga/deploy ou alteracao VPS.
+
+## Historico - Historicos Corrigidos Por SHA, Residuos442 (2026-10-30)
+
+#40134c4c0ee/CI5482 e provas montadas6528606297 preservadas, sem repetir ensaios.
+#441d18dae95/CI5498: contraprovas novas REALMENTE montadas ReactDOM/ReactQuery/
+Chrome existente confirmaram2KG no texto/payload, preco11, sem quantidade de demanda
+inventada. Policy real separa KG/PC, usa created_at HTTP e preco maisrecente20;
+loader real -> fachadaHTTP real/fetch sintetico rejeita troca apenasEmpresa e
+4negativas(sessao/grupo/ator/token), envia clienteId restrito. Parecer6529728821.
+Preco ausente ainda0 nessa revisao foi reproduzido, NAO atribuido a runtime futuro.
+
+#441 avancou a6b2e7e42e7001905ff38cd2c180b2a7433b304e1 durante revisao: montagem
+afetada agora exibe preco/unidade desconhecidos como — e omite campos no callback.
+Policy desconhecido:null; zero comprovado maisrecente vence preco antigo20.
+Achados de unidade/mistura/preco/data/Empresa ENCERRADOS no alcance executado.
+Parecer6529778868. CI5508/5509 QUEUED na consulta, nao reutilizar5498 para esseSHA.
+Prova sintetica de componentes/HTTP, nao PostgreSQL/E2E ou recuperacao de registros.
+
+#4426ffd6f631a3dace37c9b0e9c3ba29c8addda5b90/CI5499 base441d18: Top10 montado
+agora preservaKG e preco11; sem unidade usa—/omite, corrigindoUN antigo. Porem
+preco desconhecido aindaR$0/callback0, Sugestoes sem preco atual exibeR$0/callback
+sem preco_venda; score20% heuristico segue sem qualificacao como heuristica.
+Parecer6529729264. Nao integrar enquanto esses residuos persistirem; nao presumir
+que fix4416b esteja incluido nessa branch. Quantidade_total e historico, nao demanda.
+
+Cadeia verificada:441base4371cde82af ancestral;442base441d18;436fa835bd5 e paralela
+NAO ancestral441. Mapa na4016529745832: preservar Detalhes/Tab/portal/Origem/Top10,
+portar somente hunks necessarios aos consumidores existentes apos fix/revisao/CI,
+sem substituir API/servicos/repos401. Cursor unico escritor, Codex revisa porSHA.
+Busca limitada de imports nao achou Compras comercial/Sugestoes/Tab em componentes;
+nao e prova de ausencia global nem autorizacao para criar novo modulo.
+
+Harness privado E2E e coorte100 final/pins continuam bloqueios distintos sem novo
+canal; nenhuma busca repetida, nova selecao/transferencia ou consulta real executada.
+Gates finitos existentes preservados: aceite pacotes/E2E/cadeia/schema/minpriv/
+backup/reconciliacao/carga aprovada/deploy/aceite. Sem DDL/grants/carga ou VPS.
+
+## Historico - Correcoes401 Comprovadas, Historicos Separados (2026-10-30)
+
+#401 34c4c0ee0242cc959d3a8631f04504457132bb72 CI5482 SUCCESS confirmada.
+Contraprovas afetadas repetidas com componentes REAIS ReactDOM/ReactQuery montados
+em Chrome existente, fronteiras contexto/servico/UI sinteticas, sem instalacao/PG.
+Painel: save pendente em A->B, A->B->A e token novo no mesmo ator retorna
+skipped:true/CONTEXT_CHANGED; novo rascunho intacto, zero onClose/zero toast sucesso,
+pai ainda montado. Baselinea994 A->B->A reproduziu old-save sobrescrevendo draft.
+Counts agora reconsulta99 ao trocar token (antes7); Visualizador mostra `total ...`
+na carga, nao `0 total`. Achados anteriores ENCERRADOS nesses componentes/alcances;
+nao reabrir por headers historicos. Recibo4016528606297 e complemento na PR.
+Hook bruto ainda retorna total0 no loading, mas Visualizador usa countKnown;
+nao equivale a homologar todos os consumidores/dialogs folha ou E2E API/PG.
+
+#441 d46cf79dc69b1c68adf859da3046cf171eab5d54 CI5464 SUCCESS, runtime igual836b:
+achados de unidade, mistura, preco temporal e trocaEmpresa seguem pendentes por
+blobs iguais, sem repetir provas intactas. #4426c21c3d63b43f65a14f26cb9448d8fbf8e9325ea
+CI5481 SUCCESS, base441d46, separada401, reaproveita policy/loader dessa cadeia.
+Provas NOVAS montadas em Top10/Sugestoes: historico2KG vira UN no texto/callback;
+Top10 exibe20% de confianca calculado localmente, sem IA ou fonte probabilistica.
+Produto catalogado sem preco atual vira R$0,00 em Sugestoes; callback sem preco_venda.
+Policy real com2KG/3PC soma5UN, preco antigo10 vence20, created_at HTTP ignorado
+e ultima_compra:null. Recibos4426528633748/6528658820. Nao executar conversao
+de unidade nem tratar preco desconhecido/heuristica como preco zero/confianca real.
+Nao integrar441/442 antes de correcao/revisao; Cursor permanece unico escritor.
+Dependencias436/437: preservar capacidades distintas de Detalhes/Tab/historicos
+portal/comercial; base437 nao e incorporacao na401 nem recuperacao de dados reais.
+
+Harness E2E e coorte100 final/pins permanecem dependencias privadas distintas,
+sem mudanca de acesso: nenhuma busca repetida, novo recorte ou transferencia.
+Consulta fixa preparada aguarda bytes/pins/canal para READ ONLY/ROLLBACK autorizado;
+nao executada e destino nao considerado vazio. Proximas acoes: correcao441/442
+e provas afetadas; E2E original quando recuperado. Gates: aceite componentes ->
+prova integrada -> cadeia -> schema/minpriv -> backup/restore -> reconciliacao ->
+carga aprovada -> deploy -> aceite. Sem DDL/grants/merge/carga ou alteracao VPS.
+
+## Historico - Revisao Montada401 E Historicos441 (2026-10-30)
+
+Codex executou componentes REAIS com ReactDOM createRoot, React Query e Chrome
+headless existentes no desktop; Git somente leitura, scripts privados fora do
+checkout, contexto/servicos/UI de borda sinteticos. Nao SSR/AST, nem E2E/PG.
+Sem instalar dependencias, acessar VPS, criar candidata ou editar branch Cursor.
+
+#401 a994838705af5d549fe7bfc1bf0fadc583560eee, CI5459 SUCCESS: novos achados
+montados6527629911: save atorA pendente, atorB mesmo tenant/cliente + novo rascunho,
+retornoA aplica old-draft e skipped:false; painelScopeKey nao inclui ator/sessao.
+Token novo no mesmo ator reutiliza count7; API nova sintetica contaria99. Loading
+tem total0 e Visualizador mostra rodape `0 total` sem total comprovado. Positivos:
+ator novo recebe99, resposta antiga de outraEmpresa nao substitui31, vazio valido0,
+parcial/invalido terminam total:null/unavailable:true, permissao nega Visualizador.
+Nao reabrir page.length/ator-key/tenant-switch antigos: sao casos distintos.
+HEAD posterior3a80e0ffea8d67d14d7074303b7b7c9fe2fac816 CI5462 SUCCESS so muda
+testes/docs; src/server exatosa994 (diff exit0). Achados permanecem. Runner novo
+de job AST/VM nao e React montado. Parecer6527716759; codigo reservado ao Cursor.
+
+#441 836b7e333449967f38275c717567989f8de5a5ed CI5460/5461 SUCCESS, separada.
+Montagem real Compras: item KG sai UN no callback Adicionar; policy soma2KG+3PC=5
+sem unidade e ultimo_preco termina com valor antigo10 apos recente20. Loader real
+-> fachada HTTP real/fetch sintetico envia clienteId, rejeita4negativas
+(sessao/grupo/ator/token), mas aceita troca apenasEmpresa durante resposta pendente.
+Positivos montados: erro nao vira vazio, sessao ausente e permissao negada bloqueiam;
+pagina incompleta mostra parcial/sem total. Custo/estoque artificiais removidos.
+Pareceres6527642874/6527676305. HEAD d46cf79dc69b1c68adf859da3046cf171eab5d54
+somente testes/docs, runtime exato836b; CI5463/5464 em execucao na consulta.
+Parecer6527717129. Base1cde82af/#437, merge-base401 ba431a2a: preservar servicos/
+repos/API atuais, portar apenas hunks revisados; nao incorporar antes de corrigir.
+
+Harness E2E e coorte100 final/pins seguem bloqueios privados DISTINTOS, sem
+mudanca de acesso; nao repetir buscas/transferencia nem substituir por gerador.
+Consulta fixa existente exige bytes/pins/canal antes de READ ONLY/ROLLBACK real.
+Nenhuma reconciliacao real, recuperacao de registros, carga ou homologacao declarada.
+Proxima acao: Cursor corrigir runtime401/441 + montagem antes/depois; Codex revisar
+delta/SHA. Gates: aceite componentes -> E2E existente -> cadeia -> schema/minpriv
+-> backup/restore -> reconciliacao -> carga aprovada -> deploy -> aceite. Originais
+intactos, recursos locais de teste encerrados; nenhuma operacao em segundo plano.
+
+## Historico - Correcao Das Contagens Revisada Por SHA (2026-10-30)
+
+Cursor publicou #401 62cf794697348beb6089b27c9cf789d318c2fd6b sobre eab13aa5.
+Contraprova repetida no hook real -> bridge real -> fachada HTTP real, fetch
+sintetico: falha count rejeita READ_COUNT_UNAVAILABLE, sem page.length; atores
+A/B geram keys diferentes. Achados anteriores corrigidos nesse alcance. Promise
+antiga ainda resolve na key A; nao equivale a dado exibido para B. Nao foi provado
+rerender de sessao em React montado nem navegador/API/PostgreSQL integrado.
+Delta conecta scopeListCacheRemainder ao teste e normaliza somente dois hunks,
+sem alterar golden. Parecer #401/6526312519. CI5446/run41079280818 em execucao
+na consulta; nao atribuir o FAILURE5444 ao novo SHA nem presumir CI verde.
+Contagens incorporadas, aceite integral ainda pendente. #439 segue separada.
+Artefatos privados harness/coorte final continuam inacessiveis neste executor;
+sem mudanca de acesso, nao repetir busca nem substituir artefatos ou origem.
+Proxima acao: CI terminal do SHA corrigido e prova montada/integrada com artefato
+existente recuperado. Preservados gates de schema, privilegio, backup, reconciliacao,
+carga especifica, deploy e aceite. Sem escrita operacional ou outra candidata.
+
+## Historico - Contagens Incorporadas, Ainda Sem Aceite (2026-10-30)
+
+A instrucao vigente do proprietario autoriza implementar e compor contagens
+existentes em lote isolado na MESMA #401; nao aguardar confirmacao generica do
+mapa #440. Cursor escritor, Codex revisor; sem merge main, DDL, grants ou deploy.
+Mapa #440 e976c5ea revisado. #401 recebeu eab13aa5febf242b3ff7a389afe62c8ed4f282cc:
+contagens AGORA incorporadas, mas NAO aprovadas. CI5444/run41077845839 terminal
+FAILURE: frontend124138706841 2665PASS/1FAIL/0SKIP (2666total); backend e compose
+SUCCESS. Falha: cursor-identidade-consolidacao.test.js:134, helper de scope adicionado
+sem wiring no teste protegido. Corrigir hunks/import/normalizacao mantendo golden.
+
+Contraprova REAL no codigo composto eab (6526095660): hook queryFn -> bridge ->
+HttpApiClient com fetch sintetico adiado. Falha counts + listagem com 2linhas SEM
+total produz KPI2; cacheKey igual entre atores e resposta antiga42 aceita aposB.
+Remover autoridade page.length; usar count/meta.total canonico ou indisponibilidade.
+Vincular AMBOS hooks a identidade/sessao capturada, rejeitar obsoleto e separar key
+sem tokens. Alcance callbacks/HTTP simulado, nao React montado/server/PG ou dado real.
+Scriptprivado review440-count-path exit0 REPRODUZ problemas, nao aprova produto.
+
+Preservacao eab confirmada: server/API inteiros e5arquivos PainelP1/Completo/adapter/
+Forms exatos50e90d0b. Nenhum swap de servico/repo ou reversao dos contratos434.
+Prova do helper REAL restaura Visualizador INTEIRO a50e90; hunk completo rejeita
+omissao/duplicacao/forja e deixa mutacao externa visivel ao comparador integral.
+Driver privado foi corrigido apos erros de marker/subtrecho; recibo retificado
+6526190440. Nao alterar helper/produto/pin por erro de driver. Cursor deve fechar
+CI e os2defeitos funcionais no mesmo lote; recebimento do pedido nao confirmado.
+
+#439 cce8c0b4c338c5ac7131837a3b08f6833015131f:6jobsCI SUCCESS e parecer6526084353.
+Form CentroOperacao INTEIRO igual a baseba431 mais transformacao sky/ID exata;
+golden53ed preservado e25mutações rejeitadas. Sem novo bloqueador nesse alcance,
+nao prova visual/browser/persistencia ou recuperacao de registros. Segue SEPARADA.
+
+Gates finitos: corrigir/revisar counts/CI -> prova integrada -> cadeia de integracao
+-> esquema minimo/privilegios -> backup/retorno -> reconciliacao -> carga aprovada
+-> deploy -> aceite. Harness/coorte100 finais seguem dependencias privadas distintas,
+sem nova condicao de acesso; nao repeti busca, transferencia, pilotos ou instalacao.
+
+## Historico -434 Incorporada, Antes do Lote de Contagens (2026-10-30)
+
+#43450a010ce224f99cf90a93f905a200d3f8a7fb278 revisada,6jobsCI SUCCESS. Parecer
+6525097735 e pedido6525098122 recebidos/executados peloCursor (recibo6525109514).
+401 codigo0b9c0ded82292ef3001d6f72df6dd384b5fd4aa7,CI5427/run41071229904 SUCCESS:
+frontend124115652105=2643PASS/0FAIL/0SKIP;backend124115615006=574PASS/0FAIL/26SKIP
+(600total). Suitesdirigidas adicionais sao separadas,nao eliminam26SKIP.
+Builds npm API eweb daCI0b PASS nomesmoSHA;nao foram produzidos neste lote
+imageIDs/digests de nova imagem deimplantacao. Nao reutilizar digest antigo como novo.
+HEAD posterior e706b02fad24f877ccbd3c165fc42a2a368c574c alteraSOMENTE2recibos;
+CI5428/run41071461266 SUCCESS terminal no proprioSHA,sem herdarCI do0b.
+
+Prova mecanica privada review434-preservation:11pathsallowlist(9da434+2recibos),
+7blobsSRC/testexatos434;arvoresserver/API/countshooks/useEntityCounts EXATAS686.
+CadastroCompleto INTEIRO retornaexato686 retirandosomentehunksdraft/persistBusy;
+settersreais preservam outroscampos/saveMutation. Contextoimutavel,getEmpresaLink,
+clienteId,historicoinativo,acentos,lookupleve preservadosporigualdadeintegra,nao swap.
+CountsNAOincluido,confirmado emcodigoerecibo separado;nao declarartudo integrado.
+
+Provas callback/AST/VM no434 reutilizadaspelosblobsidenticos:Cliente.getexato(sem
+filteramplo),ator/cliente/Empresa antigosbloqueados,ausencia/errosemForm,404/403/late;
+Contatos/Enderecos sync2->1,await/reject+toast/persistBusy/RBAC/dialogdraft/reabrirprops;
+skippednaofecha/naoreseta. BotaoContatoshabilitadodurantebusy,guardarefbloqueia.
+424baseline6PASS;desabilitarepoch/skippedreaisgera3FAIL1/2/4;resolverauditEmpresa
+real conservaEmpresa,nuncagroup_id. NaoReactmontado/SQLauditlog/browserPGdemonstrado.
+HTTPcanonicobackend342+PGlite/IdPsintetico:getencontraclientefora1apagina(1item/page),
+negativas401/403,snapshotclientesintacto;server/enginefechados. NaoE2E434/401.
+
+Revisao4016525135872:semnovobloqueadornodelta,não mergeMain/deploy/cargaliberados.
+Gatesrestantes:UIAPI PGintegrado,esquemaminimo/menorprivilegio,
+backup/retorno,reconciliacao/coorte,cargaespecifica,deploy eaceite. Contagens emlote
+separado431,semremovertenant/RBAC,errodepermissaonaoe0confiavel.
+Harness/coorte100 privados seguemsemacesso/novacondicao;semrebusca,recriacao oucarga.
+
+## Parecer historico -4312451/4321cb e mapa de composicao (2026-10-30)
+
+#4312451d91c04d1348c0aabc85945fece6505d8ae14 e4321cb967a837f92a9d54a34702e06f7f745e408e46:
+6jobsCI SUCCESS terminais porSHA. Provas reais AST/VM atualizadas encerram atorA
+aposatorB inclusive semrender,ausenciaaposrefetch retiraeditor,errosemForm,tardia,
+Empresa/cliente antigos,safecount,zeroverdadeiro;432duasinvocacoes->1onChange,
+await/reject+toast/dialogo/rascunho/persistBusy/RBAC/reaberturaprops. Alcance callbacks
+e estado simulado,naoReactmontado/browser/PG. Pareceres6521236217/6521236590.
+
+P2 NOVO do caminhoHTTP:Cliente.filter({id}) ignora id e dois clientes produzem
+MESMO GET/api/v1/clientes semid; queryFn seleciona clientes[0]. Binding rejeita
+rowId divergente(sem gravacao errada provada),mas abertura de outrocliente pode
+ficar aguardando e consulta ampla persiste. Leitor exato Cliente.get(id) EXISTE.
+Prova de fachada REAL com fetchsintetico,review431-client-exact-read exit0;sem
+rede/dadosreais. Nao tratar isso como defeito no filtroLOCAL,nem reabrirP1encerrados.
+Cursor deve corrigir por contrato existente e testar2ocliente/fora1apagina/404/403/tardia.
+
+Mapa de composicao6521237041 enviadoCursor,nenhuma incorporacaoCodex.432mergebase
+com431=884012ed5;2451doc naoancestral masruntimeequivalente,432somadeltaForms/testes.
+5sobreposicoes:STATUS,HANDOFF,smokeC360,ContatosForm,consolidation81Remainder.
+NAO copiar8arquivos divergentes da432sobre401:clienteTypes,inMemoryClienteRepository,
+postgresClienteRepository,ClienteService(seletoresoperacionais/snapshotvinculos),
+OrcamentoService/PedidoService(freeze87),postgresProdutoRepository(buscasemacentos),
+httpApiClient(comercialMasters/resolveClienteEmpresa/contextoimutavel). Sao diferencas
+PREEXISTENTES debranches,naoregressao causada pelo delta431. Preservar ambos os lados.
+
+401686ae322 permaneceestavel/separada. Gates finitos na lista unica:fecharP2,
+compor/revisar/checks,provaUIAPI PG,esquema/minimoprivilegio,backup/retorno,
+reconciliacao/coorte,cargaaprovada,deploy eaceite;sem inferir merge emmain.
+Harness/coorte final seguemprivados semnovacondicao,nova busca ou recriacao.
+
+## Parecer historico -431beba e432707 (2026-10-30)
+
+431 avancou a4c03ed1->bebaad9eceb441b759e9f12aea9e026b752dc657;432 avancou
+2dc48183->79272de5->707759c5034bb62311c2a9b66dc2b4b0f9c5527e. Revisoes porSHA,
+nao herdar achados antigos.431beba,432707 e342f4b:6jobsSUCCESS cadaSHA,terminais.
+
+ENCERRADOS431beba por callbacks/fontes REAIS AST/VM:parcial/envelopevazio rejeitados;
+6valoresinvalidos rejeitados,zero real aceito;callback antigo aposEmpresa/cliente
+bloqueado;erro de leitura nao montaeditor;resposta tardiaREAD_STALE_SCOPE.
+ResidualATOR:binding/queryKey/generation ainda nao incluem identidade da sessao;
+callbackeditorA noMESMOcliente/Grupo/Empresa chega ao updateMock sobatorB autorizado.
+Nao e mesma falhaEmpresa ja corrigida nem escrita/vazamento server demonstrado.
+Parecer431/6520737800,scriptprivado review431-bound-editor exit0;Cursor escritor.
+Outro residual doMESMObinding reproduzido6520798060:aposloadvalido,refetchSUCESSO
+dataNULL no mesmoescopo deixa bound anterior/Formeditavel e onChangeupdateMock.
+Nao confundir com erroexplicito403 ja bloqueado;invalidar ausencia atual e ator.
+
+ENCERRADO432707 no alcance callbacks reais/state simulado:duas invocacoesantes de
+rerender agora1onChange (antes2),persistInFlightRef. Await/reject/toast/rascunho/
+persistBusy/RBAC/reabertura depropsconfirmados passam. Parecer6520751459;naoReact
+montado/browser/DB. CadastroCompleto.onChange altera RASCUNHO;saveMutation continua
+dono da persistencia.432707 depende431beba,nao incorporar isolando a dependencia.
+
+Prova INDEPENDENTE executada bridge->HTTP loopback->createApp/Supabase/RBAC/servico/
+repositorio canonicos da #342f4b sobre fixturePGlite e IdPsintetico:clienteMestreGrupo
+empresa_idNULL visivel em2Empresas autorizadas,count2;EmpresaA2mesmoGrupo negada
+quando perfil restritoA;outroGrupo/Empresaestrangeira403;expirado401;revogacao403.
+Snapshotclientes intacto,server/engine fechadosfinally. Recibo6520592667/script
+privado count-api-context-proof exit0. FixtureADMIN:NAO provaRLS/principalPG,
+PostgreSQL/browser ou composicao431 inteira. Seu servico/repo divergempreviamente
+da342em seletoresoperacionais;composicao devepreservar ambos,naocopiararquivos.
+Nao conclui queempresa_id causou desaparecimento de registros reais.
+
+401estavel permanece separada. Artefatosharness/coorte100 semnova condicao,nova
+busca ou recriacao;E2Ebrowser/reconciliacao/carga real continuamNAOexecutados.
+
+## Parecer historico -431 no9d339ce5 (2026-10-30)
+
+HEAD9d339ce5892100f77c0d242623acce598276bb01 revisado por delta e mesma contraprova.
+ENCERRADOS:chave ausente/envelopecounts{} agora READ_COUNT_PARTIAL; builder extraido
+canonicamente; checksum anterior preservado, baseline passa e25mutações dentro/fora,
+omissao/duplicacao rejeitadas. Nao manter as3falhas28b8 como atuais.
+CI9d frontendFAILURE nos2eventos; um evento completo terminouFAILURE com backend/
+composeSUCCESS, outro backend ainda em execucao na consulta. Job124003172173:
+2632PASS/2FAIL/0SKIP. Falhas cadastro-master-policy.test.js:249 e use-entity-counts-filter.test.js:5
+exigem regex buildMultiempresaReadFilter no hook apos extracao; seguir import/reexport
+e manter cobertura comportamental equivalente, nao adicionar comentario para passar.
+
+CONTINUAM no9d:P1contexto/leitura do adaptador, arquivo sem delta. Normalizacao
+ainda aceita null/false/stringvazia como0, negativos/fracionarios/inteiroinseguro.
+Scriptprivado com REVIEW431_SHA=9d completo exit0; nenhuma escrita real. BridgeHTTP
+continua requestigual, testesdeobjetofiltro nao comprovam autorizacao backend.
+Pareceres atualizados6520128216/6520145411; Cursor escritor.401nao ampliada.
+
+## Parecer historico -431 no28b8e8d1 (2026-10-30)
+
+#431 HEAD entao28b8e8d1543a52df01df4bcc9e8ff453bc564743, posterior ao fde6
+informado pelo dono. CI TERMINAL em ambos eventos:frontendFAILURE,backendSUCCESS,
+composeSUCCESS. Job123999858012:2626total/2623PASS/3FAIL/0SKIP. Causa comum das
+3falhas:preservacao integral tests/cursor-identidade-consolidacao.test.js,
+hash9b26... versus53ed..., nao infraestrutura. Nao aprovar trocando pin cegamente.
+342/9a29b85d anterior:6jobsSUCCESS confirmados por SHA.
+
+Contraprova privada code-only review431-residuals-20261030.mjs exit0, fonte real
+doSHA via AST/modulosGit; dependencias/contexto/fetch/update sinteticos, sem rede
+ou banco. Transporte403 agora rejeita, placeholder do hook removido: progresso.
+P2 residual:counts parcial{Cliente:2} para duas entidades produzProduto0; envelope
+counts{} produz todos0. Falta validar completude/tipo/inteiroseguro nao-negativo.
+P1 adaptadorContatos:efeito reatribui loadedScopeRef ao novo contexto; callback
+antigoA apos render/efeitosB passaassertScope e chega ao updateMock emB. Query
+com erro/dataundefined tambem renderiza Form vazio editavel e aceita updateMock.
+RBAC negativo bloqueou chamada. Nao e gravacao real nem vazamento server provado.
+Exigir binding imutavel cliente/escopo/ator carregado, leitura valida e invalidacao
+do editor antigo; preservar callback/Form/proprietario unico da persistencia.
+
+BridgeHTTP+HttpApiClient REAIS: filtros antigoempresa e novo$and produziram URL
+e headers identicos, contexto pela sessao. Fetch de teste retornoumeta.total2,
+sem fallback local. Logo mockProduto1 nao prova recuperar mestreGrupo noHTTP.
+Pareceres431/6520027433 e6520058442; Cursor escritor da correcao, Codex revisor.
+Recebimento/correcao ainda nao comprovados.401estavel NAO alterada/incorporada431.
+
+Harness e coorte100 seguem dependencias privadas separadas, sem nova condicao de
+acesso:nao repetir busca/transferencia/instalacao. Nao houve E2Ebrowser ou consulta
+real/reconciliacao/carga. ProvasPG5/HTTPmemoria12/IdP8 nao substituem ciclointegrado.
+
+## Detalhamento - revisao anterior de recuperacao funcional (2026-10-30)
+
+#409c07f3722749a1a91000a1c8a98ce56107b14b664, #4297ad1d35d6b8801d00d5d4f28124638244f392ca2
+e #4308ab119048af7ddda84e3d0c0442422298371a9db reconferidas:6jobsSUCCESS cadaSHA.
+Revisoes publicadas6519758646/6519748889/6519758957 respectivamente, sem editar
+branches Cursor ou ampliar401.409: delta sky/ID nao altera persistencia; smoke
+continua writes0/saveDisabled, nao E2E.430: somente comentario keep-both no runtime;
+banner/teste de texto nao recuperam registros nem corrigem autorizacao do orfao.
+
+P2 CONCRETO429: executei hook REAL do Git via AST/VM, contexto e erros sinteticos,
+sem alterar produto.7requisicoes rejeitadas resultam48countsZERO; troca Empresa
+altera queryKey mas placeholderData devolve counts anteriores. Prova code-only
+privada review429-count-contract-20261030.mjs, exit0. Alcance callbacks VM, nao
+React montado/HTTP/PG/registro recuperado. Cursor deve corrigir causa no existente,
+com negativos, resultado parcial/tardio e troca de contexto; nao remover filtros
+tenant nem ampliar acesso. Hipotese empresa excluir mestreGrupo ainda exige
+contrato/bridge/count server: regex de filtro e scopeKey nao comprovam essa causa.
+Recebimento da solicitacao ainda nao confirmado; publicado nao significa recebido.
+
+Harness/coorte100 final continuam dependencias privadas SEPARADAS. Sem mudanca de
+canal/condicao, nao repeti buscas/transferencias/instalacoes ou pilotos intactos.
+Reconciliacao real, prova integrada browser e carga continuam NAO EXECUTADAS.
+
+## Detalhamento vigente - composicao e limite da prova browser (2026-10-29)
+
+#401 HEAD `686ae3224fe44ed5a3154a972ca8391802974d94`: incorporacao backend87db e
+424 mantida; runtime/testes/locks iguais ao77c0 revisado. Delta posterior somente
+nos cinco documentos/recibos. OPDEV agora blob1fc7e685b, igual ao342/1a03;
+corpo historico c717 preservado integralmente, STATUS/HANDOFF retiveram ambos os lados.
+CI do1a03: tres jobs SUCCESS/run40947996411. Reconsulta por SHA confirmou os
+tres jobs SUCCESS tanto do686/CI5284 quanto do342/4beae9f0/CI5286.
+Nao existe mais gate de publicacao/incorporacao/POSIX/transporte neste pacote.
+
+Executor existente comprovou PostgreSQL16.15 nativo e Chrome148/Playwright1.56.1,
+sem instalar ambiente. Ensaio sintetico em cluster efemero55432: PG5/0/0;
+HTTP com fixtures em memoria12/0/0; autenticacao com IdP/fetch sintetico8/0/0.
+Nao equivalem a browser->API->PG. Recibo401/docs/evidence/prova-sintetica-ciclo-401-20261029.txt.
+Cluster5432 permaneceu down;55432/datadir de teste encerrados/removidos pelo executor.
+
+Bloqueio concreto do navegador: browser-harness.mjs privado documentado no OPDEV
+existe no volume do Codespace, nao esta disponivel no executor Cursor. Busca
+limitada em inspection-code-only desktop tambem sem arquivo; nao prova ausencia
+global. Nova busca nominal nos quatro diretorios privados documentados e no
+indice local de2911entradas: nenhum harness ou coorte final; apenas gerador da
+coorte. Drive por nome EXATO browser-harness.mjs retornou0metadados acessiveis,
+sem download ou alteracao de compartilhamento. Nao repetir busca da coorte no
+Drive ja registrada nem reconstituir selecao. O ultimo exemplar documentado
+permanece no volume privado do Codespace; nao foi comprovado acesso aos bytes.
+Recuperar SOMENTE esse artefato e guardas por canal privado suportado,
+conferir origem/versao antes de reutilizar. Nao provisionar Auth/VPS, afrouxar
+guardas nem substituir por demo writes0. Coorte100 final e pins continuam
+dependencia SEPARADA; sem nova selecao, transferencia integral ou carga real.
+
+## Detalhamento - incorporacao e revisao preservadas (2026-10-29)
+
+Codigo funcional: `87db6618cb3d6198ecdc185cc59d8ca48eeafa83`, publicado na mesma
+branch da #342, remoto confirmado e checkout limpo. CI5265/run40940232207 SUCCESS:
+frontend, backend e composicao. Raiz: 2419 PASS/0 FAIL/0 SKIP; backend: 565 PASS/
+0 FAIL/26 SKIP (591 testes). Audit, lint, typecheck, build e diff aprovados.
+Entrada/tenant PostgreSQL: 6 PASS/0 FAIL/0 SKIP. A suite de composicao tem 3 PASS,
+mas somente um percurso usa PostgreSQL real; os outros usam PGlite, inclusive a
+nova negativa de contexto. Job adicional de composicao: 1 PASS/0 FAIL/0 SKIP.
+Revisao automatizada #342/6506459572 sem achados maiores nesse SHA.
+
+Os 13 blobs publicados correspondem ao manifesto e a arvore validada `266b1ebf`;
+entre essa arvore e o commit funcional mudaram somente STATUS/HANDOFF. Publicacao
+funcional encerrada, nao apenas deposito de patch. Os 26 skips nao sao aprovacao
+PostgreSQL; CI nao homologa navegador ou operacao. Reserva desktop liberada.
+
+Incorporacao na MESMA #401 executada pelo Cursor, reserva/recibo6506970793:
+codigo composto `646ec43f80b884abe1589bb4a888650cfdeac927`, depois HEAD de testes/docs
+`77c0eacd304d50da58b30b1e1bd83ca58229adbc`. CI propria77/run40946256544 SUCCESS:
+raiz2641PASS/0FAIL/0SKIP; backend574PASS/0FAIL/26SKIP(600total). Nao herdar CI dos
+parents. Codigo src/server/scripts/.github identico646->77; sem nova versao runtime.
+Revisao integral confirmou11blobs87db exatos, PedidoService completo=baseCursor+freeze,
+teste completo=baseCursor+2testesCodex,8paths contatos exatos0aca,25paths allowlisted,
+0extras. getEmpresaLink/clienteId/inativo/paginacao e contexto imutavel preservados.
+Codex nao editou branch Cursor nem criou composicao concorrente.
+
+#424 atual `abde6294339584b33cf18dab60b7c3622dd7e2a6`, CI40946134492 SUCCESS.
+Novo P2 apenas de cobertura no0aca (replicas de teste) foi reproduzido6506994897
+e corrigido no mesmo arquivo por AST. Contraprova independente no77:baseline6PASS;
+guards reais epoch/skipped desativados em memoria agora fazem1/2/4FAIL, como exigido.
+P2 fechado6507247848, sem reabrir fix de produto/guardas antigas. AfterSaveBump ainda
+modela conclusao do save: testes nao montam React/TanStack nem provam auditoria PG.
+Controle Chrome recuperado e mensagem de correcao recebida pelo mesmo agente.
+Falta reconciliar OPDEV na candidata (prefixo vigente/suspensao ACL); delta atualizado
+na342 neste lote documental para Cursor portar sem perder o corpo historico.
+Prova browser integrada continua pendente do harness/capacidade isolada, nao de
+usuario Auth/segredo na VPS. Precheck nativo PG/Chrome solicitado, resultado nao presumido.
+
+Coorte100: consulta de metadados no Drive somente pelo nome exato nao retornou
+resultados acessiveis. Nao prova ausencia global; nenhum conteudo/download/sharing.
+Fonte final segue pendente. Plano/classificador publicados e testados nao equivalem
+a reconciliacao real ou carga. Gates e responsaveis continuam na lista unica abaixo.
+
+## Historico - preparacao da publicacao funcional (2026-10-29)
+
+Publicacao FUNCIONAL do WIP13 neste lote,autorizada pelo proprietario apos fechar
+validacao421/6505560893. Base342fdfed98f/CI5261SUCCESS,branchcodex/consolidacao-infra-20261017;
+13/13blobs iguais ao manifestoC8A,patchB78 preservado e arvore266b1ebf reconstruida
+sobrebasevalidadaeead. Deltaeead->fdfed anterior somenteSTATUS/HANDOFF; nenhum runtime
+posterior. Checks9/9PASS reutilizados por identidade de bytes/condicoes,sem novoWSL
+ou transporte. CI do commit funcional deve ser conferida na342 pelo SHA publicado;
+nao atribuir CI5261 documental ao codigo. Sem reaplicar patch,sem foldautomatico401.
+
+4017460c3a2669181138065b05112ba209629784479,
+codigo0195acc66f7c52cea6b64e92a0129d0ea322ff4a;414849419a6ee88c3490cb32b0ff2958e1e9e4bd841.
+414 incorporada: diff src/tests/server entre414 e401 vazio. Liberacao419 e residual
+failure-only ENCERRADOS no alcance ja provado. Nao repetir desbloqueio ou instalarWSL.
+
+Parecer401/6504381068:7testes novos PASS/0FAIL/0SKIP em transporte/helpers/callbacks
+reais por AST: respostas tardias de Grupo/Empresa/ator/token, erro/aborto tardios,
+nome fora da pagina preservado nos callbacks PDF/share de Orcamento e lookup leve
+20invocacoes=20requests exatas,limit1/offset0,sem retry interno. Sem novo defeito
+reproduzivel nesse delta; nao e React montado, navegador, PostgreSQL ou aceite integral.
+CIcodigo5244/run40922889462 SUCCESS conferida:raiz2632PASS/0FAIL/0SKIP;
+backend589total/563PASS/0FAIL/26SKIP; PG composicao2/0/0 e entrada/tenant6/0/0.
+Checks de audit/lint/typecheck/build da candidata SUCCESS; nao sao checks do WIP13.
+
+WIP13:13blobs iguais/0divergencias; patchB78 preservado. Revisao integral independente
+dos694lines/hunks e manifesto:nenhum dado real/credencial/relatorio privado encontrado;
+13paths exatos,manifestoSHA256c8a422240d2adff7823f619ba6e694c0cb90fef85b94e64ba575b12270eef99d.
+Autorizacao especifica posterior recebida: publicar SOMENTE patch/manifesto sanitizados
+como artefatos PUBLICOS pre-validacao. Deposito na branch342 em
+docs/evidence/codex-wip-inbox/b78e612409ff31084a7ebf30f5dde7a216ca1f228fb45830a439b0bfc4829383/:
+wip.patch e MANIFEST.json,bytes exatos/pins acima. Inbox421 PUBLICA,sem editarbranchCursor.
+Nao e publicacao funcional do WIP13,nem apply/fold automatico. Deposito publicado
+emeead306243ea1fe3e97dcc02877860458aa265db/CI5259SUCCESS; ACK421/6505240416
+confirma hashes,13/13blobs e arvore266b1ebf247fd419a500ac2da4e4acf0aa81d578.
+Primeira validacao LinuxNode22.23.4/npm10.9.7 usou deps emprestadas incompletas:
+raiz2418PASS/1FAIL/0SKIP;server531PASS/6FAIL/26SKIP;type/buildserverFAIL.
+Tracebacks identificam pacotes declarados ausentes; TS2742 deriva do symlink externo.
+Primeira rodada NAO aprovada; causa comprovada por traceback/lock/deps emprestadas.
+Fechamento FINAL421/6505560893: npmci exit0 so na area descartavel,locks intactos;
+baseline e snapshot sobMESMASdeps passaram9/9checks. Baseline:raiz2418PASS/0FAIL/0SKIP,
+server554PASS/0FAIL/26SKIP(580total). Snapshot:raiz2419PASS/0FAIL/0SKIP,
+server565PASS/0FAIL/26SKIP(591total). Audit/lint/typecheck/build/diff exit0 em ambos,
+inclusive typecheck/buildserver;TS2742 ausente com deps proprias. Nenhuma regressao.
+13/13blobs/arvore266b1ebf conferidos; os26SKIP PG NAO sao aprovacao PostgreSQL.
+Transporte/fechamento tecnico encerrados. Limite anterior SOMENTE artefatos foi
+superado pela instrucao corrente para PUBLICACAO FUNCIONAL dos13blobs validados;
+nao autoriza fold automatico na401,merge,deploy,DDL/grants ou carga operacional.
+Originais privados e candidata401 continuam intactos; nao chamar essa fase de carga.
+Nao usar CI documental, overlayPOSIX12/0/0 ou sanitizacao como fechamento do snapshot.
+
+Coordenacao direta Cursor entregue e visivel:prova browser isolada nao exige criar
+usuario/segredo ERP_DEV_LOGIN_RESTRICTED_* na VPS; usar so harness/PG/IDP sinteticos
+ja autorizados ou informar capacidade faltante. Sem skip de protecoes ou provisionamento.
+Coorte final100/pins dos bytes continuam indisponiveis; classificacao real desconhecida.
+Gates finitos/responsaveis atualizados na lista unica abaixo. Nenhuma carga/DDL/grant/deploy.
+
+## Historico - revisao414 e liberacao419 anteriores (2026-10-29)
+
+Delta414: HEAD0e16923fc5b061b4924d73a9f4e3666f5be83227 corrige failure-only.
+Revisao independente4PASS/0FAIL/0SKIP dos helpers/callbacks reais por AST:
+20erros liberam21a,pendentes preservados,repeticao limitada,reset de contexto.
+Residual6503292402 encerrado nesseSHA; nao e prova React/browser/PostgreSQL.
+401 ainda1a2 na ultima consulta; incorporacao eCI da nova composicao pendentes.
+
+Coordenacao nova: WIP30da composicao identificado por patch4196f6818d4455272df...
+e arvore inteira157eb6aca13da90a45558115819b55264bb518b0, identica ao commit716dabde.
+Nao era o WIPdesktop13 nem continha codigo tracked inedito. Autoria material nao
+comprovada, custodiaCursor; nenhuma reserva de escritor desta frente nessepath.
+Cursor confirmou liberacao419/6503608840 apos pins/escritores0:arvorec098fcba72dd03dd458fe0626c1766220ba81968,
+statuslimpo noMESMO4011a2,sem reset/stash/clean,sem commitar reversao ou tocarignorados.
+Incorporacao414 depende do proximoSHA/CI e do residual abaixo, nao de espera generica
+por suposto WIPCodex. Provas/manifesto/recibos noHANDOFF; desktop13hashesintactos.
+
+41439c1055f/codigo532ac595a:lookup leve e fila de SUCESSO corrigidos.7testesdirigidos
+PASS, incluindo2contraprovas do NOVO residual:20falhas404 impedem21a independente.
+Parecer414/6503292402, Cursor comunicado diretamente. Preservar limites/erro/retry,
+sem fabricar labels. Repositorio oficial PUBLICO confirmado; nao usar patch noGitHub
+como transporte PRIVADO nem aprovar WIPbackend por CIDocumental. POSIX12/0/0 mantido.
+
+## Historico - candidata401 e revisao414 anteriores (2026-10-29)
+
+34222b1b841/CI5167SUCCESS; WIP13blobs iguais ao manifesto, codigo funcional nao
+publicado. POSIX12/0/0 encerrado. Bloqueio atual e transporte suportado/fechamento
+do snapshot completo, nao falta de WSL. file:// negado pela politica, sem contorno.
+4011a2cfc31/CI5181SUCCESS contem codigoAPI/web094cb4b7e;411/412/407 sao ancestrais
+comprovados. Residuos e TS2339 corrigidos, nao reabrir os estados antigos abaixo.
+Compare094->1a2 tambem muda script de smoke, nao apenas docs; assertions finais
+preservadas por inspecao, browser nao reexecutado. CI atual comprova PostgreSQL
+isolado+HTTP:composicao2PASS e entrada/tenant6PASS,0FAIL/0SKIP; nao e demo E2E.
+414af1a8604/CI5195SUCCESS separada:2P2 reproduzidos no parecer6501230404, referencia21
+nao agendada e100HTTP/20labels (80auxiliares repetidos). Sem editar branch Cursor.
+Legado: plano/contraprovas8PASS PGlite reutilizados com hash atual, coorte final
+indisponivel e classificacao real desconhecida. Provas/SHAs/limites no HANDOFF.
+
+## Historico - desbloqueio POSIX e revisoes anteriores (2026-10-29)
+
+Atualizacao final desta revisao:411dbb1a413/4127e61ab57 corrigem os3residuos;
+11assertions sinteticas dos helpers reais PASS, pareceres411/6499615633 e
+412/6499616178. CI5157/5159 FAILURE em typecheckfrontend (3TS2339 porSHA ao
+enriquecer Error); test/audit/lint PASS, buildfrontend SKIP; backend/composicao
+SUCCESS. Correcoes de tipo solicitadas ao Cursor, sem tocar suas branches.
+Bloqueador vigente e CI/aceite da composicao, nao os achados funcionais ja provados.
+Upload de patch nao concluiu: snapshot completo do WIP NAO validado remotamente.
+
+Delta de continuidade:3423e8216b7;401450e830b (codigo4dbfdc7cc, entradaCodexb5cb34e1);
+410028793ac. WIP13blobs13iguais/0divergencias, patch preservado. Parecer incremental
+401/6499447355: busca helper3assertions+SQLPGlite2assertionsPASS; nao browser/PGexterno.
+Residuos406 de principal escalar e unidade presentes nesse tip;407 nao incorporada
+integralmente (helper compartilhado ausente). Cursor tem correcao WIP propria, nao
+aprovada/publicada por inferencia. Validacao snapshot solicitada401/6499358535,
+sem interferir no escritor Cursor. POSIX encerrado; nao repetir rota sem rede/WSL.
+
+Dois checks POSIX:12PASS/0FAIL/0SKIP/exit0 em Linux existente, repetidos com
+overlay atual verificado:12PASS/0FAIL/0SKIP. Sem instalacao/HDexterno/VPS. Provas,
+hashes e comandos no HANDOFF existente. Nao somar esses resultados como nova
+suite completa: fechamento integral do WIP13arquivos ainda pendente, pois esse
+executor bloqueia GitHub/npm por politica. WIP/patch preservados; nenhum codigo
+funcional publicado neste lote. Proxima acao: canal suportado de dependencias no
+mesmo executor e validacao do patch exato, sem relaxar checks ou copiar historico
+Git indiscriminadamente. WSLemD continua proibido/retirado.
+
+40673046b40/401716dabde: antigas falhas genericas de principal canonico, saldo
+ausente e agregacao encerradas por contraprovas. Dois residuos P2: principal no
+caminho escalar e unidade da demanda versus unidade do saldo, parecer406/6498240997.
+407ba431a2a: nome de recebedor valido190 truncado180, parecer407/6498241434.
+Revisao sintetica dos helpers reais, nao browser/PostgreSQL. Cursor mantem autoria.
+Coorte100 final permanece inacessivel, nao vazia/recriada. Gates operacionais
+intactos. Sem nova carga/DDL/ACL/deploy; executor de validacao encerrado.
+
+## Historico - revisao da composicao401 antes da prova Linux (2026-10-29)
+
+Retificacao de seguranca29/10: C=disco0NVMeinterno, D=disco1JMicronUSBexterno,
+comprovados por particao->disco. RETIRADA orientacao WSLemD; nao usar HD do backup.
+Nenhuma instalacao realizada. C~854MB e executor semadmin: acao humana concreta
+e disponibilizar WSL no SSDinterno com capacidade e reinicio seguro, procedimento
+condicionado no OPERACAO existente. Bundle preservado por hash, sem nova preparacao;
+codigo WIP13arquivos antes desta correcao documental, nao16. Nenhuma limpeza ou
+alteracao de backup. CIeb797672 anterior conferida pelo estado reportado, nao
+atribuir aprovacoes anteriores a novo SHA ou ao codigo WIP.
+
+Entrega independente no WIP: classificador da consulta fixa rejeita contadores
+impossiveis (vinculos com zero/multiplos matches ou empresas acima da coorte de
+empresas). Causa comprovada por CASE do SQL e UNIQUE(cliente_id,empresa_id)009,
+sem nova regra de negocio. Contraprova0PASS/1FAIL antes; foco SQLPGlite8PASS/0FAIL/
+0SKIP,8416ms, cinco negativas novas e positivo de multiplos enderecos sem teto
+artificial. Auditoria/SQL/origem/identidades/flags de carga inalterados; sem leitura
+real ou liberacao operacional. Revisao independente sem novo achado no delta.
+Audit/lint/syntax/diff PASS; lint conserva warning EntregasListagem170. Nao e
+fechamento global: dois checksPOSIX continuam abertos. Codigo nao publicado.
+Bundle0c617 preservado intacto, nao recomposto; modulo antigo65900aac versus novo
+aa34f125: delta privado identificado/verificado em memoria, aplicar SOMENTE em
+extracao descartavel com pins antes/depois. Bundle antigo nao comprova novoWIP;
+teste SQL novo exige snapshot completo atual no fechamento. Nao simular POSIX.
+
+Historico do desbloqueio anterior29/10: WIP preservado por patch/hash,14arquivos pendentes
+apos publicacao documental. Preflight sem Linux/WSL/Store/Docker/Podman e sem
+administrador; C~3.6GB/D~239GB, hipervisor presente (nao presumir BIOS incorreto).
+Bundle minimo de testes POSIX preparado/recuperado por hashes:48fontes+manifesto,
+71487bytes, nenhuma dependencia npm/rede/banco/dado real.11modulos syntaxPASS,
+NAO testes POSIX. Dois testes exatos, procedimento administrativo WSL (indicacaoD
+posteriormente retirada),
+reinicio seguro e execucao Linux nativa registrados no OPERACAO existente.
+Sem instalar/reiniciar/alterar VPS ou relaxar tests; codigo nao publicado por isso.
+Recibos privados26/10 localizados sustentam preparacao da coorte, nao exemplar
+final nem outputSha256; nao confundir com stagingArtifactSha256/cohortSha256.
+397/401 permanecem nos SHAs abaixo; coordenacao397/6495610323 pede correcao dos
+tres achados, nao presume recebimento. CI do commit documental30b1b619 agora
+confirmada6jobsSUCCESS (5093/5094), nao e CI do WIP. Sem repetir suites intactas.
+
+Entradas conferidas:342b5cb34e1fb09d4a7dedc4fc9d66d501bfe2e16f7;
+397754a05cfaba7d067f39594bde68411247c10ba41 e somente docs desde83499de9;
+4018026b2298e7bde731420ec1334c5e9397da91d81 compoe codigo83499de9+b5cb34e1.
+Ambas entradas sao ancestrais comprovados do401. Nao confundir HEAD documental
+posterior com recomposicao. CI401runs40855696315/40855705097 tem6jobsSUCCESS;
+CI397run40855918311 tem3jobsSUCCESS nos respectivos SHAs, nao herdados de anteriores.
+
+Parecer Codex401/6494773820: sem achados nos3conflitos resolvidos, alcance restrito.
+STATUS/HANDOFF preservam linhas/paragrafos e ordem das duas origens. Helper real
+selected->historical exige hunk unico e SHA integral, mantem6hunksidentidade e
+7historicosHTTP. Revisao independente executou14remaindersPASS/56mutacoesREJEITADAS
+(externa/interna/omissao/duplicacao), nao somente novos pins. Nao aprova PR integral.
+
+Snapshot descartavel de TESTE do401 publicado, sem .git/clone/branch/composicao
+concorrente, fora das pastas originais; dependencias existentes reutilizadas sem
+instalar. WIP desktop antes/depois dos testes identico por SHA256 do diff privado.
+Exportacao Windows inicial introduziu CRLF:105total/101PASS/4FAIL. Confronto com
+blobsGit comprovouLF; reexportacao por -c core.autocrlf=false somente no comando,
+sem mudar gitconfig/assertions/pins, corrigiu o artefato. HTTP/helper conferidos
+byte-a-byte com Git. Rerun dirigido105PASS/0FAIL/0SKIP,2204ms. Provas adicionais
+na candidata: percurso persistido Cliente->Orcamento->Pedido->Expedicao1PASS/0FAIL/
+0SKIP e HTTP/Auth/Orcamento/Pedido16PASS/0FAIL/0SKIP. Nao somar como suite integral:
+HTTP usa IDP/repositorios sinteticos em memoria; persistencia usa PGlite/SQL com
+rollback/replay/devolucao/cancelamento. NAO browser+PGexterno nem reserva comercial.
+Harness privado do navegador permanece no Codespace bloqueado, nao reconstruido.
+
+Achados3976493733950/6493809228 continuam no codigo834inalterado: preferencia de
+contato apagada, falta de saldo HTTP convertida em zero, demanda repetida sem
+agregacao. Ownership antigo segue encerrado. Revisao de conflitos/CI nao fecha
+esses achados funcionais nem autoriza merge/deploy/carga. Cursor mantem UI/401.
+
+Publicacao desta rodada e EXCLUSIVAMENTE documental, excecao16.2 de AGENTS:
+recibos/revisao/continuidade sanitizados, sem runtime. Codigo WIP16arquivos anterior
+continua sem commit; dois checks POSIX ainda bloqueiam sua publicacao. Validacao
+documental diff-check; checks de codigo e limites anteriores preservados abaixo.
+Nao declarar o WIP implantado, integrado na401, homologado ou importado.
+
+Lista unica/ordem operacional vigente (atualizada pelo estado do topo):
+- Publicacao backend (Codex): ENCERRADA em87db6618/CI5265SUCCESS,13blobs exatos.
+  Fechamento6505560893 e provas CI doSHA conferidos;26SKIP separados. Nao repetir
+  transporte/deps/POSIX/WSL. Nao e autorizacao de fold ou homologacao operacional.
+- Revisao/composicao (Cursor+Codex):codigo646ec43f,HEAD686ae322 incorpora
+  backend87db+contatos424abde e prefixo operacional vigente; CI5284 SUCCESS.
+  Preservacao integral e contraprovas conferidas, antiga espera de ACK/WIP encerrada.
+  Falta browser com gravacao por harness privado indisponivel; nao ampliar escopo.
+- Cadeia (Cursor+Codex):incorporacao foi por hunks/paths, nao merge de parents;
+  ausencia de ancestralidade nao significa falta de codigo. Blobs/keep-both foram
+  comprovados. Reconciliar continuidade sem perder historico, conferir SHA/CI apos
+  proximo delta documental; nao presumir merge direto emmain ou liberacaoVPS.
+- Esquema/privilegios (Codex+aprovacao dono): envelope minimo e diferenca comprovada
+  do destino;044/Fornecedor candidatos e045-049 privadas nao aplicados por inferencia.
+- Backup/retorno (Codex+aprovacao dono): verificar frescor/identidade dos recibos ja
+  recuperaveis e procedimento reversivel; nao repetir restore intacto por conveniencia.
+- Reconciliacao/carga (Codex+dono): recuperar so coorte final/pins; destino desconhecido
+  nao e vazio. Consulta fixa autorizada/copia atual comprovada e saida privada;
+  autorizar coorte/carga separadamente. Preservar CPA/IDs/codigos/inativos/procedencia,
+  sem deduzir Empresa fiscal/saldos, sem repetir HD/pilotos ou reconstruir selecao.
+- Disponibilizacao (Codex+Cursor+dono): parAPI/web deSHA unico, builds e reversao;
+  deploy/janela somente apos aprovacao especifica, preservando operacao atual.
+- Aceite (dono+Cursor+Codex): navegador com API/PG isolados e gravacao real do ciclo,
+  negativas/rascunho; prova HTTP/PG existente nao substitui esse aceite. Recuperacao
+  de registrosERPnovo e UI segue Cursor com fonte/contexto, nunca exemplos fabricados.
+
+## Historico imediatamente anterior - persistencia e revisao dirigida (2026-10-29)
+
+PR342/desktop permanecem b5cb34e1fb09d4a7dedc4fc9d66d501bfe2e16f7, mesma branch,
+WIP preservado antes deste lote.397 agora83499de995b8a7a2076f3e5bea9b9263f54ba07f,
+nao bbcf do texto antigo; checks backend/frontend/compose desse SHA SUCCESS no
+run40853365201. CI nao encerra os achados comportamentais abaixo.401eee7aba948c18ac10f10ac13a71ab519914e179f
+possui somente evidencia documental de ensaio abortado sobre3974b74; nao candidata
+integrada atual nem aceite. Coordenacao de conflitos publicada401/6493774589.
+
+Pacote backend: ampliada prova no teste existente comercial-expedicao-composicao,
+reutilizando createApp/repositorios/guards/fixture SQL canonicos. Cinco leitores
+(Orcamento get/list, Pedido get/list/history) sofrem troca deterministica de ator/
+tenant apos consulta SQL de empresa e antes do RBAC. Sem captura imutavel, nova
+contraprova falha Missing expected rejection; com WIP restaurado passa. Snapshot
+integral de Orcamentos/itens/Pedidos/itens/historico/auditoria/sequencias inalterado
+pelas leituras; ator inicialmente negado nao e promovido. Fixture persiste de fato
+em PGlite descartavel; nao e PostgreSQL real, navegador ou homologacao operacional.
+Foco final31PASS/0FAIL/0SKIP,8009ms, incluindo percurso persistido existente com
+rollback/replay/devolucao/cancelamento e snapshots/precos. Sem repetir suite global
+inalterada. Audit/lint/typecheck e build backend/diff-check PASS; lint conserva
+1warning preexistente EntregasListagem170. Nenhum teste/protecao removido.
+Revisao independente detectou e fechou lacuna do teste novo (.rows versus contrato
+.data); assert agora exige array nao vazio, IDs e Grupo/Empresa, e repete snapshot
+apos negativas finais. Fixture usa principal administrativo sintetico: nao prova
+RLS com leitor restrito/autenticacao de rede. Sem novo achado nesse delta revisado.
+ESLint dirigido ao teste TS informou arquivo ignorado por ausencia de configuracao
+correspondente; nao conta como lint desse arquivo. Configuracao nao foi relaxada;
+execucao comportamental tsx e revisao manual cobrem o delta, lint raiz permanece
+com resultado/alcance existentes. Typecheck/build server nao comprovam tipagem dos
+testes quando fora do tsconfig vigente.
+
+Revisao397 publicada6493733950 noSHA83499de9: P1 preferencia principal apagada em
+contatos multicanais antes do mapper; P1 gate estoque usa Produto MASTER sem saldo
+no DTO HTTP (ausencia vira0); P2 duaslinhas do mesmo produto nao agregam demanda.
+Contraprovas sinteticas dos helpers reais e confronto de contratos; nao browser.
+Ownership antigo permanece fechado. Elegibilidade evita fallback inelegivel; aviso
+cobranca simulada melhorou, mutacao simulada preexistente nao atribuida ao delta.
+Complemento6493809228 identifica ledger opt-in de Expedicao existente; nao significa
+reserva comercial homologada, nao criar saldo/ledger/empresa por suposicao.
+
+Lista unica de entrada em uso/ordem concreta:
+- Pronto: codigo publicado342 e respectivas provas anteriores; WIP dirigido ainda
+  privado. Nenhum novo SHA/CI de codigo neste lote.
+- Bloqueador publicacao342: dois checks POSIX abertos, runtime Linux suportado
+  indisponivel; nao instalar em C quase cheio, relaxar teste ou publicar antes.
+- Bloqueador composicao: Cursor corrigir os achados397 por SHA, depois resolver401
+  preservando as duasfrentes e contraprovas integrais; revalidar snapshot composto.
+- Bloqueador homologacao: par API/web final do mesmo SHA, schema minimo/menor
+  privilegio aprovados, backup com frescor/restore e retorno, janela e aceite browser.
+  CI/composicao nao autorizam DDL/deploy.044 compensatoria/Fornecedor e045-049 privadas
+  continuam gates, fora da execucao automatica quando candidatos privados.
+- Dados: coorte100 congelada ainda inacessivel; novos/compativeis/duplicados/
+  divergentes/rejeitados DESCONHECIDOS. Reutilizar fonte/recibos, recuperar somente
+  artefato posterior26/10, fixar bytes e executar consulta fixa autorizada OU copia
+  isolada atual comprovada; nao repetir HD nem usar backup23/10 como atualidade.
+- Primeira carga: somente apos reconciliacao/escopo/backup/idempotencia/auditoria/
+  reversao/rejeicoes e autorizacao operacional especifica, sem sobrescrever ou
+  reativar historicos. Depois clientes/fornecedores/produtos/auxiliares e historicos
+  por dependencias; dados ERP novo desaparecidos investigados separadamente pelo
+  Cursor, nao substituidos por fixtures. Ondas avancadas permanecem posteriores.
+
+## Historico imediatamente anterior - retomada e revisao397 (2026-10-29)
+
+HEAD342 b5cb34e1 confirmado, WIP inicial identico ao patch privado anterior por
+SHA256;15 arquivos preservados, sem sincronizar/sobrescrever ou escritor concorrente.
+397 agora554ad7668fcaae1b4f3ec65f4c37e21653aa0c69: P2 de ownership ENCERRADO
+por contraprova no handler real atual, nao somente CI. Mesmo interleaving sintetico
+A/reset/B/A tardio/repeticaoB: antigo exit1/B2chamadas/2paginas; atual exit0/B1/1.
+Runner adaptado apenas no snapshot e SHA; fontes/blobs completos conferidos e
+originais preservados fora do checkout. Parecer6478177392 atualizado por SHA.
+Isso nao e aceite no navegador nem revisao integral dos demais pacotes397.
+
+Coorte100 NAO recuperada: busca exata local retornou0 e Codespace unico recusou
+retomada por franquia/orcamento, mensagem real registrada em OPERACAO. Centralizacao
+23/10 antecede o artefato26/10; nao reconstruir selecao ou pedir HD inteiro. Nada
+lido/importado no destino. Dois checks POSIX continuam bloqueados: WSL ausente,
+executor sem administrador e C~706MB. D tem capacidade, mas instalacao WSL exige
+intervencao administrativa/reinicio seguro; procedimento suportado em OPERACAO.
+Alternativa sem custo e a retomada do MESMO Codespace apos renovacao, conferindo
+orcamento/WIP antes de operar. Nenhuma cobranca, instalacao ou nova frente criada.
+Provas37PASS anteriores reutilizadas, sem repetir suites intactas. Diff-check PASS.
+Sem commit/push/CI novo enquanto checks falharem; nenhum trabalho de VPS operacional.
+
+## Historico imediatamente anterior - consulta fixa (2026-10-28)
+
+PR342/HEAD remoto b5cb34e1fb09d4a7dedc4fc9d66d501bfe2e16f7, mesma branch
+codex/consolidacao-infra-20261017. WIP preservado fora do checkout antes da edicao;
+nenhum commit/push novo: permanecem dois checks POSIX incompatíveis com este
+Windows, sem skip ou enfraquecimento. C disponivel ~0.14GB; nao instalar runtime.
+
+Pacote funcional no planejador existente pilot-functional-load-plan.mjs:
+buildClientReconciliationReadPlan/classifyClientReconciliationReadResult usam
+SHA dos bytes e da coorte, limite100, Grupo/empresas fixados, parametros vinculados,
+documento valido OU identidade nativa composta e retorno somente para identidade
+unica. Duplicidades e identidades partidas nunca escolhem LIMIT1. Preservam
+inatividade/procedencia e distinguem campos comparados de completude auxiliar.
+Transacao proposta READ ONLY/REPEATABLE READ, search_path pg_catalog, timeouts e
+ROLLBACK; nenhum executor, endpoint, grant, escrita ou importador paralelo criado.
+Dois defeitos encontrados na revisao independente foram reproduzidos e corrigidos:
+identidade nativa sem documento e colisao nativa com linha ja bloqueada. Contraprova
+2FAIL antes; foco final com contexto Orcamento/Pedido37PASS/0FAIL/0SKIP,24967ms.
+SQL efetivamente executado em fixture canonica PGlite, inclusive negativas de
+UPDATE, contexto, ambiguidades, repeticao e rollback. NAO e PostgreSQL operacional.
+
+Canal administrativo existente comprovou sessao SQL real somente de metadados,
+READ ONLY/REPEATABLE READ/ROLLBACK, Grupo aprovado1 e empresas aprovadas2.
+Principal privilegiado existente NAO equivale a leitor restrito ou login ERP.
+Tres recibos privados tiveram bytes/SHA/protecao conferidos; diretorio privado
+root0700 e capacidade do filesystem conferidos. Nenhuma linha de cliente lida.
+Arquivo especifico da coorte100 nao localizado na busca privada limitada; isso
+nao prova ausencia dos backups. Recuperar somente o artefato congelado e seu SHA
+de bytes, sem repetir transferencia integral ou selecionar outra coorte. SHA da
+coorte nao substitui SHA dos bytes. Alteracoes globais PUBLIC seguem SUSPENSAS.
+
+Lista unica de entrada em uso:
+- Pronto: codigo anterior publicado, ensaios anteriores preservados e WIP dirigido
+  validado nos37 testes; nao publicado/implantado/importado neste lote.
+- Bloqueador de publicacao: dois checks POSIX ainda abertos; reutilizar resultados
+  globais abaixo, nao anunciar nova suite integral aprovada ou CI do WIP.
+- Bloqueador de uso: composicao/revisao397, par API/web final, navegacao integrada,
+  schema minimo e menor privilegio aprovados; backup recuperavel deve ter frescor
+  conferido antes da janela operacional. Ensaio anterior nao libera deploy/carga.
+- Dados: reconciliacao real100 DESCONHECIDA ate artefato e consulta fixa autorizada;
+  preservar CPA existente, IDs e empresas, sem deduzir empresa fiscal do staging.
+- Schema: contratos de leitura canonicos; candidata compensatoria044 e master
+  Fornecedor exigem compatibilidade/journals e decisao;045-049 privadas continuam
+  fora do migrador automatico. Nenhum SQL aplicado ou renumerado.
+- Melhoria posterior: ondas avancadas Comercial360 conforme programa existente.
+
+Cursor397 bf150d2179a8c4fc93f2a262156bec999683e1f4 confere com remoto: delta
+desde2fa7bd8 somente STATUS/HANDOFF. Codigo de historico inalterado; parecer por
+SHA atualizado no comentario6478177392, sem repetir ensaio intacto. P2 de cleanup
+de request antiga liberando ref atual permanece de alcance limitado ao handler;
+nao afirmar regressao de cliques React comprovada ou aprovar toda a PR. Branch
+Cursor intacta. Contatos e guardas antigos nao reabertos.
+
+## Historico imediatamente anterior - contexto comercial (2026-10-28)
+
+Decisao posterior do proprietario: desenvolvimento temporario no clone desktop
+independente existente; Codespace unico reservado para validacao integrada quando
+houver franquia. GitHub permanece canonico; nenhuma cobranca habilitada. Fast-forward
+d425138f -> b5cb34e1, mesma branch codex/consolidacao-infra-20261017, sem divergencia
+ou WIP local inicial; sem processo com o caminho do checkout detectado. Isso nao
+comprova estado atual dos arquivos/processos do Codespace bloqueado; .vscode e
+artefatos privados remotos nao foram copiados, reconstruidos ou presumidos locais.
+
+Lista unica: pronto = codigo anterior publicado e ensaios preservados; bloqueador
+de uso = composicao/revisao397 e navegacao integrada/versao operacional ainda por
+homologar; dados = reconciliacao100 contra destino DESCONHECIDA, nao vazia;
+melhoria posterior = ondas avancadas Comercial360 conforme programa existente.
+
+Lote atual reutiliza OrcamentoService/PedidoService e testes canonicos. As escritas
+ja capturavam contexto; prepare das leituras mantinha referencia mutavel durante
+await do tenant. Contraprova reproduziu autorizacao com ator substituido e falha
+na reabertura apos alteracao do contexto do chamador. Copia imutavel no inicio
+de prepare alinha tenant, RBAC e scope, sem ampliar permissoes/rotas/persistencia.
+Quatro testes novos: get/list Orcamento e get/list/history Pedido, negativas de
+troca de ator e preservacao do contexto inicial. Red25PASS/4FAIL; foco29PASS/0FAIL.
+Estes testes de servico em memoria NAO comprovam persistencia PG ou navegacao.
+Fechamento BLOQUEADO, sem commit/push novo: foco29PASS/0FAIL; backend completo
+serial584total/546PASS/0FAIL/38SKIP. Doze skips A1 exigem Linux; os demais exigem
+PG/psql isolados. Comando padrao backend interrompido somente no runner deste
+lote apos FATAL OOM explicitos Node/esbuild; nao conta como suite aprovada. Rerun
+completo node --import tsx --test --test-concurrency=1 tests/**/*.test.ts exit0.
+Raiz completa serial2418total/2408PASS/10FAIL/0SKIP,1353357ms/exit1. Triagem:
+5contraprovas LF/CRLF,3Python ausente/aliasStore,1mount Docker com path Windows,
+1ownership POSIX. Corrigidos atributosLF js/jsx/ts (sem mudar hashes/baselines),
+selecao Python real por TEST_PYTHON_EXECUTABLE nos dois testes existentes e parser
+Docker com path.posix.join; nova negativa de montagem com separadores Windows.
+17fontes limpas foram convertidas SOMENTE para bytes identicos ao Git HEAD, com
+comparacao antes/depois e indice sem delta de conteudo; nao copiar UI do Cursor.
+Foco final dos oito arquivos afetados92total/90PASS/2FAIL/0SKIP/exit1. Isto NAO e
+nova suite raiz integral aprovada nem soma de resultados para fingir uma execucao.
+Persistem precheck Python de filesystem privado (permissions/symlink POSIX) e
+review-workflow (process.getuid ausente no Windows). Nenhum skip/mock de UID ou
+relaxamento de permissoes introduzido. Runtime Linux continua gate indispensavel.
+Audit/typecheck raiz e backend/builds raiz e backend/diff PASS; lint0errors/1warning
+preexistente EntregasListagem:170. Build avisa browserslist antigo, imports dinamicos
+tambem estaticos e chunks grandes; nao alterar baseline/deps para esconder avisos.
+Revisao independente do delta contexto e portabilidade sem achados; nao comprova
+navegacao/PG operacional. A1/Linux, trust/CRL e gates de banco permanecem separados.
+
+Capacidade local: WSL --list --quiet exit1 informa subsistema nao instalado,
+Docker/psql ausentes no PATH; Windows11 compativel, mas C tem somente ~0.2GB livres.
+Nao instalar runtime sem capacidade, apagar capturas/caches desconhecidos ou usar
+VPS como executor de desenvolvimento. Decisao minima: prover espaco e runtime
+Linux local gratuito para os checks POSIX, OU aguardar franquia do Codespace unico
+em01/11, preservando o WIP desktop antes de sincronizar. Nenhuma instalacao/cobranca
+ou novo ambiente ERP realizado. Patch e recibos privados fora do checkout; SHA-base
+publicado permanece b5cb34e1. Nao declarar CI novo ou publicacao deste WIP.
+
+Proposta de alteracao global PUBLIC SUSPENSA pela orientacao posterior; nao aplicar
+as extensoes condicionais anteriores por inercia. Consulta/exportacao fixa revisada
+no executor administrativo existente e a alternativa preferida para decisao: sem
+delegar SQL arbitrario/LOGIN, escopo CPA/coorte100, allowlist, READ ONLY/ROLLBACK,
+saida privada, nenhum grant/carga. Nao prova principal estritamente leitor e ainda
+exige ensaio e autorizacao especifica da leitura de negocio. Canais/copias isoladas
+alternativos devem provar identidade/frescor, sem repetir transferencia/pilotos.
+Nenhuma alteracao de VPS/ACL/dados neste lote. Reserva e dependencia397 na342.
+397 avancou para2fa7bd8fb853e54c61339f5e8314560134f5957a: owner antes da rede/ref
+sincrona tratam o primeiro load-more anterior. Novo P2 distinto no finally: A
+obsoleta libera a ref de B pendente. Contraprova no handler REAL extraido do SHA,
+com estados/transportes sinteticos: dois offsets50/duas paginas; mover cleanup da
+ref para guarda do controller somente na copia produz uma chamada/pagina. Parecer
+397/6478177392. Limite: nao e prova de navegador React; pedir reproduzir interleaving
+no harness existente. Sem editar/integrar Cursor ou reabrir contatos/guardas antigos.
+
+## Historico - validacao condicional bloqueou aplicacao SQL (2026-10-28)
+
+Complemento do catalogo: CREATE no schema public nao e concedido a PUBLIC; seis bancos aceitam conexao PUBLIC (nao foram consultados registros neles). Isso tambem impede presumir escopo exclusivo do LOGIN. Nao corrigir somente as nove funcoes e declarar gate completo.
+PR397 avancou para 6bc890805efcd3536dc336f2e23bf5b2fa966b2a: tres achados antigos corrigidos na inspecao estatica. Novo P2: primeira load-more nao associa owner antes de setLoadingMore/erro, permitindo repeticao de offset/erro oculto; parecer #397/6474190419. Sem edicao/integracao da branch Cursor, sem alegar red/green executado.
+
+Proprietario autorizou CONDICIONALMENTE leitor temporario ate 1h + cinco policies SELECT CPA/coorte100, apos validacao/revisao; nao autorizou alterar PUBLIC ou a role API. Aplicacao no DEV NAO ocorreu.
+Novo ensaio no PostgreSQL sintetico existente (network none, sem banco operacional): escopo das cinco policies e sete negativas PASS; rollback/limpeza PASS. Primeira tentativa falhou por session_user administrativo no harness; corrigida a identidade simulada SEM retirar a negativa de SET ROLE. SET SESSION AUTHORIZATION e prova de ACL, NAO prova de autenticacao LOGIN real.
+Contraprova adicional reproduziu escrita persistente de large object por PUBLIC lo_create/lo_put/lo_get, apenas com bytes sinteticos, revertida integralmente. No DEV foram consultadas SOMENTE ACLs: nove assinaturas lo_*/lowrite tinham PUBLIC EXECUTE. Nao executar essas funcoes no destino para demonstrar o risco.
+GATE FAIL: SELECT/RLS nao bastam para chamar o principal estritamente leitor. REVOKE apenas da nova role nao remove PUBLIC. Revisao independente confirmou que alteracao de ACL PUBLIC exige extensao explicita de escopo, snapshot/matriz das 31 roles, preservacao de capacidades, teste/reversao e inventario restante; nove funcoes nao esgotam outras vias. Nao aplicar por inferencia, nem trocar por administrador/global read_only.
+Recibos/SQL sintetico/hashes em staging privado (sql-reader-gate-20261028.private.json e sql-reader-probe-20261028.private.json), fora do Git/build. Zero role/policy/grant criado no DEV; zero leitura de clientes; reconciliacao100 continua DESCONHECIDA, nao vazia. Proximo: fechar extensao ACL e revisao/decisao correspondente, mantendo a autorizacao restrita anterior sem repeti-la.
+Publicacao documental anterior b2d6fcfd6b65ef1527b7731335530921e8f7056a confirmada; seis checks CI SUCCESS (40720985387/40720994080). Lote atual acrescenta esta contraprova nova; nao repete suites/pilotos intactos. Originais/.vscode/Cursor preservados.
+
+## Historico - SSH comprovado; gate SQL delimitado (2026-10-28)
+
+Base: 21b48224101843726491c56f4825f473529b9e48, mesma branch/Codespace/PR342 (base comercial, nao main). .vscode/ preservada; nenhum chat interno em andamento observado.
+SSH encerrado: exit0, mesma chave/restrict/0600, senha bloqueada, sem sudo/docker; conta ate 28/12/2026 e chave ate 27/12/2026 20h59 Brasilia. Correcoes especificas autorizadas, backup reversivel e hashes privados. Nao reprovisionar.
+Inspecao administrativa SOMENTE de metadados confirmou destino interno da API DEV e imagem efetiva. API usa role generica com BYPASSRLS: nao usar para reconciliar clientes. Catalogo: 31 roles/10 LOGIN; 6 LOGIN sem super/BYPASSRLS, todas sem SELECT em clientes. Role read_only tem BYPASSRLS/leitura global; anon/authenticated tem escrita; pg_read_all_data nao fornece escopo de Grupo/coorte. Nenhum leitor adequado comprovado.
+clientes/cliente_empresas/cliente_locais/empresas: RLS/FORCE ativos, ZERO policies. SELECT sozinho nao libera leitura. Proposta minima e canal no topo de docs/OPERACAO_DEV_VPS.md; NAO APLICADOS. Nenhum grant/DDL/deploy/carga ou leitura de registros neste lote. Coorte100 preservada, classificacoes DESCONHECIDAS; validar principal/sessao/CPA antes de READ ONLY/ROLLBACK.
+PR397 permanece 9938f080df588c1e51e04a1346f1ab3245db1e4d. Tres achados estaticos no parecer #397/6473153593: carga incompleta Operador, submit concorrente, extras no primeiro render de novo contexto. Sem delta pertinente, sem repetir revisao/suites intactas. Branch Cursor intocada.
+Lote documental: diff-check obrigatorio; testes runtime anteriores reutilizados, nao reexecutados. Proximo gate: proposta restrita revisada/aprovada -> ACL/sessao/CPA -> reconciliacao100 -> piloto isolado e pacote separado de carga com backup/idempotencia/auditoria/reversao. Preservados originais, custos e gates.
+
+## Historico - acesso dedicado aprovado com prazo ampliado (2026-10-28)
+
+Retomada local/remotae922e047b64f84ad6520215703f27e004b78a671, mesma branch/Codespace/origin; .vscode preservada e nenhum outro escritor observado. Proprietário APROVOU provisionamento específico e reutilização para prechecks/leitura definidos: chave até27/12/2026 às20:59 Brasília (20261227T235900Z), conta expira28/12, revogação antecipada na conclusão. Não pedir novamente aprovação por comando dentro do escopo. Autorização original do proprietário neste chat diz explicitamente27/12/2026 e conta28/12; menção posterior a27/11 não substitui essa aprovação. Não houve ampliação por interpretação. Prazos/pendência de aprovação dos blocos anteriores são históricos. Sem sudo/docker/admin delegado, alterações sshd/firewall/chaves atuais, grants/DDL/carga/deploy.
+
+Reutilizada a mesma identidade dedicada privada (fingerprint D+z9tzBoEVkhLfmUwWOunGGUpC05vPLm2m3vYMPTELI), sem nova chave ou envio de credencial ao GitHub/chat. Scripts privados provisionamento/revogação atualizados e sh -n PASS; procedimento também passou4 simulações isoladas (host errado/conta existente/sucesso/falha com expiração), sem comandos administrativos reais. Intervenção humana concretizada com Ctrl+P/path integral, bloco executável já existente, hPanel/VPS/srv1982741/Terminal, saídas esperadas e gravação privada da hostkey; reconexão Base44 existente detalhada no OPERACAO, sem chamada UNAUTHORIZED repetida; não executados na VPS. Procedimento administrativo humano único em OPERACAO_DEV_VPS: console autenticado da srv1982741, validações/aborto sem sobrescrever conta existente, criação restrita, captura HOST pública confiável para known_hosts.verified privado, retorno e reversão. Shell/restrict não são sandbox. Expiração não encerra sessões existentes: procedimento de revogação encerra só UID dedicado e preserva evidências.
+
+Intervenção concretizada: mesmo provisionador/chave, bloco privado web-console-approved.block.sh pronto para copiar via Ctrl+P no Codespace e colar na Web Console srv1982741. Endpoint/porta exigem confirmação no console e listener, sem presumir22/domínio web. Emite JSON público, recebido via editor em host-console-receipt.incoming.json; não há FileZilla/acesso ao computador comprovado e sftp binário não é sessão autenticada. Receptor privado accept-host-console.py valida fingerprint HOST (recusa CLIENTE), alias literal, porta, permissões e vínculo imutável; prepara instalação atômica known_hosts/config0600 por fsync/rename, config por último.9checks locais PASS sem rede, inclusive portas22/2222. Ainda sem recibo real/arquivos verified/conexão. Procedimento único detalhado em OPERACAO, sem novo manual. HostKeyAlias explícito corresponde literalmente ao nome no known_hosts, Port separado; não inventar [alias]:porta. Leitura de negócio continua após autenticação e comprovação SQL/CPA.
+
+Bloqueio técnico comprovado: sem agent/credencial administrativa/hostkey verificada/secrets dedicados neste executor; arquivo known_hosts.verified ausente. Chave cliente local já disponível, sem necessidade de upload. Nenhuma tentativa SSH, alteração servidor ou leitura de negócio. Próxima ação humana concreta: copiar web-console-approved.block.sh, executar uma vez no console confiável e salvar somente o JSON público em host-console-receipt.incoming.json no staging privado; Codex valida e instala os arquivos verified atomicamente. Após canal comprovado, executar prechecks autorizados sem novo pedido genérico, comprovar principal SQL existente estritamente leitor e sessão/Grupo CPA antes da reconciliação100. Sem principal leitor, preparar requisito de acesso separado, não criar grants. DestinoRowsRead0/businessWrites0/importação0; classifications contra destino desconhecidas.
+
+CI5026/5027 SUCCESS terminal no SHA exatoe922e047; CI5021/5022 SUCCESS do6f177a23 preservada; CI5018/5019 SUCCESS em f2d59226 preservada; CI5011/5012 SUCCESS do bbd09904 preservada. Cursor353 permanece eaad0b84, sem delta/edição/composição; recuperação A/B/C/D e fontes privadas continuam conforme bloco anterior. Este lote é documental com preparação privada, diff-check e sintaxe dos scripts; não repete aplicação intacta ou piloto sintético. Próximo independente exige canal SQL ou fonte Base44 autenticada; nenhum dado fictício usado como recuperação.
+
+## Histórico — fechamento CI e proposta de acesso (2026-10-28)
+
+Base deste fechamento documental: bbd09904037e0b273f247e604865a9e267022569, mesma branch codex/consolidacao-infra-20261017/PR342; origin e Codespace canônicos confirmados. Reserva342/6467842834 e processos conferidos; nenhum escritor concorrente observado; .vscode preservada. HEAD desta documentação é o commit que contém este bloco, publicado com recibo por SHA na342; não altera o runtime b3e494ba nem os hashes das provas anteriores.
+
+CI5011/PUSH40693817796 e CI5012/PR40693829224: SUCCESS terminal no SHA exato bbd09904,3 jobs em cada (backend/frontend/expedicao-comercial-compose). Sem repetir suítes locais intactas. Prévia5173 Private verificada novamente por listener/HTTP/metadados: snapshot ac563ece, backend canônico isolado/socket e PostgreSQL17 efêmero network=none, operationalDatabase=false. Aviso sintético pré/pós-login comprovado no recibo anterior reutilizado; processo18760 continua ativo. Retomada única em OPERACAO_DEV_VPS, sem promessa24h.44919 não é endereço ERP.
+
+Proposta SSH dedicada completada, não aplicada: usuário erp-codex-ro sem sudo/docker, abortar se existente, senha bloqueada, authorized_keys próprio restrito e chave reutilizada com expiry-time20261030T235959Z (30/10 às20:59:59 Brasília), conta expira31/10. Reversão: expirar conta, encerrar só suas sessões e revogar só sua chave; preservar evidências/home e demais acessos. Script privado validado sh -n; opções ssh -G já comprovadas. Aprovação específica solicitada ao proprietário com alcance/prazo/reversão visíveis; nenhuma resposta presumida. Não há hostkey confiável, canal administrativo ou secrets dedicados disponíveis no executor; nenhuma tentativa SSH/provisionamento/grants. Secrets suportados: GitHub Settings/Codespaces, não Runtime Secrets Cursor. Após aprovação, ainda comprovar canal/host e principal SQL leitor existente antes de consultar clientes; se faltar role, gate separado sem grants automáticos.
+
+Coorte100 continua íntegra na origem (prova anterior reutilizada), mas classificação contra destino não executável sem identidade/sessão/CPA e role. Novos/compatíveis/duplicados/divergentes DESCONHECIDOS,100 pendentes por acesso ao destino não comprovado; leituras destino0/escritas0/importação0. Não tratar ausência de acesso como destino vazio. Piloto real e decisão concreta de carga dependem dessas provas; não inventar destino/backup/contagens nem repetir piloto sintético. Grupo CPA existente deve ser reutilizado.
+
+Recuperação separada ERP novo, taxonomia vigente: A contexto/permissão/filtro ainda exige mesmo escopo web/API/banco; B contratos omitidos: adapter Cliente existente bloqueia contatos lossy e não inventa hidratação, achados encerrados não reabertos; C registros pré-perda só com fonte confiável, ainda não comprovada; D fonte/app original não localizado. Inventários20261009/10 e comparação erp-integra-novo reutilizados; azul-claro/recursos da353 não recopiados. Conector Base44 instalado retornara UNAUTHORIZED; não repetido. Busca de plugin Base44 não retornou nova integração; nenhuma reinstalação. Nenhuma referência appId/backend configurada nos .env locais; original não identificável pelo código sozinho. Ação suportada: reconectar a integração Base44 existente nas configurações do cliente, pela conta proprietária; depois listar apps autorizados uma vez e validar app/tenant/procedência. Não confundir isso com conectores internos de um app Base44 ou criar outro app.
+
+Cursor353 confirmado eaad0b84d9d02bec61f5fa6300bfd4651319d006 (base esta branch); sem novo delta, sem nova revisão/edição/composição.3 apontamentos abertos no parecer6467957970; coordenação6469631037 já registra recuperação separada e reservas, sem repostar achados. Próxima dependência humana única solicitada agora: decisão sobre proposta concreta de provisionamento. Após canal seguro/principal comprovados executar leitura/reconciliação autorizadas. Base44 reautenticação é dependência independente de fonte; não pedir backup/HD novamente. Lote documental validado por diff-check; sem mudança aplicação ou operação VPS.
+
+## Histórico — identidade e acesso de leitura (2026-10-28)
+
+Mesmo Codespace/clone/branch; HEAD inicial ac563ecea3c48cf6480116201d1de1272afe4fa7, remoto conferido. Somente .vscode não rastreada preservada; nenhum outro escritor observado. Código b3e494ba e CI5003/5004 SUCCESS reutilizados, sem repetir lote ou suíte intacta. Este lote altera documentação; harness privado reutilizado com guardas de identidade e aviso sintético.
+
+Prévia5173 Private ATIVA nesta verificação: https://potential-xylophone-5gj7r9v9qqg637vxp-5173.app.github.dev/Comercial. Snapshot servido ac563ece, runtime igual a b3e494ba; API canônica isolada/socket privado e PostgreSQL17 efêmero network=none/tmpfs, sem banco operacional. Aviso “AMBIENTE DE TESTE — DADOS SINTÉTICOS” visível antes/depois do login. /__erp_fixture informa origem/versão de inicialização; /__erp_preview informa HEAD atual. Processo depende do Codespace ativo e limite6h; encaminhamento Private sozinho não prova disponibilidade. Porta44919 sem listener: log local remoto em28/10 às10:48 comprova callback OAuth Hostinger nessa porta, não ERP; não publicar query OAuth nem presumir dados anteriormente vistos.
+
+Autorização vigente do proprietário: preparar acesso dedicado e executar somente leitura de versão/destino DEV, principal/sessão/Grupo CPA e reconciliação privada100. Não inclui provisionamento servidor sem proposta aprovada, carga, DDL, grants, deploy, firewall ou troca de chaves. Não há credencial dedicada acessível: sem agente SSH, ~/.ssh, variáveis dedicadas ou Codespaces Secrets visíveis. Runtime Secrets Cursor não são automaticamente secrets deste executor. Chave exclusiva preparada localmente foraGit; NÃO enviada; proposta exata e configuração estrita preparadas no staging privado access-codex-readonly-20261028. Identidade HOST SSH confiável ainda ausente; fingerprint legado documentado é de CLIENTE. Não houve conexão SSH ou alteração servidor/banco. Caminho e configuração de secrets em docs/OPERACAO_DEV_VPS.md. Canal bloqueado por hostkey confiável, credencial/provisionamento dedicado e prova de principal SQL restrito, não por falta de autorização genérica.
+
+Health HTTPS público DEV respondeu ok/dev/database configured/version0.1.0-runtime-01; não comprova SHA, banco, sessão ou CPA. Coorte100 conferida privadamente: hash da origem coincide com manifesto,100 originais correspondem ao staging preservado; destinoRowsRead0/businessWrites0/importação operacional0. Recibos antigos do backup reutilizados, sem transferência/reseed. Reutilizar Grupo CPA existente, preservar IDs/empresas/referências. READ ONLY+ROLLBACK só após comprovar privilégios restritos; ROLLBACK não substitui RBAC/ACL.
+
+Recuperação do ERP novo: A (oculto por contexto) ainda precisa comparação web/API/banco no mesmo escopo; B (fonte confiável) comprovada apenas para legado, não snapshot pré-perda do ERP novo; C fonte pré-perda ERP novo indisponível. Conexão Base44 retornou UNAUTHORIZED/reautenticação necessária, sem leitura de registros/restauração. Não fabricar dados ou usar sintéticos como recuperação. Cursor353 continua eaad0b84,3 achados abertos do parecer6467957970; branch intocada, sem composição ou revisão repetida sem delta; coordenação registra separação entre recuperação ERP novo e legado.
+
+Validações novas do harness privado: node --check; guarda de SHA inválido recusou antes de criar recursos; navegador real confirmou aviso pré/pós-login e metadados sintéticos; container próprio network=none. Evidências privadas identity-preview-20261028 e recibo público docs/vps/evidence/20261028-identidade-previa-leitura.txt. Próximo concreto: aprovar proposta específica de provisionamento se necessária, cadastrar secrets no canal privado e obter hostkey por console confiável; comprovar role SQL existente estritamente leitora e sessão/CPA antes de reconciliar100. Sem nova carga/piloto sintético repetido. Operação diária VPS e piloto real continuam gates separados. Blocos anteriores conflitantes são históricos.
+
+## Retomada vigente — CI confirmada e próximos gates (2026-10-28)
+
+Checkout exclusivo /workspaces/ERP-Zuccaro-codeX, branch codex/consolidacao-infra-20261017. HEAD local/remoto b3e494bae47af945522430ad97f63911be3ab295 confirmado; CI5003/PUSH40685914148 e CI5004/PR40685922569 SUCCESS, frontend/backend/composição nos dois eventos. Lote publicado não reexecutado: provas2418/0/0, foco110/0/0 e backend554/0/26 preservadas, sem nova alegação de testes. Árvore rastreada limpa na retomada; .vscode não rastreada preservada, sem outro escritor/runner visível ou reserva de edição pendente. Não houve reinstalação de plugin, criação de caminho antigo, reset, sincronização sobre WIP ou rebuild.
+
+A prévia anterior NÃO está ativa nesta retomada: processo/harness e containers ausentes. URL/SQL/capturas/hashes anteriores são provas históricas preservadas; não anunciar disponibilidade atual nem recriar fixture como recuperação de registros. Recibo342/6468715546 reconciliado com as CIs e a disponibilidade constatadas.
+
+Próxima ação do handoff conferida, sem repetir achados encerrados: composição353 BLOCKED em eaad0b84d9d02bec61f5fa6300bfd4651319d006, o mesmo SHA revisado no parecer353/6467957970, sem nova correção publicada. Permanecem guarda da graduação, persistência única Operador e paginação/autorização Histórico. Principal/reconciliação da coorte100 BLOCKED: recibo privado mantém seleção100, destino não vinculado/comprovado,0 leituras de clientes do destino/0 escritas e ausência de autorização de carga; seleção não é importação. Reutilizar Grupo CPA existente, preservando empresas/IDs/referências; não criar Grupo paralelo. Fonte/backup/staging e seus recibos não foram refeitos nem transferidos.
+
+Alternativa segura: reutilizar os contratos/consulta somente leitura já preparados em scripts/legado/target-metadata-readonly.sql e os gates do candidato existente, após autorização exata de destino/principal; não usar contexto sintético, administrador genérico, DDL/grants ou nova carga para suprir prova ausente. AGENTS§3.5 exige autorização explícita para acesso VPS; esta retomada não executou operação VPS. Sem merge/deploy/carga. Lote atual exclusivamente documental: git diff --check; testes de aplicação dispensados porque runtime não mudou. Commit deste fechamento documental/recibo na342. Os blocos anteriores são históricos quando conflitantes, inclusive a menção à prévia ativa.
+
+## Estado vigente — referência ClienteEmpresa selecionada (2026-10-28)
+
+Retomada no Codespace potential-xylophone-5gj7r9v9qqg637vxp e clone canônico, branch codex/consolidacao-infra-20261017, base local/remota 47a5d0e109f442090bc7be3e39d3f2afc8e30f68. PR342 permanece sobre codex/comercial-composicao-20261017 (334), sem presumir main. Reserva publicada na342/6467842834; nenhum escritor concorrente observado. Os11 hashes do recibo retry foram conferidos antes da edição; snapshot/diff privados preservados, sem reaplicar patches. .vscode não rastreada preservada.
+
+Causa: Pedido dependia dos primeiros50 mestres e da busca corrente para resolver ClienteEmpresa já selecionada. WIP existente concluído reutilizando GET Cliente/operacao, comercialMasters.list, resolver/picker, Central360 e consumidores existentes: consulta exata por vínculo, contexto/RBAC/elegibilidade/ambiguidade mantidos, merge da referência real e opção selecionada preservada ao mudar a busca. Nenhum endpoint/permissão/cadastro paralelo. A prova PostgreSQL revelou placeholder sem dólar (inteiro::uuid/HTTP500); corrigido para parâmetro SQL, com o hunk exato correspondente na nova fase da guarda. Sem alteração dos hashes/tabelas históricos; contraprovas de alteração, omissão, repetição e bytes externos continuam exigidas. Leitura não cria registros nem novos eventos de mutação; auditoria de escrita existente preservada.
+
+Continuação da prévia: dois defeitos reais impediram o ciclo completo. Os4 diálogos Pedido não tinham a sobreposição já usada pelo Orçamento e ficavam atrás da janela multitarefa; reutilizado o mesmo style/overlayStyle apenas em windowMode. O mapper de edição descartava orcamento_id e a API corretamente respondia422/immutable; agora preserva a origem canônica, sem inventá-la em Pedido direto nem alterar a guarda backend. Teste novo falha antes/passou depois; stage52 mantém o hash anterior e os hunks históricos, reconhecendo somente1 hunk exato adicional com contraprovas dentro/fora/omissão/repetição. Sem componentes ou hooks paralelos.
+
+Prévia5173 Private ativa em https://potential-xylophone-5gj7r9v9qqg637vxp-5173.app.github.dev/Comercial, API canônica por socket privado e PostgreSQL17 erp_test em container próprio network=none/tmpfs; IdP/dados exclusivamente sintéticos, sem banco operacional. Navegador com cliques reais comprovou55 clientes sintéticos adicionados, selecionado fora dos primeiros50 → abrir Pedido convertido → buscar outro cliente → opção selecionada permanece → salvar200 → reabrir vínculo/observação/origem. SQL confirmou1 Pedido com as mesmas referências/observação. HTTP127 foi redirecionado por segurança; prova local usou localhost, exceção DEV já existente, sem mudar HTTPS/CSP. UI demonstrada em b435fae7+delta; hashes privados permitem conferir a publicação final, não alegação de deploy. Harness temporário de até6h enquanto o Codespace permanecer ativo.
+
+Checks da publicação b435: raiz2417PASS/0FAIL/0SKIP; foco61PASS/0FAIL/0SKIP; PostgreSQL17 isolado1PASS/0FAIL/0SKIP (inclui consulta exata e negativas); audit:baseline, lint, typecheck raiz/backend, build backend e build frontend exit0. Lint mantém1warning anterior; build mantém avisos Browserslist/chunks. Backend final: 554PASS/0FAIL/26SKIP (580 total; skips não são aprovação). Tentativa Node24 teve falha interna V8/JIT em runtime06b e foi interrompida deliberadamente; não é cobertura aprovada. Build inicial terminou143/SIGTERM sem causa comprovada/OOM registrado; nova execução Node22 (mesma major da CI) passou, sem flexibilizar testes. Recibos privados resume-20261028, fora do Git; diff-check obrigatório antes de publicar. Publicado b435fae7f43556cebe3680b75dfdbba629baf90d, remoto confirmado, CI PUSH40683148082 e PR40683155849 SUCCESS (3 jobs em cada). Delta UI/mapper: foco110PASS/0FAIL/0SKIP; fechamento final raiz2418PASS/0FAIL/0SKIP; audit/lint/typecheck/build sequencial/diff exit0. Build concorrente143 anterior não é aprovação; causa do sinal não comprovada. Publicação/CI final por SHA no recibo de fechamento da342. Backend inalterado desde b435:554/0/26 reutilizados, não nova execução. Recibos/publicação na342/6468244974 e continuidade342/6468476410.
+
+Cursor353 remoto eaad0b84d9d02bec61f5fa6300bfd4651319d006, branch intocada. Revisão dirigida342/353 sem composição: guarda de graduação ainda aceita remover negativa REAL do Operador (14PASS antes e14PASS com mutação); persistência Operador ainda chama writer e callback do visualizador que também persiste; Histórico HTTP ainda primeira página50, sem revalidação no queryFn e sem usuário/sessão na queryKey. Parecer353/6467957970. Não reabre P2 Região nem contatos/CodigoField encerrados; não equivale a revisão integral dos demais deltas.
+
+Decisão vigente do legado: REUTILIZAR Grupo CPA existente, preservando empresas, IDs e referências; não criar Grupo duplicado. O texto anterior de preparar/criar Grupo real é histórico e superado por essa decisão. Backup/staging privados preservados; coorte100 selecionada na origem NÃO é importação/reconciliação nem vínculo operacional. Principal/sessão e reconciliação com destino ainda precisam de prova. Nenhuma carga real, DDL, grants, merge, deploy ou operação VPS neste lote.
+
+Próximo: conferir CI do SHA final no recibo342 e continuar revisão/composição por SHA e principal/reconciliação privada pelos gates existentes. A prova do Pedido não homologa os KPIs do launchpad Comercial, ainda em fonte legada (fixture mostrou0 no cartão e1 Pedido canônico); tratar esse consumidor em lote separado, sem inventar totais locais. Composição Cursor e primeira carga continuam gates separados. Blocos anteriores são históricos quando conflitantes com este estado.
+
+## Estado vigente - #344 Pedido canonico e Grupo real preparado (2026-10-27)
+
+Entregavel: Pedido existente usa leitores HTTP canonicos e Central360 para locais/obras; contexto/cliente/vinculo e paginacao estritos, sem fallback local. Browser isolado salvou/reabriu referencias, quantidade3, KG/preco12.345678/desconto0/total37.037034; rascunho negado por sessao revogada permaneceu e nao foi persistido. Provas anteriores de conversao e negativas reutilizadas, sem novo piloto. Originais, captura e Cursor preservados.
+
+Validacao nova: 71/0/0 dirigidos; raiz2408 PASS/0 FAIL/0 SKIP; audit/lint/typecheck/build/diff exit0. Backend inalterado554 PASS/0 FAIL/26 SKIP reutilizado. Fixture propria encerrada; evidencias/diff/hashes privados. Sem homologacao operacional ou acesso de negocio ao destino.
+
+Cursor0988697f: P2 Regiao encerrado por mapper real/mutacao rejeitada; P1 novo da graduacao da guarda continua aceitando remocao da negativa de submit. Parecer por SHA na353; nao editar branch Cursor nem compor antes da correcao/CI/revisao.
+
+Destino/coorte:2 Grupos/3 empresas lidos estritamente; IDs dos Grupos iguais aos seeds sinteticos. Proprietario autorizou PREPARAR Grupo real no destino atual, nao cria-lo. Envelope privado atualizado; bootstrap HTTP/persistencia/autorizacao ainda nao comprovados. Nao vincular coorte a seed nem presumir empresa fiscal para mestre Grupo. Coorte100 sem binding; classificacoes contra clientes do destino continuam desconhecidas.
+
+Lista unica: pronto tecnico = leitores/Pedido sintetico; bloqueadores de entrada = guarda Cursor/composicao, Grupo real/binding, schema/menor privilegio/API+web/backup-janela/aceite; pendencia de dados = reconciliacao privada100 e auxiliares; melhorias posteriores = Comercial360 avancado conforme programa. Sem criacao/carga/DDL/grants/deploy/merge. Automacao nao reativada, estado nativo nao inferido. Proximo: guarda integral e bootstrap canonico, depois reconciliacao privada por escopo comprovado. Detalhes no HANDOFF existente.
+
+### Historico preservado - leitores e ciclo anterior (2026-10-27)
+
+Mesmo Codespace/branch, base e916d467, 16 arquivos/diff anteriores conferidos antes da retomada. GET Cliente opt-in, transporte/resolver de mestres e Orcamento concluidos no lote preservado. Navegador descobriu token ausente no Pedido em janela: captura canonica e cache por sessao corrigidos, contraprova FAIL antes/PASS depois, sem nova permissao. Originais e Cursor intactos.
+
+Novo fechamento: raiz 2402 PASS/0 FAIL/0 SKIP, dirigidos 60/0/0; audit:baseline/lint/typecheck/build exit0. Backend sem delta: prova conferida 554 PASS/0 FAIL/26 SKIP (580 total), type/build e PG leitores 1/0/0 reutilizados. SIGTERM anterior externo comprovado, supervisor desconhecido; nao foi provado OOM. Detalhes e evidencias no HANDOFF vigente, recibos privados.
+
+Demonstrado com API/PG/IdP sinteticos isolados: login/contexto, seletores canonicos, Orcamento salvar/reabrir, converter e Pedido reabrir; repeticao deixou 1/1; negativas HTTP 401/403 e contexto cruzado 403, rascunho visivel sem gravacao do marcador. Nao homologa operacao real nem edicao completa/mestres auxiliares do Pedido. #353 b2eeee52: lacuna P2 de teste de Regiao reproduzida e publicada em 6440982068; demais novos deltas nao aprovados. Sem merge/deploy/DDL/grants/carga, automacao nao reativada.
+
+Proximo P0: concluir revisao/composicao Cursor por SHA e envelope minimo de homologacao; reconciliar coorte privada 100 no destino/copia comprovados antes da decisao de primeira carga. Selecao previa nao e reconciliacao nova. Publicacao/CI deste lote por SHA na #342, sem prometer previa permanente.
+### Historico preservado - WIP de 2026-10-26 (superado)
+
+Base remota/checkout e916d467, mesma branch codex/consolidacao-infra-20261017 e Codespace existente. Runtime do lote aplicado, sem commit/push. Opt-in no leitor Cliente existente e transporte/consumidor de mestres do Orcamento, sem endpoint paralelo, migration, grant ou carga. Os blocos anteriores abaixo preservam provas historicas; nao representam aprovacao deste WIP.
+
+Provas novas: 54 PASS/0 FAIL/0 SKIP dirigidos frontend/HTTP/guardas; 3/0/0 dominio; 9/0/0 politica atualizada para exigir o caminho canonico; PostgreSQL real isolado 1/0/0 com snapshot verificado do backend dirty. IDs master/vinculo distintos, escopo, total/pagina e queries invalidas comprovados. Hashes anteriores preservados; contraprovas contra omissao/repeticao/alteracao dentro/fora dos hunks passaram. Teste de negativa do vinculo continua exigindo 403, sem ampliar permissao do produto.
+
+Fechamento nao aprovado: raiz 2401 testes, 2399 PASS/2 FAIL/0 SKIP; uma assertion obsoleta de nome do facade foi corrigida e passou dirigida, a outra registra SIGTERM em financial-consolidacao. Backend completo reportou 520 testes, 477 PASS/18 FAIL/25 SKIP, com arquivos encerrados; nao equivale a cobertura integral anterior. Reexecucao pontual financeira repetiu SIGTERM. Typecheck inicial passou, mas as tentativas finais terminaram 143/SIGTERM, inclusive sequencial; nao declarar typecheck final verde. Nova tentativa backend sequencial foi interrompida deliberadamente apos o bloqueio; seu resumo parcial nao vale como suite concluida. Causa do sinal ainda nao comprovada: memory.events sem OOM, acesso ao kernel log negado. Nao relaxar testes/baselines para liberar.
+
+Previa sintetica ficou PRIVATE e chegou a READY, mas perdeu o processo antes da demonstracao; ciclo UI Orcamento/Pedido ainda nao comprovado. Container proprio encerrado apos verificacao de nome/label/imagem/rede/mount, sem containers deste ensaio restantes. Nao ha teste proprio anunciado como ativo. WIP de 14 arquivos fonte/teste, diff e hashes verificados em copia privada fora do checkout; originais/Cursor intactos. Sem acesso operacional. Automacao nao reativada nem estado inferido do Markdown.
+
+Proximo passo preciso: identificar o emissor/condicao do SIGTERM sem ampliar permissoes; concluir checks sequenciais e retomar harness sintetico com o mesmo snapshot para criar/editar/reabrir Orcamento e converter/editar/reabrir Pedido. Somente apos gates verdes atualizar recibo, commitar e publicar a candidata. Nao repetir pilotos/transferencias nem provas PG anteriores sem delta.
+
+### Historico anterior preservado
+
+## Estado vigente - composicao e navegador isolado (2026-10-26)
+
+- Fechamento local final: raiz **2396 PASS / 0 FAIL / 0 SKIP**; audit:baseline, lint, typecheck, build e diff-check exit0. Backend composto **577 total / 551 PASS / 0 FAIL / 26 SKIP**, type/build exit0 (reutilizados sem novo delta backend). Prova PG de principals **1 PASS / 0 FAIL / 0 SKIP**, contraprova INHERIT rejeitada. A falha intermediaria da guarda stage48 foi resolvida aceitando somente os dois hunks exatos comprovados, mantendo o golden original e acrescentando contraprovas de omissao/repeticao/efeito colateral/alteracao externa. Nenhum teste removido ou pulado. Recibo de publicacao/CI por SHA permanece na #344.
+
+- Mesma branch `codex/consolidacao-infra-20261017`, Codespace existente. Composicao squash da #353 `1d3540ff40e8c3e44d2c20e8249ab9d7b8e190e6` sobre `6ba10732`, sem merge de PR/main ou edicao da branch Cursor. Diff anterior e stash restrito preservados privadamente.
+- Novo P1 CodigoField fechado por contraprova no helper real `ea820521`: ataque antigo aceito 3/3, novo rejeitado 3/3; bytes autorizados 3/3 e golden hashes preservados. Parecer #353/6423524303; sem reabrir contatos/guardas encerrados.
+- Correcao Marca: reabertura usa `updated_at` HTTP com fallback `updated_date`, sem mudar identidade/confirmacao/rascunho. Dois testes falham antes; arquivo completo 14 PASS/0 FAIL/0 SKIP depois.
+- Navegador real em porta PRIVATE 5173, API canonica e PostgreSQL 17 `network=none` via socket privado, Auth sintetico e roles sem BYPASSRLS: login, contexto, leitura de Cliente, edicao, sucesso HTTP e reabertura do valor/ID/codigo comprovados. Nao e login operacional nem implantacao.
+- Corrigida ausencia de `contatos`: formulario nao fabrica array vazio para resposta HTTP escalar. Lista explicitamente divergente, preferencia e metadata continuam bloqueadas pelo guard existente. Contraprova no mapper/payload reais; 22 PASS/0 FAIL/0 SKIP.
+- Corrigido Orçamento: transporte usa a mesma `sessionIdentity` das guardas quando consumidor omite a prop token. Contraprova falha antes e passa depois; sem nova permissao ou alteracao do proprietario da persistencia.
+- BLOQUEADOR de interface comprovado: seletores de Orçamento ainda consultam `filterInContext` legado para ClienteEmpresa/Produto/CondicaoPagamento/TabelaPreco; listagem HTTP funciona, mas os mestres da fixture PG nao chegam aos seletores. Nao fabricar copias locais ou considerar proposta sintetica como venda. Ciclo navegador Orçamento -> Pedido ainda NAO homologado. Proximo lote: reconciliar esses leitores canonicos e testar negativas/erros antes de completar o ciclo.
+- Cobertura composta anterior aos ultimos ajustes: raiz 2391 PASS/0 FAIL/0 SKIP; backend 577 total/551 PASS/0 FAIL/26 SKIP; audit/lint/type/build e checks backend exit0. Apos ajustes, 118 testes dirigidos PASS/0 FAIL/0 SKIP; fechamento raiz sera registrado no recibo de publicacao. Skips nao sao prova PostgreSQL. Envelope de principals PG/counterproof positivos registrados no bloco abaixo; nao repetir prova 044 inalterada.
+- Coorte privada de origem: 18458 clientes, 17471 elegiveis, 987 nao ativos preservados, 100 selecionados com pendencias auxiliares explicitas. Destino lido 0, escrita operacional 0; duplicidades do destino e reconciliacao da coorte ainda gates. Fornecedores: 790 elegiveis na fonte, sem nova carga. Nenhum dado real no Git.
+- Impedem entrada em uso: concluir leitores/ciclo UI comercial, fechar patch minimo do destino e menor privilegio com revisao independente, fixar par API/web para janela, atualizar frescor do backup, homologacao e autorizacao especifica da primeira carga. 045-049 seguem privadas fora do migrador; sem DDL/grants/deploy/carga operacional.
+
+## Entrada em uso - prioridade vigente e lista unica (proprietario, 2026-10-26)
+
+Composicao em validacao na candidata existente: Cursor1d3540ff + lote Codex
+preservado de envelope/coorte. Sem mergePR/main, publicacao ou homologacao deste
+estado ainda. Os blocos recebidos a seguir sao historicos quando assim rotulados.
+
+### Historico recebido Cursor1d3540ff (antes da revisao/composicao atual)
+Alegacoes recebidas e preservadas, nao aceite operacional nem estado vigente.
+| Campo | Valor |
+|-------|-------|
+| Responsável | Cursor Cloud `/workspace` (runner) |
+| Tip HEAD | **`ea820521`** |
+| CI tip | push **40371869659** + PR **40371873739** 6/6 **SUCCESS** |
+| Base Codex | **`6ba10732`** ancestor (PG entrada/fornecedor; branch Codex não editada) |
+| P1 tip revisão | **`84f3d401`** (fix `681c8ea4`) — pedido `@codex review` 6422758981 |
+| Achado | **6420465114** (P1 NOVO; não reabre P1 antigo guardas) |
+| Correção | AST estrito CodigoField remainder; contraprova Object.assign/externa/omissão/repetição |
+| Independente | Marca ciclo reopen + Histórico fail-closed; Condicao ID-only pin preservado |
+| Aceite P1 | **CI ≠ fechamento** — aguarda parecer Codex no SHA tip/`84f3d401` |
+| Preservado | Contatos ENCERRADOS; P1 antigo ENCERRADO; sem merge/deploy/carga |
+
+Nota CI: tentativa RecordState Condicao quebrou hash CANAL consolidacao — revertida
+em `ea820521`. Reopen canônico Condicao exige delta autorizado no pin.
+
+### Historico Codex — tip `6ba10732` (preservado no remarge)
+
+A prova completa6ba10732 continua preservada abaixo.
+### Estado atual Codex - envelope e coorte preparados
+Delta atual para HML: envelope de principais isolados reforcado e contraprova
+INHERIT rejeitada;1PASS/0FAIL/0SKIP positivo, sem roles/grants operacionais.
+NovoP1 remainder353 encerrado por contraprova emea820521, sem reabrir os antigos.
+Bloqueadores: Marca HTTP updated_at nao observado; Historico cai em fonte local HTTP;
+composicao+par API/web/ciclo browser ainda nao homologados. Parecer353/6422905733.
+Schema/ACL de escrita e inversa precisam de revisao/bindings no destino isolado;
+V3 somente leitura nao homologa venda. Coorte ORIGEM100 preparada entre17471
+elegiveis/18458 clientes;987 nao ativos preservados,100 pendencias auxiliares.
+Fornecedor790 elegiveis de origem. Destino0leituras/0escritas; reconciliacao contra
+o destino e carga especifica pendentes. Backup/staging/pilotos preservados.
+Nenhuma duplicacao do hook exclusivo353 nem edicao da branch Cursor.
+Detalhes do envelope e provas no HANDOFF existente; nenhuma lista/plano paralelo.
+
+### Prova integrada6ba10732 reutilizada
+
+Prova integrada PostgreSQL real de Auth/perfil/Grupo/Empresa/Cliente/
+Orcamento/Pedido e Fornecedor:1PASS/0FAIL/0SKIP. Inclui edicao/releitura, fechamento,
+concorrencia de numeros, conversao repetida bloqueada, import/replay/reversao,
+cross-tenant/revogacao e rollback de falha de auditoria. Teste e fixture existentes
+ampliados, nenhum servico/importador paralelo ou dado real. Detalhes no HANDOFF.
+Fechamento:backend545PASS/0FAIL/26SKIP; PG17 final1PASS/0FAIL/0SKIP. Audit/lint/
+typecheck/build/diff exit0; raiz2295PASS reutilizada por ausencia de delta.
+Ainda nao e ERP servido homologado: falta concluir a composicao353 com fix revisado,
+envelope minimo de escrita/schema/privilegios e HML com ciclo de navegador.
+Migrations candidatas fora do automatico; nenhuma permissao operacional ampliada.
+Coorte real ate100 continua proposta condicionada aos gates e autorizacao especifica.
+Helper CodigoField P1: encerrado por contraprova Codex no SHA ea820521; nao e aceite global.
+
+Diretriz canonica: PLANO_GO_LIVE.md, secao "Prioridade vigente: entrada em uso".
+
+Provas: `tests/cadastro-codigo-registro-remainder-p1.test.js`, reopen Marca em
+`cadastros-reopen-banco-cargo-behavioral`, `painel-dinamico-cliente-historico-tab`.
+
+## PACOTE Cursor — tip `f47fcfe3` CI SUCCESS (navegável + cadastros, 2026-10-26)
+
+| Campo | Valor |
+|-------|-------|
+| Responsável | Cursor Cloud `/workspace` (runner) |
+| Candidata | #353 tip **`f47fcfe3`** (código ≥`7793d3a8`) |
+| Base | #342 `7ae5bcd9` |
+| CI tip | push **40360798384** + PR **40360809795** 6/6 **SUCCESS** |
+| Modalidade | **runner Cursor** (Codespace xylophone 403) |
+| Aceite | matriz início de uso; Marca reopen; aba Histórico Produtos; ciclo por camada; A≠B docs |
+| Bloqueios reais | SHA Codespace; Pedido INSERT 044; staging classe B; sem merge/deploy/carga |
+
+Contatos: não reabrir. MarcaForm reopen + PainelCliente `historico_produtos` TabsContent.
+Matriz / ciclo / A/B: `docs/evidence/cadastros-inicio-uso-matriz-353-*`, `homologacao-ciclo-comercial-pacote2-*`, `registros-classe-AB-pacote2-*`.
+Codespace: comentário 6421481401.
+
+### Lista unica vigente (atualizada neste remarge)
+
+**Pronto para homologação (código/CI — ≠ VPS operacional)**
+- Contatos overflow fail-closed + rascunho (parecer Codex 6PASS).
+- Cadastros reopen/boundId + Relatorios RBAC + Orçamento componente.
+- Compensador 044 candidato documentado (Codex) + explain UI (Cursor).
+- Builds/CI tip candidata + base consolidação (ver recibo #344 para VPS).
+
+**Bloqueador entrada em uso**
+- Versão efetivamente servida (Codespace/VPS) ainda não medida neste runner.
+- CRUD Cliente/Pedido no destino: leitura #344 ≠ gravação homologada; 044+par incompleto = gate Codex.
+- Fornecedor ops schema; staging/registros privados; menor privilégio/janela.
+- Merge/disponibilização/carga: autorizações específicas.
+
+**Pendência de dados / melhoria posterior**
+- Coorte ≤100, auxiliares, históricos: staging privado + gates (inalterado).
+- C360 omnicanal: Codespace evolução (inalterado).
+
+Diretriz: PLANO_GO_LIVE. Evidência histórica: docs/evidence/entrada-em-uso-lista-353-*.txt
+
+
+## Historico Codex — tip 7ae5bcd9 (preservado no remarge)
+
+- Fechar a composicao integrada por SHA. Os DOIS achados de contatos estao
+  encerrados no fix e9d7ef15/9756f457, delta e30cffcc conferido:6PASS/0FAIL/0SKIP,
+  contraprova antes/depois e rascunho preservado (6418918562/6419136043).
+  P1 antigo guardas continua encerrado. Isto nao aprova toda a353 ou merge.
+- Novo P1 na353/093c8e08: helper CodigoField apaga JSX com spread/expressao que
+  muda o rascunho sem mudar bytes do freeze. Contraprova6420465114; fix Cursor
+  tip `681c8ea4`/`84f3d401` aguarda parecer — nao e a espera antiga de contatos.
+
+## Historico Cursor — tips #353 pré-remarge 7ae5bcd9
+
+- Fechar/revisar a composicao integrada existente por SHA. P1 antigo publication
+  (guardas reopen) ENCERRADO por contraprova Codex real — NAO permanece aberto
+  por bb341ae3/CI. Contatos: tip Cursor corrige principal entre canais + metadata
+  sem valor (overflow fail-closed antes do fetch; parecer 6416585754); encerrado
+  nos pareceres posteriores. CI verde ≠ homologacao VPS/operacional.
+  Sem editar branch Codex nem aprovar toda a #353 por este tip.
+
+- Provar login/perfil/Grupo/Empresa/RBAC e versao efetivamente servida; capturas
+  de runner e testes com IdP sintetico nao homologam a sessao real.
+- Conferir schema/journals/contratos exigidos pelo escopo operacional inicial.
+  A compatibilidade da conferencia SOMENTE LEITURA nao prova CRUD Cliente,
+  Fornecedor PG, orcamento/pedido ou seus downstreams. Nao aplicar036-044 em lote;
+ 045-049 privadas continuam fora do migrador, com identificacao/aplicacao gates.
+- Menor privilegio, frescor do backup do destino, retorno e janela aprovados.
+  V2 foi retirada; V3/inversa testadas apenas em PG sintetico. A proposta atual
+  e HML em copia restaurada isolada, nao policies/grants/roles no banco original.
+- Recuperar/modularizar o que efetivamente sumiu e validar azul-claro/funcional
+  sem perder melhorias atuais. Classificar versao/config/tenant/permissao/leitura
+  ANTES de concluir ausencia de codigo. Fluxos essenciais e cadastro completo
+  precisam persistir/reabrir no caminho canonico; simulacao nao e operacao.
+- Merge/disponibilizacao/carga real seguem autorizacoes especificas separadas.
+
+**Pendencia de dados**
+- Coorte inicial ate100 e reconciliacao privada: identidade/escopo/documento/
+  codigo, preexistentes, campos/vinculos/pendencias e reversao por lote. Preparada
+  nao significa import_authorized nem carga executada.
+- Clientes/fornecedores/produtos e auxiliares: reaproveitar staging, mapas,
+  pilotos e recibos ja comprovados; nao retransferir ou repetir ensaios intactos.
+  Preservar codigos/IDs/procedencia/inativos; nao adivinhar endereco, unidade,
+  conversao, empresa, saldo ou vinculo fiscal.
+- Registros do ERP novo: fonte Base44/snapshot/export/contexto confiavel e privado;
+  existencia da entidade ou exemplo no Git nao comprova recuperacao de registros.
+- Historicos de compras/vendas/documentos/itens/receber/pagar/cartoes/saldos:
+  preservar origem/vinculos; consulta e conciliacao nao geram efeitos operacionais.
+
+**Melhoria posterior**
+- Ondas avancadas de Comercial360/omnicanal e evolucoes do programa continuam no
+  Codespace, publicadas por versao/teste/aprovacao/retorno, sem contaminar a VPS.
+- Contatos completos jsonb/filha e outros aprimoramentos so podem ser posteriores
+  se nao forem dependencia do uso inicial; isso NAO adia a correcao de perda
+  silenciosa nem autoriza remover capacidades para reduzir o escopo.
+
+### Escopo inicial proposto para homologar, nao liberado
+Atendimento -> orcamento -> pedido; Cadastros Gerais e relatorios necessarios.
+Estoque/producao/entrega/financeiro/fiscal entram conforme a dependencia REAL do
+percurso escolhido, com criterio por operacao. Emissao, baixa, saldo disponivel,
+carga real e C360 avancado nao sao declarados homologados por estes testes.
+Validar em copia/fixture autorizada antes de propor disponibilizacao especifica.
+
+### Fontes, responsabilidade e prova deste lote
+- PLANO_GO_LIVE e PLANO_MELHORIA existentes foram repriorizados, sem novo manual.
+- Comparacao Cursor ja existente: docs/evidence/recuperacao-erp-integra-prioridades-20261026.txt
+  na353; inventario de paths NAO e homologacao funcional/visual. Referencia
+  erp-integra-novo HEAD consultado37c6f7d39e60736cbb862d122de9be23c06db8f6;
+  nao foi refeita a comparacao inteira nem alegada leitura de dados/chats ausentes.
+- A lista de evidencia docs/evidence/entrada-em-uso-lista-353-20261026.txt e fonte
+  historica desta consolidacao; esta secao e a unica lista de estado vigente.
+  Coordenacao direta353/6417549708 e6417638674, sem editar branch/reservas Cursor.
+- Codex: legado/compatibilidade/privilégio/preparacao/cargas por gate. Cursor:
+  candidata/recuperacao funcional-visual/Cadastros. Um escritor por checkout.
+- 82557565 foi somente documental. Delta atual: compensador044 candidato fora do
+  migrador, original044 preservada, dois testes adicionais sem afrouxar antigos.
+  Raiz2295PASS/0FAIL/0SKIP;backend545PASS/0FAIL/26SKIP; engine focado5PASS e
+  PostgreSQL17 real1PASS/0FAIL/0SKIP. audit/lint/typecheck/build/diff-check PASS;
+  type/build backend PASS. Node24.21.0; dados sinteticos; containers encerrados.
+  Nenhum runtime/rota/SQL/grant operacional alterado. Builds d86 anteriores
+  continuam com seu proprio pin, nao sao builds novos deste lote.
+- Compensador rejeita fingerprint NULL e preserva registros validos, rollback
+  integral na presenca de par incompleto, unicidade por tenant. Nao e migration
+  aplicada nem homologacao integrada de escrita. Sem renumerar045-049 privadas.
+- Automacao nao reativada: view nao expoe config/executor. Item nativo observado
+  Avisar ERP na nuvem em pausa nao comprova a identidade da tarefa Legado.
+
+### Compatibilidade minima ja conferida para o escopo inicial
+Leitura de contratos d86f06b6, sem chamada/escrita no banco. Catalogo anterior do
+recibo344 reutilizado; sua atualidade deve ser conferida na janela autorizada.
+
+| caminho canonico | evidencia/limite atual | gate antes de declarar operacao |
+|---|---|---|
+| Conferencia de Cliente | SELECT pontual LIMIT2, Auth/Data e V3/inversa ensaiados | login/contexto real e HML autorizada; nao e carga nem CRUD |
+| Criar/editar Cliente | postgresClienteRepository cria/atualiza clientes e vinculos cliente_empresas | escrita/RBAC/auditoria/codigo sequencial/constraints e reabertura no alvo; V3 nao concede DML |
+| Criar Pedido | postgresPedidoRepository.ts:77 SEMPRE referencia idempotency_key/payload_fingerprint; ausentes na captura anterior | incompatibilidade concreta desse contrato com aquele snapshot; avaliar delta044 e relacoes/escopo, NAO executar todas as migrations |
+| Importar Fornecedor | servico/repo existentes, PG17 real passou import/replay/concorrencia/reversao/RBAC/auditoria | precheck readonly confirma relacao ausente no alvo; DDL/grants/rotas sao gates; nao e CRUD manual homologado |
+
+Essa matriz qualifica os bloqueadores da lista unica acima; nao e um segundo
+plano ou autorizacao de mudanca. Dependencias de pedido (cliente_empresa,
+produto/unidade, pagamento e demais vinculos) nao podem ser inferidas por nome.
+
+### Proxima acao concreta
+Contatos encerrados tecnicamente (pareceres 6418918562/6419136043; fix e9d7ef15/e30cffcc).
+Fixture representativa PG17 (`6ba10732`) passou Auth/Grupo/Empresa/Cliente/Orcamento/Pedido
+e Fornecedor canonico (1PASS/0FAIL/0SKIP) — reutilizar, nao reimplementar.
+Helper CodigoField P1: fix tip `681c8ea4`/`84f3d401` aguarda parecer Codex.
+Pacote Cursor: ciclo comercial por camada, cadastros A/B, modalidade Codespace
+(403 neste token → runner). Pedido/044 compensador = Codex (fora do migrador).
+Envelope HML escrita/versao/privilegio/retorno. Decisao isolada HML/100 somente
+leitura continua registrada no recibo344; ela nao substitui HML integrada ou
+autorizacao de primeira carga real.
+
+## Historico anterior - provas mantidas, nao estado vigente de aprovacao
+
+
+## CURSOR — azul-claro roteiro + Pedido/044 explícito (2026-10-26 ~11:40 UTC-03:00)
+
+Mesma #353. Contatos tip `e9d7ef15` CI4797/4798 + bot review sem major issues;
+tip docs `9756f457` CI4799/4800. P1 guardas ENCERRADO. Contatos: ainda preferível
+contraprova humana Codex dos 2 casos (bot ≠ synthetic). Sem merge/deploy/carga.
+
+### Independente (operação inicial)
+- Azul-claro (`sky-*`) em CadastroClienteCompleto, FormaPagamentoForm,
+  GerenciarContatosClienteForm, PedidosTab — padrão já usado em cadastros.
+- `explainPedidoPersistenceError` (pedidoUiPolicy): destino sem 044 → toast
+  explícito em PedidoCanonicoPanel + conversão OrcamentosTab; rascunho não
+  declarado salvo. DDL 044 permanece Codex.
+- Evidência camadas: `docs/evidence/homologacao-fluxo-camadas-353-20261026.txt`
+
+Distinção: sintético/CI ≠ Codespace ≠ VPS. Lista vigente = topo deste STATUS.
+
+## CURSOR — CI tip `e9d7ef15` SUCCESS (2026-10-26 11:30 UTC-03:00)
+
+SHA `e9d7ef15` · CI **4797** (push) / **4798** (PR) 6/6 SUCCESS · #353 MERGEABLE/CLEAN vs base `82557565`.
+
+Contatos principal/metadata: implementado + testado CI; aguarda parecer Codex no SHA.
+Não demonstrado Codespace; não operacional VPS. Pedido/044 = Codex.
+P1 guardas: ENCERRADO. Sem merge/deploy/carga.
+
+## CURSOR — contatos P1/P2 + remarge base 82557565 (2026-10-26 ~11:20 UTC-03:00)
+
+Mesma #353. Base Codex `82557565` (entrada em uso / lista unica) incorporada;
+conflitos STATUS/HANDOFF resolvidos preservando ambos. Branch Codex intocada.
+
+### Contatos (parecer 6416585754) — implementado, aguarda revisao
+- `assessContatosScalarFidelity`: `principal_nao_representavel` quando ≥2 valores
+  e algum `principal:true` (ex. E-mail false + Telefone true) — sem escolher
+  principal por conveniencia; bloqueio antes do fetch.
+- Metadata com valor vazio (`nome`/`observacao`/`id`/`ordem`) → `metadata_sem_valor`
+  antes do early-return; rascunho vazio sem metadata permanece ok.
+- Mensagem explicita + rascunho preservado (toast onError; form nao limpa).
+- Testes: `tests/cliente-contatos-http-adapter.test.js` (casos Codex + HttpApiClient).
+- Evolucao jsonb/filha: gate separado; sem migration neste lote.
+
+### Estado (distincao obrigatoria)
+- Implementado no codigo da candidata: sim (este tip).
+- Testado em CI: apos push (nao declarar SUCCESS antecipado).
+- Demonstrado no Codespace: nao neste lote.
+- Operacional na VPS: NAO — sem merge/deploy/carga.
+
+### Lista
+Lista UNICA vigente = secao do topo (Codex). Evidencia historica:
+`docs/evidence/entrada-em-uso-lista-353-20261026.txt` (nao plano vigente).
+Roteiro HML: `docs/evidence/roteiro-homologacao-integrada-353-20261026.txt`.
+
+P1 guardas: ENCERRADO. Contatos: bloqueia ate parecer no novo SHA.
+Sem merge/deploy/carga. Reserva #344 Codex intocada.
+
+## Historico Cursor — tip #353 (antes do remarge 82557565)
+
+## DECISÃO PROPRIETÁRIO — ENTRADA EM USO (repriorização) (2026-10-26 10:11 UTC-03:00)
+
+Incorporada aos planos/HANDOFF existentes — **não** é plano paralelo nem
+substitui Regra-Mãe / AGENTS / gates de VPS·permissões·migrations·merge·deploy·carga.
+
+### Objetivo
+Versão estável na **VPS** para começar a trabalhar (cadastros + fluxo comercial
+inicial). Comercial360/omnicanal avançam no **Codespace** e só sobem após
+teste/aprovação. Não é necessário concluir todas as ondas omnicanal antes.
+
+### Cinco etapas (ordem)
+1. Homologação integrada (candidata #353 + login/grupo/RBAC/cadastros/fluxo)
+2. Primeira carga real controlada (≤100 clientes, gates + autorização)
+3. Cadastros em escala (lotes idempotentes; pendências com motivo)
+4. Operação inicial (atendimento→orçamento→pedido + deps explícitas)
+5. Históricos/saldos (consulta/conciliação ≠ efeito fiscal/financeiro automático)
+
+### Separação
+VPS=operação aprovada · Codespace=evolução · GitHub=código · dados=privado.
+
+### Papéis
+Codex=legado/compatibilidade/menor privilégio/disponibilização/carga.
+Cursor=candidata integrada/recuperação funcional-visual/Cadastros Gerais.
+
+### Lista única
+`docs/evidence/entrada-em-uso-lista-353-20261026.txt`
+(pronto / bloqueador / pendência dados / melhoria posterior).
+
+### Correção factual (histórico desatualizado)
+Cabeçalhos abaixo que ainda dizem “documento LIMIT 1” estão **superados** pelo
+tip Codex `776d81ae`/`d86f06b6` (LIMIT 2 + 409) já na candidata. Não reescrever
+o histórico inteiro; usar esta nota.
+
+Tip código `b6c8fd7f` CI4787/4788 · #353 MERGEABLE/CLEAN. P1 reopen aguarda Codex.
+Sem merge/deploy/carga neste lote documental.
+
+## CURSOR — CI tip `b6c8fd7f` SUCCESS (2026-10-26 09:53 UTC-03:00)
+
+SHA `b6c8fd7f4281d1b5979e7968ef1ba3f0336a3c28` · CI **4787** (push) / **4788** (PR)
+6/6 SUCCESS · PR MERGEABLE/CLEAN vs base `d86f06b6`.
+
+Lote: fidelidade contatos + remarge + agendamento RBAC + provas Forma/Setor.
+P1 reopen `a37b736f` **continua** aguardando Codex — este verde não fecha o P1.
+Codespace: capturas = runner Cursor até medir SHA.
+
+## CURSOR — fidelidade contatos + remarge d86f06b6 + agendamento (2026-10-26 09:47 UTC-03:00)
+
+Remarge base `d86f06b6` (legado LIMIT2/RLS) na #353; conflitos só docs.
+P1 `a37b736f`: pedido `@codex review` reiterado; CI ≠ fechamento.
+
+### Contatos fidelidade
+- Overflow `CONTATOS_SCALAR_OVERFLOW` se múltiplos/nome/obs/id/ordem/divergência.
+- `contatos_escalares` incomplete; não fabrica `contatos[]` na GET HTTP.
+- Evidência + evolução mínima jsonb/filha (gate separado).
+
+### Cadastros
+- Provas próprias FormaPagamentoForm + SetorAtividadeForm (boundId/dirty).
+
+### erp-integra
+- Agendamento fail-closed (`canScheduleRelatorios`) no existente.
+
+### Comercial360
+- Entrega avaliação: `docs/vps/evidence/comercial360-entrega-avaliacao-353-20261026.txt`
+- Capturas = runner Cursor até medir SHA Codespace.
+
+Sem merge/deploy/carga. Reserva #344 Codex intocada.
+
+## CURSOR — remarge Codex `d86f06b6` (identidade legada/RLS) na #353 (2026-10-26 09:41 UTC-03:00)
+
+Base consolidação avançou `776d81ae` → `d86f06b6` (LIMIT2 legado + teste RLS restrito).
+Incorporado por merge na mesma #353; conflitos só STATUS/HANDOFF (ambos lados).
+P1 reopen `a37b736f` hunks preservados; CI verde ≠ fechamento P1.
+#344 carga/menor privilégio/proposta HML: reserva Codex intocada.
+Sem editar branch Codex. Sem merge/deploy.
+
+## CURSOR — CI tip `6d76d0b5` SUCCESS (2026-10-26 09:11 UTC-03:00)
+
+SHA `6d76d0b5fa44f75199fd4e4e157bb05af22c96cb` · CI **4781** (push) / **4782** (PR)
+6/6 SUCCESS (frontend×2 · backend×2 · compose×2).
+
+Correção typecheck `withHydratedContatos` sobre lote contatos/exportacao.
+P1 reopen (`a37b736f` / CI4777·4778) **continua** aguardando parecer Codex —
+CI deste tip não fecha o P1.
+
+Codespace: capturas = runner Cursor até medir SHA servido.
+
+## CURSOR — contatos HTTP escalares + Fornecedor camadas + exportacao RBAC (2026-10-26 08:57 UTC-03:00)
+
+Tip anterior P1: `a37b736f` (CI4777/4778 SUCCESS). Pedido `@codex review` no P1
+publicado; CI verde ≠ fechamento P1.
+
+### Contatos HTTP (contrato MASTER existente)
+- `clienteHttpPayload`: projeta `contatos[]` → `email`/`telefone`/`celular`;
+  hidrata na leitura; BFF `.strict` continua rejeitando `contatos` cru.
+- `httpApiClient` Cliente get/list/filter/create/update hidratam quando há escalares.
+- CANAL: hunks autorizados em `consolidation81Remainder` (hash baseline preservado).
+- Testes: `cliente-contatos-http-adapter`, RBAC UI, server add/edit/remove/reopen +
+  tenant/ator ausente; `cliente-contatos-rbac-update` 6 PASS.
+
+### Fornecedor schema
+- Evidência: `docs/evidence/fornecedor-schema-camadas-353-20261026.txt`
+- Base44 UI + types/service/repo EXISTEM; migration ops AUSENTE; candidate SQL
+  fora de `server/migrations`. Sem entidade paralela / sem publicar migration.
+
+### Codespace
+- Handoff atualizado: capturas = runner Cursor até medir SHA servido.
+- Sem troca de branch / sem sobrescrever checkout Codex.
+
+### erp-integra (sem recomeçar matriz)
+- Relatorios **exportacao**: trigger+conteúdo fail-closed via `canExportRelatorios`
+  (data-permission sozinho insuficiente). secureTab inclui exportacao.
+- Teste grant/deny em `secure-report-behavior.test.js`.
+
+Sem merge/deploy/carga/micro-PR useConfirm. Reserva documento/#344 = Codex.
+
+## CURSOR — P1 publication reopen guards (Codex contraprova) (2026-10-26)
+
+Parecer Codex: tip `e670c1a2`/`0bd89333` — dois guards aceitavam remoção de
+assertion do caso reopen após recalcular `beforeSha`. Causa: `notEqual+continue`
+sem delta fixo.
+
+Correção: `tests/helpers/publicationReopenAuthorizedDelta.js` + guards em
+`publication-baseline-contracts.test.js` — beforeSha histórico preservado,
+conteúdo atual pinado, restore exige delta exato. Contraprovas executam as
+guardas reais (remoção+rehash, mutação interna, omissão, repetição, baseline).
+CI verde **não** encerra este P1 — aguarda revisão Codex no tip. Sem merge/deploy.
+
+## CURSOR — remarge Codex `776d81ae` (documento) na #353 (2026-10-26)
+
+Tip Cursor `bb341ae3` CI frontend+backend+compose **SUCCESS**. Base consolidação
+avançou para `776d81ae` (documento ambíguo LIMIT 2 + 409) — **incorporado por
+merge**, sem reimplementar. Conflitos só STATUS/HANDOFF (ambos lados).
+Legado #344 restante (carga/menor privilégio) permanece Codex. Sem merge/deploy.
+
+## CURSOR — #353 pacotes 1–4 pós-verde 0bd89333 (2026-10-26)
+
+Checkpoint verde: `0bd89333` CI4770/4771 SUCCESS. Continuidade na mesma #353.
+
+1. **PACOTE1 cadastros**: provas comportamentais reais
+   `tests/cadastros-reopen-cliente-fornecedor-completo-behavioral.test.js`
+   (Cliente/Fornecedor Completo: load/edit/updated_date/switch-reject/accept/save boundId).
+   Contatos: salvar com contexto capturado + resposta tardia; lacuna HTTP
+   `contatos` rejeitado pelo schema strict (UI ≠ autorização backend) registrada no teste.
+2. **PACOTE2 visual**: perguntas
+   `docs/vps/evidence/comercial360-proposta-353-avaliacao-visual-perguntas-20261026.txt`
+   + handoff Codespace
+   `docs/vps/evidence/codespace-handoff-candidata353-20261026.txt`
+   (não declarar prévia remota sem SHA medido).
+3. **PACOTE3 recuperação**: wiring `matriz` em `Relatorios.jsx` (trigger+RBAC+secureTab)
+   no componente canônico `MatrizAdequacaoFase3`; boundary #348 com hunks autorizados.
+4. **PACOTE4 registros**: investigação sem inventar dados —
+   `docs/evidence/registros-auxiliares-investigacao-353-20261026.txt`
+   (Fornecedor schema ausente; staging privado não montado neste runner).
+
+Documento ambíguo: tip Codex `776d81ae` incorporado (não duplicado). #344 carga
+permanece Codex. Sem micro-PRs useConfirm. Sem merge/deploy.
+
+## CURSOR — #353 CI verde e670c1a2 + evidência Comercial360 runner (2026-10-26)
+
+Candidata MERGEABLE/CLEAN; frontend+backend+compose SUCCESS.
+Capturas runner tip `e670c1a2` em `docs/evidence/comercial360-e670c1a2/`.
+Codespace **não** medido. Ambiguidade documento: histórico LIMIT 1 — **superado** por tip `776d81ae`/`d86f06b6` (LIMIT 2 + 409) na candidata.
+Sem merge/deploy. Sem micro-PRs useConfirm.
+
+## CURSOR — remarge 118e8438 + contatos scope + coorte Dept/Unidade (2026-10-26)
+
+1. Publication tip `118e8438` CI frontend **SUCCESS** (run push) incorporado na #353.
+   CANAL: tip não reescreve manifesto; único delta autorizado = reopen consolidacao P1.
+2. Ambiguidade documento: `findByDocumento` histórico LIMIT 1 — **superado** (`LIMIT 2` + 409 em `d86f06b6`); não duplicar.
+3. Contatos/Endereços: `assertScopeCurrent` no componente real + pai ClienteCompleto;
+   testes UI com troca de sessão (não cópia mutationFn).
+4. Coorte: Departamento + UnidadeMedida switch-reject boundId PASS.
+5. Comercial360: roteiro atualizado ao tip; Codespace não medido neste runner.
+
+Sem micro-PRs useConfirm. Sem merge/deploy.
+
+## CURSOR — remarge publication `118e8438` na #353 (2026-10-26)
+
+Revisão: hunk `clienteConferenciaRemainder` + counterproof channel + manifesto
+18 cases byte-idêntico a `90f0a315`. CI do tip `118e8438` ainda em andamento no
+checkpoint do merge — **não** atribuir verde de tip anterior (`79d002a3` FAIL).
+Ambiguidade por documento: **não** duplicada; dependência Codex se ainda não
+publicada. Conflitos STATUS/HANDOFF: ambos lados preservados. Sem force.
+
+## CURSOR — pacote cadastros Banco/Cargo + triagem CI + recuperação (2026-10-26)
+
+1. **CI HEAD `836a6d2d`**: logs confirmam **somente** 5 FAILs publication
+   (1851/1856/1861/1862/1863). Falhas próprias neste HEAD = 0.
+2. **Contraprovas Banco/Cargo** (não generalizar Representante): render,
+   dirty refresh, switch-reject+boundId — `tests/cadastros-reopen-banco-cargo-behavioral.test.js` PASS.
+3. **Publication #342**: tip ainda `79d002a3`; hunk antigo. Sem remarge até SHA Codex.
+4. **Comercial360**: roteiro `docs/vps/evidence/comercial360-proposta-353-roteiro-visual-20261026.txt`
+   por SHA tip; Codespace **não** comprovado neste turno.
+5. **Recuperação erp-integra**: matriz prioridades
+   `docs/evidence/recuperacao-erp-integra-prioridades-20261026.txt` — Relatórios
+   tabs já no código; páginas Documentacao/Onboarding/OAuth exigem histórico;
+   não inventar registros.
+
+Sem novas micro-PRs useConfirm. Sem merge/deploy. Sem candidata paralela.
+
+## CURSOR — baselines stage48/49 alinhados ao boundId coorte (2026-10-25)
+
+CI `ad145690` falhou além de publication: stage48 Cliente/Fornecedor, stage49
+FormaPagamentoForm, cobertura entityId Fornecedor e eval `fornecedorBoundId`.
+Hashes e bindings atualizados de propósito (P1 switch-reject). Sem tocar
+publication. Sem merge/deploy.
+
+## CURSOR — P1 boundId na coorte Banco/Cargo/+ (candidata #353) (2026-10-25)
+
+Coorte reopen que descartava `boundId` no save (Banco, Cargo, Departamento,
+FormaPagamento, UnidadeMedida, GrupoProduto, Setor, CentroCusto, PlanoContas,
+Turno, Veiculo, Motorista, TipoDespesa, Cliente/Fornecedor Completo) agora
+captura e vincula salvamento/código ao `boundId`. Contraprova estática coorte
+PASS. Sem merge/deploy. Publication hunk permanece com Codex.
+
+## CURSOR — Consolidação: pausa micro-PRs useConfirm; libera publication (2026-10-25)
+
+Prioridade do proprietário: fechar integração antes de ampliar microalterações.
+
+1. **Publication liberado a Codex** (handoff 6403101757): hunk EXATO em
+   `tests/publication-baseline-contracts.test.js` (#350/6403873982, #342/6403874205).
+   Cursor sem edição ativa nesse trecho. Um escritor: Codex na #342.
+2. **Candidata #353** tip `01b2cc1c` (ancestral `0a67aa4b` + #351 `d61b5922`).
+   P1 reopen 18/18 + consolidação 8/8 PASS local. CI frontend vermelho herdado
+   (publication-baseline) — aguarda tip Codex publication.
+3. **useConfirm**: inventário #354–#396 (+ branch `estoque-importadorplanilha-confirm`
+   sem PR nova). Sem novas micro-PRs até #353 verde com base corrigida.
+   Remarge coeso na candidata existente após publication.
+
+Sem merge/deploy. Sem nova candidata paralela.
+
+## CURSOR — remarge consolidação `15c49276` em #351 (2026-10-25)
+
+Incorpora tip Codex CANAL02–04 (`conferencia-legado`) preservando P1 reopen
+Cursor. Conflitos só STATUS/HANDOFF — ambos lados mantidos. Sem merge/deploy.
+
+## #351 — typecheck: clearOnNull JSDoc + deleteMutation tipado (Cursor, 2026-10-25)
+
+CI frontend falhou no tip `899be582`: TS2353 `clearOnNull` ausente no JSDoc do
+hook; TS2345 `mutate(string)` vs void em Representante deleteMutation.
+Corrigido + baseline stage48 Representante. Sem merge/deploy.
+
+## #351 — lint: remove eslint-disable inválido no hook reopen (Cursor, 2026-10-25)
+
+CI frontend falhou em tips anteriores: `no-undef` (imports — já corrigido) e
+regra `react-hooks/exhaustive-deps — identidade canônica` inválida no
+disable-line. Removido o disable malformado. Sem merge/deploy.
+
+## #351 — imports do hook reopen na coorte simples (Cursor, 2026-10-25)
+
+14 forms da coorte chamavam `useCadastroReopenOnIdentity` sem import
+(ReferenceError em runtime). Imports adicionados; baselines FormaPagamento
+atualizados. Sem mudança de comportamento além de tornar o hook resolvível.
+
+## #351 — P1 switch-reject: identidade de mutação alinhada (Cursor, 2026-10-25)
+
+Achado Codex em `useCadastroReopenOnIdentity`: ao recusar troca A→B o rascunho
+de A era preservado, mas save/delete ainda usavam props de B. Correção: hook
+expõe `boundId`/`identityMismatch` + `onRejectSwitch`; Completo/Cliente/
+Fornecedor/FormaPagamento/Representante mutam pela identidade do rascunho.
+Contraprova: submit após reject → `id=r1` (não r2). Baselines stage48/49
+atualizados de propósito. Incorporar na candidata #353. Sem merge/deploy.
+CANAL-02 liberado; CANAL-03/04 aguardam SHA publicado na consolidação.
+
+## #351 — CI stage48/49 + publication alinhados ao P1 (Cursor, 2026-10-25)
+
+Baselines stage48/49 e publication do reopen atualizados de propósito para o
+hook canônico `useCadastroReopenOnIdentity` (não mascarar defeito). Contraprova
+P1 permanece PASS. Handoff CANAL-02 liberado ao Codex em #350 (httpApiClient/
+testes/consumidor). Sem merge/deploy.
+
+## #352 — HTTP PATCH prova deny real (Cursor, 2026-10-25)
+
+Tip sobre consolidação `90f0a315`. Serviço + **HTTP** PATCH `/api/v1/clientes/:id`:
+viewer → 403 PERMISSION_DENIED e GET inalterado; editor muta; `contatos` no body → 400.
+UI: botões gated + algoritmo principal único. Sem alegar só botão oculto.
+Incorporar na candidata #353. Sem merge/deploy. #344 Codex intocada.
+
+## #351 — P1 rascunho sujo vs updated_date CORRIGIDO (Cursor, 2026-10-25)
+
+Executor: Cursor Cloud Agent runner (não Codespace). Base consolidação `90f0a315`.
+Reprodução pré-fix em tip `4980448d`: expected='Rascunho local nao salvo' actual='Alteracao externa' (P1 FAIL).
+Correção: política canônica `cadastroReopenPolicy` + hook `useCadastroReopenOnIdentity` na coorte #351
+(Representante/FormaPagamento/Cliente/Fornecedor/cadastros simples) e Regiao com decideCadastroReopen.
+Comportamento: fundo mesmo ID não sobrescreve dirty sem confirmação; limpo aplica; troca de registro
+confirma alterações pendentes; eco do próprio save (form==servidor) aplica sem prompt.
+Contraprova: `tests/cadastros-reopen-runtime-behavioral.test.js` P1 PASS (28/28 no lote reopen).
+Candidata #353 deve incorporar este tip — sem integração paralela. Sem merge/deploy.
+Reserva #344 Codex intocada.
+
+## #351 — P1 rascunho sujo vs updated_date CORRIGIDO (Cursor, 2026-10-25)
+
+Executor: Cursor Cloud Agent runner (não Codespace). Base consolidação `90f0a315`.
+Reprodução pré-fix em tip `4980448d`: expected='Rascunho local nao salvo' actual='Alteracao externa' (P1 FAIL).
+Correção: política canônica `cadastroReopenPolicy` + hook `useCadastroReopenOnIdentity` na coorte #351
+(Representante/FormaPagamento/Cliente/Fornecedor/cadastros simples) e Regiao com decideCadastroReopen.
+Comportamento: fundo mesmo ID não sobrescreve dirty sem confirmação; limpo aplica; troca de registro
+confirma alterações pendentes; eco do próprio save (form==servidor) aplica sem prompt.
+Contraprova: `tests/cadastros-reopen-runtime-behavioral.test.js` P1 PASS (28/28 no lote reopen).
+Candidata #353 deve incorporar este tip — sem integração paralela. Sem merge/deploy.
+Reserva #344 Codex intocada.
+
+## #344 - candidata de decisao: schema, RLS e builds (2026-10-26)
+
+Mesmo Codespace/branch, base776d81ae/CI4772-4773, sem Cursor concorrente. Novo delta real: lookup canonico por origem/codigo agora LIMIT2, mantendo409 em ambiguidade sem depender do indice043. Teste PG17 restrito2PASS/0FAIL/0SKIP, IdP HTTP sintetico e runtime Auth/Dados existentes;55colunas do canal coincidem por hash com o destino. Negados cross-tenant/Empresa/revogacao/escritas e identidade GUC forjada por terceira role.042 integra+5policies aditivas testadas em fixture, nenhum grant/role/journal/SQL operacional alterado.
+Backend570TOTAL/544PASS/0FAIL/26SKIP; ultimo reforco da fixture validado focadamente2PASS. Contrato importador4PASS; audit/lint/typecheck/diff e build backend exit0. Frontend2295PASS/browser5 anteriores reutilizados; CI final e IDs efetivamente construidos por SHA no recibo342/344. Aviso preexistente de lint EntregasListagem170, nao tocado.
+Sete pendencias investigadas:036/037/040/041/044 nao sao dependencias da leitura;042 exige bootstrap restrito;043 nao necessaria para ler clientes com campos009/ambiguidade limitada, mas afeta futuras escritas. Efeitos ausentes comprovados;26journals sem hash NAO provam conteudo aplicado.045-049 privadas preservadas fora do automatico. Nao usar migrador pending-all para o canal.
+Backup/restore recuperavel REUTILIZADO e hash/permissoes rechecados; frescor para futura janela nao presume ausencia de escritas alheias. Proposta privada hash2d604847... exige aprovacao especifica de2principais dedicados, SELECT/042/5policies, configuracao/digests e HML somente leitura sem substituir o ERP atual. Nao reutilizar identidades Supabase. Detalhe/papeis/rollback/coorte<=100 no HANDOFF existente; sem deploy/carga/merge ou novo custo.
+Cursor353 bb341ae3 conserva P1 demonstrado por contraprova atualizada6413521678. Automacao nativa so abriu card sem estado verificavel; nao ativada/duplicada. Originais/captura/staging intactos.
+## #344 - ambiguidade documental e canal isolado (2026-10-26)
+
+Mesmo Codespace/branch, base118e8438, sem editar Cursor. Publication118 publicado e CI4764/4765 seis jobs SUCCESS/frontend2295PASS. Novo repositorio canonico limita2 resultados por documento/Grupo e bloqueia duplicidade409 sem escolher/fundir/fallback; memoria equivalente. Contraprova2FAIL antes/2PASS depois; novos+HTTP8PASS. Consumidor existente->adapter->HTTP->servico testados em navegador sintetico:5PASS, inclusive100/101, nenhum eager/list-query e sessao encerrada descarta resposta tardia. Sem dados/credenciais reais, novas permissoes ou escrita de negocio.
+Fechamento: raiz2295PASS/0FAIL/0SKIP, audit/lint/typecheck/build/diff exit0; backend568TOTAL/543PASS/0FAIL/25SKIP, typecheck/build exit0. Skips nao sao aprovacao; servidor PostgreSQL do teste novo e CI final pelo novo SHA no recibo342/344, sem inferir prova a partir de PGlite.
+Precheck RO do destino efetivo:26journals,176colunas,34tabelas;26/33nomes SQL coincidem,7ausentes e journal sem hash de conteudo. Role efetiva BYPASSRLS: gate menor privilegio aberto. Backup/restauracao autorizados concluido: dump privado1164962bytes, hash/permissoes verificados,26journals/34tabelas recuperados integralmente em PostgreSQL17 temporario sem rede/portas/volumesERP; container removido e dump intacto. Primeiro teste de restore exigiu preload pg_net; corrigido somente no isolamento, falha preservada, sem repetir backup. Nao e reconciliacao de registros vivos nem liberacao operacional.
+Cursor353 tip0bd89333 conserva P1 de e670c1a2: dois guards aceitam assertion removida/re-hash no caso autorizado; parecer publicado sem editar a branch. Proxima entrega concreta: fechar CI do novo SHA, disponibilizacao coordenada API+web e resolver menor privilegio/schema/appliedSQL antes da conferencia privada<=100 e proposta de carga. Nenhuma carga/deploy/merge/grant/migration operacional. Automacao nativa sem retorno legivel de estado; nao reativada/duplicada, trava atual exclusiva. Detalhes/comandos/gates no HANDOFF existente.
+
+## #344 — reparo publication autorizado (2026-10-26)
+
+Base79d002a3, mesmo Codespace/branch. Handoff exclusivo Cursor confirmado; hunk6403101757 aplicado agora, sem aguardar nova liberacao. Preservados18golden hashes e manifesto byte-identico; verificacao bruta de HEAD/referencias e comparacao integral anterior. Foco23PASS; contraprovas adicionais rejeitam mutacoes dentro/fora e hunks repetidos. Resultados finais/CI pelo SHA no recibo GitHub; nao presumir CI verde antes do resultado.
+Nenhuma alteracao de runtime/banco/branches Cursor neste lote. Seguem ambiguidade documental, homologacao isolada e gates operacionais separados; fila detalhada em HANDOFF. Historico de espera abaixo foi superado pela liberacao explicita.
+
+
+## #344 — fechamento prioritário CANAL / homologação (2026-10-25)
+
+Executor retomado no mesmo Codespace; local/remoto0a67aa4b e checkout limpo.
+CI4710/run40235048133: backend e composição SUCCESS; frontend2280PASS,
+5FAIL,0SKIP. Logs atuais confirmam somente os cinco contratos publication
+já identificados. Não há CI global verde nem CANAL05 concluído.
+Coordenação direta350/6403876914 e6403907743: Codex proposto como único
+responsável pelo hunk publication6403101757 na342; liberação explícita
+Cursor ainda pendente. Não editar branches Cursor ou suas reservas.
+
+Fila executável (sem repetir pilotos, login, IDs ou transferências):
+- CANAL05 / Codex: após handoff, validar hash do alvo contra checkpoint,
+  aplicar proposta existente, manter18golden hashes/references/manifesto
+  byte-idênticos; checks sobre source bruto permanecem antes da reversão.
+  Contraprovas devem recusar mutação dentro/fora dos hunks reconhecidos.
+  Conclusão: testes focados + fechamento obrigatório + SHA remoto + CIverde
+  por esse SHA + revisão independente solicitada (solicitação não aprova).
+- Homologação isolada / Codex: depende da CIverde acima. Usar a candidata342
+  existente, registrar git rev-parse HEAD, hash do build e versão efetivamente
+  servida. Sessão Supabase exclusivamente de teste, perfil/Grupo sintéticos
+  existentes no isolamento; nenhum token transportado para worker. Reutilizar
+  server/tests/cliente-conferencia-http.test.ts e tests/http-api-client.test.js
+  como pré-prova de transporte sintético; eles NÃO provam login real no HML.
+  Na UI isolada abrir /comercial?conferencia_legado=1 antes de qualquer hook
+  amplo; conferir 1 e100 identidades, 101→422/zero consultas; até200 lookups
+  exatos; documento inválido/chave extra→422; token ausente/expirado→401;
+  perfil/Grupo alheio e falta de visualizar/importar explícitos→403 antes
+  da leitura; revogação/troca de sessão/contexto e resposta tardia cancelam
+  exibição; saída só indice/id/codigo/ativo; nenhum audit/escrita de negócio.
+  Registrar versão, resultados e zero escritas; falha bloqueia homologação.
+- Disponibilização real / gate separado, ainda NÃO autorizada: parecer por
+  SHA fechado; comparar esse SHA ao código/build API+web do destino efetivo;
+  comprovar schema/journals043–049 e SELECT/repositórios/RBAC compatíveis sem
+  grants/migrations; backup recuperável atual do destino e restauração em
+  isolamento; imagens anteriores API+web fixadas por digest e reversão testada.
+  Reutilizar scripts/vps/create-pre-gate-e-backup.sh,
+  verify-pre-gate-e-backup-meta.sh, validate-isolated-restore.sh e
+  scripts/deploy/comercial360-canary-from-checkout.sh/comercial360-rollback.sh
+  SOMENTE após conferir contrato/escopo e autorização específica; listar um
+  script não prova execução nem adequação automática ao destino. Este delta
+  exige API+web do mesmo SHA; não só frontend nem proxy privilegiado. Nenhuma
+  alteração de schema/grants/flags é parte implícita do canal.
+  Autorização deverá fixar destino, SHA/digests, janela, responsável e plano
+  de reversão; conferência real só depois desse gate e sessão canônica válida.
+- Primeira conferência / Codex+proprietário: leitura privada da coorte aprovada
+  de até100 no GrupoCPA, sem consulta ampla, importação ou promoção de inativos.
+  Depende da disponibilização autorizada e homologada; resultados fora do Git.
+
+Automação mesma revis-o-e-acesso-erp-45-e-46; estado nativo conferido no recibo
+GitHub do pacote, não inferido deste Markdown. Trava exclusiva/checkpoint
+privado e um escritor por checkout; sem disparo duplicado ou polling vazio.
+
+## #344 — CANAL02–05: conferência canônica dentro da aplicação (2026-10-25)
+
+Base90f0a315, reserva6402384454/6402435480; handoff Cursor350/6402408181.
+Mesmo Codespace/branch Codex; trava exclusiva própria, sem editar branch Cursor.
+POST específico /api/v1/clientes/conferencia-legado evolui o serviço/rotas de
+clientes existentes: sessão Supabase verificada no middleware, perfil/Grupo e
+visualizar+importar explícitos antes/depois de cada leitura. Body estrito,
+1–100 identidades, até200 lookups exatos por documento/identidade legada;
+rejeita vazios/inválidos/chaves extras/Empresa/contexto alterado. Sem listagem
+ampla, proxy privilegiado, token para worker, grant, importação ou audit de negócio.
+Resposta mínima índice/ID/código/ativo; inativo não é restaurado/promovido.
+Helper clienteConferencia separa a política do ClienteService já extenso,
+reutilizando validadores/repositórios/RBAC, sem módulo paralelo.
+
+Sessão malformada é negada antes do fetch e de headers legados; contraprova
+com primitivas/objeto sintéticos falhou antes do hardening e passa após.
+Adapter preserva documento/codigo e rejeita filtro inválido antes de fetch;
+conferência captura sessão/Grupo/perfil e descarta retorno tardio/troca/revogação.
+Consumidor embutido no fluxo ClientesTab, auxiliar somente formulário/estado.
+Entrada /comercial?conferencia_legado=1 desvia ANTES dos hooks da página geral,
+sem montar consultas amplas/efeitos de Comercial ou Visualizador. Não grava
+coorte em storage; limpa resultados ao trocar contexto; sem fallback amplo.
+
+Contraprovas falharam antes; transporte sintético adapter→HTTP→serviço e
+consumidor/wrapper reais:39PASS0FAIL0SKIP frontend,6PASS0FAIL0SKIP backend.
+Cobertos filtros descartados, limite100/200, permissão, cross-tenant, sessão
+inválida, revogação, resposta tardia/abortada, projeção mínima e ausência de
+escrita via ports de leitura/audit que falha se chamado. Typechecks frontend
++backend, audit:baseline, lint e build PASS; configs e hashes anteriores preservados.
+Contratos antigos desfazem somente os hunks CANAL registrados e ainda exigem
+hash integral anterior;12PASS incluem negativas dentro/fora dos hunks.
+Suítes completas locais tentadas: timeouts180s e600s, não declaradas verdes.
+Invocação controlada inicial fora de server não resolveu tsx; cwd corrigido,
+sem esconder falha. Fechamento completo exige CI por SHA no recibo344/342.
+
+CI4654/4655 do15c49276: falhas em contratos estáticos, não aprovação.
+Enumeração backend corrigida preservando integralmente métodos antigos;
+normalização do teste publication aguarda hunk coordenado, sem alterar
+manifesto/18hashes. Nenhum erro de CI foi tratado como verde.
+
+Fila: CANAL02 coordenado; CANAL03/04 implementados; CANAL05 CI/revisão por SHA.
+Implantação/uso de dados reais permanecem gate SEPARADO: compatibilidade de
+schema/journals043–049, menor privilégio, backup/restore/reversão e autorização
+específica.0clientes operacionais lidos/selecionados,0escritas operacionais.
+P1 da3513fda5f31 revisado isoladamente8PASS; parecer351/6402496862.
+Candidata35368c1b429 incorpora esse fix por ancestralidade; sem integração paralela.
+Automação mesma fila, exclusividade/checkpoint; estado final e liberação de
+reservas serão registrados no recibo de fechamento. Sem merge/deploy/migration.
 ## #344 — Grupo CPA: vínculos e permissões localizados; sessão ainda requerida (2026-10-25)
 
 Retomada6400924274, basea31d83fd, mesmo Codespace/branch Codex, checkout
@@ -114,11 +3968,50 @@ carga, merge ou deploy. SHA final/testes/CI no recibo344/342; após publicar
 seguir fila A/B/C, inclusive achado cruzado351/6399259991, sem encerrar só
 porque este commit terminou.
 
+## CURSOR — #350 remarge consolidação `5d1fa0fc` (2026-11-23)
+
+| Item | Valor |
+|---|---|
+| base merge | `codex/consolidacao-infra-20261017` tip **`5d1fa0fc`** |
+| conflitos | STATUS/HANDOFF — ambos lados preservados (histórico Cursor + consolidação) |
+| runtime | `OrcamentosTab.jsx` / testes orçamento auto-merged sem marcadores |
+| fora | branch Codex intocada · sem force-push · sem merge/deploy |
+| nota | só docs conflitaram; CI/homologação visual permanecem gates separados |
+
 ## CURSOR — #350 merge consolidação `0c18d995` (2026-10-25)
 
 | Item | Valor |
 |---|---|
 | base merge | `codex/consolidacao-infra-20261017` tip **`0c18d995`** |
+| conflitos | STATUS/HANDOFF — Cursor+#344 preservados |
+| fora | branch Codex intocada · sem force-push · sem merge/deploy |
+| nota | descrições CLEAN anteriores ficaram desatualizadas após avanço da base |
+
+## CURSOR — Pacote B validação comportamental na integração 350→351→352 (2026-10-25)
+
+| Item | Valor |
+|---|---|
+| tip integração | `7a9d2bea` |
+| Comercial | proposal+orcamento 25 PASS (painéis/rascunho/duplo clique/proposta) |
+| Cadastros reopen | runtime behavioral Representante 3 PASS (id/updated_date/dirty) |
+| Contatos/endereços | UI fail-closed + mutationFn + serviço Cliente 2 PASS (403 editar; schema rejeita contatos) |
+| fora | branch Codex intocada · aprovação visual ampla pendente |
+
+## CURSOR — integração sequencial 350→351→352 sobre `8e68484b` (2026-10-25)
+
+| Item | Valor |
+|---|---|
+| base | consolidação **`8e68484b`** |
+| ordem | PR350 (Comercial prévia) → PR351 (cadastros reopen) → PR352 (contatos/endereços RBAC) |
+| conflitos docs | resolvidos preservando Cursor+#344 |
+| fora | branch Codex intocada · sem force-push · sem merge/deploy |
+| CI | tip desta candidata — confirmar por SHA antes de CLEAN |
+
+## CURSOR — #350 merge consolidação `8e68484b` (2026-10-25)
+
+| Item | Valor |
+|---|---|
+| base merge | `codex/consolidacao-infra-20261017` tip **`8e68484b`** |
 | conflitos | STATUS/HANDOFF — Cursor+#344 preservados |
 | fora | branch Codex intocada · sem force-push · sem merge/deploy |
 | nota | descrições CLEAN anteriores ficaram desatualizadas após avanço da base |

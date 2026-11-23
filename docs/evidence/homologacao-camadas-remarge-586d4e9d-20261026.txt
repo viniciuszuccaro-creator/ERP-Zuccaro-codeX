@@ -1,0 +1,33 @@
+HOMOLOGAÇÃO POR CAMADA — tip pós-remarge 586d4e9d (#353)
+========================================================
+Modalidade: **runner Cursor** `/workspace` (Codespace API 403 neste token).
+Base incorporada: #342 tip `7ae5bcd9` (schema-candidate pedido_idempotency_pair).
+Capturas deste agente ≠ prova de SHA servido no Codespace xylophone.
+
+| Camada | Resultado neste tip | Nota |
+|--------|---------------------|------|
+| Componente contatos | PASS_SINT 20/20 | overflow principal+metadata; draft intacto; fetch=0 |
+| Adapter HTTP Cliente | PASS_SINT | HttpApiClient real nos testes; ≠ IdP Codespace |
+| Orçamento componente | PASS_SINT (suite previa) | save/retry/escopo; sem PG destino |
+| Pedido UI explain 044 | PASS_SINT | honestidade; INSERT real = BLOQ_SCHEMA até 044+par |
+| Schema-candidate 044 | presente no tip (Codex) | fora do migrador; Cursor não aplica DDL |
+| Cadastros codigo TabelaPreco | PASS_SINT | classe A: UI passa a expor codigo+ID |
+| Navegador IdP | N/A | runner sem Codespace |
+| PostgreSQL destino | N/A | sem escrita; #344 leitura ≠ CRUD |
+| VPS operacional | NÃO | gates #344 intactos |
+
+Pedido / migration 044
+----------------------
+Mensagem explainPedidoPersistenceError e candidato
+`server/schema-candidates/pedido_idempotency_pair.sql` **não** comprovam
+Pedido persistido→reaberto. Dependência exata: colunas idempotency_key +
+payload_fingerprint (+ CHECK de par no candidato). Dono: Codex / gate DDL.
+
+Contatos — SHA fix apresentado ao Codex
+---------------------------------------
+- Fix overflow: `e9d7ef15` (adapter/payload)
+- Form confirmado: `e30cffcc` (pareceres 6418918562 / 6419136043 · 6PASS)
+- Tip candidata pós-remarge: `586d4e9d` (contém o fix; remarge não altera adapter)
+
+Roteiro completo: docs/evidence/roteiro-homologacao-integrada-353-20261026.txt
+Codespace handoff: docs/vps/evidence/codespace-handoff-candidata353-20261026.txt

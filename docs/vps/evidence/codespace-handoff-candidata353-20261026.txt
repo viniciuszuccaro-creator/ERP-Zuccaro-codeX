@@ -1,0 +1,44 @@
+Handoff Codespace — validar EXATAMENTE a candidata #353
+=======================================================
+Atualizado 2026-10-26 (America/Sao_Paulo) · tip remoto alvo: ≥661ae01d
+(CI SUCCESS docs FF; código ≥093c8e08). Contatos: e9d7ef15/e30cffcc (não
+reabrir). Pacote 2: Marca reopen + matriz início de uso. Modalidade Cursor:
+Codespace API 403 — capturas = **runner Cursor**. Pedido: janela exclusiva
+Codex no xylophone existente (não criar outro ambiente).
+
+Objetivo: medir o SHA servido no Codespace sem trocar branch Codex nem
+sobrescrever WIP. Sem medição = manter rótulo **runner Cursor**.
+
+Reserva
+- Checkout Codex (#344 / consolidacao): NÃO reset / NÃO checkout destrutivo.
+- Um escritor por checkout; janela 15–20 min sem escritor concorrente.
+- Sem merge/deploy/carga neste handoff.
+
+Pré-flight (Cursor runner — já medido)
+- Branch: cursor/integracao-350-351-352-392b
+- Tip remoto a validar: tip atual #353 (pós-remarge 7ae5bcd9; ≥586d4e9d)
+- Capturas deste agente: **runner Cursor** `/workspace` — NÃO Codespace.
+
+Janela com Codex (GitHub #353)
+1. Codex confirma `git status -sb` limpo OU lista arquivos reservados.
+2. Somente fetch + fast-forward se tip remoto for ancestral direto e tree limpo;
+   senão worktree/SHA acordado — NÃO sobrescrever WIP.
+3. Medir e comentar na #353:
+```bash
+git fetch origin cursor/integracao-350-351-352-392b
+echo HEAD=$(git rev-parse --short HEAD)
+echo TIP=$(git rev-parse --short origin/cursor/integracao-350-351-352-392b)
+# conferir processo que serve a SPA; registrar URL privada + SHA
+```
+4. Critério: HEAD == tip remoto no momento da medição; SPA serve esse HEAD.
+5. Roteiro curto: login → Grupo/Empresa → Cliente editar/salvar/reabrir
+   (sem forçar principal multi-canal) → Orçamento → Pedido (esperar BLOQ 044
+   se schema ausente — não marcar vendas ok).
+
+URL privada
+- Só publicar no comentário #353 depois do passo 3 comprovado.
+- Sem prova: “prévia = runner Cursor”.
+
+Bloqueios
+- Não declarar Codespace atualizado sem SHA no comentário.
+- Não tocar VPS / migrations / carga.

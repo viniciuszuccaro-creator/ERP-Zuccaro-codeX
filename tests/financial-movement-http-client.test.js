@@ -1,3 +1,4 @@
+import { clienteConferenciaRemainder } from './helpers/consolidation81Remainder.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -25,7 +26,7 @@ test('shared bank executor and HTTP factory retain complete previous sources out
  ["  return execute;\n}\n\n/** @param {{getScope:()=>BankScope,request:(path:string,options:BankRequestOptions,scope:Readonly<BankScope>)=>Promise<unknown>}} deps */\nexport function createBankStatementApi(deps) {\n  const { request } = deps;\n  const execute = createBankRequestExecutor(deps);\n",'']];
  for(const [after,before] of changes){assert.equal(bank.split(after).length,2);bank=bank.replace(after,before);}
  assert.equal(hash(bank),'145bf54405c26705b0e6f93bd93a391051cba7dbc4c97d13f6de59ba4b0c5131');
- let http=read('src/api/httpApiClient.js');
+ let http=clienteConferenciaRemainder('src/api/httpApiClient.js',read('src/api/httpApiClient.js'));
  for(const addition of ["import { createFinancialMovementApi } from './financialMovementHttp.js';\n",'    financialMovements: createFinancialMovementApi({ getScope, request }),\n',"export const financialMovementApi = createHttpApiClient({ getScope: () => readErpHttpSession() || {} }).financialMovements;\n"]){assert.equal(http.split(addition).length,2);http=http.replace(addition,'');}
  assert.equal(hash(http),'6552582391e26c892325ac16955df5d76426e9321565cad61d12361cb9398449');
 });

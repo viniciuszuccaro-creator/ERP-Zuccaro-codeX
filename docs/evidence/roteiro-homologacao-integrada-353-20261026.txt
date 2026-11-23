@@ -1,0 +1,81 @@
+ROTEIRO EXECUTÁVEL — HOMOLOGAÇÃO INTEGRADA (candidata #353)
+============================================================
+Data: 2026-10-26 · Ambiente alvo: Codespace / cópia HML autorizada (NÃO VPS
+operacional sem gate). Distinguir: implementado · testado CI · demonstrado
+Codespace · operacional VPS.
+
+Pré-condições
+-------------
+[ ] SHA tip #353 conhecido e igual ao servido (medir build/imagem; capturas de
+    runner ≠ prova de versão servida).
+[ ] Grupo + Empresa selecionáveis; usuário com RBAC de cadastro/comercial.
+[ ] Sem aplicar migrations 036–044 em lote; 044 (Pedido idempotency) ausente no
+    destino observado → INSERT Pedido deve FALHAR até gate específico Codex.
+[ ] Dados: apenas sintéticos ou coorte autorizada; sem carga real neste roteiro.
+
+Passo a passo
+-------------
+1) Login
+   - Abrir SPA → autenticar IdP real do ambiente.
+   - Esperado: sessão com perfil; sem token → bloqueio fail-closed.
+   - Negativo: credencial inválida / sessão expirada.
+
+2) Grupo / Empresa
+   - Selecionar Grupo, depois Empresa do grupo.
+   - Esperado: contexto explícito em requests (groupId/empresaId).
+   - Negativo: trocar empresa no meio de formulário dirty → banner/bloqueio;
+     operação de outro escopo não grava.
+
+3) Cadastro Cliente — abrir / editar / salvar / reabrir
+   - Abrir Cadastros → Cliente existente (ou criar sintético mínimo).
+   - Editar campos escalares seguros (nome fantasia/obs) SEM lista de contatos
+     que exija principal entre canais ou metadata sem valor.
+   - Salvar → toast sucesso → fechar → reabrir mesmo ID.
+   - Esperado: valores gravados; boundId estável; dirty refresh conforme política.
+   - Contatos (bloqueio honesto até contrato canônico):
+     a) E-mail + Telefone com Telefone principal=true → NÃO envia fetch;
+        toast CONTATOS_SCALAR_OVERFLOW / mensagem explícita; rascunho preservado.
+     b) Contato valor vazio + nome/obs → mesmo overflow; rascunho preservado.
+     c) Um e-mail + um telefone sem principal=true → pode projetar escalares;
+        reabrir mostra contatos_escalares.complete=false (não fingir lista).
+   - Negativo RBAC: perfil sem editar → botão/ação bloqueada; backend 403.
+   - Negativo sessão: trocar Grupo após abrir → não salvar no escopo antigo.
+
+4) Orçamento
+   - Comercial → Orçamento: criar com cliente do passo 3, item, condição existente.
+   - Salvar / reabrir.
+   - Esperado: persistência no caminho canônico do ambiente; status coerente.
+   - Se falhar por schema/auth: registrar tabela/coluna/permissão exata — NÃO
+     marcar “vendas prontas”.
+   - Negativo: sem permissão comercial.orcamento.* → bloqueio.
+
+5) Pedido
+   - Converter orçamento ou criar pedido no fluxo existente (sem C360 omnicanal).
+   - Esperado HOJE no destino sem 044: INSERT pode falhar por
+     idempotency_key / payload_fingerprint ausentes (postgresPedidoRepository).
+   - Registrar evidência do erro; coordenar Codex para delta 044 + relações —
+     SEM Cursor reimplementar backend Pedido.
+   - Não declarar operação de vendas pronta só porque a tela abre.
+
+Critérios de aceite deste roteiro
+---------------------------------
+- Passos 1–3 demonstráveis no tip com overflow contatos fail-closed.
+- Passo 4: só “demonstrado” se persistir/reabrir no alvo medido.
+- Passo 5: bloqueador de schema explícito até 044/autorização — não mascarar.
+- Nenhuma etapa autoriza merge, deploy, migration em lote ou carga ≤100.
+
+Dependências explícitas (coordenação Codex)
+-------------------------------------------
+| etapa        | dependência                         | dono   |
+|--------------|-------------------------------------|--------|
+| Login/RBAC   | IdP + profiles/grupos/empresas      | Ops/Codex |
+| Cliente CRUD | repo PG + vínculo cliente_empresas  | ambos  |
+| Contatos[]   | jsonb/filha (gate) OU overflow UI   | Cursor (overflow) / Codex (schema) |
+| Orçamento    | permissões + tabelas comerciais     | Codex schema |
+| Pedido INSERT| migration 044 + FKs produto/pagto   | Codex  |
+| Disponibilizar VPS | menor privilégio + digests + janela | Codex #344 |
+
+Registro
+--------
+Preencher após execução: SHA servido, ambiente, operador, PASS/FAIL por passo,
+erros SQL/HTTP (sanitizados), link comentário #353/#344. Sem segredos no Git.

@@ -1,0 +1,36 @@
+PROPOSTA NAVEGÁVEL — aprovação visual (antes de redesign amplo)
+===============================================================
+Candidata #353 · tip ≥1a360b45 · modalidade: runner Cursor (Codespace 403)
+Referência: erp-integra-novo · inventário: recuperacao-erp-integra-prioridades-*
+
+O que o proprietário deve ver (sem redesign paralelo)
+----------------------------------------------------
+1. Cadastros Gerais — Cliente / FormaPagamento / Contatos
+   - Chrome sky (azul-claro) nos forms do roteiro
+   - Código de registro + ID técnico
+   - Contatos: overflow honesto (não “salvo parcial”)
+2. Tabela de Preço
+   - Código numérico + ID técnico + legado (classe A neste pacote)
+3. Relatórios
+   - Abas matriz / exportação / agendamento montadas com RBAC fail-closed
+4. Comercial
+   - Orçamento: fluxo existente
+   - Pedido: PedidosTab permanece blue (pin proof suites); explain 044 se schema ausente
+5. Não restaurar nesta aprovação
+   - Documentacao / EmpresaOnboarding / OAuthConsent (auth permissiva)
+   - Troca em massa PedidosTab → sky (quebraria SHA congelado)
+
+Critério de aprovação visual
+----------------------------
+- Aceitar sky nos cadastros do roteiro como padrão de entrada em uso
+- Confirmar que capacidades (reopen, RBAC, overflow, relatorios) ≥ referência
+  onde equivalentes existem — cor sozinha ≠ recuperação
+- Qualquer redesign amplo só após este OK + lista única STATUS
+
+Como navegar (Codespace quando SHA medido; senão runner ≠ prova servida)
+-----------------------------------------------------------------------
+Login → Grupo/Empresa → Cadastros Cliente → Tabela Preço → Relatórios
+(matriz/export/agenda) → Comercial Orçamento → Pedido (esperar BLOQ 044
+se colunas ausentes).
+
+Sem merge/deploy/carga nesta proposta.

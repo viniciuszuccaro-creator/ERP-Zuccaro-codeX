@@ -3,6 +3,8 @@ import { sanitizeAuditSnapshot } from '../audit/sanitizeAuditSnapshot.js';
 import type { AuditRepository, RequestContext } from '../audit/types.js';
 import type { RbacAction, RbacGuard } from '../db/rbacGuard.js';
 import type { TenantGuard } from '../db/tenantGuard.js';
+import type { DbQueryExecutor } from '../db/client.js';
+import { applyLocalBatch, localBatchSnapshot, parseLocalBatch } from './clienteLocalBatch.js';
 import type { ClienteLocalRepository } from '../repositories/inMemoryClienteLocalRepository.js';
 import type { ClienteRepository } from '../repositories/inMemoryClienteRepository.js';
 import {
@@ -71,7 +73,39 @@ export class ClienteLocalService {
         executor?: import('../db/client.js').DbQueryExecutor,
       ): Promise<{ obraId: string; principal: boolean } | null>;
     },
+    private readonly transaction?: { executor?: DbQueryExecutor },
   ) {}
+
+  private withTransaction<T>(fn: (executor?: DbQueryExecutor) => Promise<T>): Promise<T> {
+    return this.transaction ? fn(this.transaction.executor) : this.repo.withTransaction(fn);
+  }
+
+  async snapshot(ctx: RequestContext, clienteId: string) {
+    const fixed = Object.freeze({ ...ctx });
+    await this.prepare(fixed, clienteId, 'visualizar');
+    return this.withTransaction(async executor => {
+      const snapshot = await localBatchSnapshot(this.repo, fixed, clienteId, executor);
+      return { version: snapshot.version, data: snapshot.rows.map(publicLocal) };
+    });
+  }
+
+  async sync(ctx: RequestContext, clienteId: string, payload: unknown) {
+    const fixed = Object.freeze({ ...ctx });
+    const batch = parseLocalBatch(payload);
+    await this.prepare(fixed, clienteId, 'editar');
+    return this.withTransaction(async executor => {
+      if (!executor) throw new AppError(503, 'CLIENTE_LOCAIS_ATOMIC_UNAVAILABLE', 'Transactional database required');
+      const before = await localBatchSnapshot(this.repo, fixed, clienteId, executor);
+      if (batch.version !== before.version) {
+        throw new AppError(409, 'CLIENTE_LOCAIS_VERSION_CONFLICT', 'Local snapshot changed; reload before retry');
+      }
+      const scoped = new ClienteLocalService(this.repo, this.clienteRepo, this.audit,
+        this.tenantGuard, this.rbacGuard, this.obraUsage, { executor });
+      const data = await applyLocalBatch(scoped, fixed, clienteId, batch);
+      const after = await localBatchSnapshot(this.repo, fixed, clienteId, executor);
+      return { data, version: after.version, batchAtomic: true };
+    });
+  }
 
   async list(
     ctx: RequestContext,
@@ -128,7 +162,7 @@ export class ClienteLocalService {
       await this.assertPermission(ctx, 'principal');
     }
     try {
-      const local = await this.repo.withTransaction(async (executor) => {
+      const local = await this.withTransaction(async (executor) => {
         const created = await this.repo.create(
           this.scope(ctx, clienteId),
           parsed.data,
@@ -166,7 +200,7 @@ export class ClienteLocalService {
     const parsed = clienteLocalUpdateSchema.safeParse(payload);
     if (!parsed.success) this.validationError(parsed.error.flatten());
     try {
-      const updated = await this.repo.withTransaction(async (executor) => {
+      const updated = await this.withTransaction(async (executor) => {
         const before = await this.requireActive(ctx, clienteId, localId, executor);
         this.validateCandidate(before, parsed.data);
         const after = await this.repo.update(
@@ -198,7 +232,7 @@ export class ClienteLocalService {
       (payload as { finalidades?: unknown })?.finalidades,
     );
     if (!parsed.success) this.validationError(parsed.error.flatten());
-    const updated = await this.repo.withTransaction(async (executor) => {
+    const updated = await this.withTransaction(async (executor) => {
       const before = await this.requireActive(ctx, clienteId, localId, executor);
       if (this.principalChanged(before, parsed.data)) {
         await this.assertPermission(ctx, 'principal');
@@ -219,7 +253,7 @@ export class ClienteLocalService {
 
   async softDelete(ctx: RequestContext, clienteId: string, localId: string) {
     await this.prepare(ctx, clienteId, 'inativar', localId);
-    const updated = await this.repo.withTransaction(async (executor) => {
+    const updated = await this.withTransaction(async (executor) => {
       const before = await this.requireActive(ctx, clienteId, localId, executor);
       if (before.finalidades.some((purpose) => purpose.principal)) {
         throw new AppError(
@@ -252,7 +286,7 @@ export class ClienteLocalService {
 
   async restore(ctx: RequestContext, clienteId: string, localId: string) {
     await this.prepare(ctx, clienteId, 'restaurar', localId);
-    const updated = await this.repo.withTransaction(async (executor) => {
+    const updated = await this.withTransaction(async (executor) => {
       const before = await this.repo.get(this.scope(ctx, clienteId), localId, executor);
       if (!before || before.ativo) this.notFound();
       const after = await this.repo.restore(
@@ -278,16 +312,18 @@ export class ClienteLocalService {
     const cliente = await this.clienteRepo.getById(
       { groupId: ctx.groupId, empresaId: ctx.empresaId },
       clienteId,
+      this.transaction?.executor,
     );
     if (!cliente || !cliente.ativo) {
       throw new AppError(404, 'CLIENTE_NOT_FOUND', 'Cliente not found in tenant scope');
     }
     if (ctx.empresaId) {
-      await this.tenantGuard.assertEmpresaInGroup(ctx.groupId, ctx.empresaId);
+      await this.tenantGuard.assertEmpresaInGroup(ctx.groupId, ctx.empresaId, this.transaction?.executor);
       const relation = await this.clienteRepo.getEmpresaLink(
         { groupId: ctx.groupId, empresaId: ctx.empresaId },
         clienteId,
         ctx.empresaId,
+        this.transaction?.executor,
       );
       if (!relation?.elegivel_operacao) {
         throw new AppError(403, 'CLIENTE_EMPRESA_NOT_ELIGIBLE', 'Cliente not eligible in company');
@@ -374,7 +410,8 @@ export class ClienteLocalService {
   }
 
   private assertPermission(ctx: RequestContext, action: RbacAction) {
-    return this.rbacGuard.assertAllowed(ctx, 'Cadastros', 'cliente_local', action);
+    return this.rbacGuard.assertAllowed(ctx, 'Cadastros', 'cliente_local', action,
+      { executor: this.transaction?.executor });
   }
 
   private scope(ctx: RequestContext, clienteId: string) {

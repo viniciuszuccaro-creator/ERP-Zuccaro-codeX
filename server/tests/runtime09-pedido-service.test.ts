@@ -88,6 +88,37 @@ test('Pedido captura tenant e ator antes da espera sem seguir alteracao do chama
  assert.equal((await f.audit.listByEntity('Pedido',order.id))[0].actorId,ctx.actorId);
 });
 
+test('Pedido get/list/history nao promovem ator trocado durante espera de tenant', async () => {
+  for (const method of ['get', 'list', 'history'] as const) {
+    const f = fixture();
+    const row = await f.service.create(ctx, direct);
+    const caller = { ...ctx, actorId: '99999999-9999-4999-8999-999999999999' };
+    const pending = method === 'get' ? f.service.get(caller, row.id)
+      : method === 'list' ? f.service.list(caller) : f.service.history(caller, row.id);
+    caller.actorId = ctx.actorId;
+    await assert.rejects(pending, error => error instanceof Error
+      && 'code' in error && error.code === 'PERMISSION_DENIED', method);
+    assert.equal((await f.repo.list({ groupId, empresaId })).total, 1);
+    assert.equal((await f.audit.listByEntity('Pedido', row.id)).length, 1);
+  }
+});
+
+test('Pedido reabertura lista e historico preservam contexto capturado', async () => {
+  const f = fixture();
+  const row = await f.service.create(ctx, direct);
+  const caller = { ...ctx };
+  const pendingGet = f.service.get(caller, row.id);
+  const pendingList = f.service.list(caller);
+  const pendingHistory = f.service.history(caller, row.id);
+  caller.groupId = '99999999-9999-4999-8999-999999999999';
+  caller.empresaId = caller.groupId;
+  caller.actorId = caller.groupId;
+  const [reopened, page, history] = await Promise.all([pendingGet, pendingList, pendingHistory]);
+  assert.equal(reopened.id, row.id);
+  assert.equal(page.data[0].id, row.id);
+  assert.equal(history[0].status_novo, 'EM_ABERTO');
+});
+
 test('Pedido exige motivo explicito de cancelamento sem efeitos em tentativas invalidas', async()=>{
   const f=fixture(), order=await f.service.create(ctx,direct);
   const scope={groupId,empresaId};

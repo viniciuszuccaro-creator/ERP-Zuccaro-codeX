@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,12 +9,21 @@ import { MapPin, Plus, Edit, Trash2, Check, ExternalLink, Route } from "lucide-r
 import BuscaCEP from "@/components/comercial/BuscaCEP";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import { toast } from "sonner";
+import usePermissions from "@/components/lib/usePermissions";
 
 /**
  * V21.1.2 - SUB-DIALOG MANTIDO (usado dentro de forms maiores)
  * Dialogs internos são permitidos quando fazem parte de um fluxo maior
+ * Lacuna vs erp-integra-novo / Regra-Mãe: mutações sem RBAC fail-closed.
  */
-export default function GerenciarEnderecosClienteForm({ enderecos = [], onChange }) {
+export default function GerenciarEnderecosClienteForm({ enderecos = [], onChange, assertScopeCurrent }) {
+  const { canEdit } = usePermissions();
+  const podeEditar = canEdit("Cadastros", "Cliente") || canEdit("Cadastros", null);
+  const assertScope = () => {
+    if (typeof assertScopeCurrent !== "function") return;
+    assertScopeCurrent();
+  };
   const [dialogAberto, setDialogAberto] = useState(false);
   const [enderecoEditando, setEnderecoEditando] = useState(null);
 
@@ -64,9 +72,30 @@ export default function GerenciarEnderecosClienteForm({ enderecos = [], onChange
     setEnderecoEditando(null);
   };
 
+  const abrirNovo = () => {
+    if (!podeEditar) {
+      toast.error("Sem permissão para editar endereços do cliente.");
+      return;
+    }
+    try { assertScope(); } catch (error) {
+      toast.error(error?.message || "Contexto alterado. Reabra o cadastro.");
+      return;
+    }
+    resetForm();
+    setDialogAberto(true);
+  };
+
   const handleSalvarEndereco = () => {
+    if (!podeEditar) {
+      toast.error("Sem permissão para editar endereços do cliente.");
+      return;
+    }
+    try { assertScope(); } catch (error) {
+      toast.error(error?.message || "Contexto alterado. Reabra o cadastro.");
+      return;
+    }
     if (!novoEndereco.logradouro || !novoEndereco.numero) {
-      alert("Preencha logradouro e número");
+      toast.error("Preencha logradouro e número");
       return;
     }
 
@@ -105,12 +134,28 @@ export default function GerenciarEnderecosClienteForm({ enderecos = [], onChange
   };
 
   const handleEditarEndereco = (index) => {
+    if (!podeEditar) {
+      toast.error("Sem permissão para editar endereços do cliente.");
+      return;
+    }
+    try { assertScope(); } catch (error) {
+      toast.error(error?.message || "Contexto alterado. Reabra o cadastro.");
+      return;
+    }
     setEnderecoEditando(index);
     setNovoEndereco({ ...enderecos[index] });
     setDialogAberto(true);
   };
 
   const handleExcluirEndereco = (index) => {
+    if (!podeEditar) {
+      toast.error("Sem permissão para editar endereços do cliente.");
+      return;
+    }
+    try { assertScope(); } catch (error) {
+      toast.error(error?.message || "Contexto alterado. Reabra o cadastro.");
+      return;
+    }
     const enderecosAtualizados = enderecos.filter((_, i) => i !== index);
     onChange(enderecosAtualizados);
   };
@@ -119,7 +164,13 @@ export default function GerenciarEnderecosClienteForm({ enderecos = [], onChange
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-semibold">Endereços de Entrega ({enderecos.length})</h3>
-        <Button onClick={() => { resetForm(); setDialogAberto(true); }} size="sm">
+        <Button
+          onClick={abrirNovo}
+          size="sm"
+          disabled={!podeEditar}
+          data-permission="Cadastros.Cliente.editar"
+          data-action="Cadastros.Cliente.endereco.adicionar"
+        >
           <Plus className="w-4 h-4 mr-2" />
           Adicionar Endereço
         </Button>
@@ -188,6 +239,9 @@ export default function GerenciarEnderecosClienteForm({ enderecos = [], onChange
                     variant="ghost"
                     size="icon"
                     onClick={() => handleEditarEndereco(idx)}
+                    disabled={!podeEditar}
+                    data-permission="Cadastros.Cliente.editar"
+                    data-action="Cadastros.Cliente.endereco.editar"
                   >
                     <Edit className="w-4 h-4 text-blue-600" />
                   </Button>
@@ -195,6 +249,9 @@ export default function GerenciarEnderecosClienteForm({ enderecos = [], onChange
                     variant="ghost"
                     size="icon"
                     onClick={() => handleExcluirEndereco(idx)}
+                    disabled={!podeEditar}
+                    data-permission="Cadastros.Cliente.editar"
+                    data-action="Cadastros.Cliente.endereco.excluir"
                   >
                     <Trash2 className="w-4 h-4 text-red-600" />
                   </Button>
@@ -208,10 +265,13 @@ export default function GerenciarEnderecosClienteForm({ enderecos = [], onChange
           <MapPin className="w-12 h-12 text-slate-300 mx-auto mb-2" />
           <p className="text-slate-500 text-sm">Nenhum endereço cadastrado</p>
           <Button 
-            onClick={() => { resetForm(); setDialogAberto(true); }}
+            onClick={abrirNovo}
             variant="outline"
             size="sm"
             className="mt-3"
+            disabled={!podeEditar}
+            data-permission="Cadastros.Cliente.editar"
+            data-action="Cadastros.Cliente.endereco.adicionar"
           >
             <Plus className="w-4 h-4 mr-2" />
             Adicionar Primeiro Endereço
@@ -422,7 +482,12 @@ export default function GerenciarEnderecosClienteForm({ enderecos = [], onChange
               <Button variant="outline" onClick={() => { setDialogAberto(false); resetForm(); }}>
                 Cancelar
               </Button>
-              <Button onClick={handleSalvarEndereco}>
+              <Button
+                onClick={handleSalvarEndereco}
+                disabled={!podeEditar}
+                data-permission="Cadastros.Cliente.editar"
+                data-action="Cadastros.Cliente.endereco.salvar"
+              >
                 <Check className="w-4 h-4 mr-2" />
                 Salvar
               </Button>

@@ -1,0 +1,18 @@
+Fornecedor — camadas (não “arquivo ausente = cadastro inexistente”)
+====================================================================
+Candidata #353 · runner Cursor · 2026-10-26 (America/Sao_Paulo)
+
+| Camada | Evidência | Estado |
+|---|---|---|
+| Base44 / UI | `CadastroFornecedorCompleto.jsx`, entityReadPolicy Fornecedor, formulário email/telefone/whatsapp/contato_responsavel | EXISTE — cadastro operacional na UI |
+| Contrato HTTP / domínio | `server/src/repositories/fornecedorTypes.ts`, `fornecedorService.ts`, `postgresFornecedorRepository.ts` | EXISTE — import/mestre Grupo, RBAC Cadastros.fornecedor, sem rotas UI montadas de propósito |
+| PostgreSQL canônico (migrations) | `server/migrations/*` — zero CREATE fornecedores | AUSENTE na journal operacional |
+| Candidato SQL | `server/schema-candidates/fornecedor_master.sql` | Candidato isolado — FORA de migrations; sem grants/policies ops |
+
+Equivalência
+- Vocabulário UI Completo ≈ fields de `fornecedorTypes` (documento, nome, contato, endereço, status).
+- Lacuna comprovada = **materialização PG na journal** (candidate ≠ migration publicada), não ausência do cadastro.
+- Correção funcional de schema ops exige gate migration/#211/legado (reserva Codex) — **não** criada entidade paralela nem migration neste lote Cursor.
+- Sem seed fictício “recuperado”.
+
+Próximo autorizado (não este lote): Codex/staging decide publicação do candidate sob journal + RLS + prova isolada.

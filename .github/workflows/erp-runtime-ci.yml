@@ -24,7 +24,9 @@ jobs:
       - run: npm run build
 
   backend:
-    runs-on: ubuntu-latest
+    # pg_dump/pg_restore must match the PostgreSQL 16 service. ubuntu-latest
+    # moved to 26.04; its client emitted transaction_timeout unsupported by 16.
+    runs-on: ubuntu-24.04
     services:
       postgres:
         image: postgres:16
@@ -50,6 +52,12 @@ jobs:
       - run: npm run build
       - run: npm run migrate
         env: { DATABASE_URL: postgresql://erp_test:erp_test@localhost:5432/erp_test }
+      - name: Report PostgreSQL backup client and server versions
+        run: |
+          psql --version
+          pg_dump --version
+          pg_restore --version
+          psql postgresql://erp_test:erp_test@localhost:5432/erp_test -Atc 'SHOW server_version_num'
       - run: psql postgresql://erp_test:erp_test@localhost:5432/erp_test -f scripts/seed-dev-synthetic.sql
       - run: npm run test:postgres
         env: { DATABASE_URL: postgresql://erp_test:erp_test@localhost:5432/erp_test }

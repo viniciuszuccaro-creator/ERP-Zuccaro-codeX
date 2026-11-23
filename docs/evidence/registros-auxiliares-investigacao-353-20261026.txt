@@ -1,0 +1,50 @@
+PACOTE 4 — Registros auxiliares “desaparecidos” (investigação 2026-10-26)
+=======================================================================
+Candidata: #353 · base evidências: tip runner 0bd89333+
+Sem inventar dados · sem reseed · sem confudir definição de entidade × registros.
+
+Fontes já existentes (reuso)
+- docs/evidence/registros-recuperacao-matriz-20261009.txt
+- docs/evidence/registros-recuperacao-matriz-20261010.txt
+- docs/vps/evidence/registros-sumidos-fonte-api-ui-20261009.txt
+- docs/evidence/recuperacao-erp-integra-prioridades-20261026.txt
+
+Diagnóstico por mecanismo (não por “falta de tela”)
+--------------------------------------------------
+1) Contexto Grupo/Empresa / filtro Visualizador
+   - Listagem vazia com DB n>0: classificar como oculto por contexto/RBAC/badge
+     (histórico #254), não como apagamento.
+   - Ação: medir groupId+empresaId+scopeType na sessão HTTP e na queryKey;
+     não recriar cadastro paralelo.
+
+2) Paginação / contagem local
+   - Badge 0 com registros: contagem batch/store local já tratada em tips
+     anteriores; revalidar só se regressão comprovada no tip atual.
+
+3) Permissão fail-closed
+   - Sem grant Cadastros.<entidade>.visualizar a UI some — esperado.
+   - Ação: perfil sintético com grant mínimo; não liberar por isAdmin sem escopo.
+
+4) Schema / materialização
+   - Fornecedor: tabela ops ausente (to_regclass null) — ausência REAL de
+     entidade materializada, não filtro de tela.
+   - Ação exata: migration/schema + contrato/crosswalk + import_authorized
+     sob gates #211 / legado (Codex). Sem seed fictício “recuperado”.
+
+5) Staging legado privado
+   - Volume grande (clientes/produtos/fornecedores) permanece em staging
+     privado com import_authorized=0.
+   - Neste runner Cursor: sem acesso privado comprovado ao HD/staging.
+   - Ação exata se/quando houver acesso: reconciliação isolada no Codespace
+     Codex (staging → relatório divergência → lote piloto), nunca dump no Git.
+
+6) Ensaios SYNTH / GATE-D
+   - Registros auxiliares do ERP novo (marcas/UM/grupos/setores) são ensaios
+     preserváveis; ≠ legado recuperado.
+   - Não substituir por carga legado indiscriminada.
+
+Conclusão deste lote
+- Não há recuperação de REGISTROS a declarar neste runner.
+- Lacunas concretas: (a) Fornecedor schema ops; (b) staging privado não
+  montado aqui; (c) UI vazia exige prova de contexto/RBAC antes de ETL.
+- Próximo passo autorizado: Codex mede staging/#211; Cursor não inventa dados.

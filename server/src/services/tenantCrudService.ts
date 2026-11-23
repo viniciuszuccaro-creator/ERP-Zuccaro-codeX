@@ -4,6 +4,7 @@ import type { AuditRepository, RequestContext } from '../audit/types.js';
 import { sanitizeAuditSnapshot } from '../audit/sanitizeAuditSnapshot.js';
 import { AppError } from '../api/errors.js';
 import type { TenantGuard } from '../db/tenantGuard.js';
+import type { RbacGuard, RbacAction } from '../db/rbacGuard.js';
 
 export type ListOptions = {
   ativo?: boolean;
@@ -26,6 +27,7 @@ type FactoryOptions<TRow, TCreate, TUpdate> = {
   notFoundCode: string;
   createSchema: z.ZodType<TCreate>;
   updateSchema: z.ZodType<TUpdate>;
+  authorization?: { guard: RbacGuard; moduleName: string; section: string };
   /**
    * Opcional. Default: snapshot completo via sanitizeAuditSnapshot
    * (todos os campos do row, menos secrets).
@@ -52,7 +54,8 @@ export class TenantCrudService<TRow, TCreate, TUpdate> {
   }
 
   async list(ctx: RequestContext, options: ListOptions = {}) {
-    this.assertScope(ctx);
+    ctx = Object.freeze({ ...ctx });
+    await this.assertAccess(ctx, 'visualizar');
     return this.repo.list({
       groupId: ctx.groupId,
       empresaId: ctx.empresaId,
@@ -61,7 +64,8 @@ export class TenantCrudService<TRow, TCreate, TUpdate> {
   }
 
   async get(ctx: RequestContext, id: string) {
-    this.assertScope(ctx);
+    ctx = Object.freeze({ ...ctx });
+    await this.assertAccess(ctx, 'visualizar');
     const row = await this.repo.getById({ groupId: ctx.groupId, empresaId: ctx.empresaId }, id);
     if (!row) {
       throw new AppError(404, this.opts.notFoundCode, `${this.opts.entityName} not found in tenant scope`);
@@ -70,7 +74,8 @@ export class TenantCrudService<TRow, TCreate, TUpdate> {
   }
 
   async create(ctx: RequestContext, payload: unknown) {
-    this.assertScope(ctx);
+    ctx = Object.freeze({ ...ctx });
+    await this.assertAccess(ctx, 'criar');
     const parsed = this.opts.createSchema.safeParse(payload);
     if (!parsed.success) {
       throw new AppError(400, 'VALIDATION_ERROR', `Invalid ${this.opts.entityName} payload`, parsed.error.flatten());
@@ -101,7 +106,8 @@ export class TenantCrudService<TRow, TCreate, TUpdate> {
   }
 
   async update(ctx: RequestContext, id: string, payload: unknown) {
-    this.assertScope(ctx);
+    ctx = Object.freeze({ ...ctx });
+    await this.assertAccess(ctx, 'editar');
     const parsed = this.opts.updateSchema.safeParse(payload);
     if (!parsed.success) {
       throw new AppError(400, 'VALIDATION_ERROR', `Invalid ${this.opts.entityName} payload`, parsed.error.flatten());
@@ -140,7 +146,8 @@ export class TenantCrudService<TRow, TCreate, TUpdate> {
   }
 
   async softDelete(ctx: RequestContext, id: string) {
-    this.assertScope(ctx);
+    ctx = Object.freeze({ ...ctx });
+    await this.assertAccess(ctx, 'inativar');
     const scope = { groupId: ctx.groupId, empresaId: ctx.empresaId };
     const before = await this.repo.getById(scope, id);
     if (!before) {
@@ -166,10 +173,13 @@ export class TenantCrudService<TRow, TCreate, TUpdate> {
     return updated;
   }
 
-  private assertScope(ctx: RequestContext) {
+  private async assertAccess(ctx: RequestContext, action: RbacAction) {
     if (!ctx.groupId) {
       throw new AppError(400, 'GROUP_ID_REQUIRED', 'groupId is required');
     }
+    const policy = this.opts.authorization;
+    if (policy) await policy.guard.assertAllowed(ctx, policy.moduleName, policy.section, action,
+      { allowGlobalWildcard: false });
   }
 
   private rethrowConflict(error: unknown) {

@@ -27,6 +27,7 @@ export class FornecedorService {
     await this.rbac.assertAllowed(ctx, 'Cadastros', 'fornecedor', action, { allowGlobalWildcard: false, executor: q });
   }
   async importar(ctx: RequestContext, payload: unknown) {
+    ctx = Object.freeze({ ...ctx });
     await this.authorize(ctx, 'importar');
     await this.authorize(ctx, 'criar');
     const parsed = fornecedorImportSchema.safeParse(payload);
@@ -62,6 +63,7 @@ export class FornecedorService {
     });
   }
   async get(ctx: RequestContext, id: string) {
+    ctx = Object.freeze({ ...ctx });
     await this.authorize(ctx, 'visualizar'); uuid.parse(id);
     return this.repo.db.withTransaction(async q => {
       await this.authorize(ctx, 'visualizar', q);
@@ -71,6 +73,7 @@ export class FornecedorService {
     });
   }
   async softDelete(ctx: RequestContext, id: string, expectedRevision: number, source: string, batch: string, expectedFingerprint: string) {
+    ctx = Object.freeze({ ...ctx });
     await this.authorize(ctx, 'inativar'); uuid.parse(id); uuid.parse(batch);
     z.number().int().positive().parse(expectedRevision);
     z.string().regex(/^[a-f0-9]{64}$/).parse(expectedFingerprint);

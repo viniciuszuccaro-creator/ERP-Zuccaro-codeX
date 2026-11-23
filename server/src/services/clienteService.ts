@@ -1,8 +1,10 @@
+import { conferirClientesLegado } from './clienteConferencia.js';
 import type { DbQueryExecutor } from '../db/client.js';
 import type { AuditRepository, RequestContext } from '../audit/types.js';
 import { sanitizeClienteAudit } from '../audit/clienteAuditSnapshot.js';
 import { restoreClienteBulkSnapshot } from './clienteBulkLifecycle.js';
-import { correctInactiveLegacyName } from './clienteLegacyNameCorrection.js';
+import { correctInactiveLegacyName, enrichLegacyContacts } from './clienteLegacyNameCorrection.js';
+import { assertClienteContatosVersion, assertContactReferences, withClienteContatosVersion } from './clienteContatos.js';
 import { exportClientes } from './clienteExport.js';
 import type { AppliedBulkItem } from './cadastroBulkPolicy.js';
 import { AppError } from '../api/errors.js';
@@ -12,6 +14,7 @@ import type { TenantGuard } from '../db/tenantGuard.js';
 import type { ClienteRepository } from '../repositories/inMemoryClienteRepository.js';
 import {
   CLIENTE_FORBIDDEN_FIELDS,
+  clienteOperacaoLinkSchema,
   clienteCreateSchema,
   clienteUpdateSchema,
   type Cliente,
@@ -22,6 +25,8 @@ import {
 } from './clienteEmpresaOperations.js';
 
 export type ClienteListOptions = {
+  operacao?: boolean;
+  clienteEmpresaId?: string;
   ativo?: boolean;
   search?: string;
   codigo?: string;
@@ -53,9 +58,28 @@ export class ClienteService {
     );
   }
 
+  conferirLegado(ctx: RequestContext, input: unknown) {
+    return conferirClientesLegado(this.repo, this.rbacGuard, ctx, input);
+  }
+
   async list(ctx: RequestContext, options: ClienteListOptions = {}) {
     this.assertScope(ctx);
     await this.assertPermission(ctx, 'visualizar');
+    if (options.clienteEmpresaId !== undefined && (!options.operacao
+      || !clienteOperacaoLinkSchema.shape.id.safeParse(options.clienteEmpresaId).success
+      || Boolean(options.search || options.codigo || options.documento)
+      || (options.offset ?? 0) !== 0)) {
+      throw new AppError(422, 'VALIDATION_ERROR', 'Invalid exact operational customer selector');
+    }
+    if (options.operacao) {
+      if (!ctx.empresaId) throw new AppError(422, 'CLIENTE_OPERATIONAL_SCOPE_REQUIRED', 'Active company scope required');
+      if (options.ativo === false || (options.limit !== undefined && (!Number.isSafeInteger(options.limit) || options.limit < 1 || options.limit > 200))
+        || (options.offset !== undefined && (!Number.isSafeInteger(options.offset) || options.offset < 0))
+        || (options.search !== undefined && (options.search.length > 200 || options.search !== options.search.trim()))) {
+        throw new AppError(422, 'VALIDATION_ERROR', 'Invalid operational customer selector');
+      }
+      await this.tenantGuard.assertEmpresaInGroup(ctx.groupId, ctx.empresaId);
+    }
     const limit = Math.min(Math.max(options.limit ?? 50, 1), 200);
     const offset = Math.max(options.offset ?? 0, 0);
     // Fail-safe: sem ?ativo= explícito, listar SOMENTE ativo=true.
@@ -63,6 +87,8 @@ export class ClienteService {
     const page = await this.repo.listPage({
       groupId: ctx.groupId,
       empresaId: ctx.empresaId,
+      operacao: options.operacao,
+      clienteEmpresaId: options.clienteEmpresaId,
       ativo,
       search: options.search,
       codigo: options.codigo,
@@ -72,6 +98,7 @@ export class ClienteService {
       limit,
       offset,
     });
+    if (options.operacao) await this.assertPermission(ctx, 'visualizar');
     return {
       data: page.rows,
       meta: {
@@ -91,7 +118,12 @@ export class ClienteService {
     return correctInactiveLegacyName({ repo: this.repo, audit: this.audit, rbac: this.rbacGuard }, ctx, input);
   }
 
+  enrichLegacyContacts(ctx: RequestContext, input: unknown) {
+    return enrichLegacyContacts({ repo: this.repo, audit: this.audit, rbac: this.rbacGuard }, ctx, input);
+  }
+
   async get(ctx: RequestContext, id: string) {
+    ctx = { ...ctx };
     this.assertScope(ctx);
     await this.assertPermission(ctx, 'visualizar');
     const row = await this.repo.getById({ groupId: ctx.groupId, empresaId: ctx.empresaId }, id);
@@ -99,7 +131,8 @@ export class ClienteService {
     if (!row || row.ativo === false) {
       throw new AppError(404, 'CLIENTE_NOT_FOUND', 'Cliente not found in tenant scope');
     }
-    return row;
+    await this.assertPermission(ctx, 'visualizar');
+    return withClienteContatosVersion(ctx, row);
   }
 
   /**
@@ -254,10 +287,11 @@ export class ClienteService {
   }
 
   async update(ctx: RequestContext, id: string, payload: unknown) {
+    ctx = { ...ctx };
+    const parsed = clienteUpdateSchema.safeParse(payload);
     this.assertScope(ctx);
     await this.assertPermission(ctx, 'editar');
     this.rejectForbiddenFields(payload);
-    const parsed = clienteUpdateSchema.safeParse(payload);
     if (!parsed.success) {
       throw new AppError(400, 'VALIDATION_ERROR', 'Invalid Cliente payload', parsed.error.flatten());
     }
@@ -299,6 +333,11 @@ export class ClienteService {
       if (!before || before.ativo === false) {
         throw new AppError(404, 'CLIENTE_NOT_FOUND', 'Cliente not found in tenant scope');
       }
+      if (parsed.data.contatos !== undefined) {
+        assertClienteContatosVersion(ctx, before, parsed.data.expectedVersion);
+        assertContactReferences(parsed.data.contatos);
+        await this.tenantGuard.assertEmpresaInGroup(ctx.groupId, ctx.empresaId, executor);
+      }
       if (before.source_system && before.codigo_legado && (['origem','source_system','codigo_legado','legacy_id','migration_batch'] as const)
         .some(field => parsed.data[field] !== undefined && parsed.data[field] !== before[field])) {
         throw new AppError(409,'LEGACY_RECONCILIATION_REQUIRED','Imported provenance is immutable');
@@ -318,7 +357,8 @@ export class ClienteService {
 
       let updated: Cliente | null;
       try {
-        updated = await this.repo.update(scope, id, parsed.data,executor);
+        const { expectedVersion: _version, ...fields } = parsed.data;
+        updated = await this.repo.update(scope, id, fields,executor);
       } catch (error) {
         this.rethrowConflict(error);
         throw error;
@@ -337,7 +377,8 @@ export class ClienteService {
         requestId: ctx.requestId,
         ipAddress: ctx.ipAddress,
       },executor);
-      return updated;
+      await this.assertPermission(ctx, 'editar', executor);
+      return withClienteContatosVersion(ctx, updated);
     });
   }
 

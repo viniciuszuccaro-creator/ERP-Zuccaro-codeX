@@ -67,6 +67,8 @@ import { ExpedicaoService } from './services/expedicaoService.js';
 import type { ExpedicaoEstoquePort, ExpedicaoPedidoSideEffectPort } from './repositories/expedicaoTypes.js';
 import type { PedidoRepository } from './repositories/pedidoTypes.js';
 import { OportunidadeService } from './services/oportunidadeService.js';
+import { FornecedorService } from './services/fornecedorService.js';
+import { PostgresFornecedorRepository } from './repositories/postgresFornecedorRepository.js';
 import { PostgresOportunidadeRepository } from './repositories/postgresOportunidadeRepository.js';
 import { InMemoryOportunidadeRepository } from './repositories/inMemoryOportunidadeRepository.js';
 import type { ComercialCostPort } from './services/comercialMargemAlcadaPolicy.js';
@@ -150,6 +152,7 @@ export function createApp(options: CreateAppOptions) {
   });
   const setorService = new TenantCrudService(setorRepo, auditRepo, tenantGuard, {
     entityName: 'SetorAtividade',
+    authorization: { guard: rbacGuard, moduleName: 'Cadastros', section: 'setor_atividade' },
     notFoundCode: 'SETOR_NOT_FOUND',
     createSchema: setorCreateSchema,
     updateSchema: setorUpdateSchema,
@@ -202,6 +205,8 @@ export function createApp(options: CreateAppOptions) {
   const oportunidadeService = config.crmHttpEnabled===true
     ? new OportunidadeService(useMemory ? new InMemoryOportunidadeRepository() : new PostgresOportunidadeRepository(db),
       auditRepo,tenantGuard,rbacGuard,clienteRepo,orcamentoRepo,pedidoRepo,useMemory?null:pedidoService) : null;
+  const fornecedorService = config.fornecedorHttpEnabled === true && !useMemory
+    ? new FornecedorService(new PostgresFornecedorRepository(db), auditRepo, rbacGuard) : null;
   const obraService = new ObraService(
     obraRepo,
     clienteRepo,
@@ -282,6 +287,7 @@ export function createApp(options: CreateAppOptions) {
     });
   }
   app.use(createApiRouter({
+    fornecedorService,
     config,
     db,
     authDb,
