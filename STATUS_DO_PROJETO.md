@@ -1,3 +1,13 @@
+## Cursor — Central360 ENTREGUE frontend (2026-11-23 America/Sao_Paulo)
+
+PR #599 tip entregue ao Codex. Checklist: listLocais fail-closed;
+sessão/hydrate #596; superfície única; sticky + próxima ação;
+§7 fail-closed (baixa CR aguarda mapa); DashboardHeader +
+DashboardEstruturantes com faixa de escopo. Evidência
+`docs/evidence/central360-entregue-20261123.txt` + termine webp.
+CI 11/11 em `0d4262d67`. Sem Completo/deploy. Aceite Codex HML §7
+no evidence. Próximo Cursor: só pós-mapa CR ou regressão.
+
 ## Cursor — Central360 TERMINE lote (listLocais + UI) (2026-11-23 America/Sao_Paulo)
 
 PR #599. Bases #595 (`b5862fc5`) / #596 (`1a5bc05e`) conferidas no tip.

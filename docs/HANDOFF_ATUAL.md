@@ -1,3 +1,12 @@
+## Cursor — Central360 ENTREGUE (2026-11-23 America/Sao_Paulo)
+
+PR #599 `cursor/comercial-360-frontend-v6-3cfd` entregue (frontend).
+`listLocais` fail-closed; Central sticky/próxima ação; §7 opt-in
+fail-closed; CR baixa canônica **bloqueada** até mapa pedido/parcela.
+Dashboard/Cadastros: faixa de escopo sticky. Evidência
+`docs/evidence/central360-entregue-20261123.txt`. Aceite VPS = Codex
+(publicar §7 + percurso HML). Sem Completo/deploy neste lote.
+
 ## Cursor — Central360 browser + CR/mobile (2026-11-23 America/Sao_Paulo)
 
 PR #599 `cursor/comercial-360-frontend-v6-3cfd`. Browser proposta sintética

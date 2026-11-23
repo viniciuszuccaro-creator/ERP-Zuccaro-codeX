@@ -153,23 +153,49 @@ export default function DashboardEstruturantes() {
     }
   ];
 
+  const contextoLabel = contexto === 'empresa'
+    ? (empresaAtual?.nome_fantasia || empresaAtual?.razao_social || 'Empresa')
+    : (grupoAtual?.nome_do_grupo || 'Grupo');
+
   return (
     <div className="w-full h-full space-y-6" data-permission="Cadastros.visualizar" data-context-required="true">
       {/* HEADER */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
-            <Stars className="w-7 h-7 text-sky-600" />
-            Dashboard de Cadastros Estruturantes
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h2 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-3">
+            <Stars className="w-7 h-7 text-sky-600 shrink-0" />
+            <span className="truncate">Dashboard de Cadastros Estruturantes</span>
           </h2>
           <p className="text-sm text-slate-600 mt-1">
-            Visão consolidada dos 5 pilares mestres do sistema • Fase 2 Completa
+            Visão consolidada dos 5 pilares mestres • Cadastros Gerais
           </p>
         </div>
-        <Badge className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-4 py-2 text-sm">
+        <Badge className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-4 py-2 text-sm shrink-0">
           <CheckCircle2 className="w-4 h-4 mr-2" />
           100% Operacional
         </Badge>
+      </div>
+
+      <div
+        className="sticky top-0 z-10 rounded-md border border-sky-200 bg-white/95 backdrop-blur px-3 py-2 shadow-sm"
+        data-block="cadastros-estruturantes-contexto"
+        role="status"
+      >
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-700">
+          <span>
+            Escopo:{' '}
+            <strong className="text-sky-950">
+              {contexto === 'empresa' ? 'Empresa' : 'Grupo (consolidado)'}
+            </strong>
+          </span>
+          <span>
+            Contexto:{' '}
+            <strong className={contextoValido ? 'text-sky-950' : 'text-amber-800'}>
+              {contextoValido ? contextoLabel : 'selecione grupo/empresa'}
+            </strong>
+          </span>
+          <span className="text-slate-500">Métricas abaixo respeitam o filtro multiempresa atual.</span>
+        </div>
       </div>
 
       {(!contextoValido || !podeVisualizarCadastros) && (
