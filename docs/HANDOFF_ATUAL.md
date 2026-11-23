@@ -1,3 +1,14 @@
+## CURSOR — #350 remarge consolidação `5d1fa0fc` (2026-11-23)
+
+| Item | Valor |
+|---|---|
+| branch | `cursor/comercial360-proposta-347-evolucao-392b` (PR #350) |
+| base | `codex/consolidacao-infra-20261017` tip **`5d1fa0fc`** |
+| conflitos | só STATUS/HANDOFF — ambos lados preservados |
+| runtime | auto-merge sem marcadores |
+| handoff completo | `HANDOFF.md` na raiz |
+| fora | sem merge/deploy |
+
 ## Retomada vigente - restante dos dados e Cliente-only (2026-11-11)
 
 NOVO significado confirmado pelo dono: mestre ENDERECO=FISCAL;
@@ -4537,7 +4548,7 @@ Codex será registrado no recibo de fechamento conforme houver item executável.
 
 ## #344 / Comercial360 — Pedido exige motivo de cancelamento (2026-10-25)
 
-Pacote D autorizado pelo proprietário, reserva344/6399158275, base8e68484b.
+Pacote D autorizado pelo proprietário, reserva344/6399158275, base0c18d995.
 Contrato Onda5 já exige motivo; UI canônica já o coleta, mas PedidoService.cancel
 aceitava undefined. Contraprova no teste existente falhou no código anterior
 (Missing expected rejection); correção remove apenas a exceção para ausência.
@@ -4558,6 +4569,25 @@ Mesmo Codespace/branch Codex e trava exclusiva própria; sem dados reais,
 carga, merge ou deploy. SHA final/testes/CI no recibo344/342; após publicar
 seguir fila A/B/C, inclusive achado cruzado351/6399259991, sem encerrar só
 porque este commit terminou.
+
+## CURSOR — #350 remarge consolidação `5d1fa0fc` (2026-11-23)
+
+| Item | Valor |
+|---|---|
+| base merge | `codex/consolidacao-infra-20261017` tip **`5d1fa0fc`** |
+| conflitos | STATUS/HANDOFF — ambos lados preservados (histórico Cursor + consolidação) |
+| runtime | `OrcamentosTab.jsx` / testes orçamento auto-merged sem marcadores |
+| fora | branch Codex intocada · sem force-push · sem merge/deploy |
+| nota | só docs conflitaram; CI/homologação visual permanecem gates separados |
+
+## CURSOR — #350 merge consolidação `0c18d995` (2026-10-25)
+
+| Item | Valor |
+|---|---|
+| base merge | `codex/consolidacao-infra-20261017` tip **`0c18d995`** |
+| conflitos | STATUS/HANDOFF — Cursor+#344 preservados |
+| fora | branch Codex intocada · sem force-push · sem merge/deploy |
+| nota | descrições CLEAN anteriores ficaram desatualizadas após avanço da base |
 
 ## CURSOR — Pacote B validação comportamental na integração 350→351→352 (2026-10-25)
 
