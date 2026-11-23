@@ -4,6 +4,8 @@ Documento de continuidade para qualquer agente (Cursor/Codex Casa/Codex Empresa)
 Complementa `docs/HANDOFF_ATUAL.md`, `docs/HANDOFF_CASA_2026-11-20.md` e `STATUS_DO_PROJETO.md`.
 Não substitui `AGENTS.md` nem a Regra-Mãe.
 
+**Fonte desta revisão:** transcript JSON do agent `bc-d973626e` (131 099 mensagens; corte em 15/11/2026 no checkpoint PR596 / `d43ae30b1`), reconciliado com tip Casa `bf2f02810` e com a PR documental [#598](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/598).
+
 ---
 
 ## 1. Por que este handoff existe
@@ -12,11 +14,13 @@ O Cloud Agent **`bc-d973626e-1060-4071-a25a-6a549769392b`** executou continuidad
 
 Este arquivo registra:
 
-- o que aquele chat já entregou;
-- onde parou exatamente;
+- o que aquele chat já entregou (com cronologia de tips Bugbot);
+- onde parou exatamente (última mensagem útil do transcript);
+- a instrução consolidada do proprietário em 15/11 (12 etapas);
 - o que a Casa fez depois (15/11 → 23/11);
 - decisões de ownership ainda válidas;
-- o próximo passo executável para Cursor e para Casa.
+- o próximo passo executável para Cursor e para Casa;
+- trilha **separada** da remarge #350/Comercial360 (não misturar).
 
 ---
 
@@ -31,16 +35,23 @@ Este arquivo registra:
 | PR | [#596](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/596) — OPEN |
 | Base da PR596 | `cursor/c360-pos594-continuidade-ui-392b` (PR #595) |
 | Stack | PR #594 (draft) → #595 → #596 |
-| Motivo da parada | limite de uso; proprietário redirecionou UI pendente ao Codex Casa |
+| Motivo da parada | limite de uso no Cloud Agent; corte após publicar `d43ae30b1` / docs `1a5bc05ea` |
 | Runtime HML registrado na época | `d054e2b3` — **tip ≠ HML; sem deploy Cursor** |
+| Último checkpoint no transcript | msg `131090` — “Checkpoint 15/11 — Cursor (PR596)” |
 
 **Atenção:** o `main` público (`baba91a6b`, merge #257 de 09/10) **não** é o tip operacional desta continuidade. O trabalho vivo está nas branches Codex/Cursor da pilha HML 11/2026.
+
+### Trilha paralela (NÃO é esta continuidade)
+
+| Trilha | PR / tip | Nota |
+|---|---|---|
+| Remarge Comercial360 candidata | [#350](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/350) tip `1053cd4c7` sobre consolidação `5d1fa0fc` | Conflitos só STATUS/HANDOFF; MERGEABLE/CLEAN em 23/11. Hunk publication 6403101757 já na base. **Não misturar com PR596.** |
 
 ---
 
 ## 3. Onde o agente parou (ponto de freeze)
 
-Última entrega Cursor publicada:
+Última entrega Cursor publicada (confirmada no transcript + remoto):
 
 1. `d43ae30b1` — `OrcamentosTab` com paridade de `PedidoCanonicoPanel`:
    - `hydrateEpoch` monotônico (A→B→A);
@@ -51,7 +62,7 @@ Este arquivo registra:
 3. CI do tip **`1a5bc05ea`**: frontend/backend/compose **SUCCESS**; Bugbot/Security/Approval **NEUTRAL**.
 4. Testes focados na época: 61 PASS (`hml-cadastros-dash-ux-596`, layout v6, orçamento).
 
-Última ação antes do corte: ler comentário Casa de retomada 15/11 e alinhar tip **sem tocar** em `CadastroClienteCompleto.jsx`.
+**Corte do transcript:** após o checkpoint `d43ae30b1` o agente ainda lia notificação/comentário Casa de retomada 15/11 e **não** chegou a abrir novo lote de código. Próximo declarado no próprio checkpoint: Casa (Completo/SFTP/preflight) · Cursor segue Cadastros/C360 **sem Completo**.
 
 Casa, em seguida (sem editar a branch Cursor `1a5bc05ea`):
 
@@ -65,6 +76,23 @@ Casa, em seguida (sem editar a branch Cursor `1a5bc05ea`):
 ## 4. O que já foi feito (resumo do ciclo Cursor na PR #596)
 
 Escopo Cursor autorizado: **Cadastros / Dashboard / Central360**, sem `CadastroClienteCompleto` (reserva Casa).
+
+### 4.0 Cronologia de tips (transcript → tip congelado)
+
+| Tip código | Tema | Nota |
+|---|---|---|
+| `f2d92ec9c` | ProdutosProducao / Estruturantes / Formas hydrate / PedidoCanonico `genAtStart` | CI SUCCESS |
+| `f7603d651` | loading→`—`; CanaisOrigem cache/perm; Formas atalho; epoch/intent; Top5≤100 | CI SUCCESS |
+| `4485508c9` | Formas rebalance sem apagar hidratado | CI SUCCESS; Bugbot tip neutral |
+| `7a6c769e7` | Dashboard KPIs derivados fail-closed | — |
+| `800524f36` | Casa P1 A→B→A + RBAC pós-await + toast sessão antiga | — |
+| `c9bb620d7` | C360 limpa seleção no tenant; Bloco2 `ownOnly` | Security Review |
+| `9f8c11842` | Fluxo CR∩CP; `hydrateInflightRef.clear()` | Bugbot High/Med |
+| `c34f63e73` | `canViewEntity` sem DFS null; shell lê `sessionToken` vivo | Bugbot High/Med |
+| `5cf08bb77` | pins hash `Dashboard.jsx` (`a2e0cc61…`) | CI SUCCESS `43650315916` |
+| `4d6b0478d` | docs do tip 5cf08 | — |
+| **`d43ae30b1`** | **OrcamentosTab** paridade sessão | tip código final Cursor |
+| **`1a5bc05ea`** | docs SFTP 4MB + alinhamento | tip docs final Cursor |
 
 ### 4.1 Segurança de sessão / seleção (Central360)
 
@@ -97,6 +125,10 @@ Escopo Cursor autorizado: **Cadastros / Dashboard / Central360**, sem `CadastroC
 | Freeze Completo/endereços | `0ffff5100` |
 | Port Casa | `81d1e849` |
 | Completo ownership-in-load / draft durante catálogo | **RESERVA CASA** — Cursor **não edita** `CadastroClienteCompleto.jsx` |
+
+### 4.6 Instrução do proprietário (15/11) — contexto, não checklist cego
+
+A última ordem longa no transcript (“CONTINUIDADE COORDENADA E AUTÔNOMA”, 15/11) define 12 frentes. **Responsável Cursor** permanece só frontend/visual nas frentes 4 (revisão residual sem Completo), 8 (Cadastros/Dashboard Base44 sem inventar zeros), 9 (Central360 layout v6) e 10 (unificar/códigos UI). Frentes SFTP/legado/HML/importação/automação 15 min → **Casa/Codex**. Não reabrir inventário visual nem criar segunda Central.
 
 ---
 
@@ -243,11 +275,25 @@ Não tocar sem coordenação: `CadastroClienteCompleto.jsx`, payload sync locais
 
 ## 12. Próximo comando executável (Cursor — esta retomada)
 
-1. Manter este `HANDOFF.md` versionado na branch de retomada.
-2. Continuar lote frontend na Central360 / consumidores existentes **sem** Completo.
-3. Preparar (sem ativar na HML) a adaptação de `FechamentoFinanceiroTab` ao contrato §7 quando o tip Casa indicar promote; até lá preservar mensagem de indisponível no modo HTTP.
-4. Publicar PR da branch Cursor e informar SHA ao Codex Casa para composição.
+1. Manter este `HANDOFF.md` versionado na branch de retomada ([#598](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/598)).
+2. Abrir branch frontend a partir de `origin/cursor/hml-cadastros-dash-c360-ux-392b` (`1a5bc05ea` / código `d43ae30b1`), **não** a partir desta branch documental Casa.
+3. Continuar lote frontend na Central360 layout v6 / consumidores existentes **sem** Completo.
+4. Preparar (sem ativar na HML) a adaptação de `FechamentoFinanceiroTab` ao contrato §7 quando o tip Casa indicar promote; até lá preservar mensagem de indisponível no modo HTTP.
+5. Publicar PR da branch Cursor de código e informar SHA ao Codex Casa para composição.
 
 ---
 
-*Gerado na retomada do agent bc-d973626e em 2026-11-23 (America/Sao_Paulo). Evidências privadas e recibos permanecem fora do GitHub.*
+## 13. Retomada desta sessão (23/11 — agent atual)
+
+| Item | Estado |
+|---|---|
+| Transcript `bc-d973626e` | Lido (corte no checkpoint `d43ae30b1` / PR596) |
+| HANDOFF canônico | Este arquivo na [#598](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/598) |
+| Tip Casa revalidado | `bf2f02810` — fila 5.423 encerrada; faturamento HTTP só no clone |
+| Tip Cursor PR596 | `1a5bc05ea` inalterado |
+| Trilha #350 | Remarge `1053cd4c7` / base `5d1fa0fc` — **paralela**; não portar para cá |
+| Próximo código Cursor | Branch nova a partir da PR596 → Central360 v6 + FechamentoFinanceiro (indisponível até promote) |
+
+---
+
+*Gerado/atualizado na retomada do agent bc-d973626e em 2026-11-23 (America/Sao_Paulo), com leitura do transcript. Evidências privadas e recibos permanecem fora do GitHub.*

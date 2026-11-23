@@ -1,3 +1,9 @@
+## Cursor — transcript bc-d973 lido + HANDOFF enriquecido (2026-11-23 America/Sao_Paulo)
+
+`HANDOFF.md` atualizado com cronologia Bugbot do transcript, §4.6 da
+instrução 15/11, trilha #350 separada e §13. Tip Casa `bf2f02810`; tip
+Cursor PR596 `1a5bc05ea`. Próximo código: branch a partir da PR596.
+
 ## Cursor — retomada bc-d973626e (2026-11-23 America/Sao_Paulo)
 
 Handoff canônico de retomada: **`HANDOFF.md`** (raiz). Tip Casa base

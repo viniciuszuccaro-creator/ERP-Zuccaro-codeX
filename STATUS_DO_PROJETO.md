@@ -1,3 +1,12 @@
+## Cursor — HANDOFF.md enriquecido com transcript bc-d973 (2026-11-23 America/Sao_Paulo)
+
+Transcript do agent `bc-d973626e` lido (corte no checkpoint PR596 /
+`d43ae30b1`). `HANDOFF.md` ganhou cronologia de tips Bugbot, instrução
+15/11 (§4.6), trilha paralela #350 `1053cd4c7` e §13 desta retomada.
+Tip Casa `bf2f02810` e tip Cursor `1a5bc05ea` revalidados. Sem Completo/
+deploy/DDL. Próximo código Cursor: branch a partir da PR596 → Central360
+v6 + FechamentoFinanceiro indisponível até promote (§7).
+
 ## Cursor — retomada bc-d973626e + HANDOFF.md (2026-11-23 America/Sao_Paulo)
 
 Agent anterior `bc-d973626e` travou no limite de uso em 15/11 no tip PR596
