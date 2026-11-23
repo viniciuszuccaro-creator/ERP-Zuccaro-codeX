@@ -1,3 +1,20 @@
+## CPA3: inventario Base44 autenticado e vinculo de Grupo no clone
+
+Paginacao por ID ate pagina vazia, sem filtro de status, nas 48 entidades
+do mapa de contagens dos seis blocos. Totais, na ordem do mapa: 26, 1016, 97, 16, 33, 20.
+Isso nao e export de campos, contagem independente nem cobertura de relacoes.
+
+Base44: 14 unidades no Grupo das duas empresas; 2/2 empresas com match
+unico por CNPJ no backup restaurado, ambas no mesmo Grupo de destino.
+871 produtos com unidade de venda unica no Grupo. Das classes, 817 IDs
+sem alvo no recorte ativo da fonte e 54 omitidos. Nao inferir por nome.
+
+VPS: volume compartilhado com 21.627.904.000 bytes livres e 12.230.436
+inodes livres. Socket da HML responde, mas psql sem credencial falhou;
+a prova de Grupo vale no restauro. Proximo: revalidar pelo principal
+restrito existente, export privado de Unidades e ensaio via servico/API.
+Sem transferir, gravar ou repetir cargas. HML e operacional intactos.
+
 ## CPA3: codigo de Unidade e auditoria no restauro isolado
 
 Aplicado em transacao apenas o trecho de Unidade da 038 sobre 005/006/008.
