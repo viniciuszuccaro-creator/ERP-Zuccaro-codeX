@@ -1,3 +1,13 @@
+## Cursor — Central360 COMPLETE frontend (2026-11-23 America/Sao_Paulo)
+
+PR #599 tip completo no escopo frontend/visual sobre tip Casa `0cb6783b`.
+Checklist: listLocais fail-closed; hydrate #596; sticky Grupo|Empresa +
+obra/local + próxima ação; grades com — para preço ausente; §7 opt-in
+fail-closed (escopo/geração/404); CR canônica bloqueada até mapa Codex;
+Cadastros/Dashboard escopo. Evidência
+`docs/evidence/central360-complete-20261123.txt` + visual webp.
+Sem Completo/deploy. Aceite HML = Codex (§7 + percurso + mapa CR).
+
 ## Cursor — Central360 TERMINE sticky obra/local (2026-11-23 America/Sao_Paulo)
 
 PR #599. Sticky da venda passa a exibir Obra/Local a partir dos campos da

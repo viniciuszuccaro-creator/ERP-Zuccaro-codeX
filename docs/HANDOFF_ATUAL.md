@@ -1,3 +1,10 @@
+## Cursor — Central360 COMPLETE (2026-11-23 America/Sao_Paulo)
+
+PR #599 frontend/visual completo vs tip Casa `0cb6783b` / bf2f0281.
+listLocais fail-closed; sticky Grupo|Empresa+obra/local; grades —≠0;
+§7 fail-closed; CR baixa canônica aguarda mapa Codex. Evidência
+`docs/evidence/central360-complete-20261123.txt`. Aceite VPS = Codex.
+
 ## Cursor — Central360 TERMINE (2026-11-23 America/Sao_Paulo)
 
 PR #599: sticky com Obra/Local; grades Qtde/Un./Unit./Desc./Total;

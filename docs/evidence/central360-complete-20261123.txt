@@ -1,0 +1,53 @@
+COMPLETE FRONTEND — Central de Vendas 360º (CPA)
+Data: 2026-11-23 (America/Sao_Paulo)
+PR: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/599
+Branch: cursor/comercial-360-frontend-v6-3cfd
+SHA tip: 79d4bd95b (+ docs deste recibo)
+Base Casa: codex/casa-fechamento-hml-20261114 tip 0cb6783b / handoff bf2f0281
+Bases conferidas: #595 b5862fc5 · #596 1a5bc05e
+
+════════════════════════════════════════
+1) LOCAIS / SESSÃO
+════════════════════════════════════════
+- listLocais: data:[] = vazio confirmado; envelope inválido/incompleto →
+  CLIENTE_LOCAIS_LIST_INVALID | CLIENTE_LOCAIS_LIST_INCOMPLETE (nunca []).
+- Seletor Entrega: snapshotLocais (#595). Completo: failed ≠ [].
+- OrcamentosTab: hydrateEpoch + sessionIdentity; troca contexto descarta stale.
+
+════════════════════════════════════════
+2) FLUXO / VISUAL (layout v6)
+════════════════════════════════════════
+- Sticky: Grupo|Empresa (nome_do_grupo), cliente, obra/local, condição,
+  total, botão próxima ação (focus-visible).
+- Grades corte/revenda: Qtde/Un./Unit./Desc./Total; null/'' → — (≠ R$ 0).
+- Seleção: highlight + Enter/Espaço; superfície única sem remount resize.
+- Faixa/QuickAction focus-visible; resumo sem duplicar sticky.
+- Reuso: OrcamentosTab, PedidoCanonicoPanel, ShellParts, Cliente360.
+
+Browser sintético: docs/evidence/central360-visual-desktop|mobile-20261123.webp
+
+════════════════════════════════════════
+3) §7 FATURAMENTO / BAIXA
+════════════════════════════════════════
+- Opt-in VITE_ERP_HTTP_PEDIDO_FINANCEIRO; FechamentoPedidoFinanceiroHttp.
+- Fail-closed: sem SYNTHETIC na lista de Baixar; geração sobe em
+  pedido + groupId + empresaId; 404 genérico ≠ PEDIDO_NAO_ENCONTRADO.
+- Contas a Receber: Recebido/Saldo fail-closed; baixa canônica
+  **bloqueada** até Codex publicar mapa pedido↔parcela + rotas HML.
+
+════════════════════════════════════════
+4) CADASTROS / DASHBOARD
+════════════════════════════════════════
+- DashboardHeader + DashboardEstruturantes: faixa escopo fail-closed
+  (incompleto ≠ Grupo/Empresa falso). Pin Dashboard.jsx intacto.
+
+════════════════════════════════════════
+ACEITE CODEX (VPS / HML) — checkpoint 0cb6783b
+════════════════════════════════════════
+1. Publicar contrato §7; confirmar SHA/flag servidos.
+2. Locais [] vs 502 inválido/incompleto.
+3. Troca cliente/empresa → descartar stale (Central + painel §7).
+4. Percurso: orçamento → pedido → expedição → faturar → títulos →
+   parcial → quitação → reabrir saldo 0; reenvio idempotente.
+5. Entregar identidade canônica pedido+parcela → ligar baixa CR.
+6. Sem Completo/deploy neste lote Cursor.
