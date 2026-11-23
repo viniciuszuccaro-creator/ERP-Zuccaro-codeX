@@ -4,10 +4,9 @@
  * Extração do Dashboard.jsx (>600 linhas): concentra chips que já existiam
  * espalhados (estoque, aprovação, inadimplência, anomalia) com drill-down.
  */
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AlertTriangle, X, ChevronRight, Package, DollarSign, ShoppingCart, Zap } from 'lucide-react';
 import { createPageUrl } from '@/utils';
-import { useContextoVisual } from '@/components/lib/useContextoVisual';
 
 const ALERT_CONFIG = {
   estoque: { icon: Package, color: 'text-red-700', bg: 'bg-red-50 border-red-200', label: 'Estoque crítico' },
@@ -60,7 +59,10 @@ function AlertChip({ type, message, to, onNavigate, permission, action }) {
 
 /**
  * Contagens/KPIs: number | string | null (policy pode usar toFixed → string).
+ * Escopo de dismiss vem do Dashboard pai (mesmo groupId/empresaId do hasContextoAtivo).
  * @param {{
+ *   groupId?: string | null,
+ *   empresaId?: string | null,
  *   produtosBaixoEstoque?: number | string | null,
  *   taxaInadimplencia?: number | string | null,
  *   pedidosAguardando?: number | string | null,
@@ -73,6 +75,8 @@ function AlertChip({ type, message, to, onNavigate, permission, action }) {
  * }} props
  */
 export default function DashboardAlertsBar({
+  groupId = null,
+  empresaId = null,
   produtosBaixoEstoque = null,
   taxaInadimplencia = null,
   pedidosAguardando = null,
@@ -83,21 +87,26 @@ export default function DashboardAlertsBar({
   canSeeComercial = true,
   onNavigate,
 }) {
-  const { empresaAtual, grupoAtual } = useContextoVisual();
-  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
-  const empresaId = empresaAtual?.id || null;
   const storageKey = useMemo(
     () => dashboardAlertsDismissKey(groupId, empresaId),
     [groupId, empresaId],
   );
   const [dismissed, setDismissed] = useState(() => readDismissed(storageKey));
-  const [dismissTick, setDismissTick] = useState(0);
+  const sessionTimerRef = useRef(/** @type {ReturnType<typeof setTimeout> | null} */ (null));
 
-  // Troca de grupo/empresa ou TTL: reavalia e agenda restauração (Dashboard long-lived).
+  // Troca de grupo/empresa: reaplica dismiss só do storage dessa chave.
+  // Sem chave: não zera dismiss de sessão (evita reaparecer no próximo effect).
   useEffect(() => {
+    if (sessionTimerRef.current) {
+      clearTimeout(sessionTimerRef.current);
+      sessionTimerRef.current = null;
+    }
+    if (!storageKey) {
+      return undefined;
+    }
     const hidden = readDismissed(storageKey);
     setDismissed(hidden);
-    if (!storageKey || !hidden) return undefined;
+    if (!hidden) return undefined;
     let remaining = 0;
     try {
       const ts = Number(localStorage.getItem(storageKey) || 0);
@@ -112,7 +121,11 @@ export default function DashboardAlertsBar({
     }
     const timer = setTimeout(() => setDismissed(false), remaining);
     return () => clearTimeout(timer);
-  }, [storageKey, dismissTick]);
+  }, [storageKey]);
+
+  useEffect(() => () => {
+    if (sessionTimerRef.current) clearTimeout(sessionTimerRef.current);
+  }, []);
 
   if (!hasContextoAtivo || dismissed) return null;
 
@@ -172,16 +185,23 @@ export default function DashboardAlertsBar({
       <button
         type="button"
         onClick={() => {
-          // Sem escopo: só esconde na sessão (não grava chave global).
+          if (sessionTimerRef.current) {
+            clearTimeout(sessionTimerRef.current);
+            sessionTimerRef.current = null;
+          }
           if (storageKey) {
             try {
               localStorage.setItem(storageKey, String(Date.now()));
             } catch {
-              /* ignore */
+              /* ignore — ainda esconde na sessão com TTL abaixo */
             }
           }
           setDismissed(true);
-          setDismissTick((n) => n + 1);
+          // TTL mesmo sem storage (sessão) ou se setItem falhar — não depende de dismissTick.
+          sessionTimerRef.current = setTimeout(() => {
+            sessionTimerRef.current = null;
+            setDismissed(false);
+          }, DISMISS_TTL_MS);
         }}
         className="ml-auto flex-shrink-0 text-slate-400 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 rounded"
         aria-label="Dispensar alertas por 15 minutos"

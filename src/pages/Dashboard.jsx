@@ -851,6 +851,8 @@ export default function Dashboard() {
 
       {/* Origem Base44: alertas com ação (Estoque/Comercial/Financeiro) — só com contagem confirmada. */}
       <DashboardAlertsBar
+        groupId={groupId}
+        empresaId={empresaId}
         hasContextoAtivo={hasContextoAtivo}
         canSeeEstoque={canSeeEstoque}
         canSeeFinanceiro={canSeeFinanceiro}

@@ -1,3 +1,9 @@
+## Cursor — Bugbot dismiss session/TTL (2026-11-23 America/Sao_Paulo)
+
+PR #599. AlertsBar: escopo via props do Dashboard; dismiss sem storageKey
+não é desfeito pelo effect; TTL por timer de sessão. Pin `bff13623…`.
+Sem Completo/deploy.
+
 ## Cursor — typecheck taxaInadimplencia (2026-11-23 America/Sao_Paulo)
 
 PR #599. `DashboardAlertsBar` aceita `number | string | null` nos KPIs

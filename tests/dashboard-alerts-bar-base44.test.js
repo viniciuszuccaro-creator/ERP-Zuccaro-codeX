@@ -18,17 +18,22 @@ test('DashboardAlertsBar: fail-closed e drill-down com permissão', async () => 
   assert.match(src, /createPageUrl\('Comercial'\)/);
   assert.match(src, /createPageUrl\('Financeiro'\)/);
   assert.match(src, /Dashboard\.alerta\./);
-  // Dismiss escopado por grupo/empresa + TTL reavaliado (não só no mount).
+  // Dismiss escopado por props do Dashboard + TTL; sem storageKey não desfaz sessão.
   assert.match(src, /dashboardAlertsDismissKey/);
   assert.match(src, /dashboard_alerts_dismissed_at:\$\{g\}:\$\{e \|\| 'grupo'\}/);
-  assert.match(src, /useContextoVisual/);
-  assert.match(src, /setTimeout\(\(\) => setDismissed\(false\), remaining\)/);
+  assert.match(src, /groupId = null/);
+  assert.match(src, /empresaId = null/);
+  assert.doesNotMatch(src, /useContextoVisual/);
+  assert.doesNotMatch(src, /dismissTick/);
+  assert.match(src, /sessionTimerRef/);
   assert.doesNotMatch(src, /localStorage\.getItem\('dashboard_alerts_dismissed_at'\)/);
 });
 
 test('Dashboard.jsx: alertas + KPI strip clicável + painéis secundários lazy', async () => {
   const dash = await readFile(new URL('../src/pages/Dashboard.jsx', import.meta.url), 'utf8');
   assert.match(dash, /DashboardAlertsBar/);
+  assert.match(dash, /groupId=\{groupId\}/);
+  assert.match(dash, /empresaId=\{empresaId\}/);
   assert.match(dash, /data-block="dashboard-kpi-strip"/);
   assert.match(dash, /hasContextoAtivo=\{hasContextoAtivo\}/);
   assert.match(dash, /Dashboard\.kpi\.faturamento/);

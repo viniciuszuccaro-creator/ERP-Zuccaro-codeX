@@ -12,7 +12,7 @@ const files = {
   driver: ['src/components/mobile/AppEntregasMotorista.jsx', 'ef9273614d17281d675643ab484faee93a78ea762afccdbcca582ab9dd039532'],
   dre: ['src/components/relatorios/DREComparativo.jsx', '7d9cc13ab4c7c13dd4190cfbf9a3b57f9e170f52f6a0219958225a74d8bb7434'],
   export: ['src/components/ui/ExportMenu.jsx', 'ea9ec90fcaddc2b5a461443bd95a288c8ca4627b2bdc7411040ecb4f91f0f3bf'],
-  dashboard: ['src/pages/Dashboard.jsx', 'ae9e4628835facce2759bafe07fc9a78247aac303c18a7ac9ef54979efa26f6e'],
+  dashboard: ['src/pages/Dashboard.jsx', 'bff13623d4bd46b390a5029a883b47dd310231ffc2ab6400eb6ef7320ef3d69b'],
   quote: ['src/pages/OrcamentoSite.jsx', 'c8a2db58e48fe10416f1b270f48701f36f2ba90124c4ae59094edfb22754525b'],
 };
 const source = key => fs.readFileSync(files[key][0], 'utf8').replace(/\r\n/g, '\n');
