@@ -1,3 +1,13 @@
+## CPA3: codigo de Unidade e auditoria no restauro isolado
+
+Aplicado em transacao apenas o trecho de Unidade da 038 sobre 005/006/008.
+Papel de ensaio sem BYPASSRLS reservou dois codigos consecutivos com a
+funcao canonica, inseriu uma unidade sintetica e vinculou uma auditoria.
+Rollback removeu o delta e a auditoria, preservando os 17.472 mestres.
+
+Prova SQL; faltam o servico/API com papeis efetivos e o mapa de Grupo
+das 14 unidades e classificacoes. Sem manifesto apto ou escrita em HML.
+
 ## CPA3: prova SQL restrita do Catalogo em clone
 
 No restauro PG16 sem rede, o papel de importacao sem BYPASSRLS inseriu
