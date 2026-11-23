@@ -342,12 +342,13 @@ export default function Cadastros() {
             })}
           </div>
 
-          {/* BUSCA UNIVERSAL */}
+          {/* BUSCA UNIVERSAL — placeholder curto (origem Base44; evita corte em tela estreita) */}
           <SearchInput
-            placeholder="🔍 Busca Universal - Digite para filtrar em todos os 6 blocos simultaneamente..."
+            placeholder="Busca universal nos 6 blocos…"
             value={searchTerm}
             onChange={(val) => setSearchTerm(val)}
             className="h-12 text-base shadow-md border-slate-300"
+            aria-label="Busca universal em todos os blocos de Cadastros"
             data-permission="Cadastros.Busca.visualizar"
             data-action="buscar-cadastros-gerais"
             data-context-required="group-or-company"

@@ -38,6 +38,17 @@ node --test tests/cadastros-count-erro-vazio.test.js
              tests/pedido-faturamento-policy.test.js
 → 53 PASS / 0 FAIL
 
+## Browser (localhost:5173, Admin Local / 3Z LTDA LOCAL)
+
+- Cadastros: chips + busca + scroll Financeiro OK (desktop + 390px).
+- Busca "banco" abre 6 blocos; limpar restaura só bloco1.
+- Contagens: Organizacional=3; demais 0 confirmados (não —).
+- Central360 sticky: Empresa, Cliente, Obra/Local, Condição, Total, Fechar Orçamento.
+- Evidência visual: cadastros-atalhos-desktop|mobile-20261123.webp,
+  central360-sticky-desktop-20261123.webp
+- Nota local: Bloco* audit log "Grupo obrigatório" quando sessão só tem empresa
+  (createInContext) — UI não quebra; endurecer carimbo = Codex se necessário.
+
 ## Aceite Codex (VPS/HML)
 
 1. Abrir Cadastros com grupo/empresa → chips com totais reais (não — fabricado).
