@@ -1,3 +1,17 @@
+## CPA3: Produtos Base44 cruzados com Unidades e Empresas
+
+871/871 unidades de venda conciliadas com as 14 siglas ativas do Grupo
+CPA. As duas empresas compartilhadas de cada produto correspondem por
+CNPJ; empresa_id: 323 ausentes, 494 mapeadas, 54 com uma chave sem alvo
+inclusive na consulta direta Base44. Nao apagar esse vinculo.
+
+817 referencias de classe e setor sem alvo entre 91 grupos e 11 setores.
+Os 54 sem classe tem empresa nao conciliada; 1 inativo no total.
+Nenhum apto para manifesto aplicavel ou ensaio real de Produtos.
+Proximo: obter export historico ou correspondencia oficial para IDs
+de classe/setor e a chave empresarial divergente. Nao casar por nome.
+HML a305a143 somente leitura; sem escrita ou alteracao operacional.
+
 ## CPA3: 14 unidades aplicadas e conciliadas na HML
 
 Removido somente o indice binario reconstruivel pkgcache.bin do APT.
