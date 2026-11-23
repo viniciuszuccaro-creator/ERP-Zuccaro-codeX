@@ -4,6 +4,19 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "lucide-react";
 
+/**
+ * @param {{
+ *   empresaAtual?: object | null,
+ *   estaNoGrupo?: boolean,
+ *   grupoAtual?: object | null,
+ *   autoRefresh?: boolean,
+ *   setAutoRefresh?: (value: boolean) => void,
+ *   periodo?: string,
+ *   setPeriodo?: (value: string) => void,
+ *   canSeeDashboard?: boolean,
+ *   hasContextoAtivo?: boolean,
+ * }} props
+ */
 export default function DashboardHeader({
   empresaAtual,
   estaNoGrupo,
@@ -13,7 +26,7 @@ export default function DashboardHeader({
   periodo,
   setPeriodo,
   canSeeDashboard = true,
-  hasContextoAtivo,
+  hasContextoAtivo = undefined,
 }) {
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaId = empresaAtual?.id || null;
