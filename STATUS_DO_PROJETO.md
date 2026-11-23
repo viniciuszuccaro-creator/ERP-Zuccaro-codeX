@@ -1,3 +1,13 @@
+## Cursor — Central360 browser + crash CR + stack mobile (2026-11-23 America/Sao_Paulo)
+
+PR #599. Browser `/comercial?proposta=comercial360`: seleção ORC-SINT-001
+preenche contexto (cliente/total/Fechar). Contas a Receber abre sem crash
+(import dinâmico no clique, não React.lazy→openWindow). Viewport estreita:
+ResizablePanelGroup vertical (uma montagem). Evidência
+`docs/evidence/central360-frontend-browser-20261123.txt` + artifacts webp.
+Faturamento HTTP HML ainda indisponível (mensagem/gate). Sem Completo/deploy.
+Próximo: CI verde · aceite Codex HML §7 · ajustes visuais Cadastros/Dashboard.
+
 ## Cursor — Central360 CI frontend (contratos financeiro) (2026-11-23 America/Sao_Paulo)
 
 PR #599 tip após `6778d0804`: job `frontend` falhou por hunks/hashes de

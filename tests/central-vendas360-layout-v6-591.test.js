@@ -187,6 +187,11 @@ test('CentralVendas360Shell: faixa, situações, grades dual, Cliente360', () =>
   // Uma única montagem do painel operacional (sem cópia lg:hidden + hidden lg:block).
   assert.equal((src.match(/\{mainPanel\}/g) || []).length, 1);
   assert.doesNotMatch(src, /lg:hidden[\s\S]{0,80}\{mainPanel\}/);
+  // openWindow não recebe React.lazy — import dinâmico no clique (evita suspend fora de Suspense).
+  assert.match(src, /import\('@\/components\/financeiro\/ContasReceberTab'\)/);
+  assert.match(src, /import\('\.\/PedidosEntregaTab'\)/);
+  assert.match(src, /stackPanels/);
+  assert.doesNotMatch(src, /React\.lazy\(\(\) => import\('@\/components\/financeiro\/ContasReceberTab'\)\)/);
   assert.match(parts, /central360-grades-simultaneas/);
   assert.match(parts, /central360-grade-corte/);
   assert.match(parts, /central360-grade-revenda/);

@@ -1,3 +1,12 @@
+## Cursor — Central360 browser + CR/mobile (2026-11-23 America/Sao_Paulo)
+
+PR #599 `cursor/comercial-360-frontend-v6-3cfd`. Browser proposta sintética
+OK (contexto cliente/total). Contas a Receber: import dinâmico (sem crash
+lazy). Mobile: split vertical. Evidência
+`docs/evidence/central360-frontend-browser-20261123.txt`. Contrato §7
+ainda só clone; HML a305a143 sem rotas — UI fail-closed. Aceite Codex HML
+no STATUS. Sem Completo/deploy.
+
 ## Cursor — Central360 frontend v6 (DOCX) (2026-11-23 America/Sao_Paulo)
 
 Branch `cursor/comercial-360-frontend-v6-3cfd`. Melhoria no shell existente:

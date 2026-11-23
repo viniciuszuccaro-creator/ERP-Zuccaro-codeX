@@ -39,9 +39,7 @@ import { Cliente360Aside, FaixaTile, GradesSimultaneas } from './CentralVendas36
 
 const OrcamentosTab = React.lazy(() => import('./OrcamentosTab'));
 const PedidoCanonicoPanel = React.lazy(() => import('./PedidoCanonicoPanel'));
-const CentralAprovacoesManager = React.lazy(() => import('./CentralAprovacoesManager'));
-const PedidosEntregaTab = React.lazy(() => import('./PedidosEntregaTab'));
-const ContasReceberTab = React.lazy(() => import('@/components/financeiro/ContasReceberTab'));
+// Janelas externas: import dinâmico no clique (não passar React.lazy a openWindow — suspende fora de Suspense).
 
 const money = (value) => {
   const n = Number(value);
@@ -77,6 +75,18 @@ export default function CentralVendas360Shell({
   /** Epoch da seleção na Central: troca de situação invalida GET tardio do painel desmontado. */
   const selectionEpochRef = useRef(0);
   const [selectionEpoch, setSelectionEpoch] = useState(0);
+  // Uma montagem: em viewport estreita empilha (vertical); desktop mantém split horizontal.
+  const [stackPanels, setStackPanels] = useState(() => (
+    typeof window !== 'undefined' ? window.matchMedia('(max-width: 1023px)').matches : false
+  ));
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return undefined;
+    const mq = window.matchMedia('(max-width: 1023px)');
+    const sync = () => setStackPanels(mq.matches);
+    sync();
+    mq.addEventListener?.('change', sync);
+    return () => mq.removeEventListener?.('change', sync);
+  }, []);
 
   const situacao = situacaoById(proposalMode ? CENTRAL_VENDAS360_DEFAULT_SITUACAO : situacaoId);
   const canViewDocument = situacao.kind === 'orcamento'
@@ -146,20 +156,24 @@ export default function CentralVendas360Shell({
   };
 
   const openEntregas = () => {
-    openWindow(PedidosEntregaTab, { windowMode: true, groupId, empresaId }, {
-      title: 'Entregas do Dia',
-      width: 1400,
-      height: 850,
-      uniqueKey: 'central360-entregas-dia',
+    void import('./PedidosEntregaTab').then((mod) => {
+      openWindow(mod.default, { windowMode: true, groupId, empresaId }, {
+        title: 'Entregas do Dia',
+        width: 1400,
+        height: 850,
+        uniqueKey: 'central360-entregas-dia',
+      });
     });
   };
 
   const openAprovacoes = () => {
-    openWindow(CentralAprovacoesManager, { windowMode: true, groupId, empresaId }, {
-      title: 'Aprovações pendentes',
-      width: 1400,
-      height: 800,
-      uniqueKey: 'central360-aprovacoes',
+    void import('./CentralAprovacoesManager').then((mod) => {
+      openWindow(mod.default, { windowMode: true, groupId, empresaId }, {
+        title: 'Aprovações pendentes',
+        width: 1400,
+        height: 800,
+        uniqueKey: 'central360-aprovacoes',
+      });
     });
   };
 
@@ -186,11 +200,13 @@ export default function CentralVendas360Shell({
   }, []);
 
   const openContasReceber = () => {
-    openWindow(ContasReceberTab, { windowMode: true }, {
-      title: 'Contas a Receber',
-      width: 1400,
-      height: 850,
-      uniqueKey: 'central360-contas-receber',
+    void import('@/components/financeiro/ContasReceberTab').then((mod) => {
+      openWindow(mod.default, { windowMode: true }, {
+        title: 'Contas a Receber',
+        width: 1400,
+        height: 850,
+        uniqueKey: 'central360-contas-receber',
+      });
     });
   };
 
@@ -501,29 +517,42 @@ export default function CentralVendas360Shell({
 
       {/* Centro + Cliente360 — uma única montagem (P1: sem cópia desktop/mobile). */}
       <div className="flex-1 min-h-0" data-block="central360-superficie-unica">
-        <ResizablePanelGroup direction="horizontal" className="w-full h-full rounded-md border border-sky-100 bg-white">
-          <ResizablePanel defaultSize={clientePanelOpen ? 72 : 100} minSize={40}>
-            <div className="h-full min-h-[280px] overflow-hidden p-2">{mainPanel}</div>
+        <ResizablePanelGroup
+          key={stackPanels ? 'stack' : 'split'}
+          direction={stackPanels ? 'vertical' : 'horizontal'}
+          className="w-full h-full rounded-md border border-sky-100 bg-white"
+        >
+          <ResizablePanel
+            defaultSize={clientePanelOpen ? (stackPanels ? 62 : 72) : 100}
+            minSize={stackPanels ? 35 : 40}
+          >
+            <div className="h-full min-h-[240px] overflow-hidden p-2">{mainPanel}</div>
           </ResizablePanel>
           {clientePanelOpen ? (
             <>
               <ResizableHandle withHandle className="bg-sky-50" />
-              <ResizablePanel defaultSize={28} minSize={18} maxSize={48}>
-                <Cliente360Aside
-                  clienteForView={clienteForView}
-                  groupId={groupId}
-                  empresaId={empresaId}
-                  actorId={actorId}
-                  actorEmail={actorEmail}
-                  openHub={openHub}
-                  openChatbot={openChatbot}
-                  openEntregas={openEntregas}
-                  openContasReceber={openContasReceber}
-                  runCentralAction={runCentralAction}
-                  situacao={situacao}
-                  hasSelection={Boolean(selectionForView)}
-                  proposalMode={proposalMode}
-                />
+              <ResizablePanel
+                defaultSize={stackPanels ? 38 : 28}
+                minSize={stackPanels ? 22 : 18}
+                maxSize={stackPanels ? 55 : 48}
+              >
+                <div className="h-full min-h-[200px] overflow-auto">
+                  <Cliente360Aside
+                    clienteForView={clienteForView}
+                    groupId={groupId}
+                    empresaId={empresaId}
+                    actorId={actorId}
+                    actorEmail={actorEmail}
+                    openHub={openHub}
+                    openChatbot={openChatbot}
+                    openEntregas={openEntregas}
+                    openContasReceber={openContasReceber}
+                    runCentralAction={runCentralAction}
+                    situacao={situacao}
+                    hasSelection={Boolean(selectionForView)}
+                    proposalMode={proposalMode}
+                  />
+                </div>
               </ResizablePanel>
             </>
           ) : null}
