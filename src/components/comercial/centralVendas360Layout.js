@@ -156,8 +156,11 @@ export function invokeCentralDataAction(action, root = typeof document !== 'unde
   const key = String(action || '').trim();
   if (!key || !root?.querySelector) return false;
   const el = root.querySelector(`[data-action="${key}"]`);
-  if (!el || typeof el.click !== 'function') return false;
-  if (el.disabled || el.getAttribute('aria-disabled') === 'true') return false;
+  // Duck-typing: Node testes usam stub sem HTMLElement global.
+  if (!el || typeof el.click !== 'function' || typeof el.getAttribute !== 'function') return false;
+  const disabled = Boolean(/** @type {{ disabled?: boolean }} */ (el).disabled)
+    || el.getAttribute('aria-disabled') === 'true';
+  if (disabled) return false;
   el.click();
   return true;
 }

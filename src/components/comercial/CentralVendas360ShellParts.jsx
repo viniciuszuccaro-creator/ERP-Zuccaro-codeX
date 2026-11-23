@@ -242,7 +242,8 @@ export function Cliente360Aside({
   );
 }
 
-function QuickAction({ icon: Icon, label, onClick, action, disabled = false, title }) {
+/** @param {{ icon: any, label: string, onClick: () => void, action: string, disabled?: boolean, title?: string }} props */
+function QuickAction({ icon: Icon, label, onClick, action, disabled = false, title = undefined }) {
   return (
     <button
       type="button"
