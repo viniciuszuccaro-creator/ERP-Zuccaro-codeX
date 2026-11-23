@@ -16,9 +16,11 @@ const httpSrc = readFileSync('src/api/httpApiClient.js', 'utf8');
 const logistica = readFileSync('src/components/comercial/LogisticaEntregaTab.jsx', 'utf8');
 const panel = readFileSync('src/components/comercial/PedidoCanonicoPanel.jsx', 'utf8');
 
-test('listLocais legado array; Seletor usa snapshotLocais (Codex Continuity)', () => {
+test('listLocais: vazio confirmado ≠ inválido/incompleto; Seletor usa snapshotLocais', () => {
   const listSlice = httpSrc.slice(httpSrc.indexOf('async listLocais'), httpSrc.indexOf('async listLocaisReviewPage'));
   assert.match(listSlice, /return rows;/);
+  assert.match(listSlice, /CLIENTE_LOCAIS_LIST_INVALID/);
+  assert.match(listSlice, /CLIENTE_LOCAIS_LIST_INCOMPLETE/);
   assert.doesNotMatch(listSlice, /LOCAIS_ENVELOPE_INVALID/);
   // snapshotLocais vem do batch HTTP (spread em clientes), não do método legado listLocais.
   const batchSrc = readFileSync('src/api/clienteLocalBatchHttp.js', 'utf8');
@@ -144,4 +146,32 @@ test('Seletor montado: onSelect após troca de token/contexto limpa em vez de gr
   void effects;
   void reactShim;
   void session;
+});
+
+test('listLocais: data:[] confirma vazio; envelope inválido/incompleto rejeita', async () => {
+  const { createHttpApiClient } = await import('../src/api/httpApiClient.js');
+  const scope = {
+    token: 'synthetic-token',
+    groupId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+    empresaId: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+    actorId: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+  };
+  const mk = (body) => createHttpApiClient({
+    baseUrl: 'https://erp.synthetic.test',
+    getScope: () => scope,
+    fetchImpl: async () => new Response(JSON.stringify(body), { status: 200 }),
+  });
+  assert.deepEqual(await mk({ data: [], meta: { total: 0 } }).clientes.listLocais('synthetic-client'), []);
+  await assert.rejects(
+    mk({ meta: { total: 0 } }).clientes.listLocais('synthetic-client'),
+    (e) => e.code === 'CLIENTE_LOCAIS_LIST_INVALID' || e.status === 502,
+  );
+  await assert.rejects(
+    mk({ data: [{ id: 'x' }], incomplete: true }).clientes.listLocais('synthetic-client'),
+    (e) => e.code === 'CLIENTE_LOCAIS_LIST_INCOMPLETE' || e.status === 502,
+  );
+  await assert.rejects(
+    mk({ data: null }).clientes.listLocais('synthetic-client'),
+    (e) => e.code === 'CLIENTE_LOCAIS_LIST_INVALID' || e.status === 502,
+  );
 });

@@ -4,6 +4,10 @@ export const financialBatchHunks = {};
 for (const [kind, entity, message] of [['Pagar', 'ContaPagar', 'pagamento multiplo'], ['Receber', 'ContaReceber', 'baixa multipla']]) {
   const file = `src/components/financeiro/Contas${kind}Tab.jsx`;
   financialBatchHunks[file] = [
+    ...(kind === 'Receber' ? [
+      ['import { isSafeHttpUrl } from "@/lib/utils";\nimport { isHttpBackendMode } from "@/api/base44Client";\n', 'import { isSafeHttpUrl } from "@/lib/utils";\n'],
+      [`      <HeaderReceberCompacto />\n      {isHttpBackendMode ? (\n        <Alert className="border-amber-200 bg-amber-50" data-block="contas-receber-pedido-http-gate">\n          <AlertDescription className="text-xs text-amber-950">\n            Baixa por pedido/parcela canônica (<code className="font-mono">POST /api/v1/pedidos/:id/titulos/baixa</code>)\n            {' '}ainda não está publicada nesta HML — a grade usa ContaReceber existente. Exiba recebido/saldo quando a API informar;\n            sem inventar quitação. Promote e vínculo pedido↔título: Codex.\n          </AlertDescription>\n        </Alert>\n      ) : null}\n      <KPIsReceber totais={totais} />\n`, '      <HeaderReceberCompacto />\n      <KPIsReceber totais={totais} />\n'],
+    ] : []),
     ['  const { hasPermission, isLoading: permissionsLoading } = usePermissions();', '  const { hasPermission } = usePermissions();'],
     [`  const podeBaixarMultipla${kind} = !permissionsLoading && podeBaixar${kind} && hasPermission('Financeiro','${entity}','baixar_multiplos');\n`, ''],
     [`      if (!podeBaixarMultipla${kind}) throw new Error('Sem permissao para ${message}.');`, `      if (!podeBaixar${kind}) throw new Error('Sem permissao para ${message}.');`],

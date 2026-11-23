@@ -9,7 +9,7 @@ const dashboard = readFileSync('src/pages/Dashboard.jsx', 'utf8');
 const page = readFileSync('src/pages/DashboardFechamentoPedidos.jsx', 'utf8');
 const pagesConfig = readFileSync('src/pages.config.js', 'utf8');
 const widget = readFileSync('src/components/comercial/WidgetFechamentoPedidos.jsx', 'utf8');
-const DASHBOARD_PIN = '5b8ddf19ed369ceb076cd9a80cbc08ae7009eb30fd0a40ffe277135c3f01d00a';
+const DASHBOARD_PIN = 'a29af89ab3d2622b99b4fcf4d3f5db687156b3a29190f331014a0352c714d45b';
 
 test('recuperação: Dashboard monta WidgetFechamentoPedidos com RBAC Comercial', () => {
   assert.match(dashboard, /WidgetFechamentoPedidos/);

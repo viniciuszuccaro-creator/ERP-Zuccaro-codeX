@@ -1,10 +1,15 @@
 import {
   assertFaturamentoDentroDoPedido,
+  buildPedidoTituloBaixaEvento,
+  classifyTituloSituacao,
   evaluatePedidoCredito,
+  formatContratoDecimal,
+  mapPedidoFinanceiroHttpError,
   pedidoJaTemReservaEstoque,
   pedidoJaTemSaidaEstoque,
   remainingValorFaturar,
   resolveStatusFaturamentoPedido,
+  SYNTHETIC_PEDIDO_TITULOS,
 } from '../src/components/lib/pedidoFaturamentoPolicy.js';
 import { applyCodigoOnCreate } from '../src/api/localCadastroMasterPolicy.js';
 import assert from 'node:assert/strict';
@@ -76,6 +81,20 @@ test('stock movement idempotency helpers detect reserva and saida', () => {
   assert.equal(pedidoJaTemSaidaEstoque({ movimentos, pedidoId: 'ped-1', produtoId: 'p1' }), false);
 });
 
+test('contrato §7: situacao, evento estavel, erros e fixtures sinteticas', () => {
+  assert.equal(classifyTituloSituacao({ valor_recebido: '40.00', saldo: '60.00' }), 'parcial');
+  assert.equal(classifyTituloSituacao({ valor_recebido: '50.00', saldo: '0.00' }), 'quitado');
+  assert.equal(classifyTituloSituacao({ valor_recebido: '0.00', saldo: '100.00' }), 'pendente');
+  assert.equal(classifyTituloSituacao({}), 'indisponivel');
+  assert.equal(formatContratoDecimal('10.50'), '10,50');
+  const evento = buildPedidoTituloBaixaEvento({ pedidoId: 'p1', parcela: 2, attemptKey: 'a1' });
+  assert.equal(evento, 'pedido.p1.parcela.2.a1');
+  assert.equal(buildPedidoTituloBaixaEvento({ pedidoId: 'p1', parcela: 2, attemptKey: 'a1' }), evento);
+  assert.equal(mapPedidoFinanceiroHttpError({ status: 409, code: 'RECEBIMENTO_EXCEDE_SALDO' }).code, 'RECEBIMENTO_EXCEDE_SALDO');
+  assert.equal(mapPedidoFinanceiroHttpError({ status: 503, code: 'FINANCEIRO_SCHEMA_INVALIDO' }).status, 503);
+  assert.equal(SYNTHETIC_PEDIDO_TITULOS.filter((t) => classifyTituloSituacao(t) === 'quitado').length, 1);
+});
+
 test('commercial billing persists the NF instead of logging it', async () => {
   const fechamento = await readFile(new URL('../src/components/comercial/FechamentoFinanceiroTab.jsx', import.meta.url), 'utf8');
   const fluxo = await readFile(new URL('../src/components/lib/useFluxoPedido.jsx', import.meta.url), 'utf8');
@@ -89,7 +108,39 @@ test('commercial billing persists the NF instead of logging it', async () => {
   assert.match(fechamento, /assertFaturamentoDentroDoPedido/);
   assert.match(fechamento, /createInContext\('NotaFiscal'/);
   assert.match(fechamento, /disabled=\{isHttpBackendMode \|\| !contextoValido/);
+  assert.match(fechamento, /FechamentoPedidoFinanceiroHttp/);
   assert.match(fechamento, /onEmitir=\{async \(dadosNFe\) => \{\s*if \(isHttpBackendMode\) throw new Error\(faturamentoHttpIndisponivel\);/);
+  const painelHttp = await readFile(new URL('../src/components/comercial/FechamentoPedidoFinanceiroHttp.jsx', import.meta.url), 'utf8');
+  assert.match(painelHttp, /isHttpPedidoFinanceiroEnabled/);
+  assert.match(painelHttp, /readErpHttpSession/);
+  assert.match(painelHttp, /getScope:/);
+  assert.match(painelHttp, /operacaoGeracaoRef/);
+  assert.match(painelHttp, /\[pedidoId, formGroupId, formEmpresaId\]/);
+  assert.match(painelHttp, /scopeAtGeracaoRef/);
+  assert.match(painelHttp, /pending\.valor !== valorInformado/);
+  assert.match(painelHttp, /delete tentativaBaixaRef\.current\[parcela\]/);
+  assert.match(painelHttp, /pedidos\.faturar/);
+  assert.match(painelHttp, /pedidos\.baixarTitulo/);
+  assert.match(painelHttp, /buildPedidoTituloBaixaEvento/);
+  assert.doesNotMatch(painelHttp, /import[\s\S]{0,200}SYNTHETIC_PEDIDO_TITULOS/);
+  assert.doesNotMatch(painelHttp, /publicarTitulos\(SYNTHETIC_/);
+  assert.match(painelHttp, /publicarTitulos\(\[\], geracao\)/);
+  assert.match(painelHttp, /mapped\.code === 'HTTP_ERROR' && mapped\.status === 404/);
+  assert.doesNotMatch(painelHttp, /mapped\.code === 'HTTP_ERROR' \|\| mapped\.status === 404/);
+  // GET /titulos: 404 genérico/pedido ≠ lista vazia silenciosa; TITULO_NAO_ENCONTRADO = vazio ok.
+  assert.match(painelHttp, /mapped\.code === 'TITULO_NAO_ENCONTRADO'/);
+  assert.match(painelHttp, /GET \/titulos ainda pendente no servidor/);
+  assert.match(painelHttp, /publicarTitulosAposMutacao/);
+  assert.match(painelHttp, /titulosAbortRef/);
+  assert.match(painelHttp, /mutacaoLockRef/);
+  assert.match(painelHttp, /mutacaoEmCurso/);
+  // Troca de escopo NÃO zera o lock (evita baixa duplicada com POST em voo).
+  assert.match(painelHttp, /Não zerar mutacaoLockRef/);
+  assert.doesNotMatch(painelHttp, /tentativaBaixaRef\.current = \{\};\s*mutacaoLockRef\.current = false/);
+  // Sucesso: pedido+escopo; troca grupo/empresa não aborta GET novo.
+  assert.match(painelHttp, /scopeAtStart/);
+  assert.match(painelHttp, /if \(!publicarTitulosAposMutacao\(rows, scopeAtStart\)\) return/);
+  assert.match(painelHttp, /disabled=\{!canBaixar \|\| mutacaoEmCurso\}/);
   assert.match(fluxo, /assertFaturamentoDentroDoPedido/);
   assert.match(fluxo, /reservarEstoqueItemAprovacao/);
   assert.match(fluxo, /evaluatePedidoCredito|validarLimiteCredito/);

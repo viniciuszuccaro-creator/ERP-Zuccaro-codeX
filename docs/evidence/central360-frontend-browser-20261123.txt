@@ -1,0 +1,29 @@
+Central360 frontend — evidência browser (America/Sao_Paulo 2026-11-23)
+
+Branch: cursor/comercial-360-frontend-v6-3cfd
+SHA tip (este lote visual+crash): ver git tip após commit
+
+Ambiente: Vite 127.0.0.1:5173 · VITE_ERP_BACKEND=local
+Proposta sintética: /comercial?proposta=comercial360
+
+PASS
+- Layout v6: barra sticky contexto, fluxo Orçamento→Entrega/Retira, grades, Cliente360, Ações Rápidas
+- Proposta: ORC-SINT-001 selecionado → Cliente 000001 — Cliente SINTÉTICO, Total R$ 100,00, próxima ação Fechar Orçamento
+- Contas a Receber via Ações Rápidas: abre sem crash (antes: suspend React.lazy fora de Suspense)
+- Viewport ~390px: painéis empilhados (ResizablePanelGroup vertical) — Cliente360 abaixo do centro
+
+LIMITAÇÕES / CODEX
+- HML a305a143: rotas /api/v1/pedidos/:id/{vinculos-contabeis,faturar,titulos,titulos/baixa} NÃO publicadas
+- UI HTTP: FechamentoFinanceiro + gate ContasReceber informam indisponível (sem simular sucesso)
+- Sem API local :3080 (CSP connect-src 'self'): lista operacional vazia fora da proposta sintética
+- Janela Comercial width 1600 ainda pode clipar chrome em mobile estreito (fora do empilhamento interno)
+
+Artefatos: /opt/cursor/artifacts/central360_*.webp
+
+Aceite HML (Codex):
+1. Promover contrato §7 (Casa tip bf2f0281+)
+2. Selecionar empresa/cliente, item, salvar/reabrir orçamento
+3. Fechar → pedido → expedição
+4. POST faturar + GET títulos + baixa parcial/quitação
+5. Reabrir pedido/CR com saldo zero
+6. Negativos: sem permissão, clique repetido, 409 replay

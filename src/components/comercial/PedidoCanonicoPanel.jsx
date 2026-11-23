@@ -331,7 +331,7 @@ export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actor
     ()=>CENTRAL_VENDAS360_COLUMNS.filter((col)=>!centralHiddenColumns.has(col.key)),
     [centralHiddenColumns],
   );
-  const notifyCentralSelect=(row,epoch=selectionEpochLiveRef.current)=>{if(typeof onCentralSelect!=='function')return;const link=masters.clientesEmpresa.find(x=>x.id===row?.cliente_empresa_id);const cond=masters.condicoes.find((item)=>item.id===row?.condicao_pagamento_id);const tab=(masters.tabelas||[]).find((item)=>item.id===row?.tabela_preco_id);const enriched=row?{...row,condicao_pagamento_codigo:row.condicao_pagamento_codigo||cond?.codigo||undefined,condicao_pagamento_nome:row.condicao_pagamento_nome||cond?.nome||undefined,condicao_pagamento_label:row.condicao_pagamento_label||(cond?condicaoLabel(cond.id):undefined),tabela_preco_codigo:row.tabela_preco_codigo||tab?.codigo||undefined,tabela_preco_nome:row.tabela_preco_nome||tab?.nome||undefined,tabela_preco_label:row.tabela_preco_label||(tab?tabelaLabel(tab.id):undefined)}:row;onCentralSelect(enriched,{clienteId:link?.cliente_id||row?.cliente_id||null,selectionEpoch:epoch});};
+  const notifyCentralSelect=(row,epoch=selectionEpochLiveRef.current)=>{if(typeof onCentralSelect!=='function')return;const link=masters.clientesEmpresa.find(x=>x.id===row?.cliente_empresa_id);const cond=masters.condicoes.find((item)=>item.id===row?.condicao_pagamento_id);const tab=(masters.tabelas||[]).find((item)=>item.id===row?.tabela_preco_id);const resolvedClienteNome=row?.cliente_nome||row?.nome_cliente||(typeof row?.cliente==='string'?row.cliente:undefined)||(row?.cliente_empresa_id?clientLabel(row.cliente_empresa_id):undefined)||undefined;const enriched=row?{...row,cliente_nome:resolvedClienteNome,nome_cliente:row.nome_cliente||resolvedClienteNome,condicao_pagamento_codigo:row.condicao_pagamento_codigo||cond?.codigo||undefined,condicao_pagamento_nome:row.condicao_pagamento_nome||cond?.nome||undefined,condicao_pagamento_label:row.condicao_pagamento_label||(cond?condicaoLabel(cond.id):undefined),tabela_preco_codigo:row.tabela_preco_codigo||tab?.codigo||undefined,tabela_preco_nome:row.tabela_preco_nome||tab?.nome||undefined,tabela_preco_label:row.tabela_preco_label||(tab?tabelaLabel(tab.id):undefined)}:row;onCentralSelect(enriched,{clienteId:link?.cliente_id||row?.cliente_id||null,clienteNome:resolvedClienteNome||null,selectionEpoch:epoch});};
   /** GET compartilhado por id; sessão monotônica + epoch/intent/RBAC validam no waiter. */
   const hydratePedidoRow=async(row,{epochAtClick=null,sessionGenAtClick=null}={})=>{
     if(!row?.id)return null;
@@ -478,8 +478,18 @@ export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actor
                   <TableRow
                     key={row.id}
                     data-selected={selectedRow ? 'true' : undefined}
-                    className={selectedRow ? 'bg-sky-50' : 'cursor-pointer'}
+                    aria-selected={selectedRow}
+                    tabIndex={0}
+                    className={selectedRow
+                      ? 'bg-sky-100 ring-1 ring-inset ring-sky-400 cursor-pointer'
+                      : 'cursor-pointer hover:bg-slate-50 focus-visible:bg-sky-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sky-400'}
                     onClick={() => { void selectCentralRow(row); }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        void selectCentralRow(row);
+                      }
+                    }}
                     onDoubleClick={() => { void openEditHydrated(row); }}
                     data-action="central360-selecionar-pedido"
                   >

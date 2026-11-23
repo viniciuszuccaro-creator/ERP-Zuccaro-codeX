@@ -222,10 +222,10 @@ run().then(result=>reportFetch('/result',{method:'POST',body:JSON.stringify(resu
       : args.path === 'httpmode'
         ? `export const isHttpBackendMode=true;export const isApiKeyMode=false;export const isLocalOnlyMode=false;export const localApiUser=null;export const base44={auth:{me:async()=>({id:'synthetic-actor'})},entities:{}};`
       : args.path === 'contexto'
-        ? `export const useContextoVisual=()=>({empresaAtual:{id:window.__session?.empresaId||'company',group_id:window.__session?.groupId||'group'},grupoAtual:{id:window.__session?.groupId||'group'}});`
+        ? `export function useContextoVisual(){return{empresaAtual:{id:window.__session?.empresaId||'company',group_id:window.__session?.groupId||'group'},grupoAtual:{id:window.__session?.groupId||'group'}};}export default useContextoVisual;`
       : args.path === 'empty' ? `export default()=>null;`
       : args.path === 'central-document' ? `import React from 'react';export default function DocumentBoundary(props){window.__centralDoc=props;return React.createElement('div',{'data-central-document-boundary':true});}`
-      : args.path === 'context' ? `export const useContextoVisual=()=>({grupoAtual:{id:window.__session?.groupId},contexto:'empresa'});`
+      : args.path === 'context' ? `export function useContextoVisual(){return{grupoAtual:{id:window.__session?.groupId},contexto:'empresa'};}export default useContextoVisual;`
       : args.path === 'windows' ? `export const useWindow=()=>({openWindow:()=>{throw Error('Unexpected external window');}});`
       : args.path === 'select' ? `import React from 'react';export function Select(p){window.selectHandler=p.onValueChange;return React.createElement('div',null,p.children);}const Part=p=>React.createElement('div',null,p.children);export {Part as SelectContent,Part as SelectItem,Part as SelectTrigger,Part as SelectValue};`
       : `export default()=>({hasPermission:()=>window.__allowed});`, loader: 'js', resolveDir: process.cwd() }));

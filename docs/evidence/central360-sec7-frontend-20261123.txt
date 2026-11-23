@@ -1,0 +1,61 @@
+Central360 + contrato §7 frontend — evidência (America/Sao_Paulo 2026-11-23)
+
+Branch: cursor/comercial-360-frontend-v6-3cfd
+PR: #599
+
+## O que o Cursor entregou neste lote
+
+1. Cliente HTTP existente (`httpApiClient.pedidos`):
+   - GET `/vinculos-contabeis`
+   - POST `/faturar`
+   - GET `/titulos`
+   - POST `/titulos/baixa`
+2. Políticas reutilizadas em `pedidoFaturamentoPolicy.js`:
+   - `classifyTituloSituacao` (parcial / quitado / pendente)
+   - `buildPedidoTituloBaixaEvento` (evento estável no retry)
+   - `mapPedidoFinanceiroHttpError` (401/403/404/409/422/503)
+   - fixtures `SYNTHETIC_PEDIDO_TITULOS` (DEV only)
+3. Opt-in `VITE_ERP_HTTP_PEDIDO_FINANCEIRO=true` + `isHttpPedidoFinanceiroEnabled`
+4. Painel extraído no Fechamento existente:
+   `FechamentoPedidoFinanceiroHttp.jsx` (centro/plano, faturar, títulos, baixa)
+5. Contas a Receber: badges Parcial/Quitado na grade; baixa por pedido/parcela
+   **ainda bloqueada** até Codex mapear id CRUD → pedido+parcela
+6. NF-e no Fechamento continua fail-closed em modo HTTP (mensagem HML)
+
+## Browser (local)
+
+- Vite `VITE_ERP_BACKEND=local` · `/comercial?proposta=comercial360`
+- Central abre; ORC-SINT-001 preenche contexto (empresa/cliente/total/Fechar)
+- Layout estreito ~390px empilhado
+- Artefatos: `docs/evidence/central360-sec7-desktop.webp`,
+  `docs/evidence/central360-sec7-narrow.webp`
+- Modo `http` + flag §7 exige Auth supabase (login) — painel não exercitado
+  no browser local sem sessão; coberto por testes sintéticos
+
+## Validações
+
+- `node --test` (policy + http client + central360 + contracts): PASS
+- `npm run lint` (0 errors; warnings pré-existentes fora do lote)
+- `npm run typecheck` PASS
+- `npm run build` PASS
+- `npm run audit:baseline` PASS
+- `git diff --check` PASS
+
+## Percurso de aceite VPS (Codex)
+
+1. Confirmar tip Casa ≥ bf2f0281 e SHA API com `pedidoFinanceiroEnabled`
+2. Publicar rotas §7 + GET `/vinculos-contabeis` (ainda ausente no tip local)
+3. Habilitar `VITE_ERP_HTTP_PEDIDO_FINANCEIRO=true` na web HML
+4. Empresa + permissões: `Comercial.pedidos.faturar`,
+   `Financeiro.contas_receber.visualizar|baixar`
+5. Pedido PRONTO_* → Fechamento → selecionar centro/plano → faturar
+6. GET títulos → baixa parcial (mesmo evento no retry) → quitação → saldo 0
+7. Negativos: 403, 409 replay/divergente, 503 FINANCEIRO_SCHEMA_INVALIDO
+8. Contas a Receber grade: **não** ligar baixa até mapear pedido_id+parcela
+
+## Pendências concretas para Codex
+
+- Implementar/publicar GET `/vinculos-contabeis` (documentado, ausente no server tip)
+- Promote HML + schema/ACL contas_receber
+- Mapear ContaReceber CRUD id → (pedido_id, parcela) antes da baixa na grade
+- Confirmar SHA ambiente vs contrato publicado

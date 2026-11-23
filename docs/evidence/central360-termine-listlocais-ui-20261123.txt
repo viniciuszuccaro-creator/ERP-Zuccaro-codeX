@@ -1,0 +1,41 @@
+Central360 TERMINE — listLocais fail-closed + UI próxima ação
+Data: 2026-11-23 (America/Sao_Paulo)
+Branch: cursor/comercial-360-frontend-v6-3cfd (PR #599)
+Bases: #595 HEAD b5862fc5 · #596 HEAD 1a5bc05e
+
+1) listLocais (httpApiClient)
+   - data:[] → [] (vazio confirmado)
+   - sem data / data null → CLIENTE_LOCAIS_LIST_INVALID (502)
+   - incomplete/partial true → CLIENTE_LOCAIS_LIST_INCOMPLETE (502)
+   - Nunca LOCAIS_ENVELOPE_INVALID; Completo não trata inválido como []
+   - Seletor Continuidade: snapshotLocais (batch), não listLocais
+
+2) Sessão / Entrega (#596 apto no tip)
+   - OrcamentosTab: hydrateEpoch + sessionIdentity; stale discard
+   - onOpenDraft / abertura rascunho Entrega preservados
+
+3) Central360 UI
+   - Sticky contexto: empresa, cliente, condição, total
+   - Próxima ação = Button (Fechar Orçamento → data-action central360-fechar-orcamento)
+   - Dica pagamento encurtada (sem texto repetido longo)
+
+4) §7
+   - Fail-closed opt-in VITE_ERP_HTTP_PEDIDO_FINANCEIRO mantido
+   - Baixa grade aguarda mapa canônico Codex
+
+5) Testes focados
+   - seletor-endereco-binding-595 (incl. listLocais behavioral)
+   - pedido-local-entrega-failclosed-595
+   - central-vendas360-layout-v6-591
+   - http-api-client (CANAL peels)
+
+6) Browser (preview :4173 produção local)
+   - desktop: docs/evidence/central360-termine-desktop.webp
+   - mobile 390px: docs/evidence/central360-termine-mobile.webp
+   - notes: docs/evidence/central360-termine-browser-notes.txt
+   - Shell Central360 + sticky contexto + botão próxima ação OK
+   - Lista vazia: CSP connect-src bloqueia API local (não regressão UI)
+   - §7 faturamento: mensagem “aguarda promote Codex”
+
+Aceite VPS (Codex): publicar §7; validar vinculos/faturar/titulos/baixa;
+troca cliente/empresa com GET em voo; locais vazio vs 502.

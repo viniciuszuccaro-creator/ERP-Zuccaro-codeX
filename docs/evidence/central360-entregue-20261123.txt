@@ -1,0 +1,54 @@
+ENTREGA FRONTEND — Central de Vendas 360º (CPA)
+Data: 2026-11-23 (America/Sao_Paulo)
+PR: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/599
+Branch: cursor/comercial-360-frontend-v6-3cfd
+SHA tip: 495828cbf (Bugbot escopo Dashboard + pin Dashboard.jsx preservado)
+Base Casa: codex/casa-fechamento-hml-20261114 / handoff bf2f0281
+Bases conferidas: #595 b5862fc5 · #596 1a5bc05e
+
+════════════════════════════════════════
+1) FLUXOS EXISTENTES
+════════════════════════════════════════
+- listLocais: data:[] = vazio confirmado; sem data / incomplete →
+  CLIENTE_LOCAIS_LIST_INVALID | CLIENTE_LOCAIS_LIST_INCOMPLETE (nunca []).
+- Seletor Entrega: snapshotLocais (Continuidade #595).
+- Completo: catch de listLocais → visão indefinida (≠ []).
+- OrcamentosTab: hydrateEpoch + sessionIdentity; troca cliente/empresa
+  descarta resposta antiga.
+- Superfície única: uma montagem ResizablePanelGroup (desktop/stack).
+
+2) CENTRAL 360º (layout v6)
+- Sticky: empresa, cliente, condição, total + botão próxima ação.
+- Grades corte/revenda + Cliente360 aside (reuso).
+- Fechar Orçamento → data-action central360-fechar-orcamento.
+- Evidência browser: docs/evidence/central360-termine-*.webp
+
+3) §7 FATURAMENTO / BAIXA (fail-closed)
+- Opt-in VITE_ERP_HTTP_PEDIDO_FINANCEIRO
+- FechamentoPedidoFinanceiroHttp: vinculos, faturar, títulos, baixa
+  com getScope/sessão, limpeza na troca de pedido, evento estável no retry.
+- Contas a Receber grade: Recebido/Saldo fail-closed; baixa canônica
+  NÃO ligada até Codex mapear pedido↔parcela (mensagem na tab).
+- HML a305a143 sem rotas: UI permanece indisponível até promote.
+
+4) CADASTROS / DASHBOARD (independente)
+- DashboardHeader + DashboardEstruturantes: faixa sticky de escopo
+  (mesmo padrão visual da Central) — reduz ambiguidade grupo/empresa.
+
+5) TESTES / CI
+- seletor-endereco-binding-595 (+ behavioral listLocais)
+- peels CANAL / http-api-client / layout v6
+- lint · typecheck · build · audit:baseline
+- CI branch: 11/11 SUCCESS em 0d4262d67 (+ tip deste lote)
+
+════════════════════════════════════════
+ACEITE CODEX (VPS / HML)
+════════════════════════════════════════
+1. Publicar contrato §7; confirmar SHA e flag de ativação.
+2. Locais: vazio confirmado vs 502 inválido/incompleto.
+3. Troca cliente/empresa com GET em voo → descartar stale.
+4. Percurso: empresa → cliente → local → produto → orçamento
+   salvar/reabrir → aprovar → pedido → expedição.
+5. §7: faturar → títulos → parcial → quitação → reabrir saldo 0;
+   clique repetido / 403 / 409 / 503.
+6. Só então ligar baixa da grade CR com identidade canônica.

@@ -739,6 +739,26 @@ SeparacaoConferencia: {
     history(id, { signal } = {}) { return request(`/api/v1/pedidos/${encodeURIComponent(id)}/historico`, { signal }); },
     /** @param {string} id @param {Record<string, unknown>} payload @param {{ signal?: AbortSignal }} [options] */
     convertOrcamento(id, payload, { signal } = {}) { return request(`/api/v1/orcamentos/${encodeURIComponent(id)}/converter-pedido`, { method: 'POST', body: payload, signal }); },
+    /** Contrato §7 — GET centros/planos da empresa (pode 404 até Codex publicar a rota). */
+    /** @param {string} id @param {{ signal?: AbortSignal }} [options] */
+    vinculosContabeis(id, { signal } = {}) {
+      return request(`/api/v1/pedidos/${encodeURIComponent(id)}/vinculos-contabeis`, { signal });
+    },
+    /** Contrato §7 — POST faturar (centro/plano); parcelas no servidor. */
+    /** @param {string} id @param {{ centro_custo_id: string, plano_contas_id: string }} payload @param {{ signal?: AbortSignal }} [options] */
+    faturar(id, payload, { signal } = {}) {
+      return request(`/api/v1/pedidos/${encodeURIComponent(id)}/faturar`, { method: 'POST', body: payload, signal });
+    },
+    /** Contrato §7 — GET títulos (valores string decimal). */
+    /** @param {string} id @param {{ signal?: AbortSignal }} [options] */
+    titulos(id, { signal } = {}) {
+      return request(`/api/v1/pedidos/${encodeURIComponent(id)}/titulos`, { signal });
+    },
+    /** Contrato §7 — POST baixa (parcela + evento estável + valor). */
+    /** @param {string} id @param {{ parcela: number, evento: string, valor: string }} payload @param {{ signal?: AbortSignal }} [options] */
+    baixarTitulo(id, payload, { signal } = {}) {
+      return request(`/api/v1/pedidos/${encodeURIComponent(id)}/titulos/baixa`, { method: 'POST', body: payload, signal });
+    },
   };
   // Prepared CRM surface: explicit callers only; never adds Oportunidade to the pilot.
   const oportunidades = {
@@ -883,9 +903,16 @@ SeparacaoConferencia: {
         signal,
         unwrap: false,
       });
-      const rows = page && typeof page === 'object' && Array.isArray(/** @type {{ data?: unknown }} */ (page).data)
-        ? /** @type {{ data: unknown[] }} */ (page).data
-        : [];
+      // Vazio confirmado (data:[]) ≠ envelope inválido/incompleto (nunca virar []).
+      if (!page || typeof page !== 'object' || !Array.isArray(/** @type {{ data?: unknown }} */ (page).data)) {
+        throw createHttpError(502, { error: { code: 'CLIENTE_LOCAIS_LIST_INVALID', message: 'Resposta de locais inválida' } }, undefined);
+      }
+      const meta = /** @type {{ meta?: Record<string, unknown>, partial?: unknown, incomplete?: unknown }} */ (page);
+      if (meta.partial === true || meta.incomplete === true
+        || meta.meta?.partial === true || meta.meta?.incomplete === true) {
+        throw createHttpError(502, { error: { code: 'CLIENTE_LOCAIS_LIST_INCOMPLETE', message: 'Resposta de locais incompleta' } }, undefined);
+      }
+      const rows = /** @type {{ data: unknown[] }} */ (page).data;
       return rows;
     },
     /**

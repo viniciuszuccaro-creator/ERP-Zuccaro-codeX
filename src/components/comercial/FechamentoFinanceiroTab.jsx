@@ -17,6 +17,7 @@ import { faturarPedidoCompleto } from '@/components/lib/useFluxoPedido';
 import { assertFaturamentoDentroDoPedido } from '@/components/lib/pedidoFaturamentoPolicy';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { isHttpBackendMode } from '@/api/base44Client';
+import FechamentoPedidoFinanceiroHttp from './FechamentoPedidoFinanceiroHttp';
 
 const faturamentoHttpIndisponivel = 'Faturamento indisponível neste ambiente: o pedido não pode gerar títulos pela API atual.';
 
@@ -411,6 +412,8 @@ export default function FechamentoFinanceiroTab({ formData, setFormData, onNext 
           </div>
         </CardContent>
       </Card>
+
+      <FechamentoPedidoFinanceiroHttp formData={formData} />
 
       {/* V21.1: Modal de Emissão de NF-e */}
       <GerarNFeModal

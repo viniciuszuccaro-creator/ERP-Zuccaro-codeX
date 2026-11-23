@@ -52,7 +52,7 @@ export default function useCadastrosAllCounts() {
     .sort()
     .join(",");
 
-  const { data, isLoading, isError, error, isFetching, failureReason } = useQuery({
+  const { data, isLoading, isError, error, isFetching, failureReason, refetch } = useQuery({
     queryKey: ["cadastros-all-counts-v5", empresaId, groupId, grupoEmpIds, actorId, sessionKey],
     queryFn: async () => {
       if (!contextoValido) {
@@ -118,6 +118,8 @@ export default function useCadastrosAllCounts() {
   const totals = Object.fromEntries(
     Object.entries(BLOCOS_ENTITIES).map(([bloco, entities]) => {
       if (isError) return [bloco, null];
+      // Sem payload ainda: null (UI → …), nunca fabricar 0 de {} vazio.
+      if (!data) return [bloco, null];
       const blocoMissing = entities.some((e) => missingSet.has(e));
       if (blocoMissing) return [bloco, null];
       return [bloco, entities.reduce((sum, e) => sum + (Number(counts[e]) || 0), 0)];
@@ -137,5 +139,7 @@ export default function useCadastrosAllCounts() {
     isError,
     error: error || failureReason || null,
     countsUnavailable,
+    // Origem Base44 Cadastros: retry explícito no banner de contagens.
+    refetch: () => refetch(),
   };
 }

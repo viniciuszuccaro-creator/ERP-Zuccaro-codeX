@@ -1,0 +1,51 @@
+MELHORIA VISUAL — Central de Vendas 360º (CPA)
+Data: 2026-11-23 (America/Sao_Paulo)
+PR: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/599
+Branch: cursor/comercial-360-frontend-v6-3cfd
+Base Casa: codex/casa-fechamento-hml-20261114 / handoff bf2f0281
+Bases conferidas: #595 b5862fc5 · #596 1a5bc05e
+
+════════════════════════════════════════
+1) LOCAIS / SESSÃO (confirmado)
+════════════════════════════════════════
+- listLocais: data:[] = vazio; inválido/incompleto → CLIENTE_LOCAIS_LIST_*
+- Seletor: snapshotLocais; Completo: failed ≠ []
+- OrcamentosTab: hydrateEpoch + session; troca contexto descarta stale
+
+════════════════════════════════════════
+2) VISUAL CENTRAL (este lote)
+════════════════════════════════════════
+- Grades: colunas Qtde/Un./Unit./Desc./Total com tabular-nums e contraste
+  (corte inclui Peso; revenda sem peso).
+- Sticky: empresa/cliente/condição/total + próxima ação (focus-visible).
+- Resumo pagamento: sem duplicar condição/total da sticky; alerta só se
+  condição pendente ou total não hidratado.
+- Seleção orçamento/pedido: highlight sky + teclado Enter/Espaço.
+- Faixa/QuickAction: focus-visible ring.
+- Superfície única sem remount no resize (Bugbot anterior).
+
+Evidência browser (DEV proposal, localhost:5173):
+- docs/evidence/central360-visual-desktop-20261123.webp
+- docs/evidence/central360-visual-mobile-20261123.webp
+Nota: preview :4173 (prod) não monta proposta sintética (só DEV).
+
+════════════════════════════════════════
+3) §7 / CR
+════════════════════════════════════════
+- Opt-in VITE_ERP_HTTP_PEDIDO_FINANCEIRO; GET títulos fail-closed (sem SYNTHETIC
+  na lista de Baixar). Baixa CR grade bloqueada até mapa Codex.
+
+════════════════════════════════════════
+4) CADASTROS / DASHBOARD
+════════════════════════════════════════
+- DashboardEstruturantes: faixa escopo fail-closed (incompleto ≠ Grupo falso).
+- DashboardHeader: hasContextoAtivo opcional (pin Dashboard.jsx intacto).
+
+════════════════════════════════════════
+ACEITE CODEX (VPS / HML)
+════════════════════════════════════════
+1. Publicar §7; confirmar SHA e flag.
+2. Locais [] vs 502 inválido/incompleto.
+3. Troca cliente/empresa → descartar stale.
+4. Percurso venda + §7 parcial→quitação.
+5. Só então ligar baixa CR canônica.

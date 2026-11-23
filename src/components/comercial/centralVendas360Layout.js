@@ -95,6 +95,78 @@ export function situacaoById(id) {
 }
 
 /**
+ * Fluxo visual da jornada (versão 6 / DOCX) — só apresentação.
+ * Não inventa status: mapeia situação da faixa + campos já hidratados do documento.
+ */
+export const CENTRAL_VENDAS360_FLUXO_STEPS = Object.freeze([
+  { id: 'orcamento', label: 'Orçamento' },
+  { id: 'validacao', label: 'Validação' },
+  { id: 'fechado', label: 'Fechado' },
+  { id: 'producao', label: 'Produção' },
+  { id: 'expedicao', label: 'Expedição' },
+  { id: 'entrega', label: 'Entrega / Retira' },
+]);
+
+/**
+ * @param {{ id?: string, kind?: string, statusHint?: string } | null | undefined} situacao
+ * @param {Record<string, unknown> | null | undefined} row
+ * @returns {{ activeIndex: number, nextLabel: string, steps: typeof CENTRAL_VENDAS360_FLUXO_STEPS }}
+ */
+export function resolveCentralFluxoState(situacao, row) {
+  const steps = CENTRAL_VENDAS360_FLUXO_STEPS;
+  const sid = String(situacao?.id || '');
+  const status = String(row?.status || row?.situacao || situacao?.statusHint || '').toUpperCase();
+  let activeIndex = 0;
+  if (sid === 'ORCAMENTOS_ABERTOS' || situacao?.kind === 'orcamento') {
+    if (/VENCID|ENCERR|PERD|CANCEL/.test(status) || sid === 'VENCIDOS') activeIndex = 0;
+    else if (/APROV|VALID|CREDITO|AGUARD/.test(status)) activeIndex = 1;
+    else activeIndex = 0;
+  } else if (sid === 'PRODUCAO' || /PRODUC/.test(status)) {
+    activeIndex = 3;
+  } else if (sid === 'ENTREGA' || sid === 'RETIRA') {
+    // Situação da faixa já é Entrega/Retira — não marcar Expedição por PRONTO_RETIRADA.
+    activeIndex = 5;
+  } else if (/ENTREGA|RETIR/.test(status)) {
+    activeIndex = 5;
+  } else if (/SEPAR|ROMANE|EXPED/.test(status)) {
+    activeIndex = 4;
+  } else if (sid === 'ENTREGUES' || /ENTREGUE/.test(status)) {
+    activeIndex = 5;
+  } else if (sid === 'FINALIZADOS' || /FINALIZ/.test(status)) {
+    activeIndex = 5;
+  } else if (sid === 'CANCELADOS' || /CANCEL/.test(status)) {
+    activeIndex = 0;
+  } else if (/FECHAD|CONVERT|PEDIDO|APROVAD/.test(status)) {
+    activeIndex = 2;
+  }
+  const next = steps[Math.min(activeIndex + 1, steps.length - 1)];
+  const nextLabel = activeIndex >= steps.length - 1
+    ? 'Jornada no fim desta visão'
+    : `Próxima: ${next.label}`;
+  return { activeIndex, nextLabel, steps };
+}
+
+/**
+ * Dispara ação já renderizada na Central (toolbar existente) sem duplicar handler.
+ * Exige `root` da superfície atual — sem fallback em `document` (multi-janela).
+ * @param {string} action data-action canônico
+ * @param {ParentNode | Document | null | undefined} root
+ * @returns {boolean}
+ */
+export function invokeCentralDataAction(action, root = null) {
+  const key = String(action || '').trim();
+  if (!key || !root?.querySelector) return false;
+  const found = root.querySelector(`[data-action="${key}"]`);
+  // Duck-typing: Node testes usam stub sem HTMLElement; tsc exige cast de Element.
+  /** @type {{ click?: () => void, disabled?: boolean, getAttribute?: (name: string) => string | null } | null} */
+  const el = /** @type {any} */ (found);
+  if (!el || typeof el.click !== 'function' || typeof el.getAttribute !== 'function') return false;
+  if (el.disabled || el.getAttribute('aria-disabled') === 'true') return false;
+  el.click();
+  return true;
+}
+
+/**
  * Preferências de colunas da grade Central — escopo obrigatório usuário+grupo+empresa.
  * Sem actor/group/empresa: fail-closed (sem ler/gravar storage compartilhado).
  * @param {{ actorId?: string, groupId?: string, empresaId?: string } | null | undefined} scope

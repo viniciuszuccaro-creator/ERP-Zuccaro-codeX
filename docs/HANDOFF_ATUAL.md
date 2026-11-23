@@ -1,3 +1,128 @@
+## Cursor — merge #599 com Casa tip 0ee16ad62 (2026-11-23 America/Sao_Paulo)
+
+Conflitos só STATUS/HANDOFF — prepends Cursor #599 + CPA3 Casa `0ee16ad62`.
+Sem conflito de código.
+
+## Cursor — AttentionStrip + Cadastros escopo (2026-11-23 America/Sao_Paulo)
+
+PR #599: AttentionStrip operacional + escopo Cadastros. Aceite VPS = Codex
+(§7 + mapa CR + contagens server-side).
+
+## Cursor — merge #599 com Casa tip 6eb5a7286 (2026-11-23 America/Sao_Paulo)
+
+Conflitos só STATUS/HANDOFF — prepends Cursor #599 + CPA3 Casa `6eb5a7286`.
+Sem conflito de código.
+
+## Cursor — Bugbot dismiss session/TTL (2026-11-23 America/Sao_Paulo)
+
+PR #599. AlertsBar: escopo via props do Dashboard; dismiss sem storageKey
+não é desfeito pelo effect; TTL por timer de sessão. Pin `bff13623…`.
+Sem Completo/deploy.
+
+## Cursor — typecheck taxaInadimplencia (2026-11-23 America/Sao_Paulo)
+
+PR #599. `DashboardAlertsBar` aceita `number | string | null` nos KPIs
+(policy `toFixed`). Sem mudar `Dashboard.jsx` (pin). Sem Completo/deploy.
+
+## Cursor — Bugbot #599 chips/dismiss/root (2026-11-23 America/Sao_Paulo)
+
+PR #599: Cadastros Ir para; alertas escopados; ações no root do shell.
+Aceite HML = Codex.
+
+## Cursor — merge #599 com Casa tip e700b3c47 (2026-11-23 America/Sao_Paulo)
+
+Conflitos só STATUS/HANDOFF — prepends Cursor #599 + CPA3 Casa `e700b3c47`.
+Sem conflito de código.
+
+## Cursor — pin Dashboard Base44 (2026-11-23 America/Sao_Paulo)
+
+PR #599: pin Dashboard após alertas/KPI/lazy. Aceite VPS = Codex.
+
+## Cursor — Bugbot #599 lock/404/desc (2026-11-23 America/Sao_Paulo)
+
+PR #599: lock sobrevive troca de escopo; títulos 404 com aviso; Desc. 0 monetário.
+Aceite HML = Codex (§7 + mapa CR).
+
+## Cursor — merge #599 com Casa tip af375376d (2026-11-23 America/Sao_Paulo)
+
+Conflitos só STATUS/HANDOFF — prepends Cursor #599 + CPA3 Casa `af375376d`.
+Sem conflito de código.
+
+## Cursor — Dashboard 1º ganho Base44 (2026-11-23 America/Sao_Paulo)
+
+PR #599: alertas acionáveis + KPI strip + lazy secundários. Evidência
+`docs/evidence/dashboard-base44-primeiro-ganho-20261123.txt`. Aceite VPS = Codex.
+
+## Cursor — merge #599 com Casa tip 56222f6cc (2026-11-23 America/Sao_Paulo)
+
+Conflitos só STATUS/HANDOFF — prepends Cursor #599 + CPA3 Casa.
+Sem conflito de código. Tip Casa `56222f6cc`.
+
+## Cursor — Cadastros UX Base44 (2026-11-23 America/Sao_Paulo)
+
+PR #599: Cadastros Gerais — atalhos/busca/retry (origem Base44 `5a8c26fab`).
+Evidência `docs/evidence/cadastros-base44-atalhos-20261123.txt`. Aceite VPS = Codex.
+
+## Cursor — Central360 Bugbot baixas concorrentes (2026-11-23 America/Sao_Paulo)
+
+PR #599: serializa faturar/baixa (`mutacaoLockRef` + UI); sucesso POST não
+exige geração. Aceite HML = Codex (§7 + mapa CR).
+
+## Cursor — Central360 Bugbot stale GET (2026-11-23 America/Sao_Paulo)
+
+PR #599 vs Casa `aaf6eac5a`: MERGEABLE, sem conflitos. Fix: abort GET títulos
+após faturar/baixa + Desc. monetário primeiro. Aceite HML = Codex (§7 + mapa CR).
+
+## Cursor — Central360 COMPLETE (2026-11-23 America/Sao_Paulo)
+
+PR #599 frontend/visual completo vs tip Casa `0cb6783b` / bf2f0281.
+listLocais fail-closed; sticky Grupo|Empresa+obra/local; grades —≠0;
+§7 fail-closed; CR baixa canônica aguarda mapa Codex. Evidência
+`docs/evidence/central360-complete-20261123.txt`. Aceite VPS = Codex.
+
+## Cursor — Central360 TERMINE (2026-11-23 America/Sao_Paulo)
+
+PR #599: sticky com Obra/Local; grades Qtde/Un./Unit./Desc./Total;
+seleção teclado; listLocais fail-closed; §7 opt-in sem SYNTHETIC na
+Baixar; CR canônica bloqueada até mapa. Evidência visual em
+`docs/evidence/central360-visual-melhoria-20261123.txt`. Aceite Codex HML.
+
+## Cursor — Central360 ENTREGUE (2026-11-23 America/Sao_Paulo)
+
+PR #599 `cursor/comercial-360-frontend-v6-3cfd` entregue (frontend).
+`listLocais` fail-closed; Central sticky/próxima ação; §7 opt-in
+fail-closed; CR baixa canônica **bloqueada** até mapa pedido/parcela.
+Dashboard/Cadastros: faixa de escopo sticky. Evidência
+`docs/evidence/central360-entregue-20261123.txt`. Aceite VPS = Codex
+(publicar §7 + percurso HML). Sem Completo/deploy neste lote.
+
+## Cursor — Central360 browser + CR/mobile (2026-11-23 America/Sao_Paulo)
+
+PR #599 `cursor/comercial-360-frontend-v6-3cfd`. Browser proposta sintética
+OK (contexto cliente/total). Contas a Receber: import dinâmico (sem crash
+lazy). Mobile: split vertical. Evidência
+`docs/evidence/central360-frontend-browser-20261123.txt`. Contrato §7
+ainda só clone; HML a305a143 sem rotas — UI fail-closed. Aceite Codex HML
+no STATUS. Sem Completo/deploy.
+
+## Cursor — Central360 frontend v6 (DOCX) (2026-11-23 America/Sao_Paulo)
+
+Branch `cursor/comercial-360-frontend-v6-3cfd`. Melhoria no shell existente:
+contexto sticky da venda, fluxo visual, Ações Rápidas (reusa toolbar),
+grades/Cliente360 em `CentralVendas360ShellParts`, Contas a Receber com
+Recebido/Saldo fail-closed + gate HTTP, FechamentoFinanceiro mensagem HML.
+Testes `central-vendas360-layout-v6-591` 16/16 PASS. Sem Completo/deploy.
+Próximo: browser desktop/mobile + promote financeiro Codex.
+
+## Cursor — retomada bc-d973626e (2026-11-23 America/Sao_Paulo)
+
+Handoff canônico de retomada: **`HANDOFF.md`** (raiz). Tip Casa base
+`bf2f02810`. Tip Cursor PR596 preservado `1a5bc05ea`. Escopo Cursor:
+frontend/Central360; Completo/endereços/HML/deploy = Casa. Contrato
+financeiro clone documentado no HANDOFF §7; UI HTTP permanece indisponível
+até promote. P1 #598: lote 5.423 = encerrado (5384 revisão + 39 histórico);
+**não reaplicar** — alinhado ao recibo deste tip.
+
 ## CPA3: Unidades autorizadas, preflight bloqueado por margem
 
 Manifesto 43dfafc5: 14 unidades, 7.265 bytes, SHA e modo 600 conferidos
@@ -11,6 +136,7 @@ margem adequada para tabela, indices, temporarios e variacao do host.
 Gate de planejamento: piso + 40 MiB; margem adicional 7.619.653 bytes
 ate o alvo na amostra. Revalidar antes de executar. Sem nova limpeza.
 Zero DDL, grants ou unidades gravadas; sem deploy ou operacional.
+
 
 ## CPA3: backup fresco verificado para o gate de Unidades
 
@@ -43,6 +169,7 @@ Falta backup fresco: 21.627.408.384 bytes livres, piso de 21.743.271.936
 antes do dump. Avulso de 23/11 restauravel; agendador segue falho.
 Sem escrita, deploy, schema ou grants na HML. Pacote nao autorizado.
 
+
 ## CPA3: gate de retomada de Unidades e backup avulso verificado
 
 O piloto canonico de Produtos exige branch e aprovacao do piloto antigo.
@@ -60,6 +187,7 @@ duravel atomico e reversao por postimage; ensaiar falha apos commit com
 ACL efetiva. Revalidar estado atual e backup antes de pedir aprovacao.
 Nenhuma gravacao, mudanca de permissao ou agendador na HML.
 
+
 ## CPA3: Grupo fixado e 14 unidades ensaiadas em PostgreSQL
 
 UUID do Grupo fixado privadamente apos leitura pelo principal efetivo
@@ -75,6 +203,7 @@ e validar backup fresco antes do pedido de escrita. Nenhuma carga HML.
 Produto: grupo/setor opcionais no schema generico; importador legado
 continua exigindo prova de classe, tipo e unidade. Sem liberar por omissao.
 Backup: timer ativo, servico falho; nenhuma alteracao no agendador.
+
 
 ## CPA3: manifesto privado e prova HTTP das 14 unidades
 

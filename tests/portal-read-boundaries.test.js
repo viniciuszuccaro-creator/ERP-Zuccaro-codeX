@@ -10,6 +10,7 @@ import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { buildPortalDocumentoLinks, assertPortalTituloDoCliente } from '../src/components/lib/portalClientePolicy.js';
 import { portalReadHunks, portalReadRemainder } from './helpers/portalReadRemainder.js';
+import { financialBatchHunks } from './helpers/financialBatchPermissionRemainder.js';
 
 const read = file => fs.readFileSync(file, 'utf8').replace(/\r\n/g, '\n');
 const digest = text => crypto.createHash('sha256').update(text).digest('hex');
@@ -38,7 +39,12 @@ for (const [file, hash] of Object.entries(frozen)) test(`${file}: exact read hun
   const source = read(file);
   assert.equal(digest(portalReadRemainder(file, source)), hash);
   for (const [current] of portalReadHunks[file]) {
-    const target=[current,...(consolidation82Hunks[file]?.hunks||[]).map(h=>h[0]),...(consolidation84Hunks[file]?.hunks||[]).map(h=>h[0])].find(h=>source.includes(h));
+    // ContasReceber: portalReadRemainder aplica financialBatch primeiro (gate HTTP / import).
+    const target=[current,
+      ...(financialBatchHunks[file]||[]).map(h=>h[0]),
+      ...(consolidation82Hunks[file]?.hunks||[]).map(h=>h[0]),
+      ...(consolidation84Hunks[file]?.hunks||[]).map(h=>h[0]),
+    ].find(h=>source.includes(h));
     assert.ok(source.includes(target));
     assert.throws(() => portalReadRemainder(file, source.replace(target, '')));
     assert.throws(() => portalReadRemainder(file, source.replace(target, target + target)));

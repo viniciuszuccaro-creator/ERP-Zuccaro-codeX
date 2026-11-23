@@ -953,9 +953,16 @@ const convertToPedido = async () => {
     const link = masters.clientesEmpresa.find((item) => item.id === row?.cliente_empresa_id);
     const cond = masters.condicoes.find((item) => item.id === row?.condicao_pagamento_id);
     const tab = (masters.tabelas || []).find((item) => item.id === row?.tabela_preco_id);
+    const resolvedClienteNome = row?.cliente_nome
+      || row?.nome_cliente
+      || (typeof row?.cliente === 'string' ? row.cliente : undefined)
+      || (row?.cliente_empresa_id ? clienteLabel(row.cliente_empresa_id) : undefined)
+      || undefined;
     const enriched = row
       ? {
         ...row,
+        cliente_nome: resolvedClienteNome,
+        nome_cliente: row.nome_cliente || resolvedClienteNome,
         condicao_pagamento_codigo: row.condicao_pagamento_codigo || cond?.codigo || undefined,
         condicao_pagamento_nome: row.condicao_pagamento_nome || cond?.nome || undefined,
         condicao_pagamento_label: row.condicao_pagamento_label || (cond ? condicaoLabel(cond.id) : undefined),
@@ -964,7 +971,11 @@ const convertToPedido = async () => {
         tabela_preco_label: row.tabela_preco_label || (tab ? tabelaLabel(tab.id) : undefined),
       }
       : row;
-    onCentralSelect(enriched, { clienteId: link?.cliente_id || row?.cliente_id || null, selectionEpoch: epoch });
+    onCentralSelect(enriched, {
+      clienteId: link?.cliente_id || row?.cliente_id || null,
+      clienteNome: resolvedClienteNome || null,
+      selectionEpoch: epoch,
+    });
   };
   /** Clique simples: seleciona já e sempre GET canônico (lista pode trazer itens stub sem total/parcelas). Sem mutation gate. */
   const selectCentralRow = async (row) => {
@@ -1415,8 +1426,18 @@ const convertToPedido = async () => {
                 <TableRow
                   key={row.id}
                   data-selected={selectedRow ? 'true' : undefined}
-                  className={selectedRow ? 'bg-sky-50' : 'cursor-pointer'}
+                  aria-selected={selectedRow}
+                  tabIndex={0}
+                  className={selectedRow
+                    ? 'bg-sky-100 ring-1 ring-inset ring-sky-400 cursor-pointer'
+                    : 'cursor-pointer hover:bg-slate-50 focus-visible:bg-sky-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sky-400'}
                   onClick={() => { void selectCentralRow(row); }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      void selectCentralRow(row);
+                    }
+                  }}
                   onDoubleClick={() => { if (proposalMode || canEdit(row)) void openEditHydrated(row); }}
                   data-action="central360-selecionar-orcamento"
                 >

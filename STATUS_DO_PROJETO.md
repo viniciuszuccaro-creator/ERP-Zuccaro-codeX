@@ -1,3 +1,226 @@
+## Cursor — merge #599 com Casa tip 0ee16ad62 (2026-11-23 America/Sao_Paulo)
+
+Conflitos só STATUS/HANDOFF — prepends Cursor AttentionStrip/Cadastros + CPA3 Casa.
+Sem conflito de código. Tip Casa `0ee16ad62`.
+
+## Cursor — AttentionStrip + Cadastros escopo (2026-11-23 America/Sao_Paulo)
+
+PR #599. Dashboard: faixa atrasados/expedir/receber (`DashboardAttentionStrip`);
+Cadastros: escopo Grupo/Empresa visível; pin `a29af89ab…`. Merge Casa `6eb5a7286`.
+Central360/§7 já no tip; CR baixa Codex. Sem Completo/deploy.
+
+## Cursor — merge #599 com Casa tip 6eb5a7286 (2026-11-23 America/Sao_Paulo)
+
+Conflitos só STATUS/HANDOFF — prepends Cursor Dashboard/360/Cadastros + CPA3 backup/gate HML.
+Sem conflito de código. Tip Casa `6eb5a7286`.
+
+## Cursor — Bugbot dismiss session/TTL (2026-11-23 America/Sao_Paulo)
+
+PR #599. AlertsBar: escopo via props do Dashboard; dismiss sem storageKey
+não é desfeito pelo effect; TTL por timer de sessão. Pin `bff13623…`.
+Sem Completo/deploy.
+
+## Cursor — typecheck taxaInadimplencia (2026-11-23 America/Sao_Paulo)
+
+PR #599. `DashboardAlertsBar` aceita `number | string | null` nos KPIs
+(policy `toFixed`). Sem mudar `Dashboard.jsx` (pin). Sem Completo/deploy.
+
+## Cursor — Bugbot #599 chips/dismiss/root (2026-11-23 America/Sao_Paulo)
+
+PR #599. (1) Cadastros: busca ativa → chip só “Ir para” (não fecha).
+(2) Alertas: dismiss por grupo/empresa + TTL reavaliado.
+(3) Central360: `invokeCentralDataAction` exige root do shell.
+Testes focados PASS. Sem Completo/deploy.
+
+## Cursor — merge #599 com Casa tip e700b3c47 (2026-11-23 America/Sao_Paulo)
+
+Conflitos só STATUS/HANDOFF — prepends Cursor pin/Bugbot/Dashboard + CPA3 bloqueio/backup.
+Sem conflito de código. Tip Casa `e700b3c47`.
+
+## Cursor — pin Dashboard Base44 (2026-11-23 America/Sao_Paulo)
+
+PR #599. CI frontend: pin SHA-256 do restante de `Dashboard.jsx` atualizado
+após 1º ganho Base44 (`ae9e46288…`). Sem Completo/deploy.
+
+## Cursor — Bugbot #599 lock/404/desc (2026-11-23 America/Sao_Paulo)
+
+PR #599. (1) Escopo não zera `mutacaoLockRef` — evita baixa duplicada com POST em voo.
+(2) GET `/titulos` 404: `TITULO_NAO_ENCONTRADO` = vazio ok; demais → aviso.
+(3) Desc. monetário 0 explícito → "—" (não cai no %). Testes focados PASS.
+Sem Completo/deploy. CR canônica ainda Codex.
+
+## Cursor — merge #599 com Casa tip af375376d (2026-11-23 America/Sao_Paulo)
+
+Conflitos só em STATUS/HANDOFF — prepends complementares (Cursor Dashboard/
+Cadastros/Central360 + CPA3 Grupo/14 unidades PG). Sem conflito de código.
+Tip Casa `af375376d`.
+
+## Cursor — Dashboard 1º ganho Base44 (2026-11-23 America/Sao_Paulo)
+
+PR #599. Dashboard existente: `DashboardAlertsBar` (alertas com ação),
+KPI strip clicável fail-closed, painéis secundários lazy. Cadastros/
+Central360 já no tip. Evidência
+`docs/evidence/dashboard-base44-primeiro-ganho-20261123.txt`.
+CR baixa ainda Codex. Sem Completo/deploy.
+
+## Cursor — merge #599 com Casa tip 56222f6cc (2026-11-23 America/Sao_Paulo)
+
+Conflitos só em STATUS/HANDOFF — prepends complementares (Cursor Central360/
+Cadastros UX + CPA3 manifesto/inventário). Sem conflito de intenção em código.
+Tip Casa `56222f6cc`.
+
+## Cursor — Bugbot escopo POST + chips … (2026-11-23 America/Sao_Paulo)
+
+PR #599. (1) POST faturar/baixa stale após troca grupo/empresa: `scopeAtStart`
+em `publicarTitulosAposMutacao` — sem abortar GET novo nem toast. (2) Atalhos
+Cadastros: `!data` → total null; UI prioriza `countsLoading` → `…` (não 0).
+Testes policy+count PASS. Sem Completo/deploy.
+
+## Cursor — Cadastros UX Base44 (atalhos/busca/retry) (2026-11-23 America/Sao_Paulo)
+
+PR #599. Origem Base44 `5a8c26fab` Cadastros.jsx — melhoria no existente:
+atalhos compactos com contagem real (…/— fail-closed); scroll ao bloco;
+busca abre 6 blocos e restaura; retry de contagens (`refetch` no hook).
+Reuso: `Cadastros.jsx`, `useCadastrosAllCounts`, `GroupCountBadge`, Bloco1..6.
+Evidência `docs/evidence/cadastros-base44-atalhos-20261123.txt`.
+Central360/§7 já no tip; CR baixa ainda bloqueada (Codex). Sem Completo/deploy.
+
+## Cursor — Central360 Bugbot baixas concorrentes (2026-11-23 America/Sao_Paulo)
+
+PR #599. Medium: baixas paralelas dropariam o 2º POST após bump de geração.
+Fix: `mutacaoLockRef` + `mutacaoEmCurso` (desabilita todas Baixar/Faturar);
+sucesso de POST publica só com `pedidoId` (não exige geração).
+Testes policy PASS. Sem Completo/deploy. CR canônica ainda bloqueada.
+
+## Cursor — Central360 Bugbot stale GET + Desc. (2026-11-23 America/Sao_Paulo)
+
+PR #599. Merge com Casa `aaf6eac5a`: **MERGEABLE** (sem conflitos). Bugbot High:
+faturar/baixa aborta GET `/titulos` em voo + bump geração (`publicarTitulosAposMutacao`)
+para não sobrescrever POST com 404/lista stale; loading limpo no finally por pedido.
+Low: coluna Desc. prioriza `desconto`/`valor_desconto` sobre `%` (inclui 0%).
+Testes focados 24/24 PASS. Sem Completo/deploy. CR baixa ainda bloqueada (Codex).
+
+## Cursor — Central360 COMPLETE frontend (2026-11-23 America/Sao_Paulo)
+
+PR #599 tip completo no escopo frontend/visual sobre tip Casa `0cb6783b`.
+Checklist: listLocais fail-closed; hydrate #596; sticky Grupo|Empresa +
+obra/local + próxima ação; grades com — para preço ausente; §7 opt-in
+fail-closed (escopo/geração/404); CR canônica bloqueada até mapa Codex;
+Cadastros/Dashboard escopo. Evidência
+`docs/evidence/central360-complete-20261123.txt` + visual webp.
+Sem Completo/deploy. Aceite HML = Codex (§7 + percurso + mapa CR).
+
+## Cursor — Central360 TERMINE sticky obra/local (2026-11-23 America/Sao_Paulo)
+
+PR #599. Sticky da venda passa a exibir Obra/Local a partir dos campos da
+seleção (sem inventar). Merge com tip Casa (interseção Preços/clone).
+Bases #595 `b5862fc5` / #596 `1a5bc05e`. listLocais fail-closed; §7 sem
+SYNTHETIC na Baixar; CR canônica bloqueada até mapa Codex. Sem Completo/
+deploy. Aceite HML no evidence visual.
+
+## Cursor — Central360 visual + teclado (2026-11-23 America/Sao_Paulo)
+
+PR #599. Melhoria no existente (layout v6): grades com Qtde/Un./Unit./Desc./Total
+(tabular-nums); sticky + próxima ação com focus-visible; resumo sem duplicar
+condição/total; seleção orçamento/pedido com highlight + Enter/Espaço;
+Cadastros estruturantes: escopo incompleto fail-closed. Bases #595/#596
+conferidas. §7 sem SYNTHETIC na lista de Baixar; CR canônica bloqueada.
+Evidência `docs/evidence/central360-visual-melhoria-20261123.txt` + webp.
+Sem Completo/deploy. Aceite Codex HML no evidence.
+
+## Cursor — Central360 ENTREGUE tip (2026-11-23 America/Sao_Paulo)
+
+PR #599 tip `495828cbf`. Checklist completo no existente: listLocais
+fail-closed (vazio≠inválido/incompleto); Seletor/Completo estados;
+hydrateEpoch #596; sticky + próxima ação; superfície única; §7
+opt-in fail-closed (baixa CR bloqueada até mapa); Dashboard/Cadastros
+faixa escopo (`contextoValido`, sem alterar pin Dashboard.jsx).
+Evidência `docs/evidence/central360-entregue-20261123.txt`. Sem
+Completo/deploy. Aceite Codex HML no evidence. Próximo: CI tip +
+mapa CR pelo Codex.
+
+## Cursor — Central360 ENTREGUE frontend (2026-11-23 America/Sao_Paulo)
+
+PR #599 tip entregue ao Codex. Checklist: listLocais fail-closed;
+sessão/hydrate #596; superfície única; sticky + próxima ação;
+§7 fail-closed (baixa CR aguarda mapa); DashboardHeader +
+DashboardEstruturantes com faixa de escopo. Evidência
+`docs/evidence/central360-entregue-20261123.txt` + termine webp.
+CI 11/11 em `0d4262d67`. Sem Completo/deploy. Aceite Codex HML §7
+no evidence. Próximo Cursor: só pós-mapa CR ou regressão.
+
+## Cursor — Central360 TERMINE lote (listLocais + UI) (2026-11-23 America/Sao_Paulo)
+
+PR #599. Bases #595 (`b5862fc5`) / #596 (`1a5bc05e`) conferidas no tip.
+`listLocais`: `data:[]` = vazio confirmado; envelope inválido/incompleto
+→ `CLIENTE_LOCAIS_LIST_*` (nunca `[]`). Seletor segue `snapshotLocais`;
+OrcamentosTab mantém hydrateEpoch/sessão. Central360: dica pagamento
+encurtada; próxima ação como botão (Fechar via `data-action` existente).
+Peels purpose/conferência preservados. Browser preview: sticky + botão
+próxima ação (`docs/evidence/central360-termine-*.webp`). lint/typecheck/
+build/audit PASS. Sem Completo/deploy. Próximo Codex: §7 HML + mapa CR;
+Cursor: Cadastros/Dashboard só com ganho concreto.
+
+## Cursor — Central360 §7 wire frontend (2026-11-23 America/Sao_Paulo)
+
+PR #599. Ligação fail-closed do contrato financeiro no UI existente:
+`httpApiClient.pedidos` (+vinculos/faturar/titulos/baixarTitulo),
+políticas em `pedidoFaturamentoPolicy`, painel
+`FechamentoPedidoFinanceiroHttp` (opt-in `VITE_ERP_HTTP_PEDIDO_FINANCEIRO`),
+badges Parcial/Quitado em Contas a Receber. Baixa na grade **não** ligada
+(aguarda mapeamento pedido/parcela do Codex). NF-e HTTP permanece bloqueada.
+Browser local: Central360 desktop+390px
+(`docs/evidence/central360-sec7-*.webp` + txt). lint/typecheck/build/audit PASS.
+Sem Completo/deploy. Próximo Codex: publish §7 HML + vinculos-contabeis +
+mapa CR; Cursor: Cadastros/Dashboard se ganho concreto.
+
+## Cursor — Central360 browser + crash CR + stack mobile (2026-11-23 America/Sao_Paulo)
+
+PR #599. Browser `/comercial?proposta=comercial360`: seleção ORC-SINT-001
+preenche contexto (cliente/total/Fechar). Contas a Receber abre sem crash
+(import dinâmico no clique, não React.lazy→openWindow). Viewport estreita:
+ResizablePanelGroup vertical (uma montagem). Evidência
+`docs/evidence/central360-frontend-browser-20261123.txt` + artifacts webp.
+Faturamento HTTP HML ainda indisponível (mensagem/gate). Sem Completo/deploy.
+Próximo: CI verde · aceite Codex HML §7 · ajustes visuais Cadastros/Dashboard.
+
+## Cursor — Central360 CI frontend (contratos financeiro) (2026-11-23 America/Sao_Paulo)
+
+PR #599 tip após `6778d0804`: job `frontend` falhou por hunks/hashes de
+`TabelaReceber`/`ContasReceberTab`/`Fechamento` + stub `useContextoVisual`
+sem default no mount. Correção: hunks autorizados (Recebido/Saldo + gate
+HTTP), mensagem Fechamento alinhada ao boundary Casa, stub com
+`export default`. Sem Completo/deploy. Próximo: CI verde + promote Codex.
+
+## Cursor — Central360 Bugbot P3 (cliente/Retira/Desmembrar) (2026-11-23 America/Sao_Paulo)
+
+Branch `cursor/comercial-360-frontend-v6-3cfd` (PR #599). Correções no existente:
+`notifyCentralSelect` enriquece `cliente_nome`/`clienteNome` (barra sticky);
+`resolveCentralFluxoState` RETIRA/ENTREGA → índice 5 (não Expedição por
+PRONTO_RETIRADA); Ação Rápida Desmembrar abre `central360-mais-acoes`.
+Testes `central-vendas360-layout-v6-591` 16/16 PASS. Sem Completo/deploy.
+Próximo: browser desktop/mobile + promote financeiro Codex.
+
+## Cursor — Central360 frontend v6 (DOCX) (2026-11-23 America/Sao_Paulo)
+
+Branch `cursor/comercial-360-frontend-v6-3cfd`. Melhoria no shell existente:
+contexto sticky da venda, fluxo visual, Ações Rápidas (reusa toolbar),
+grades/Cliente360 em `CentralVendas360ShellParts`, Contas a Receber com
+Recebido/Saldo fail-closed + gate HTTP, FechamentoFinanceiro mensagem HML.
+Testes `central-vendas360-layout-v6-591` 16/16 PASS. Sem Completo/deploy.
+Próximo: browser desktop/mobile + promote financeiro Codex.
+
+## Cursor — retomada bc-d973626e + HANDOFF.md (2026-11-23 America/Sao_Paulo)
+
+Agent anterior `bc-d973626e` travou no limite de uso em 15/11 no tip PR596
+`1a5bc05ea` (OrcamentosTab `d43ae30b1`). Casa seguiu em
+`codex/casa-fechamento-hml-20261114` tip `bf2f02810`. Este lote: handoff
+completo em `HANDOFF.md` + restaura `docs/HANDOFF_CASA_2026-11-20.md`.
+P1 Codex #598: fila 5.423 reconciliada como **ENCERRADA** (5384+39; não
+reaplicar) — próximo Casa = backup/faturamento/Obras, não reimportar.
+Sem Completo/deploy/DDL. Próximo Cursor: Central360 visual + contrato
+financeiro HTTP (§7 do HANDOFF) só com indisponível até promote Casa.
+
 ## CPA3: Unidades autorizadas, preflight bloqueado por margem
 
 Manifesto 43dfafc5: 14 unidades, 7.265 bytes, SHA e modo 600 conferidos
@@ -11,6 +234,7 @@ margem adequada para tabela, indices, temporarios e variacao do host.
 Gate de planejamento: piso + 40 MiB; margem adicional 7.619.653 bytes
 ate o alvo na amostra. Revalidar antes de executar. Sem nova limpeza.
 Zero DDL, grants ou unidades gravadas; sem deploy ou operacional.
+
 
 ## CPA3: backup fresco verificado para o gate de Unidades
 
@@ -43,6 +267,7 @@ Falta backup fresco: 21.627.408.384 bytes livres, piso de 21.743.271.936
 antes do dump. Avulso de 23/11 restauravel; agendador segue falho.
 Sem escrita, deploy, schema ou grants na HML. Pacote nao autorizado.
 
+
 ## CPA3: gate de retomada de Unidades e backup avulso verificado
 
 O piloto canonico de Produtos exige branch e aprovacao do piloto antigo.
@@ -60,6 +285,7 @@ duravel atomico e reversao por postimage; ensaiar falha apos commit com
 ACL efetiva. Revalidar estado atual e backup antes de pedir aprovacao.
 Nenhuma gravacao, mudanca de permissao ou agendador na HML.
 
+
 ## CPA3: Grupo fixado e 14 unidades ensaiadas em PostgreSQL
 
 UUID do Grupo fixado privadamente apos leitura pelo principal efetivo
@@ -75,6 +301,7 @@ e validar backup fresco antes do pedido de escrita. Nenhuma carga HML.
 Produto: grupo/setor opcionais no schema generico; importador legado
 continua exigindo prova de classe, tipo e unidade. Sem liberar por omissao.
 Backup: timer ativo, servico falho; nenhuma alteracao no agendador.
+
 
 ## CPA3: manifesto privado e prova HTTP das 14 unidades
 
