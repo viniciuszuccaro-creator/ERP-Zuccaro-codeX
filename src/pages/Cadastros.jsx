@@ -157,6 +157,34 @@ export default function Cadastros() {
   };
 
   const handleCardClick = (blocoId) => {
+    // Com busca ativa os 6 blocos já estão abertos: chip = "Ir para" (scroll), não fechar.
+    const buscaAtiva = Boolean(searchTerm.trim()) || openBeforeSearchRef.current !== null;
+    if (buscaAtiva) {
+      if (!acordeonAberto.includes(blocoId)) {
+        setAcordeonAberto((prev) => (prev.includes(blocoId) ? prev : [...prev, blocoId]));
+      }
+      setTimeout(() => {
+        document.querySelector(`[data-bloco="${blocoId}"]`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 150);
+      registrarAuditoriaCadastros(`Ir para bloco de Cadastros: ${blocoId}`, {
+        entidade: "Bloco Cadastros",
+        dados_novos: {
+          bloco: blocoId,
+          bloco_nome: blocosMeta[blocoId]?.nome || blocoId,
+          permissao_bloco: blocosMeta[blocoId]?.permissao || null,
+          acao_visual: "ir_para",
+          busca_ativa: true,
+          blocos_abertos: acordeonAberto.includes(blocoId)
+            ? acordeonAberto
+            : [...acordeonAberto, blocoId],
+          total_exibido_bloco: getTotalBloco(blocoId),
+          contexto_obrigatorio_atendido: contextoAtivo,
+        },
+        sucesso: contextoAtivo,
+      });
+      return;
+    }
+
     const estavaAberto = acordeonAberto.includes(blocoId);
     const proximosAbertos = estavaAberto
       ? acordeonAberto.filter((id) => id !== blocoId)

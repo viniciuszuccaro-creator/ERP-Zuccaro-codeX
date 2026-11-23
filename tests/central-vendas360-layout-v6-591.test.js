@@ -178,6 +178,8 @@ test('CentralVendas360Shell: faixa, situações, grades dual, Cliente360', () =>
   const src = read('src/components/comercial/CentralVendas360Shell.jsx');
   const parts = read('src/components/comercial/CentralVendas360ShellParts.jsx');
   assert.match(src, /data-layout="versao6"/);
+  assert.match(src, /shellRootRef/);
+  assert.match(src, /invokeCentralDataAction\(action, shellRootRef\.current\)/);
   assert.match(src, /central360-faixa-compacta/);
   assert.match(src, /central360-situacoes/);
   assert.match(src, /central360-contexto-venda/);
@@ -261,6 +263,9 @@ test('invokeCentralDataAction só clica botão habilitado existente', () => {
   assert.equal(invokeCentralDataAction('central360-imprimir', root), true);
   assert.equal(invokeCentralDataAction('central360-fechar-orcamento', root), false);
   assert.equal(invokeCentralDataAction('central360-inexistente', root), false);
+  // Sem root: fail-closed (não cai em document global).
+  assert.equal(invokeCentralDataAction('central360-imprimir'), false);
+  assert.equal(invokeCentralDataAction('central360-imprimir', null), false);
 });
 
 test('TabelaReceber exibe Recebido/Saldo fail-closed; ContasReceber informa gate HTTP', () => {

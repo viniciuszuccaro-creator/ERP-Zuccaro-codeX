@@ -148,11 +148,12 @@ export function resolveCentralFluxoState(situacao, row) {
 
 /**
  * Dispara ação já renderizada na Central (toolbar existente) sem duplicar handler.
+ * Exige `root` da superfície atual — sem fallback em `document` (multi-janela).
  * @param {string} action data-action canônico
  * @param {ParentNode | Document | null | undefined} root
  * @returns {boolean}
  */
-export function invokeCentralDataAction(action, root = typeof document !== 'undefined' ? document : null) {
+export function invokeCentralDataAction(action, root = null) {
   const key = String(action || '').trim();
   if (!key || !root?.querySelector) return false;
   const found = root.querySelector(`[data-action="${key}"]`);

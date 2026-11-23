@@ -76,6 +76,8 @@ export default function CentralVendas360Shell({
   /** Epoch da seleção na Central: troca de situação invalida GET tardio do painel desmontado. */
   const selectionEpochRef = useRef(0);
   const [selectionEpoch, setSelectionEpoch] = useState(0);
+  /** Escopo do querySelector de ações — evita clicar toolbar de outra janela montada. */
+  const shellRootRef = useRef(/** @type {HTMLDivElement | null} */ (null));
   // Uma montagem: em viewport estreita empilha (vertical); desktop mantém split horizontal.
   const [stackPanels, setStackPanels] = useState(() => (
     typeof window !== 'undefined' ? window.matchMedia('(max-width: 1023px)').matches : false
@@ -221,7 +223,7 @@ export default function CentralVendas360Shell({
     : null;
 
   const runCentralAction = useCallback((action, fallbackMessage) => {
-    const ok = invokeCentralDataAction(action);
+    const ok = invokeCentralDataAction(action, shellRootRef.current);
     if (!ok) {
       toast.message(fallbackMessage || 'Ação indisponível nesta visão ou sem seleção.');
     }
@@ -367,6 +369,7 @@ export default function CentralVendas360Shell({
 
   return (
     <div
+      ref={shellRootRef}
       className={`w-full h-full flex flex-col bg-slate-50 text-slate-900 ${windowMode ? 'p-2' : 'p-3'}`}
       data-permission="Comercial.pedido.visualizar"
       data-block="central-vendas-360"

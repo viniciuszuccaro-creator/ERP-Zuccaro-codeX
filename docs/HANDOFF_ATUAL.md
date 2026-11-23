@@ -1,3 +1,8 @@
+## Cursor — Bugbot #599 chips/dismiss/root (2026-11-23 America/Sao_Paulo)
+
+PR #599: Cadastros Ir para; alertas escopados; ações no root do shell.
+Aceite HML = Codex.
+
 ## Cursor — merge #599 com Casa tip e700b3c47 (2026-11-23 America/Sao_Paulo)
 
 Conflitos só STATUS/HANDOFF — prepends Cursor #599 + CPA3 Casa `e700b3c47`.

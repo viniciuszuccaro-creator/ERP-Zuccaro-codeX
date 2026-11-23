@@ -18,6 +18,12 @@ test('DashboardAlertsBar: fail-closed e drill-down com permissão', async () => 
   assert.match(src, /createPageUrl\('Comercial'\)/);
   assert.match(src, /createPageUrl\('Financeiro'\)/);
   assert.match(src, /Dashboard\.alerta\./);
+  // Dismiss escopado por grupo/empresa + TTL reavaliado (não só no mount).
+  assert.match(src, /dashboardAlertsDismissKey/);
+  assert.match(src, /dashboard_alerts_dismissed_at:\$\{g\}:\$\{e \|\| 'grupo'\}/);
+  assert.match(src, /useContextoVisual/);
+  assert.match(src, /setTimeout\(\(\) => setDismissed\(false\), remaining\)/);
+  assert.doesNotMatch(src, /localStorage\.getItem\('dashboard_alerts_dismissed_at'\)/);
 });
 
 test('Dashboard.jsx: alertas + KPI strip clicável + painéis secundários lazy', async () => {

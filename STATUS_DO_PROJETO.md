@@ -1,3 +1,10 @@
+## Cursor — Bugbot #599 chips/dismiss/root (2026-11-23 America/Sao_Paulo)
+
+PR #599. (1) Cadastros: busca ativa → chip só “Ir para” (não fecha).
+(2) Alertas: dismiss por grupo/empresa + TTL reavaliado.
+(3) Central360: `invokeCentralDataAction` exige root do shell.
+Testes focados PASS. Sem Completo/deploy.
+
 ## Cursor — merge #599 com Casa tip e700b3c47 (2026-11-23 America/Sao_Paulo)
 
 Conflitos só STATUS/HANDOFF — prepends Cursor pin/Bugbot/Dashboard + CPA3 bloqueio/backup.

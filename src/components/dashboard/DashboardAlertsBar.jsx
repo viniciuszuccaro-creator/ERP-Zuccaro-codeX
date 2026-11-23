@@ -4,9 +4,10 @@
  * Extração do Dashboard.jsx (>600 linhas): concentra chips que já existiam
  * espalhados (estoque, aprovação, inadimplência, anomalia) com drill-down.
  */
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, X, ChevronRight, Package, DollarSign, ShoppingCart, Zap } from 'lucide-react';
 import { createPageUrl } from '@/utils';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
 
 const ALERT_CONFIG = {
   estoque: { icon: Package, color: 'text-red-700', bg: 'bg-red-50 border-red-200', label: 'Estoque crítico' },
@@ -14,6 +15,26 @@ const ALERT_CONFIG = {
   pedidos: { icon: ShoppingCart, color: 'text-amber-800', bg: 'bg-amber-50 border-amber-200', label: 'Pedidos aguardando' },
   anomalia: { icon: Zap, color: 'text-purple-700', bg: 'bg-purple-50 border-purple-200', label: 'Anomalia financeira' },
 };
+
+const DISMISS_TTL_MS = 15 * 60 * 1000;
+
+/** Chave por grupo/empresa — dismiss de uma empresa não esconde alertas de outra. */
+export function dashboardAlertsDismissKey(groupId, empresaId) {
+  const g = String(groupId || '').trim();
+  if (!g) return null;
+  const e = String(empresaId || '').trim();
+  return `dashboard_alerts_dismissed_at:${g}:${e || 'grupo'}`;
+}
+
+function readDismissed(storageKey) {
+  if (!storageKey) return false;
+  try {
+    const ts = Number(localStorage.getItem(storageKey) || 0);
+    return ts > 0 && Date.now() - ts < DISMISS_TTL_MS;
+  } catch {
+    return false;
+  }
+}
 
 function AlertChip({ type, message, to, onNavigate, permission, action }) {
   const cfg = ALERT_CONFIG[type] || ALERT_CONFIG.anomalia;
@@ -61,14 +82,36 @@ export default function DashboardAlertsBar({
   canSeeComercial = true,
   onNavigate,
 }) {
-  const [dismissed, setDismissed] = useState(() => {
+  const { empresaAtual, grupoAtual } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const storageKey = useMemo(
+    () => dashboardAlertsDismissKey(groupId, empresaId),
+    [groupId, empresaId],
+  );
+  const [dismissed, setDismissed] = useState(() => readDismissed(storageKey));
+  const [dismissTick, setDismissTick] = useState(0);
+
+  // Troca de grupo/empresa ou TTL: reavalia e agenda restauração (Dashboard long-lived).
+  useEffect(() => {
+    const hidden = readDismissed(storageKey);
+    setDismissed(hidden);
+    if (!storageKey || !hidden) return undefined;
+    let remaining = 0;
     try {
-      const ts = Number(localStorage.getItem('dashboard_alerts_dismissed_at') || 0);
-      return ts > 0 && Date.now() - ts < 15 * 60 * 1000;
+      const ts = Number(localStorage.getItem(storageKey) || 0);
+      remaining = Math.max(0, DISMISS_TTL_MS - (Date.now() - ts));
     } catch {
-      return false;
+      setDismissed(false);
+      return undefined;
     }
-  });
+    if (remaining === 0) {
+      setDismissed(false);
+      return undefined;
+    }
+    const timer = setTimeout(() => setDismissed(false), remaining);
+    return () => clearTimeout(timer);
+  }, [storageKey, dismissTick]);
 
   if (!hasContextoAtivo || dismissed) return null;
 
@@ -128,12 +171,16 @@ export default function DashboardAlertsBar({
       <button
         type="button"
         onClick={() => {
-          try {
-            localStorage.setItem('dashboard_alerts_dismissed_at', String(Date.now()));
-          } catch {
-            /* ignore */
+          // Sem escopo: só esconde na sessão (não grava chave global).
+          if (storageKey) {
+            try {
+              localStorage.setItem(storageKey, String(Date.now()));
+            } catch {
+              /* ignore */
+            }
           }
           setDismissed(true);
+          setDismissTick((n) => n + 1);
         }}
         className="ml-auto flex-shrink-0 text-slate-400 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 rounded"
         aria-label="Dispensar alertas por 15 minutos"
