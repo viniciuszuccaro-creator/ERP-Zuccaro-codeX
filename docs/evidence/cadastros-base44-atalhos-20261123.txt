@@ -1,0 +1,47 @@
+ERP CPA — Cadastros Gerais UX (origem Base44 5a8c26fab) — 2026-11-23 America/Sao_Paulo
+Branch: cursor/comercial-360-frontend-v6-3cfd
+PR: #599
+
+## Comparação Base44 → ERP atual (Regra-Mãe: melhorar existente)
+
+Referência: viniciuszuccaro-creator/erp-integra-novo @ 5a8c26fabba3793a5e7094873358f936748df81a
+Arquivo Base44: src/pages/Cadastros.jsx + Bloco1..6
+
+Já existia no ERP (reaproveitado, não duplicado):
+- pages/Cadastros.jsx + blocks/Bloco1Pessoas..Bloco6Tecnologia
+- useCadastrosAllCounts + GroupCountBadge (fail-closed — ≠ 0)
+- SearchInput universal, Accordion 6 blocos, GerenciadorJanelas, RBAC/auditoria
+
+Lacunas Base44 trazidas neste lote (somente UI):
+1. Atalhos compactos (chips) no lugar dos 6 cards grandes — data-block=cadastros-atalhos-totais
+2. Contagem: Number.isFinite → número; loading → …; erro/parcial → —
+3. Clique no atalho: abre bloco + scrollIntoView([data-bloco])
+4. Busca universal: abre os 6 blocos; limpar restaura openBeforeSearchRef
+5. Banner contagens: botão Tentar novamente / Atualizar (refetch do hook)
+
+Componentes reaproveitados: Cadastros.jsx, useCadastrosAllCounts, GroupCountBadge,
+SearchInput, AccordionItem, Bloco1..6 (inalterados na lógica de entidade).
+
+## Central360 / Financeiro (estado tip anterior)
+
+- listLocais fail-closed (#595/#596) + hydrateEpoch: já no tip
+- Layout v6 sticky + grades Desc. money-first: já no tip
+- §7 FechamentoPedidoFinanceiroHttp: abort GET stale + serialização baixas
+- Baixa CR canônica: BLOQUEADA até mapa pedido↔parcela (Codex)
+
+## Testes (foco)
+
+node --test tests/cadastros-count-erro-vazio.test.js
+             tests/cadastros-surface-trace.test.js
+             tests/cadastros-blocos-sky-chrome.test.js
+             tests/central-vendas360-layout-v6-591.test.js
+             tests/pedido-faturamento-policy.test.js
+→ 53 PASS / 0 FAIL
+
+## Aceite Codex (VPS/HML)
+
+1. Abrir Cadastros com grupo/empresa → chips com totais reais (não — fabricado).
+2. Digitar busca → 6 blocos abertos; limpar → restaura.
+3. Clicar atalho Financeiro → scroll até bloco3.
+4. Simular falha de count → banner + retry.
+5. Central360: percurso orçamento→pedido; §7 se flag publicada; CR baixa aguarda mapa.

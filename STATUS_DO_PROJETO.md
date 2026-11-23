@@ -1,3 +1,12 @@
+## Cursor — Cadastros UX Base44 (atalhos/busca/retry) (2026-11-23 America/Sao_Paulo)
+
+PR #599. Origem Base44 `5a8c26fab` Cadastros.jsx — melhoria no existente:
+atalhos compactos com contagem real (…/— fail-closed); scroll ao bloco;
+busca abre 6 blocos e restaura; retry de contagens (`refetch` no hook).
+Reuso: `Cadastros.jsx`, `useCadastrosAllCounts`, `GroupCountBadge`, Bloco1..6.
+Evidência `docs/evidence/cadastros-base44-atalhos-20261123.txt`.
+Central360/§7 já no tip; CR baixa ainda bloqueada (Codex). Sem Completo/deploy.
+
 ## Cursor — Central360 Bugbot baixas concorrentes (2026-11-23 America/Sao_Paulo)
 
 PR #599. Medium: baixas paralelas dropariam o 2º POST após bump de geração.

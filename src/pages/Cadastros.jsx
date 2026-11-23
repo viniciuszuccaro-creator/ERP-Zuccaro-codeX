@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import useCadastrosAllCounts from "@/components/cadastros/hooks/useCadastrosAllCounts";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -23,10 +23,14 @@ import { useUser } from "@/components/lib/UserContext";
 import { useToast } from "@/components/ui/use-toast";
 import ExternalAppsHub from "@/components/administracao-sistema/ExternalAppsHub";
 
+const BLOCO_IDS = ["bloco1", "bloco2", "bloco3", "bloco4", "bloco5", "bloco6"];
+
 export default function Cadastros() {
   const [searchTerm, setSearchTerm] = useState("");
   const [acordeonAberto, setAcordeonAberto] = useState(["bloco1"]);
   const [abaGerenciamento, setAbaGerenciamento] = useState("cadastros");
+  // Origem Base44 Cadastros (5a8c26fab): restaura acordeões ao limpar a busca universal.
+  const openBeforeSearchRef = useRef(null);
   const {
     counts: allCounts,
     totals,
@@ -34,6 +38,7 @@ export default function Cadastros() {
     countsUnavailable,
     countsPartial,
     missing: countsMissing,
+    refetch: refreshCounts,
   } = useCadastrosAllCounts();
   const { isAdmin, hasPermission } = usePermissions();
   const { empresaAtual, grupoAtual, createInContext } = useContextoVisual();
@@ -157,10 +162,12 @@ export default function Cadastros() {
       ? acordeonAberto.filter((id) => id !== blocoId)
       : [...acordeonAberto, blocoId];
 
-    if (acordeonAberto.includes(blocoId)) {
-      setAcordeonAberto(proximosAbertos);
-    } else {
-      setAcordeonAberto(proximosAbertos);
+    setAcordeonAberto(proximosAbertos);
+    // Origem Base44: atalho da barra de totais rola até o bloco recém-aberto.
+    if (!estavaAberto) {
+      setTimeout(() => {
+        document.querySelector(`[data-bloco="${blocoId}"]`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 150);
     }
     registrarAuditoriaCadastros(`Alternar bloco de Cadastros: ${blocoId}`, {
       entidade: "Bloco Cadastros",
@@ -176,6 +183,19 @@ export default function Cadastros() {
       sucesso: contextoAtivo,
     });
   };
+
+  // Origem Base44 Cadastros: busca universal abre os 6 blocos; limpar restaura o estado anterior.
+  useEffect(() => {
+    if (searchTerm.trim()) {
+      if (openBeforeSearchRef.current === null) {
+        openBeforeSearchRef.current = acordeonAberto;
+        setAcordeonAberto(BLOCO_IDS);
+      }
+    } else if (openBeforeSearchRef.current !== null) {
+      setAcordeonAberto(openBeforeSearchRef.current);
+      openBeforeSearchRef.current = null;
+    }
+  }, [searchTerm]);
 
   useEffect(() => {
     const termo = searchTerm.trim().replace(/\s+/g, " ").slice(0, 120);
@@ -247,8 +267,17 @@ export default function Cadastros() {
             <Card className="rounded-sm border border-amber-300 bg-amber-50" data-counts-unavailable="true" role="status">
               <CardContent className="p-3 text-sm text-amber-950">
                 Contagens indisponíveis por erro de consulta — isso <strong>não</strong> significa
-                que os cadastros estejam vazios. Tente novamente ou confira permissão/contexto.
+                que os cadastros estejam vazios. Confira permissão/contexto.
                 Badges exibem &quot;—&quot; até a contagem responder.
+                <button
+                  type="button"
+                  onClick={() => { void refreshCounts?.(); }}
+                  className="ml-2 underline text-amber-950 font-medium"
+                  data-action="cadastros-contagens-retry"
+                  data-permission="Cadastros.visualizar"
+                >
+                  Tentar novamente
+                </button>
               </CardContent>
             </Card>
           )}
@@ -261,72 +290,56 @@ export default function Cadastros() {
                   ? ` (${countsMissing.slice(0, 4).join(", ")}${countsMissing.length > 4 ? "…" : ""})`
                   : ""}
                 . Blocos afetados exibem &quot;—&quot;; demais totais permanecem válidos. Não é zero confirmado.
+                <button
+                  type="button"
+                  onClick={() => { void refreshCounts?.(); }}
+                  className="ml-2 underline text-amber-950 font-medium"
+                  data-action="cadastros-contagens-retry"
+                  data-permission="Cadastros.visualizar"
+                >
+                  Atualizar
+                </button>
               </CardContent>
             </Card>
           )}
 
-          {/* DASHBOARD DE TOTAIS */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-            <Card className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-blue-50 to-blue-100" onClick={() => handleCardClick('bloco1')} data-permission="Cadastros.Pessoas.visualizar" data-action="alternar-bloco-pessoas" data-context-required="group-or-company">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <Users className="w-5 h-5 text-blue-600" />
-                  <GroupCountBadge precomputedTotal={totals.bloco1} badgeClassName="bg-blue-600 text-white text-xs px-1.5 border-blue-600" countsUnavailable={countsUnavailable || totals.bloco1 == null} />
-                </div>
-                <div className="text-lg font-bold text-blue-900">Pessoas</div>
-                <p className="text-xs text-blue-700">& Parceiros</p>
-              </CardContent>
-            </Card>
-            <Card className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-purple-50 to-purple-100" onClick={() => handleCardClick('bloco2')} data-permission="Cadastros.Produtos.visualizar" data-action="alternar-bloco-produtos" data-context-required="group-or-company">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <Package className="w-5 h-5 text-purple-600" />
-                  <GroupCountBadge precomputedTotal={totals.bloco2} badgeClassName="bg-purple-600 text-white text-xs px-1.5 border-purple-600" countsUnavailable={countsUnavailable || totals.bloco2 == null} />
-                </div>
-                <div className="text-lg font-bold text-purple-900">Produtos</div>
-                <p className="text-xs text-purple-700">& Serviços</p>
-              </CardContent>
-            </Card>
-            <Card className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-green-50 to-green-100" onClick={() => handleCardClick('bloco3')} data-permission="Cadastros.Financeiro.visualizar" data-action="alternar-bloco-financeiro-fiscal" data-context-required="group-or-company">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <DollarSign className="w-5 h-5 text-green-600" />
-                  <GroupCountBadge precomputedTotal={totals.bloco3} badgeClassName="bg-green-600 text-white text-xs px-1.5 border-green-600" countsUnavailable={countsUnavailable || totals.bloco3 == null} />
-                </div>
-                <div className="text-lg font-bold text-green-900">Financeiro</div>
-                <p className="text-xs text-green-700">& Fiscal</p>
-              </CardContent>
-            </Card>
-            <Card className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-orange-50 to-orange-100" onClick={() => handleCardClick('bloco4')} data-permission="Cadastros.Logistica.visualizar" data-action="alternar-bloco-logistica" data-context-required="group-or-company">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <Truck className="w-5 h-5 text-orange-600" />
-                  <GroupCountBadge precomputedTotal={totals.bloco4} badgeClassName="bg-orange-600 text-white text-xs px-1.5 border-orange-600" countsUnavailable={countsUnavailable || totals.bloco4 == null} />
-                </div>
-                <div className="text-lg font-bold text-orange-900">Logística</div>
-                <p className="text-xs text-orange-700">Frota & Almox.</p>
-              </CardContent>
-            </Card>
-            <Card className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-indigo-50 to-indigo-100" onClick={() => handleCardClick('bloco5')} data-permission="Cadastros.Organizacional.visualizar" data-action="alternar-bloco-organizacional" data-context-required="group-or-company">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <Building2 className="w-5 h-5 text-indigo-600" />
-                  <GroupCountBadge precomputedTotal={totals.bloco5} badgeClassName="bg-indigo-600 text-white text-xs px-1.5 border-indigo-600" countsUnavailable={countsUnavailable || totals.bloco5 == null} />
-                </div>
-                <div className="text-lg font-bold text-indigo-900">Organizacional</div>
-                <p className="text-xs text-indigo-700">Estrutura</p>
-              </CardContent>
-            </Card>
-            <Card className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-cyan-50 to-cyan-100" onClick={() => handleCardClick('bloco6')} data-permission="Cadastros.Tecnologia.visualizar" data-action="alternar-bloco-tecnologia" data-context-required="group-or-company">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <Cpu className="w-5 h-5 text-cyan-600" />
-                  <GroupCountBadge precomputedTotal={totals.bloco6} badgeClassName="bg-cyan-600 text-white text-xs px-1.5 border-cyan-600" countsUnavailable={countsUnavailable || totals.bloco6 == null} />
-                </div>
-                <div className="text-lg font-bold text-cyan-900">Tecnologia</div>
-                <p className="text-xs text-cyan-700">IA & Parâmetros</p>
-              </CardContent>
-            </Card>
+          {/* SUMÁRIO RÁPIDO — atalhos compactos (origem Base44 Cadastros P4; reusa handleCardClick + GroupCountBadge fail-closed) */}
+          <div className="flex flex-wrap gap-2 items-center" data-block="cadastros-atalhos-totais" role="navigation" aria-label="Atalhos dos blocos de Cadastros">
+            {[
+              { id: "bloco1", label: "Pessoas", color: "bg-blue-100 text-blue-800 border-blue-200", icon: Users, permission: "Cadastros.Pessoas.visualizar", action: "alternar-bloco-pessoas" },
+              { id: "bloco2", label: "Produtos", color: "bg-purple-100 text-purple-800 border-purple-200", icon: Package, permission: "Cadastros.Produtos.visualizar", action: "alternar-bloco-produtos" },
+              { id: "bloco3", label: "Financeiro", color: "bg-green-100 text-green-800 border-green-200", icon: DollarSign, permission: "Cadastros.Financeiro.visualizar", action: "alternar-bloco-financeiro-fiscal" },
+              { id: "bloco4", label: "Logística", color: "bg-orange-100 text-orange-800 border-orange-200", icon: Truck, permission: "Cadastros.Logistica.visualizar", action: "alternar-bloco-logistica" },
+              { id: "bloco5", label: "Organizacional", color: "bg-indigo-100 text-indigo-800 border-indigo-200", icon: Building2, permission: "Cadastros.Organizacional.visualizar", action: "alternar-bloco-organizacional" },
+              { id: "bloco6", label: "Tecnologia", color: "bg-cyan-100 text-cyan-800 border-cyan-200", icon: Cpu, permission: "Cadastros.Tecnologia.visualizar", action: "alternar-bloco-tecnologia" },
+            ].map(({ id, label, color, icon: Icon, permission, action }) => {
+              const total = getTotalBloco(id);
+              const aberto = acordeonAberto.includes(id);
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => handleCardClick(id)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium transition-all hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-1 ${color} ${aberto ? "ring-2 ring-slate-400 ring-offset-1" : ""}`}
+                  title={`Ir para ${label}`}
+                  data-permission={permission}
+                  data-action={action}
+                  data-context-required="group-or-company"
+                  data-atalho-bloco={id}
+                  aria-pressed={aberto}
+                >
+                  <Icon className="w-3.5 h-3.5" aria-hidden />
+                  <span>{label}</span>
+                  <span className="font-bold tabular-nums" data-total-bloco={id}>
+                    {Number.isFinite(total)
+                      ? total.toLocaleString("pt-BR")
+                      : countsLoading
+                        ? "…"
+                        : "—"}
+                  </span>
+                </button>
+              );
+            })}
           </div>
 
           {/* BUSCA UNIVERSAL */}
@@ -342,7 +355,7 @@ export default function Cadastros() {
 
           {/* ACCORDIONS - 6 BLOCOS */}
           <Accordion type="multiple" value={acordeonAberto} onValueChange={setAcordeonAberto} className="space-y-4">
-            <AccordionItem value="bloco1" className="border-2 border-blue-200 rounded-sm overflow-hidden shadow-md">
+            <AccordionItem value="bloco1" data-bloco="bloco1" className="border-2 border-blue-200 rounded-sm overflow-hidden shadow-md">
               <AccordionTrigger className="bg-gradient-to-r from-blue-50 to-blue-100 px-6 py-4 hover:from-blue-100 hover:to-blue-200">
                 <div className="flex items-center gap-3 flex-1">
                   <Users className="w-6 h-6 text-blue-600" />
@@ -358,7 +371,7 @@ export default function Cadastros() {
               </AccordionContent>
             </AccordionItem>
 
-            <AccordionItem value="bloco2" className="border-2 border-purple-200 rounded-sm overflow-hidden shadow-md">
+            <AccordionItem value="bloco2" data-bloco="bloco2" className="border-2 border-purple-200 rounded-sm overflow-hidden shadow-md">
               <AccordionTrigger className="bg-gradient-to-r from-purple-50 to-purple-100 px-6 py-4 hover:from-purple-100 hover:to-purple-200">
                 <div className="flex items-center gap-3 flex-1">
                   <Package className="w-6 h-6 text-purple-600" />
@@ -374,7 +387,7 @@ export default function Cadastros() {
               </AccordionContent>
             </AccordionItem>
 
-            <AccordionItem value="bloco3" className="border-2 border-green-200 rounded-sm overflow-hidden shadow-md">
+            <AccordionItem value="bloco3" data-bloco="bloco3" className="border-2 border-green-200 rounded-sm overflow-hidden shadow-md">
               <AccordionTrigger className="bg-gradient-to-r from-green-50 to-green-100 px-6 py-4 hover:from-green-100 hover:to-green-200">
                 <div className="flex items-center gap-3 flex-1">
                   <DollarSign className="w-6 h-6 text-green-600" />
@@ -390,7 +403,7 @@ export default function Cadastros() {
               </AccordionContent>
             </AccordionItem>
 
-            <AccordionItem value="bloco4" className="border-2 border-orange-200 rounded-sm overflow-hidden shadow-md">
+            <AccordionItem value="bloco4" data-bloco="bloco4" className="border-2 border-orange-200 rounded-sm overflow-hidden shadow-md">
               <AccordionTrigger className="bg-gradient-to-r from-orange-50 to-orange-100 px-6 py-4 hover:from-orange-100 hover:to-orange-200">
                 <div className="flex items-center gap-3 flex-1">
                   <Truck className="w-6 h-6 text-orange-600" />
@@ -406,7 +419,7 @@ export default function Cadastros() {
               </AccordionContent>
             </AccordionItem>
 
-            <AccordionItem value="bloco5" className="border-2 border-indigo-200 rounded-sm overflow-hidden shadow-md">
+            <AccordionItem value="bloco5" data-bloco="bloco5" className="border-2 border-indigo-200 rounded-sm overflow-hidden shadow-md">
               <AccordionTrigger className="bg-gradient-to-r from-indigo-50 to-indigo-100 px-6 py-4 hover:from-indigo-100 hover:to-indigo-200">
                 <div className="flex items-center gap-3 flex-1">
                   <Building2 className="w-6 h-6 text-indigo-600" />
@@ -422,7 +435,7 @@ export default function Cadastros() {
               </AccordionContent>
             </AccordionItem>
 
-            <AccordionItem value="bloco6" className="border-2 border-cyan-200 rounded-sm overflow-hidden shadow-md">
+            <AccordionItem value="bloco6" data-bloco="bloco6" className="border-2 border-cyan-200 rounded-sm overflow-hidden shadow-md">
               <AccordionTrigger className="bg-gradient-to-r from-cyan-50 to-cyan-100 px-6 py-4 hover:from-cyan-100 hover:to-cyan-200">
                 <div className="flex items-center gap-3 flex-1">
                   <Cpu className="w-6 h-6 text-cyan-600" />

@@ -1,3 +1,8 @@
+## Cursor — Cadastros UX Base44 (2026-11-23 America/Sao_Paulo)
+
+PR #599: Cadastros Gerais — atalhos/busca/retry (origem Base44 `5a8c26fab`).
+Evidência `docs/evidence/cadastros-base44-atalhos-20261123.txt`. Aceite VPS = Codex.
+
 ## Cursor — Central360 Bugbot baixas concorrentes (2026-11-23 America/Sao_Paulo)
 
 PR #599: serializa faturar/baixa (`mutacaoLockRef` + UI); sucesso POST não

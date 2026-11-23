@@ -52,7 +52,7 @@ export default function useCadastrosAllCounts() {
     .sort()
     .join(",");
 
-  const { data, isLoading, isError, error, isFetching, failureReason } = useQuery({
+  const { data, isLoading, isError, error, isFetching, failureReason, refetch } = useQuery({
     queryKey: ["cadastros-all-counts-v5", empresaId, groupId, grupoEmpIds, actorId, sessionKey],
     queryFn: async () => {
       if (!contextoValido) {
@@ -137,5 +137,7 @@ export default function useCadastrosAllCounts() {
     isError,
     error: error || failureReason || null,
     countsUnavailable,
+    // Origem Base44 Cadastros: retry explícito no banner de contagens.
+    refetch: () => refetch(),
   };
 }
