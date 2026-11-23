@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ## Cursor — pin Dashboard Base44 (2026-11-23 America/Sao_Paulo)
 
 PR #599. CI frontend: pin SHA-256 do restante de `Dashboard.jsx` atualizado
@@ -181,6 +182,24 @@ P1 Codex #598: fila 5.423 reconciliada como **ENCERRADA** (5384+39; não
 reaplicar) — próximo Casa = backup/faturamento/Obras, não reimportar.
 Sem Completo/deploy/DDL. Próximo Cursor: Central360 visual + contrato
 financeiro HTTP (§7 do HANDOFF) só com indisponível até promote Casa.
+=======
+## CPA3: gate de retomada de Unidades e backup avulso verificado
+
+O piloto canonico de Produtos exige branch e aprovacao do piloto antigo.
+Nao aceita o manifesto isolado de 14 Unidades: cria dependencias antes
+de gravar state.units no arquivo; falha apos commit deixa o ID sem
+checkpoint e o preflight seguinte recusa UNREVIEWED_UNIT_TARGET_ID.
+A reversao do piloto cobre Produtos, nao Unidades. Nao contornar guards.
+
+Backup avulso de 23/11: 46.028.800 bytes na VPS e na copia externa, SHA
+igual e recibos de restauro e copia conferidos. Nao prova frescor para
+uma intervencao futura. Ultima agenda: exit-code 1 / SNAPSHOT_READ_FAILED.
+
+Gate: acoplar o manifesto segregado ao servico existente com checkpoint
+duravel atomico e reversao por postimage; ensaiar falha apos commit com
+ACL efetiva. Revalidar estado atual e backup antes de pedir aprovacao.
+Nenhuma gravacao, mudanca de permissao ou agendador na HML.
+>>>>>>> origin/codex/casa-fechamento-hml-20261114
 
 ## CPA3: Grupo fixado e 14 unidades ensaiadas em PostgreSQL
 
