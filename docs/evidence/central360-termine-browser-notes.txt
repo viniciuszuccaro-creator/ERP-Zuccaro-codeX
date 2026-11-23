@@ -1,0 +1,19 @@
+Central 360 browser evidence - 2026-11-23 ~14:45 UTC
+Server: vite preview (production build) http://localhost:4173 (127.0.0.1:4173 gives curl 200 but Chrome auto-upgrades to HTTPS -> ERR_SSL_PROTOCOL_ERROR, so localhost was used).
+
+What loaded
+- No login block: auto-session "Administrador Local" (admin@erp-local.test), empresa 3Z LTDA LOCAL.
+- /comercial?proposta=comercial360 loaded the Comercial hub. Because this is a PRODUCTION build, the synthetic proposal mode (import.meta.env.DEV only) is NOT active: all tiles are enabled (no "Proposta" badges, no ORC-SINT rows).
+- Central de Vendas360 opened (tile click) as a window; maximized for the desktop shot. Shell rendered: header + search, Atendimento Unificado / Bot Vendas / Entregas do Dia / Aprovações pendentes, status tabs, context strip, fluxo (Orçamento > Validação > Fechado > Produção > Expedição > Entrega/Retira), toolbar (Colunas, Novo Orçamento, Imprimir, Enviar, Fechar Orçamento, Mais Ações), filters, grids Corte e Dobra / Materiais de Revenda, Cliente 360 aside with Ações Rápidas.
+- List is empty: "Não foi possível comunicar com o servidor. Tente novamente." Console: CSP connect-src 'self' blocks http://localhost:3080/api/v1/orcamentos?limit=20&offset=0 (Fetch API cannot load). Backend/CSP blocker, not auth.
+- Ações Rápidas hint: "Faturamento/baixa HTTP na HML: aguarda promote Codex." Contas a Receber button appears enabled in this build (not clicked).
+
+DOM checks (console querySelector)
+- [data-block="central360-proxima-acao"]: FOUND, <button type="button">, text "Selecione um orçamento/pedido" (visually disabled/greyed with no selection) -> próxima ação IS a button.
+- [data-block="central360-contexto-venda"]: FOUND, <div role="status">, position: sticky; top: 0px, text "Empresa: 3Z LTDA LOCAL / Cliente: selecione um documento / Condição: — / Total: –".
+
+Screenshots
+- /opt/cursor/artifacts/central360-termine-desktop.webp (browser window ~1280x800, Central maximized)
+- /opt/cursor/artifacts/central360-termine-mobile.webp (DevTools device mode 390px; Cliente 360 stacks below list; context strip stacked; fluxo clipped at 'Produção' but horizontally scrollable)
+
+Other: console also shows CSP frame-ancestors via <meta> ignored, apple-mobile-web-app-capable deprecation, manifest blob warnings. Date inputs show mm/dd/yyyy.

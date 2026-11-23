@@ -192,12 +192,28 @@ export default function CentralVendas360Shell({
       ? 'Ajustar Pedido (tela da situação)'
       : fluxo.nextLabel);
 
+  const proximaAcaoKey = situacao.kind === 'orcamento' && selectionForView?.status === 'EM_ABERTO'
+    ? 'central360-fechar-orcamento'
+    : null;
+
   const runCentralAction = useCallback((action, fallbackMessage) => {
     const ok = invokeCentralDataAction(action);
     if (!ok) {
       toast.message(fallbackMessage || 'Ação indisponível nesta visão ou sem seleção.');
     }
   }, []);
+
+  const runProximaAcao = useCallback(() => {
+    if (!selectionForView) {
+      toast.message('Selecione um orçamento ou pedido para a próxima ação.');
+      return;
+    }
+    if (proximaAcaoKey) {
+      runCentralAction(proximaAcaoKey, 'Fechar Orçamento só na visão Orçamentos em Aberto com seleção.');
+      return;
+    }
+    toast.message(`${proximaAcaoLabel} — use a faixa de situação ou a toolbar do documento.`);
+  }, [selectionForView, proximaAcaoKey, proximaAcaoLabel, runCentralAction]);
 
   const openContasReceber = () => {
     void import('@/components/financeiro/ContasReceberTab').then((mod) => {
@@ -319,9 +335,8 @@ export default function CentralVendas360Shell({
               })()
               : 'não hidratados nesta seleção'}
           </span>
-          <span className="text-slate-400 w-full sm:w-auto">
-            Confirme a condição de pagamento e a tabela no documento antes do fechamento.
-            Fechar orçamento, cancelar e fechar a janela são ações diferentes.
+          <span className="text-slate-400 w-full sm:w-auto sm:ml-auto" data-block="central360-pagamento-dica">
+            Fechar orçamento ≠ cancelar ≠ fechar janela.
           </span>
         </div>
       )}
@@ -477,9 +492,19 @@ export default function CentralVendas360Shell({
                 : '—'}
             </strong>
           </span>
-          <span className="ml-auto text-sky-800 font-medium" data-block="central360-proxima-acao">
+          <Button
+            type="button"
+            variant={proximaAcaoKey ? 'default' : 'outline'}
+            size="sm"
+            className="ml-auto h-7 px-2.5 text-xs font-medium"
+            data-block="central360-proxima-acao"
+            disabled={!selectionForView}
+            onClick={runProximaAcao}
+            aria-label={selectionForView ? `Próxima ação: ${proximaAcaoLabel}` : 'Selecione um orçamento ou pedido'}
+          >
             {selectionForView ? proximaAcaoLabel : 'Selecione um orçamento/pedido'}
-          </span>
+            <ChevronRight className="w-3.5 h-3.5 ml-1 opacity-70" aria-hidden />
+          </Button>
         </div>
       </div>
 

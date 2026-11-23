@@ -903,9 +903,16 @@ SeparacaoConferencia: {
         signal,
         unwrap: false,
       });
-      const rows = page && typeof page === 'object' && Array.isArray(/** @type {{ data?: unknown }} */ (page).data)
-        ? /** @type {{ data: unknown[] }} */ (page).data
-        : [];
+      // Vazio confirmado (data:[]) ≠ envelope inválido/incompleto (nunca virar []).
+      if (!page || typeof page !== 'object' || !Array.isArray(/** @type {{ data?: unknown }} */ (page).data)) {
+        throw createHttpError(502, { error: { code: 'CLIENTE_LOCAIS_LIST_INVALID', message: 'Resposta de locais inválida' } }, undefined);
+      }
+      const meta = /** @type {{ meta?: Record<string, unknown>, partial?: unknown, incomplete?: unknown }} */ (page);
+      if (meta.partial === true || meta.incomplete === true
+        || meta.meta?.partial === true || meta.meta?.incomplete === true) {
+        throw createHttpError(502, { error: { code: 'CLIENTE_LOCAIS_LIST_INCOMPLETE', message: 'Resposta de locais incompleta' } }, undefined);
+      }
+      const rows = /** @type {{ data: unknown[] }} */ (page).data;
       return rows;
     },
     /**

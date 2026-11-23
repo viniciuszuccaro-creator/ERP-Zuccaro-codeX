@@ -1,3 +1,15 @@
+## Cursor — Central360 TERMINE lote (listLocais + UI) (2026-11-23 America/Sao_Paulo)
+
+PR #599. Bases #595 (`b5862fc5`) / #596 (`1a5bc05e`) conferidas no tip.
+`listLocais`: `data:[]` = vazio confirmado; envelope inválido/incompleto
+→ `CLIENTE_LOCAIS_LIST_*` (nunca `[]`). Seletor segue `snapshotLocais`;
+OrcamentosTab mantém hydrateEpoch/sessão. Central360: dica pagamento
+encurtada; próxima ação como botão (Fechar via `data-action` existente).
+Peels purpose/conferência preservados. Browser preview: sticky + botão
+próxima ação (`docs/evidence/central360-termine-*.webp`). lint/typecheck/
+build/audit PASS. Sem Completo/deploy. Próximo Codex: §7 HML + mapa CR;
+Cursor: Cadastros/Dashboard só com ganho concreto.
+
 ## Cursor — Central360 §7 wire frontend (2026-11-23 America/Sao_Paulo)
 
 PR #599. Ligação fail-closed do contrato financeiro no UI existente:
