@@ -1,3 +1,11 @@
+## Cursor — Central360 CI frontend (contratos financeiro) (2026-11-23 America/Sao_Paulo)
+
+PR #599 tip após `6778d0804`: job `frontend` falhou por hunks/hashes de
+`TabelaReceber`/`ContasReceberTab`/`Fechamento` + stub `useContextoVisual`
+sem default no mount. Correção: hunks autorizados (Recebido/Saldo + gate
+HTTP), mensagem Fechamento alinhada ao boundary Casa, stub com
+`export default`. Sem Completo/deploy. Próximo: CI verde + promote Codex.
+
 ## Cursor — Central360 Bugbot P3 (cliente/Retira/Desmembrar) (2026-11-23 America/Sao_Paulo)
 
 Branch `cursor/comercial-360-frontend-v6-3cfd` (PR #599). Correções no existente:

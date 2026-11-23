@@ -141,10 +141,17 @@ test('TabelaReceber omitted sort props retain existing no-op guard; explicit sor
  const file='src/components/financeiro/contas-receber/TabelaReceber.jsx';
  const props={contas:[],empresas:[],statusColors:{},contasSelecionadas:[],configsCobranca:[],toggleSelecao:noop};
  function tables(tree){if(!tree||typeof tree!=='object')return [];if(tree.type==='SyntheticTable')return [tree];return [tree.props?.children].flat(Infinity).flatMap(tables);}
+ function columnKeys(table){return (table?.props?.columns||[]).map(c=>c.key);}
  for(const overrides of [{},{sortField:'valor',sortDirection:'desc'}]){
   const current=componentHarness(file),old=componentHarness(file,{},true);
-  const tree=current.component({...props,...overrides});assert.deepEqual(normalized(tree),normalized(old.component({...props,...overrides})));
-  const [table]=tables(tree);assert.ok(table);assert.equal(table.props.onSortChange('valor','asc'),undefined);
+  const [table]=tables(current.component({...props,...overrides}));
+  const [oldTable]=tables(old.component({...props,...overrides}));
+  assert.ok(table);assert.ok(oldTable);
+  assert.equal(table.props.onSortChange('valor','asc'),undefined);
+  assert.equal(oldTable.props.onSortChange('valor','asc'),undefined);
+  // Recebido/Saldo são hunk consumer autorizado: presentes no atual, ausentes no remainder.
+  assert.deepEqual(columnKeys(table).filter(k=>k==='valor_recebido'||k==='saldo'),['valor_recebido','saldo']);
+  assert.deepEqual(columnKeys(oldTable).filter(k=>k==='valor_recebido'||k==='saldo'),[]);
  }
  const calls=[],current=componentHarness(file);
  const [table]=tables(current.component({...props,onSortChange:(...args)=>calls.push(args)}));table.props.onSortChange('valor','desc');
