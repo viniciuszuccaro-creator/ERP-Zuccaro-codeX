@@ -1,3 +1,11 @@
+## Cursor — Dashboard 1º ganho Base44 (2026-11-23 America/Sao_Paulo)
+
+PR #599. Dashboard existente: `DashboardAlertsBar` (alertas com ação),
+KPI strip clicável fail-closed, painéis secundários lazy. Cadastros/
+Central360 já no tip. Evidência
+`docs/evidence/dashboard-base44-primeiro-ganho-20261123.txt`.
+CR baixa ainda Codex. Sem Completo/deploy.
+
 ## Cursor — merge #599 com Casa tip 56222f6cc (2026-11-23 America/Sao_Paulo)
 
 Conflitos só em STATUS/HANDOFF — prepends complementares (Cursor Central360/

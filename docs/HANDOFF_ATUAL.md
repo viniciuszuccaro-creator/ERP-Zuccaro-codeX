@@ -1,3 +1,8 @@
+## Cursor — Dashboard 1º ganho Base44 (2026-11-23 America/Sao_Paulo)
+
+PR #599: alertas acionáveis + KPI strip + lazy secundários. Evidência
+`docs/evidence/dashboard-base44-primeiro-ganho-20261123.txt`. Aceite VPS = Codex.
+
 ## Cursor — merge #599 com Casa tip 56222f6cc (2026-11-23 America/Sao_Paulo)
 
 Conflitos só STATUS/HANDOFF — prepends Cursor #599 + CPA3 Casa.

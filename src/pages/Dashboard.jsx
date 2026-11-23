@@ -62,15 +62,17 @@ import ProtectedSection from "@/components/security/ProtectedSection";
 import usePermissions from "@/components/lib/usePermissions";
 const WidgetCanaisOrigem = React.lazy(() => import("@/components/dashboard/WidgetCanaisOrigem")); // kept for backward-compat (not used directly here)
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
+import DashboardAlertsBar from "@/components/dashboard/DashboardAlertsBar";
 import StatsSection from "@/components/dashboard/StatsSection";
 import KPIsOperacionaisSection from "@/components/dashboard/KPIsOperacionaisSection";
-import SecondaryKPIsSection from "@/components/dashboard/SecondaryKPIsSection";
-import ChartsSection from "@/components/dashboard/ChartsSection";
-import TopProdutosStatusPeriodoSection from "@/components/dashboard/TopProdutosStatusPeriodoSection";
-import AdvancedAnalysisSection from "@/components/dashboard/AdvancedAnalysisSection";
 import QuickAccessModulesGrid from "@/components/dashboard/QuickAccessModulesGrid";
-import FinancialSummary from "@/components/dashboard/FinancialSummary";
 import WidgetEstoqueCritico from "@/components/estoque/WidgetEstoqueCritico";
+/** Painéis secundários sob demanda (origem Base44: lazy separado do header/KPI/alertas). */
+const SecondaryKPIsSection = React.lazy(() => import("@/components/dashboard/SecondaryKPIsSection"));
+const ChartsSection = React.lazy(() => import("@/components/dashboard/ChartsSection"));
+const TopProdutosStatusPeriodoSection = React.lazy(() => import("@/components/dashboard/TopProdutosStatusPeriodoSection"));
+const AdvancedAnalysisSection = React.lazy(() => import("@/components/dashboard/AdvancedAnalysisSection"));
+const FinancialSummary = React.lazy(() => import("@/components/dashboard/FinancialSummary"));
 const WidgetFechamentoPedidos = React.lazy(() => import("@/components/comercial/WidgetFechamentoPedidos"));
 import ResizableRow from "@/components/dashboard/ResizableRow";
 import { ResizablePanelGroup as PanelGroup, ResizablePanel as Panel, ResizableHandle as PanelResizeHandle } from "@/components/ui/resizable";
@@ -844,6 +846,22 @@ export default function Dashboard() {
           auditDashboardAction('alterar_periodo', { periodo: value });
         }}
         canSeeDashboard={canSeeDashboard}
+        hasContextoAtivo={hasContextoAtivo}
+      />
+
+      {/* Origem Base44: alertas com ação (Estoque/Comercial/Financeiro) — só com contagem confirmada. */}
+      <DashboardAlertsBar
+        hasContextoAtivo={hasContextoAtivo}
+        canSeeEstoque={canSeeEstoque}
+        canSeeFinanceiro={canSeeFinanceiro}
+        canSeeComercial={canSeeComercial}
+        produtosBaixoEstoque={canSeeEstoque ? produtosBaixoEstoque : null}
+        taxaInadimplencia={canSeeFinanceiro ? taxaInadimplencia : null}
+        pedidosAguardando={canSeeComercial ? pedidosAguardandoAprovacao.length : null}
+        anomaliasCount={canSeeFinanceiro
+          ? ((anomaliasIA?.details || []).filter((a) => a.severity === 'alto').length)
+          : null}
+        onNavigate={handleDrillDown}
       />
 
       <ErrorBoundary>
@@ -856,29 +874,63 @@ export default function Dashboard() {
 
 
         <TabsContent value="resumo" className="w-full h-full overflow-y-auto space-y-6 mt-6">
-          {/* Sticky KPIs principais */}
-          <div className="sticky top-0 z-20 bg-gradient-to-b from-white/80 to-white/40 backdrop-blur-sm border-b border-slate-200 py-3">
+          {/* Sticky KPIs principais — clicáveis (drill-down), fail-closed sem contexto */}
+          <div className="sticky top-0 z-20 bg-gradient-to-b from-white/80 to-white/40 backdrop-blur-sm border-b border-slate-200 py-3" data-block="dashboard-kpi-strip">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <Card className="shadow-sm rounded-md bg-gradient-to-br from-white to-slate-50">
-                <CardContent className="p-3">
-                  <div className="text-xs text-slate-500">Faturamento</div>
-                  <div className="text-sm font-semibold text-slate-900">Dia: R$ {(pedidos.filter(p=>new Date(p.data_pedido||p.created_date).toDateString()===new Date().toDateString()).reduce((s,p)=>s+(p.valor_total||0),0)).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
-                  <div className="text-xs text-slate-600">Mês: R$ {pedidos.filter(p=>{const d=new Date(p.data_pedido||p.created_date);const n=new Date();return d.getMonth()===n.getMonth()&&d.getFullYear()===n.getFullYear();}).reduce((s,p)=>s+(p.valor_total||0),0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
-                </CardContent>
-              </Card>
-              <Card className="shadow-sm rounded-md bg-gradient-to-br from-white to-slate-50">
-                <CardContent className="p-3">
-                  <div className="text-xs text-slate-500">Pedidos</div>
-                  <div className="text-sm font-semibold text-slate-900">Abertos: {pedidosPendentes.length}</div>
-                  <div className="text-xs text-slate-600">Em aprovação: {pedidosAguardandoAprovacao.length}</div>
-                </CardContent>
-              </Card>
-              <Card className="shadow-sm rounded-md bg-gradient-to-br from-white to-slate-50">
-                <CardContent className="p-3">
-                  <div className="text-xs text-slate-500">Estoque crítico</div>
-                  <div className="text-sm font-semibold text-slate-900">Itens: {produtosBaixoEstoque}</div>
-                </CardContent>
-              </Card>
+              <button
+                type="button"
+                className="text-left shadow-sm rounded-md bg-gradient-to-br from-white to-slate-50 border border-slate-200 p-3 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 disabled:opacity-60"
+                disabled={!hasContextoAtivo || !canSeeComercial}
+                data-permission="Comercial.visualizar"
+                data-action="Dashboard.kpi.faturamento"
+                data-context-required="true"
+                onClick={() => handleDrillDown(createPageUrl('Comercial'))}
+              >
+                <div className="text-xs text-slate-500">Faturamento</div>
+                {!hasContextoAtivo || !canSeeComercial ? (
+                  <div className="text-sm font-semibold text-slate-400">—</div>
+                ) : (
+                  <>
+                    <div className="text-sm font-semibold text-slate-900">Dia: R$ {(pedidos.filter(p=>new Date(p.data_pedido||p.created_date).toDateString()===new Date().toDateString()).reduce((s,p)=>s+(p.valor_total||0),0)).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
+                    <div className="text-xs text-slate-600">Mês: R$ {pedidos.filter(p=>{const d=new Date(p.data_pedido||p.created_date);const n=new Date();return d.getMonth()===n.getMonth()&&d.getFullYear()===n.getFullYear();}).reduce((s,p)=>s+(p.valor_total||0),0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
+                  </>
+                )}
+              </button>
+              <button
+                type="button"
+                className="text-left shadow-sm rounded-md bg-gradient-to-br from-white to-slate-50 border border-slate-200 p-3 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 disabled:opacity-60"
+                disabled={!hasContextoAtivo || !canSeeComercial}
+                data-permission="Comercial.visualizar"
+                data-action="Dashboard.kpi.pedidos"
+                data-context-required="true"
+                onClick={() => handleDrillDown(createPageUrl('Comercial'))}
+              >
+                <div className="text-xs text-slate-500">Pedidos</div>
+                {!hasContextoAtivo || !canSeeComercial ? (
+                  <div className="text-sm font-semibold text-slate-400">—</div>
+                ) : (
+                  <>
+                    <div className="text-sm font-semibold text-slate-900">Abertos: {pedidosPendentes.length}</div>
+                    <div className="text-xs text-slate-600">Em aprovação: {pedidosAguardandoAprovacao.length}</div>
+                  </>
+                )}
+              </button>
+              <button
+                type="button"
+                className={`text-left shadow-sm rounded-md bg-gradient-to-br from-white to-slate-50 border p-3 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 disabled:opacity-60 ${hasContextoAtivo && canSeeEstoque && Number(produtosBaixoEstoque) > 0 ? 'border-red-300 ring-1 ring-red-200' : 'border-slate-200'}`}
+                disabled={!hasContextoAtivo || !canSeeEstoque}
+                data-permission="Estoque.visualizar"
+                data-action="Dashboard.kpi.estoque-critico"
+                data-context-required="true"
+                onClick={() => handleDrillDown(createPageUrl('Estoque'))}
+              >
+                <div className="text-xs text-slate-500">Estoque crítico</div>
+                {!hasContextoAtivo || !canSeeEstoque ? (
+                  <div className="text-sm font-semibold text-slate-400">—</div>
+                ) : (
+                  <div className="text-sm font-semibold text-slate-900">Itens: {Number.isFinite(Number(produtosBaixoEstoque)) ? produtosBaixoEstoque : '—'}</div>
+                )}
+              </button>
             </div>
           </div>
           <PanelGroup direction="vertical" className="gap-2 flex-1 w-full h-full">
@@ -893,8 +945,10 @@ export default function Dashboard() {
             </Panel>
           </PanelGroup>
 
-          {/* KPIs Secundários */}
-          <SecondaryKPIsSection kpis={kpiCards} />
+          {/* KPIs Secundários (lazy) */}
+          <Suspense fallback={<div className="h-24 rounded-md bg-slate-100 animate-pulse" />}>
+            <SecondaryKPIsSection kpis={kpiCards} />
+          </Suspense>
 
           {/* Tempo Real - Mapa em card dentro do Dashboard unificado */}
           <div className="mt-4">
@@ -1044,25 +1098,29 @@ export default function Dashboard() {
             </ErrorBoundary>
           )}
 
-          {/* Gráficos + Top Produtos (redimensionável) */}
-          <PanelGroup direction="vertical" className="gap-2 min-h-[420px]">
-            <Panel defaultSize={55} minSize={30} className="overflow-auto">
-              <ChartsSection vendasUltimos30Dias={vendasUltimos30Dias} fluxo7Dias={fluxo7Dias} />
-            </Panel>
-            <PanelResizeHandle className="w-1 bg-slate-200 rounded" />
-            <Panel defaultSize={45} minSize={20} className="overflow-auto">
-              <TopProdutosStatusPeriodoSection topProdutos={topProdutos} dadosVendasStatus={dadosVendasStatus} COLORS={COLORS} />
-            </Panel>
-          </PanelGroup>
+          {/* Gráficos + Top Produtos (lazy / sob demanda) */}
+          <Suspense fallback={<div className="h-40 rounded-md bg-slate-100 animate-pulse" />}>
+            <PanelGroup direction="vertical" className="gap-2 min-h-[420px]">
+              <Panel defaultSize={55} minSize={30} className="overflow-auto">
+                <ChartsSection vendasUltimos30Dias={vendasUltimos30Dias} fluxo7Dias={fluxo7Dias} />
+              </Panel>
+              <PanelResizeHandle className="w-1 bg-slate-200 rounded" />
+              <Panel defaultSize={45} minSize={20} className="overflow-auto">
+                <TopProdutosStatusPeriodoSection topProdutos={topProdutos} dadosVendasStatus={dadosVendasStatus} COLORS={COLORS} />
+              </Panel>
+            </PanelGroup>
+          </Suspense>
 
-          {/* GRÁFICOS AVANÇADOS */}
-          <AdvancedAnalysisSection
-            vendasPorMes={vendasPorMesData}
-            top5Clientes={top5ClientesData}
-            statusPedidos={statusPedidosDataAll}
-            fluxoCaixaMensal={fluxoCaixaMensalData}
-            COLORS={COLORS}
-          />
+          {/* GRÁFICOS AVANÇADOS (lazy) */}
+          <Suspense fallback={<div className="h-40 rounded-md bg-slate-100 animate-pulse" />}>
+            <AdvancedAnalysisSection
+              vendasPorMes={vendasPorMesData}
+              top5Clientes={top5ClientesData}
+              statusPedidos={statusPedidosDataAll}
+              fluxoCaixaMensal={fluxoCaixaMensalData}
+              COLORS={COLORS}
+            />
+          </Suspense>
 
           {/* Command Center (Executivo) - sem criar módulo novo, visível a quem tem Sistema */}
           <ProtectedSection module="Sistema" action="ver" hideInstead>
@@ -1206,9 +1264,11 @@ export default function Dashboard() {
           {/* Módulos de Acesso Rápido */}
           <QuickAccessModulesGrid modules={quickAccess} onClick={handleDrillDown} />
 
-          {/* Resumo Financeiro */}
+          {/* Resumo Financeiro (lazy) */}
           {canSeeFinanceiro && (
-          <FinancialSummary receitasPendentes={receitasPendentes} despesasPendentes={despesasPendentes} fluxoCaixa={fluxoCaixa} />
+            <Suspense fallback={<div className="h-24 rounded-md bg-slate-100 animate-pulse" />}>
+              <FinancialSummary receitasPendentes={receitasPendentes} despesasPendentes={despesasPendentes} fluxoCaixa={fluxoCaixa} />
+            </Suspense>
           )}
 
           {/* NOVO: Gamificação */}

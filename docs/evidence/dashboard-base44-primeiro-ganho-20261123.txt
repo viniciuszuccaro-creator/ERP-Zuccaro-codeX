@@ -1,0 +1,38 @@
+ERP CPA — Dashboard 1º ganho (Base44 → ERP) — 2026-11-23 America/Sao_Paulo
+PR #599 tip branch cursor/comercial-360-frontend-v6-3cfd
+Ref. Base44: erp-integra-novo @ 5a8c26fab Dashboard.jsx
+
+## Comparação por finalidade
+
+| Finalidade | Base44 | ERP atual | Escolha |
+|------------|--------|-----------|---------|
+| Cabeçalho + período/auto-refresh | DashboardHeader | DashboardHeader (+ escopo fail-closed) | ERP (mais completo) + passar hasContextoAtivo |
+| Alertas com ação | DashboardAlertsBar | espalhado / TempoReal | Incorporar AlertsBar no ERP (extração) |
+| Faixa KPI compacta clicável | DashboardKPIStrip | sticky 3 cards Faturamento/Pedidos/Estoque | ERP sticky (mais operacional Dia/Mês) + drill-down |
+| Resumo / gráficos / KPIs | DashboardResumoTab lazy | Stats + KPIs + Charts + Advanced (eager) | ERP painéis (mais completo) + lazy secundários |
+| Multiempresa banner/status | componentes dedicados | Header escopo + ProtectedSection | ERP (já reforçado) |
+| Operações/estoque crítico/financeiro | — | WidgetEstoqueCritico, FinancialSummary, Fechamento | ERP (preservar) |
+| Cadastros Gerais atalhos | Cadastros chips | já no tip #599 | OK |
+| Central 360º | — | layout v6 + §7 no tip | OK; CR baixa aguarda Codex |
+
+## Implementado neste lote (frontend)
+
+1. `DashboardAlertsBar.jsx` — alertas estoque/aprovação/inadimplência/anomalia
+   só com número confirmado > 0; RBAC; dismiss 15 min; drill-down.
+2. Sticky KPI strip clicável + `—` sem contexto/permissão.
+3. Lazy: SecondaryKPIs, Charts, TopProdutos, AdvancedAnalysis, FinancialSummary.
+4. Header recebe `hasContextoAtivo`.
+
+## Dependências Codex
+
+- Contagens de pedidos/estoque/financeiro server-side quando lista for truncada
+  (hoje parte ainda deriva de filterInContext).
+- Publicar §7 + mapa pedido↔parcela para baixa CR na Central360.
+- HML: flags VITE_ERP_HTTP_PEDIDO_FINANCEIRO quando contrato estiver no tip.
+
+## Aceite VPS
+
+1. Dashboard com empresa: alertas só se houver estoque/aprovação/inad≥10.
+2. Clique no alerta → Estoque/Comercial/Financeiro.
+3. Sem contexto: KPIs sticky mostram —; alertas ocultos.
+4. Troca de período/empresa: queryKey inclui escopo (já existente).
