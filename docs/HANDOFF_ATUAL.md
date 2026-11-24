@@ -1,3 +1,18 @@
+## CPA3: busca dirigida do mapa historico de Produtos (2026-11-24)
+
+Acervo privado da VPS, pasta Base44 local e diretorios dirigidos do HD
+consultados. Quatro candidatos conferidos: revisao de classe, proposta
+de Grupo, crosswalk SQL de empresas e revisao Base44 x SQL. Os dois
+primeiros no HD tem SHA-256 igual ao da VPS. Nenhum dos quatro contem
+os IDs de Grupo, Setor ou empresa referenciados pelo export de Produtos.
+Cobertura examinada: 100 IDs distintos de Grupo, 11 de Setor e 3 de
+empresa. Nenhum export historico adicional localizado nesses caminhos.
+
+Aptos: 0. Sem manifesto aplicavel, ensaio no clone ou escrita na HML.
+Proxima fonte: export Base44 historico das entidades GrupoProduto,
+SetorAtividade e Empresa com os IDs originais, ou mapa aprovado por
+ID e empresa. Nao reaproveitar proposta ou cruzamento SQL como prova.
+
 ## CPA3: Produtos sem vinculo de classe comprovado (2026-11-24)
 
 Cruzamento somente leitura dos 871 Produtos Base44 com os manifestos
