@@ -1,3 +1,14 @@
+## CPA3: pacote candidato dos 13 Centros centralizado
+
+Manifesto 57d3cbbb, pacote 3e18ac94, SHA conferido na VPS privada.
+SQL de abertura/fechamento ensaiado no clone com pin local: 13
+criados, 13 reusados, 13 auditorias. Fechamento deixou papel
+sem login/select/insert e os 13 dados intactos.
+
+Pacote nao executavel. Falta executor/autenticacao HML, revalidar
+backup/folga e obter aprovacao especifica. Contas ficam fora.
+Sem escrita HML; Produtos aguardam gate proprio.
+
 ## CPA3: reversao auditada dos Centros ensaiada
 
 Clone: 13 criados, 13 reusados, 12 inativados com auditoria e
