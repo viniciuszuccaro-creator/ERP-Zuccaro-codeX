@@ -1,3 +1,9 @@
+## CPA3: legado SQL comparado entre HD e VPS (2026-11-24)
+
+Comparacao por leitura SHA-256 nos dois lados: 36/36 MDF/LDF iguais ao caminho correspondente no HD, 44.605.505.536 bytes na VPS. Inclui 18 originais, 16 da copia SQL de trabalho e 2 da proveniencia EMP03. EXETPS de trabalho permanece no HD e nao consta na VPS; o par original permanece nos dois lados. Versoes EXETPS do arquivo Empresa e da auditoria sao distintas.
+
+Sem mounts Docker nem arquivos abertos observados no acervo comparado; referencia de recuperacao/importacao ainda nao encerrada. Zero exclusoes. Relatorios TPS conferidos nao comprovam empresa proprietaria da Obra. Perfil de 35.309 Obras e 27.765 chaves revisadas reaproveitado. Sem EMP aberta, lote enviado ou escrita HML.
+
 ## CPA3: clone local do backup e montagem do HD (2026-11-24)
 
 PG16 descartavel no WSL, somente socket privado: backup externo `6f9515a2` restaurado nas secoes pre-data e data. Confirmados 17.472 clientes e zero Marcas no schema canonico; 813.086.517 bytes ocupados ao medir. O restauro completo parou em policy que exige papel ausente. Proximo: reconstituir ACLs com papeis sem login no clone e ensaiar as seis chaves. Sem gravacao na HML.
