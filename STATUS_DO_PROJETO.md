@@ -1,3 +1,9 @@
+## CPA3: leitura isolada EMP04, EMP02 e EMP01 (2026-11-24)
+
+SQL Server 17.0.5035.5 sem rede/portas ou mounts HML; copias verificadas, ONLINE/READ_ONLY, leitores encerrados. EMP04: 0 pedidos, 0 notas, 0 propostas. EMP02: 0 pedidos, 8.281 notas, 0 propostas. EMP01: 28 pedidos, 139.593 notas, 0 propostas. Zero triades de codigos positivos Cliente/Obra/Empresa nas fontes examinadas; nenhum lote de Obras apto nem gravado. Recibos privados: EMP04 a5758f64, EMP02 b1a9fdac, EMP01 29ea406d.
+
+EMP03 nao aberta: par de 8.301.314.048 bytes deixaria cerca de 65 MB acima do piso de backup antes de temporarios, no filesystem com 31.104.937.984 bytes livres apos encerrar leitores. Proximo: executor com margem para EMP03 e verificacao das referencias alternativas/Catalogo oficial; nao inferir empresa pela transacao. HML HTTP 200. Sem repetir Produtos/Centros, escrita HML ou operacional.
+
 ## CPA3: Produtos e Centros conciliados; EMP05 lida (2026-11-24)
 
 HML: 13 Centros (57d3cbbb) em duas empresas, replay 13/13, 13 recibos/auditorias. 273 Produtos do Grupo (8cfcc611), checkpoints 100/200/273, replay 273/273, 273 recibos/auditorias e chaves unicas. Sem habilitacao empresarial; recorte de 87 em revisao fora. Papeis temporarios sem login e sem USAGE. 17.472 clientes preservados; HTTP 200. Sem deploy ou escrita no operacional.
