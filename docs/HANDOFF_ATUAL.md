@@ -1,3 +1,15 @@
+## CPA3: credencial temporaria e recibos da carga ensaiados
+
+Clone isolado, candidato 8ace33db com DB/socket de ensaio: SCRAM
+com expiry, 273 criados e 273 recibos. Recibo removido de proposito
+bloqueou replay sem recriar prova; restaurado o original, 273 reusos
+e 273 auditorias de criacao. Fechamento revogou o papel.
+
+HML: socket presente, sem lease, recovery parado. Backup 6f9515a2
+restaurado; livre 22.743.457.792 bytes, sujeito a revalidacao.
+Gate: aprovacao especifica, backup/folga revalidados e reversao
+por postimage antes da intervencao. Nenhum apply em HML.
+
 ## CPA3: executor candidato da HML centralizado
 
 Bundle privado 8ace33db conferido na VPS. Checagem offline fixou
