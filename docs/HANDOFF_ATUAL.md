@@ -1,3 +1,13 @@
+## CPA3: margem ampliada com cache reconstruivel
+
+Somente /var/cache/apt/srcpkgcache.bin removido apos checagem
+de caminho, dono, processos e locks. Livre antes 22.743.400.448
+e depois 22.802.792.448 bytes; ganho 59.392.000 e margem
+63.499.195 acima do piso medido. Nenhum backup ou volume removido.
+
+Gate do manifesto 8cfcc611 ainda exige aprovacao especifica.
+Revalidar capacidade e protecao no inicio. Nenhuma escrita HML.
+
 ## CPA3: backup e pacote dos 273 revalidados sem escrita
 
 Snapshot READ ONLY: 21/21 tabelas iguais ao backup 6f9515a2
