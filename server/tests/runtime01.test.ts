@@ -130,11 +130,14 @@ test('migrations include foundation through 039 in canonical order', () => {
   assert.ok(files.indexOf('038_cadastros_codigo_registro.sql') < files.indexOf('039_orcamentos_tabela_preco.sql'));
   assert.ok(files.indexOf('039_orcamentos_tabela_preco.sql') < files.indexOf('040_crm_oportunidades.sql'));
   assert.ok(files.indexOf('040_crm_oportunidades.sql') < files.indexOf('041_produto_empresas_operacao.sql'));
-  assert.equal(files.at(-5), '041_produto_empresas_operacao.sql');
-  assert.equal(files.at(-4), '042_auth_bootstrap_select.sql');
-  assert.equal(files.at(-3), '043_legado_identidade_compartilhada.sql');
-  assert.equal(files.at(-2), '044_pedidos_idempotencia_direta.sql');
-  assert.equal(files.at(-1), '045_clientes_contatos_jsonb.sql');
+  assert.deepEqual(files.slice(-6), [
+    '041_produto_empresas_operacao.sql',
+    '042_auth_bootstrap_select.sql',
+    '043_legado_identidade_compartilhada.sql',
+    '044_pedidos_idempotencia_direta.sql',
+    '045_clientes_contatos_jsonb.sql',
+    '046_grupos_produto_margem_nullable.sql',
+  ]);
 });
 
 test('marca service validates payload and audits create/update/soft-delete', async () => {
