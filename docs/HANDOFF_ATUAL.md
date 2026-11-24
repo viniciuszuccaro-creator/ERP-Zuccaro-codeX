@@ -1,3 +1,16 @@
+## CPA3: grupos autorizados, gates de espaco e runtime abertos
+
+Autorizacao registrada para 91 Grupos/51 inativos/91 nulos na HML,
+manifesto f6f1add9, executor af2be804 e delta 13409eba; hashes conferidos.
+Backup 5dbeff99 intacto na VPS e HD, restore 20 tabelas e ACK conferidos.
+Livre 22.740.279.296; piso 22.738.752.581; faltam 40.416.325 bytes
+para piso + 40 MiB. Sem iniciar DDL, carga ou limpeza.
+
+a305a143 rejeita margem explicitamente nula em teste local do contrato
+servido. Usar executor pontual com o contrato nullable de 7d69e43a,
+sem deploy, apos ensaio do empacotamento e igualdade do snapshot vivo.
+Nenhuma gravacao em HML nem alteracao operacional.
+
 ## CPA3: Pedido HTTP restrito e recontagem de Obras
 
 PG16 isolado sem acesso externo: teste Entrada PostgreSQL 1/1, Auth
