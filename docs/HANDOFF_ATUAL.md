@@ -1,3 +1,21 @@
+## CPA3: backup restaurado em memoria e Produto validado no clone
+
+Backup 2f85fbdc verificado e restaurado no WSL PG16.15, tmpfs
+privado e namespace sem rede. Roles locais NOLOGIN supriram nomes
+de policies sem importar credenciais. Restauro integral necessario
+para dependencias entre schemas. Clone encerrado e removido.
+
+Baseline: 17.472 mestres, 5.423 revisao/historico, 14 Unidades,
+11 Setores (2 inativos), 91 Grupos (51 inativos e 91 NULL).
+360/360 chaves resolvidas; 273 com referencias ativas, 87 com
+inativas, zero codigo duplicado no Grupo. Produto ausente no dump.
+
+006/007/008/018/019 passaram em transacao, FORCE RLS confirmado
+e rollback. 019 depende de 018. Sem ensaio de gravacao/importador,
+manifesto, carga HML ou aceite em navegador. Menor folga tmpfs
+observada 4.307.505.152; WAL medido 402.653.184 bytes.
+EMP intactas; timer 25/11 ainda futuro na consulta.
+
 ## CPA3: WSL validado para PostgreSQL isolado
 
 PG16.15 iniciou em namespace sem rede com socket privado, PGDATA
