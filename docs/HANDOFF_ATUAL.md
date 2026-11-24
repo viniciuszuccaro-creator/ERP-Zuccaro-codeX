@@ -1,3 +1,16 @@
+## CPA3: ACL efetiva de Produtos e retencao da HML conferidas
+
+Leitura com principal efetivo: API a305a143, sem superuser/BYPASSRLS.
+Produtos e produto_empresas ausentes; sequencia SELECT/INSERT/UPDATE
+e audit INSERT ja existentes. Falta lock de Unidade (UPDATE no
+updated_at) e delta minimo de Produto com policies restritas.
+
+Backup: 7/7 na retencao. Mais antigo 7d624196 arquivado no HD,
+46.028.800 bytes e SHA 4b78aef1 conferidos. Nada retirado da VPS.
+Piso medido 22.739.293.253 bytes, livre 22.749.966.336 na leitura.
+Falta margem, backup fresco restaurado e ensaio do delta efetivo
+antes de pedir escrita dos 273. Sem DDL, grants ou carga HML.
+
 ## CPA3: retomada e reversao dos 273 Produtos comprovadas
 
 Clone isolado: primeiro processo gravou 100; segundo reaproveitou
