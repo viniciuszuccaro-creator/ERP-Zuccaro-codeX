@@ -1,3 +1,9 @@
+## CPA3: margem no host e instalacao VirtualBox iniciada (2026-11-24)
+
+MSI temporario WSL 3.0.5 arquivado no HD, tamanho/SHA conferidos, retirado do C somente apos leitura exclusiva. C livre 781.824.000 -> 1.146.466.304 bytes na operacao. Sem fechar processos alheios; RAM disponivel 4.807 MiB antes do instalador.
+
+MSI AMD64 Oracle extraido no HD, assinatura valida. Windows Installer iniciado com ADDLOCAL=VBoxApplication, sem drivers opcionais de rede/USB e sem reinicio; resultado pendente de verificacao/confirmacao administrativa. VBoxManage ainda nao constatado. Sem criar VM ativa, executar legado, exportar, ensaiar ou gravar HML.
+
 ## CPA3: ISO completa e vTPM identificado (2026-11-24)
 
 ISO Windows 11 Enterprise LTSC pt-BR retomada da Microsoft: 5.001.269.248 bytes, SHA-256 local a939263c9a98d1ee5d542fe01e4f3744c28f6140973e34da77be67be2c7dfc8b; UDF legivel (1.057 arquivos), setup e bootx64 com Authenticode Microsoft valido. Nao localizado checksum oficial da imagem exata. QEMU passou no smoke pausado UEFI/WHPX, sem rede, mas nao oferece vTPM.
