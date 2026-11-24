@@ -1,3 +1,17 @@
+## CPA3: hierarquia financeira reconciliada na origem
+
+Plano: 21 de 26 cadeias completas, quatro pais diretos ausentes e um
+descendente adicional bloqueado. Sem ciclo nem cruzamento de Grupo.
+Centros: 13 com empresa na fonte e um sem empresa, sem inferencia.
+Mapa privado ordenado por profundidade, 5.627 bytes, SHA 0e5135fe
+conferido na VPS. Nao e manifesto de execucao.
+
+Pedidos usa migration 017; financeiro depende de mestres contabeis
+por empresa ainda ausentes no schema servido. Sem ensaio ou carga nova.
+Grupos seguem sem autorizacao especifica de escrita. Livre 22.812.278.784
+bytes; agendador exit-code, nenhuma nova execucao ou exclusao.
+Sem novo vinculo de Obras, deploy ou operacao no navegador da HML.
+
 ## CPA3: fontes financeiras Base44 centralizadas
 
 14 Centros de Custo e 26 contas do Plano, duas paginas por entidade
