@@ -1,3 +1,14 @@
+## CPA3: 87 Produtos preservados como recorte de revisao
+
+Fixture PostgreSQL sintetica: vinculo desabilitado ficou fora da
+operacao. Habilitacao explicita pode liberar Produto ativo mesmo
+com Grupo/Setor inativos; outra empresa nao recebeu acesso. Nenhuma
+referencia foi reativada. Nao inferir habilitacao a partir da fonte.
+
+Candidato separado 8cbcfc5e privado na VPS, nao executavel, sem
+vinculo operacional. 273 Produtos e 13 Centros ainda aguardam
+gates proprios. Sem escrita HML ou novo aceite comercial.
+
 ## CPA3: Produtos com referencias inativas ensaiados separadamente
 
 Clone PG16: 87 mestres criados e reusados pelo importador canonico,
