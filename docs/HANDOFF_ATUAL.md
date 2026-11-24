@@ -1,3 +1,14 @@
+## CPA3: protecao comercial da revisao e Centros offline na VPS
+
+Fixture PostgreSQL sintetica: vinculo sem operacao excluiu Produto
+do seletor e bloqueou itens de Orcamento e Pedido. Grupo/Setor
+permaneceram inativos. Nao e prova de faturamento em navegador.
+
+Na VPS, hashes do pacote 3e18ac94 e executor f28f24b0 conferidos.
+Imagem efetiva da API verificou 13 IDs sem banco/rede. Livre
+22.801.027.072 bytes, sem lease. Sem carga, EMP ou deploy.
+Gates especificos dos 13 Centros e 273 Produtos continuam pendentes.
+
 ## CPA3: 87 Produtos preservados como recorte de revisao
 
 Fixture PostgreSQL sintetica: vinculo desabilitado ficou fora da
