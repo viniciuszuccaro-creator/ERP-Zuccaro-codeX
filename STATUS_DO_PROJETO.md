@@ -1,3 +1,9 @@
+## CPA3: par redundante de proveniencia EMP03 arquivado (2026-11-24)
+
+Dos cinco manifestos de recuperacao, nenhum reutiliza o par da pasta EMP03-PROVENANCE como fonte. Retirados somente os dois MDF/LDF dessa pasta de trabalho, com SHA conferido no HD e revalidado na VPS. Recibo de proveniencia, originais e copia principal preservados. Retomada: copiar os dois arquivos da pasta homonima no HD para staging privado, conferir SHA e usar somente uma copia de trabalho no leitor isolado.
+
+Filesystem da VPS: 22.809.903.104 -> 31.111.225.344 bytes livres (+8.301.322.240). HML web respondeu HTTP 200 e os tres containers permaneceram ativos. Timer nao executou novamente. Sem EMP aberta, carga ou deploy; C com menos de 1 GB livre e sem volume de leitor independente validado.
+
 ## CPA3: legado SQL comparado entre HD e VPS (2026-11-24)
 
 Comparacao por leitura SHA-256 nos dois lados: 36/36 MDF/LDF iguais ao caminho correspondente no HD, 44.605.505.536 bytes na VPS. Inclui 18 originais, 16 da copia SQL de trabalho e 2 da proveniencia EMP03. EXETPS de trabalho permanece no HD e nao consta na VPS; o par original permanece nos dois lados. Versoes EXETPS do arquivo Empresa e da auditoria sao distintas.
