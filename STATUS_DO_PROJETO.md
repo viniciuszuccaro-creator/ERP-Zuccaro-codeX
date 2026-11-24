@@ -1,3 +1,20 @@
+## CPA3: EMP05 conferida no HD e testes de Pedido/parcelas
+
+Par original EMP05 no HD e VPS: tamanho 23.068.672 bytes e SHA
+por arquivo iguais (98e36b7a/a0902164). Nenhuma base EMP aberta.
+WSL tem PG16, sem engine SQL 2025 instalado; C fisico cerca de
+1,25 GB livres, abaixo dos 5 GiB documentados para o leitor.
+HD continua fonte/arquivo, nao executor. Recovery HML parado.
+
+Quatro testes focados passaram: precisao/parcelas e leitura de
+Pedido em PostgreSQL efemero com isolamento de Empresa. Sem aceite
+no navegador. Contrato financeiro exige centro e plano da Empresa.
+
+Timer automatico ainda nao executou em 25/11; ultimo sucesso e
+manual, com restauracao/ACK. VPS livre 22.750.425.088 bytes.
+Sem nova carga, exclusao ou deploy. Retomar EMP05 e clone por
+executor privado com armazenamento independente e margem medida.
+
 ## CPA3: rotina de backup HML corrigida e validada manualmente
 
 Instalado somente o delta de timeout 100/105 s em hml-backup.py
