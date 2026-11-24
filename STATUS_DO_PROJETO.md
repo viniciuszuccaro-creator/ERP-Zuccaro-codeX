@@ -1,3 +1,18 @@
+## CPA3: 91 Grupos de Produtos conciliados na HML (2026-11-24)
+
+Manifesto f6f1add9, executor af2be804, delta 13409eba. Ensaio isolado
+com interrupcao e retomada, com 91 margens NULL e 51 grupos inativos.
+Backup restaurado e revalidado: 20 tabelas iguais ao destino antes do delta.
+A limpeza de cache reconstruivel liberou 59.412.480 bytes; nenhum backup
+removido. Menor folga durante a carga: 22.799.331.328 bytes.
+
+HML: 91 inseridos e conciliados, 51 inativos, 91 margens NULL, 91
+checkpoints auditados e replay sem duplicatas. Preservados 17.472 clientes
+mestres, 5.423 em revisao/historico, 14 unidades e 11 setores. Recibo e
+artefatos privados. API permanece a305a143; sem deploy ou escrita operacional.
+Retomada: nao reaplicar este manifesto. Publicacao da interface segue gate
+proprio; outros lotes precisam de manifesto e aprovacao independentes.
+
 ## CPA3: grupos autorizados, gates de espaco e runtime abertos
 
 Autorizacao registrada para 91 Grupos/51 inativos/91 nulos na HML,
