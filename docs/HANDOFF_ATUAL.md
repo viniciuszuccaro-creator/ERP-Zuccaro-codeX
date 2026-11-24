@@ -1,3 +1,20 @@
+## CPA3: exports historicos de Produtos recuperados (2026-11-24)
+
+Dois exports privados de 04/05 do mesmo app Base44 ERP Integra foram
+localizados na copia portatil. O export anterior tem 91 Grupos, 11
+Setores e duas Empresas com IDs originais. No recorte de 871 Produtos,
+618 cruzam Grupo, 817 Setor, 494 Empresa, e 411 os tres na origem.
+O export posterior nao retornou Setor e Produto; nao e substituto.
+
+Com os candidatos de destino, 360/411 tem empresa compativel com
+Grupo e Setor; 51 divergem em ambos. Grupos cruzam por codigo e Grupo
+empresarial; os Setores historicos nao tem codigo. Os 11 pares por
+nome e atributos conferem, mas sem o nome os atributos nao produzem
+pares unicos. Falta evidencia da troca de IDs ou aprovacao do mapa.
+
+Aptos: 0; candidatos prioritarios: 360. Nao ensaiado nem gerado
+manifesto de carga. Sem alteracao do plano Base44 ou escrita HML.
+
 ## CPA3: historico de Produtos consultado no Base44 (2026-11-24)
 
 ERP Integra confirmado pelo conector autenticado. Historico de dados
