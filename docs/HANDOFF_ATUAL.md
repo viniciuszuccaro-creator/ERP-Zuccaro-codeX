@@ -1,3 +1,19 @@
+## CPA3: Produtos sem vinculo de classe comprovado (2026-11-24)
+
+Cruzamento somente leitura dos 871 Produtos Base44 com os manifestos
+conciliados: 871 siglas de venda cobertas pelas 14 Unidades; 91/91 IDs
+dos Grupos da exportacao constam no manifesto f6f1add9. Dos Produtos,
+817 referenciam Grupo e Setor, mas nenhum desses IDs consta nos
+manifestos conciliados; 54 omitem as duas referencias e mantem
+empresa nao conciliada. Compartilhamento nao prova empresa dona.
+
+SQL legado: 2.360 materiais com classe nativa comprovada; a leitura
+registrada das chaves externas nao comprova equivalencia com Base44
+nem transforma classe SQL em GrupoProduto por coincidencia de codigo.
+Aptos: 0. Sem manifesto aplicavel, ensaio vazio ou escrita HML.
+Proximo: obter export historico ou mapa autoritativo dos IDs de Grupo
+e Setor e da empresa divergente; depois revalidar o recorte no clone.
+
 ## CPA3: 91 Grupos de Produtos conciliados na HML (2026-11-24)
 
 Manifesto f6f1add9, executor af2be804, delta 13409eba. Ensaio isolado
