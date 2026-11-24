@@ -1,3 +1,9 @@
+## CPA3: clone local do backup e montagem do HD (2026-11-24)
+
+PG16 descartavel no WSL, somente socket privado: backup externo `6f9515a2` restaurado nas secoes pre-data e data. Confirmados 17.472 clientes e zero Marcas no schema canonico; 813.086.517 bytes ocupados ao medir. O restauro completo parou em policy que exige papel ausente. Proximo: reconstituir ACLs com papeis sem login no clone e ensaiar as seis chaves. Sem gravacao na HML.
+
+HD NTFS com 219.257.151.488 bytes livres, montado em WSL via 9p/DrvFs rw; engine SQL ausente. Nao comprovado para executar SQL Server. VPS com 22.800.089.088 bytes livres no volume Docker; nenhum novo disparo do timer. Sem exclusao, EMP aberta, carga ou deploy.
+
 ## CPA3: contratos de Marca e Comercial validados (2026-11-24)
 
 Quatro testes focados passaram em fixture PostgreSQL sintetica, sem DATABASE_URL externa: Marca com persistencia, RBAC e rollback de auditoria; Comercial com composicao, replay e isolamento. MarcaService reserva novo codigo e insere a cada create; nao usar chamadas repetidas como importador idempotente. Falta ensaiar as seis chaves no clone restaurado e validar o replay da carga.
