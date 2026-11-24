@@ -1,3 +1,14 @@
+## CPA3: fechamento do acesso temporario ensaiado
+
+Clone: remocao de oito policies, revogacao dos grants e NOLOGIN.
+Papel sem leitura/insercao de Produto e sem trava de Unidade.
+273 mestres e 273 criacoes auditadas preservados; zero carga HML.
+Recibo privado somente clone 134db83a centralizado e SHA conferido.
+
+Proximo: adaptar e revisar o acesso temporario no destino exato,
+fixar SQL/reversao por SHA e revalidar backup e folga. Nenhum
+grant na HML nem aprovacao de escrita presumida.
+
 ## CPA3: leitura restrita das referencias dos 273 Produtos ensaiada
 
 Backup 6f9515a2 restaurado no clone. Papel SQL dedicado leu apenas
