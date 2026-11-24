@@ -1,3 +1,13 @@
+## CPA3: Produtos com referencias inativas ensaiados separadamente
+
+Clone PG16: 87 mestres criados e reusados pelo importador canonico,
+87 conciliados e 87 auditorias. Permaneceram 51 Grupos e 2 Setores
+inativos; nenhuma habilitacao empresarial. Tempo carga/replay 1.136 ms.
+
+Esse recorte nao integra manifesto dos 273 e nao foi gravado na HML.
+Centros e Produtos ainda aguardam gates independentes. Sem consulta
+EMP, novo backup, deploy ou aceite comercial nesta rodada.
+
 ## CPA3: executor autenticado dos Centros ensaiado
 
 Executor f28f24b0 centralizado e SHA conferido na VPS. Com
