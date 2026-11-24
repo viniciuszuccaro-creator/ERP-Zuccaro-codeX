@@ -1,3 +1,19 @@
+## CPA3: vinculo Produto-Empresa validado em schema restaurado
+
+Clone PG16 privado: 041 inicialmente recusada pela FK de Empresas.
+Reaproveitado somente uq_empresas_id_group_scope da 040; conjunto
+006/007/008/018/019 + indice + 041 passou, FORCE RLS confirmado e
+rollback. Sem vinculos reais gravados. Quatro testes focados passaram
+para flag OFF, escopo, replay/CAS, auditoria e rollback sinteticos.
+
+Fonte: 360/360 compartilhados no Grupo, zero empresa_dona_id e uma
+lista distinta de compartilhamento no recorte. Empresa de origem
+nao prova habilitacao operacional. Antes de manifesto, fixar regra
+de habilitacao/registro de procedencia e ensaiar o fluxo combinado.
+
+Sem importacao dos 273, consulta EMP ou aceite comercial na HML.
+Recovery antigo parado; timer de 25/11 ainda futuro na consulta.
+
 ## CPA3: contrato de escopo do importador Produto confirmado
 
 Os 273 candidatos ativos seguem mapeados no clone, mas o caminho
