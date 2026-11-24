@@ -1,3 +1,18 @@
+## CPA3: mapa aprovado para clone; preflight dos 360 Produtos
+
+Mapa a2668529 autorizado somente para ensaio. SHA conferido; 360
+identidades de origem e 360 codigos por empresa sem duplicatas na fonte.
+273 com Grupo e Setor ativos, 43 so com Grupo inativo, 30 so com Setor
+inativo e 14 com ambos inativos. Nenhum status foi alterado.
+
+Clone nao iniciado: o container recovery parado monta o mesmo PGDATA
+da HML. VPS com 22.798.970.880 bytes livres, apenas 60.218.299 acima
+do piso anterior; PGDATA atual com 1.106.963.833 bytes. Nao usar o
+container antigo nem restaurar sem volume e margem independentes.
+Proximo: clone novo em volume privado separado com backup verificado,
+validacao de destino e ensaio canonico. Sem manifesto aplicavel,
+escrita HML ou alteracao Base44.
+
 ## CPA3: mapa dos 11 Setores historicos aguarda aprovacao
 
 Mapa privado centralizado e conferido por SHA-256 a2668529, com 11
