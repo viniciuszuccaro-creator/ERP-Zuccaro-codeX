@@ -1,3 +1,16 @@
+## CPA3: cadastros financeiros e dependencias comerciais conferidos
+
+Exports privados completos no recorte: 14 Centros e 26 Contas,
+IDs unicos e paginacao encerrada. Sem carga. 13 Centros mapeados;
+21 cadeias completas nao substituem parametrizacao por Empresa.
+
+Leitura efetiva HML a305a143: centros_custo, plano_contas, pedidos,
+orcamentos, contas_receber e produtos ausentes no schema. Tres
+testes focados do WIP Comercial passaram localmente; nao e aceite
+HML. Sem publicar WIP, DDL, deploy ou alteracao operacional.
+
+Produtos 8cfcc611 permanece aguardando aprovacao especifica.
+
 ## CPA3: executor verificado na imagem da VPS
 
 Imagem efetiva da API Node 22.23.3: container temporario sem rede,
