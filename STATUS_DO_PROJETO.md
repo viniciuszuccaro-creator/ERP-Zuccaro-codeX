@@ -1,3 +1,15 @@
+## CPA3: retomada e reversao dos 273 Produtos comprovadas
+
+Clone isolado: primeiro processo gravou 100; segundo reaproveitou
+os 100, inseriu 173 e reexecutou os 273 sem duplicar. 273 criacoes
+auditadas. Reversao por postimage inativou 272; preservou a edicao
+posterior comprovada e seu registro ativo. Nenhuma exclusao fisica.
+
+Manifesto candidato privado 8cfcc611 (9.850 bytes), SHA conferido
+na VPS. Escopo Grupo, 87 separados, sem habilitacao empresarial.
+Nao executavel: falta revisao do delta/papel efetivo e novo backup
+restaurado antes da aprovacao especifica da HML. Sem escrita HML.
+
 ## CPA3: 273 Produtos gravados e reexecutados no clone
 
 Pacote a9b6c44e; importador canonico no PG16 restaurado e isolado.
