@@ -1,3 +1,14 @@
+## CPA3: recorte financeiro centralizado para ensaio
+
+Pacote privado f8a47412, 9.968 bytes, SHA conferido na VPS.
+13 Centros com empresa revalidada por CNPJ exato no destino;
+21 Contas em ordem de dependencia, mantendo escopo de Grupo.
+Separados um Centro sem empresa e cinco Contas bloqueadas.
+
+Nao executavel. Proximo: contrato/schema canonico e ensaio
+com papel restrito. Sem escrita HML ou novo aceite comercial.
+Produtos 8cfcc611 ainda aguarda aprovacao especifica.
+
 ## CPA3: cadastros financeiros e dependencias comerciais conferidos
 
 Exports privados completos no recorte: 14 Centros e 26 Contas,
