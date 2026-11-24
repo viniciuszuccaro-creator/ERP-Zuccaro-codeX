@@ -1,3 +1,9 @@
+## CPA3: abertura do ERP legado depende de executor Windows (2026-11-24)
+
+HD contem copia do aplicativo e ISO SQL Server, sem VM de Windows localizada na pasta de backup. Estacao: Windows 11 Home, vmcompute ativo, sem gerenciador Hyper-V/VirtualBox/VMware localizado, C com 812.040.192 bytes livres. VPS sem /dev/kvm e sem QEMU localizado. SQL legado do host permaneceu parado. Nenhum binario antigo executado.
+
+Retomar com VM Windows privada pronta, volume de trabalho separado e sem rede externa ou acesso gravavel aos originais. Copiar e conferir o acervo, validar que o aplicativo aponta ao SQL da VM, abrir cadastro de Obras, conferir escopo e exportar pelo menu nativo. Sem export, ensaio de lote ou escrita HML nesta rodada.
+
 ## CPA3: busca de export nativo e contrato atual de Obras (2026-11-24)
 
 Busca dirigida nos exports/staging/relatorios/arquivo Empresa do HD e no canal privado VPS: sem export nativo com escopo oficial. Export ClientesObras e recorte de vinculos ja verificados permanecem insuficientes para atribuir Empresa. ERP legado nao aberto; servico SQL parado, sem partida nesta rodada.
