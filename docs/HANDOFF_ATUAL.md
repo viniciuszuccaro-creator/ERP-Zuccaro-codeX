@@ -1,3 +1,9 @@
+## CPA3: ISO completa e vTPM identificado (2026-11-24)
+
+ISO Windows 11 Enterprise LTSC pt-BR retomada da Microsoft: 5.001.269.248 bytes, SHA-256 local a939263c9a98d1ee5d542fe01e4f3744c28f6140973e34da77be67be2c7dfc8b; UDF legivel (1.057 arquivos), setup e bootx64 com Authenticode Microsoft valido. Nao localizado checksum oficial da imagem exata. QEMU passou no smoke pausado UEFI/WHPX, sem rede, mas nao oferece vTPM.
+
+Instalador Oracle VirtualBox 7.2.22 no HD, SHA oficial e assinatura validos; nao instalado. Host sem elevacao, C com 810.397.696 bytes livres e RAM disponivel 5.167 MiB na medicao final. Retomar com margem no host e instalacao administrativa controlada do hipervisor com vTPM e sem drivers opcionais de rede, depois criar convidado sem NIC no HD. Sem boot Windows, export, ensaio ou escrita HML.
+
 ## CPA3: VM do legado preparada no HD (2026-11-24)
 
 Area privada nova no HD externo: QEMU 11.1.0 extraido sem instalar no host, instalador conferido por SHA-512, QCOW2 de 80 GiB virtuais criado. Smoke TCG com disco vazio, sem placa de rede ou acesso aos originais. Copia de trabalho EXETPS (1.022.492.672 bytes) conferida por SHA-256; ainda nao ligada a VM.
