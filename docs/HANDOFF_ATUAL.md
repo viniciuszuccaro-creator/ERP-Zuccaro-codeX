@@ -1,3 +1,7 @@
+## CPA3: referencias organizacionais Base44 (2026-11-24)
+
+Preflight somente leitura: 6 Marcas, 8 Departamentos (2 inativos) e 8 Cargos (8 inativos), sem filtro de situacao. Export privado conferido na VPS (`faeb0b0e`); mapa privado por empresa e Grupo conferido (`058d0b08`), 22/22 vinculados. Nenhuma gravacao na HML. Proximo: confrontar chaves e campos com o cadastro atual e ensaiar os aptos no clone antes de solicitar escrita.
+
 ## CPA3: protecao comercial da revisao e Centros offline na VPS
 
 Fixture PostgreSQL sintetica: vinculo sem operacao excluiu Produto
