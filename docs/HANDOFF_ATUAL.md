@@ -1,3 +1,18 @@
+## CPA3: Pedido HTTP restrito e recontagem de Obras
+
+PG16 isolado sem acesso externo: teste Entrada PostgreSQL 1/1, Auth
+sintetico com roles LOGIN restritas. Conversao e reabertura de Pedido
+via HTTP, outra empresa 404, outro Grupo 403, auditoria/rollback.
+Nao e aceite na HML; schema servido ainda nao tem Pedidos.
+
+ClientesObras privado: 35.309 linhas e 59 colunas, SHA igual ao recibo.
+Arquivo de vinculos: 27.765 chaves unicas, 27.648 em revisao inativa e
+117 locais existentes a reconciliar. Diferenca de uma linha frente aos
+27.766 mestres; sem chave empresarial comprovada, zero Obras aptas.
+
+Livre 22.740.365.312 bytes; agendador exit-code. Grupos aguardam
+autorizacao especifica; sem exclusoes, DDL, carga ou deploy nesta rodada.
+
 ## CPA3: Pedidos ensaiado e empresas de Centros confirmadas
 
 PG16 isolado: 005/006/012/013/016/017 passaram em transacao.
