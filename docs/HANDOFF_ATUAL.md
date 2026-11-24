@@ -1,3 +1,14 @@
+## CPA3: leitura restrita das referencias dos 273 Produtos ensaiada
+
+Backup 6f9515a2 restaurado no clone. Papel SQL dedicado leu apenas
+15 Grupos e 6 Setores do manifesto, zero sem contexto ou com outro
+Grupo. Sem UPDATE em Produto. Checkpoint 100, retomada +173, replay
+integral, 273 conciliados e 273 auditorias de criacao.
+
+Nenhum grant ou Produto aplicado na HML. Proximo: fixar delta
+privado com ciclo de acesso, revogacao e reversao, revalidar
+backup/folga e apresentar autorizacao especifica dos 273.
+
 ## CPA3: backup fresco restaurado e barreira de leitura confirmada
 
 Backup manual 6f9515a2: exit 0, 47.687.680 bytes, SHA 8e272347
