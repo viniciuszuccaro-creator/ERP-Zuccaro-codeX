@@ -1,3 +1,14 @@
+## CPA3: mapa dos 11 Setores historicos aguarda aprovacao
+
+Mapa privado centralizado e conferido por SHA-256 a2668529, com 11
+pares unicos, fontes fixadas e 360 IDs de Produtos candidatos com
+empresa compativel. Dois Setores divergem em situacao; preservar
+o estado do destino. Nao e manifesto executavel.
+
+Gate: aprovacao dos pares somente para ensaio no clone. Antes do
+ensaio, resolver chaves no clone e conferir status e escopo; manter
+fora itens que nao passem. Sem escrita HML ou mudanca no Base44.
+
 ## CPA3: exports historicos de Produtos recuperados (2026-11-24)
 
 Dois exports privados de 04/05 do mesmo app Base44 ERP Integra foram
