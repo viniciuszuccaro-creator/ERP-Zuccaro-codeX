@@ -1,3 +1,14 @@
+## CPA3: SQL candidato de Produtos fixado por SHA
+
+Abertura b92d7332 e fechamento c299ffe1 centralizados na VPS.
+No clone, apenas o pin do nome do banco foi adaptado. Checkpoint
+100+173, replay, auditoria e revogacao passaram com esses SQLs.
+Sem grant amplo de UPDATE em Produto ou habilitacao empresarial.
+
+Ainda falta fixar executor para HML, autenticacao temporaria,
+reversao por postimage e revalidar protecao/margem antes do gate.
+Os arquivos sao candidatos; nenhum deles foi aplicado na HML.
+
 ## CPA3: fechamento do acesso temporario ensaiado
 
 Clone: remocao de oito policies, revogacao dos grants e NOLOGIN.
