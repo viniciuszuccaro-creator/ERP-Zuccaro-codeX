@@ -1,3 +1,16 @@
+## CPA3: kit de Grupos centralizado; backup bloqueado por capacidade
+
+Manifesto f6f1add9 preservado (91 nulos, 51 inativos). Executor candidato
+af2be804 e SQL 13409eba na VPS privada com SHA conferido (6.438 bytes).
+SQL exato rodou em PG16 isolado: margem nullable, RLS forcada, 17.472
+mestres. Falta ensaiar o executor empacotado junto ao SQL e fechar gate.
+
+HML ainda a305a143: 17.472 mestres, 5.423 na fila, 14 Unidades,
+11 Setores/2 inativos; Grupos ausente. Leitura pelo principal restrito.
+Agendador 24/11: RECOVERY_SPACE_RESERVE. Livre 22.710.530.048, piso
+22.738.752.581: deficit 28.222.533 bytes antes de folga adicional.
+Sem backup pos-Setores, limpeza, DDL, carga ou deploy. Operacional intacto.
+
 ## CPA3: 91 Grupos com margem nula preservada no clone
 
 Contrato, repositorios e formulario distinguem nulo de zero. Omitir
