@@ -1,3 +1,12 @@
+## CPA3: recorte de Produtos centralizado para ensaio
+
+Pacote privado de preflight a9b6c44e, 163.626 bytes, SHA-256
+verificado na VPS. 273 candidatos ativos e 87 com referencias
+inativas. Mantem empresa de origem sem habilitar operacao.
+Artefato nao executavel. Proximo: importador canonico no clone
+isolado, com auditoria, replay e reversao, antes do manifesto HML.
+Nenhuma gravacao de dados na HML ou no operacional.
+
 ## CPA3: vinculo Produto-Empresa validado em schema restaurado
 
 Clone PG16 privado: 041 inicialmente recusada pela FK de Empresas.
