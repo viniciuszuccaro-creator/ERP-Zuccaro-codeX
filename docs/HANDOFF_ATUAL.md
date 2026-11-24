@@ -1,3 +1,9 @@
+## CPA3: EMP03 lida e chave alternativa de Obras conferida (2026-11-24)
+
+Par de trabalho EMP01 retirado da VPS apos SHA nos dois lados e zero referencias de reutilizacao nos cinco manifestos; originais preservados. Livre 31.104.798.720 -> 34.916.114.432 bytes. EMP03 aberta ONLINE/READ_ONLY em copia verificada, staging isolado e sem rede. 231.601 notas, 250 pedidos, zero propostas e zero triades positivas pela chave CODIGOOBRA.
+
+Chave candidata CODIGOCLIENTE + OBRA numerica versus CODIGOCLIENTE + ITEM do export: EMP03 33.079 coincidencias, 2.858 com mais de uma empresa; EMP01 28.991/13; EMP02 2.743/0. Contagens por base nao somaveis. Nenhuma regra oficial de titularidade comprovada; zero aptos e zero gravados. Resumos privados no canal VPS. Leitores encerrados. Proximo: localizar cadastro, regra ou export autoritativo antes de promover.
+
 ## CPA3: leitura isolada EMP04, EMP02 e EMP01 (2026-11-24)
 
 SQL Server 17.0.5035.5 sem rede/portas ou mounts HML; copias verificadas, ONLINE/READ_ONLY, leitores encerrados. EMP04: 0 pedidos, 0 notas, 0 propostas. EMP02: 0 pedidos, 8.281 notas, 0 propostas. EMP01: 28 pedidos, 139.593 notas, 0 propostas. Zero triades de codigos positivos Cliente/Obra/Empresa nas fontes examinadas; nenhum lote de Obras apto nem gravado. Recibos privados: EMP04 a5758f64, EMP02 b1a9fdac, EMP01 29ea406d.
