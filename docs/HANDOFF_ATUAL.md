@@ -1,3 +1,15 @@
+## CPA3: 273 Produtos gravados e reexecutados no clone
+
+Pacote a9b6c44e; importador canonico no PG16 restaurado e isolado.
+Role SQL sem superuser/BYPASSRLS, RBAC sintetico. O papel de ensaio
+precisou da sequencia canonica, com policy de Grupo, somente no clone.
+273 inseridos, 273 reusados, 273 conciliados e 273 eventos de criacao.
+Zero leitura sem contexto. Criacao + replay medidos em 2.306 ms.
+
+Sem habilitacao empresarial, sem gravacao na HML. Restam retomada
+apos interrupcao, reversao por postimage e revisao do delta/papel
+efetivo antes do manifesto. Os 87 inativos continuam separados.
+
 ## CPA3: identidade legada de Produtos validada no clone
 
 Backup 2f85fbdc restaurado em PG16 isolado. Em transacao,
