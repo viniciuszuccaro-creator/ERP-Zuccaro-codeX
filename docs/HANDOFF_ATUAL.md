@@ -1,3 +1,15 @@
+## CPA3: vinculos contabeis do Base44 conferidos
+
+SyncMap paginado ate vazio: 29 Centros, 1.290 Contas, IDs unicos.
+Zero vinculo nos 13 Centros; 16 vinculos tocam cinco das 21 Contas,
+em duas empresas. Consulta dirigida nao retornou as 16 contrapartes
+fora do export nem os quatro pais ausentes. Nao presumir espelho.
+
+DDL de Contas a Receber exige mestre contabil da Empresa. Nao
+usar contas de Grupo como equivalentes operacionais. Falta contrato
+persistente dos mestres e regra de selecao; sem ensaio/carga.
+Produtos aguardam gate especifico; sem deploy ou escrita na HML.
+
 ## CPA3: recorte financeiro centralizado para ensaio
 
 Pacote privado f8a47412, 9.968 bytes, SHA conferido na VPS.
