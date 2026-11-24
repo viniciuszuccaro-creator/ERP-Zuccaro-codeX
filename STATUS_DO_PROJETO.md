@@ -1,3 +1,20 @@
+## CPA3: rotina de backup HML corrigida e validada manualmente
+
+Instalado somente o delta de timeout 100/105 s em hml-backup.py
+(SHA 4ad7b8e2); reversao privada preservada (faae40f6). Timer,
+retencao e reserva inalterados. Unidade acionada manualmente: exit 0,
+hml-20261124T124803Z-2f85fbdc, 47.687.680 bytes, restoreVerified.
+Copia no HD conferida por tamanho/SHA 250a4b05 e ACK registrado.
+Menor folga observada 22.324.609.024 bytes. Proxima prova: timer
+automatico em 25/11; sucesso manual nao equivale a sucesso agendado.
+
+Catalogo EMP01 a EMP05 confirmou PedidoVenda, NotaFiscalSaidas e
+PropostaComercial nas cinco bases. Nenhuma foi anexada: margem de
+aprox. 60 MB antes do backup, sem espaco comprovado para copia e
+recuperacao; menor par EMP05 com 23.068.672 bytes antes de temporarios.
+Zero Obras/Produtos gravados; sem teste no navegador ou deploy ERP.
+Retomar em executor separado, sem usar recovery ligado a HML.
+
 ## CPA3: leitura EXETPS e referencias do Comercial
 
 Leitor SQL dedicado: localhost expirou; TCP loopback funcionou.
