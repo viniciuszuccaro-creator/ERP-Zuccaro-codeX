@@ -1,3 +1,9 @@
+## CPA3: contratos de Marca e Comercial validados (2026-11-24)
+
+Quatro testes focados passaram em fixture PostgreSQL sintetica, sem DATABASE_URL externa: Marca com persistencia, RBAC e rollback de auditoria; Comercial com composicao, replay e isolamento. MarcaService reserva novo codigo e insere a cada create; nao usar chamadas repetidas como importador idempotente. Falta ensaiar as seis chaves no clone restaurado e validar o replay da carga.
+
+EMP05: C com 1.401.257.984 bytes livres, abaixo dos 5 GiB documentados; Docker VPS com 22.800.175.104 bytes livres em volume compartilhado. Recovery antigo segue parado. Timer nao teve novo disparo. Sem carga, deploy ou aceite comercial no navegador.
+
 ## CPA3: leitura do backup e capacidade EMP05 (2026-11-24)
 
 Backup externo `6f9515a2`: pg_restore 16 inspecionou somente o dump, sem conectar a banco. Zero Marcas no schema HML; a tabela homonima de public foi excluida. Seis candidatas novas no snapshot, ainda sem ensaio de servico ou verificacao viva.
