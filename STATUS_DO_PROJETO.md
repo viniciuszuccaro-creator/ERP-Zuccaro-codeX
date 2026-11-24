@@ -1,3 +1,14 @@
+## CPA3: executor autenticado dos Centros ensaiado
+
+Executor f28f24b0 centralizado e SHA conferido na VPS. Com
+SCRAM temporario no clone, 13 criados, 13 reusados e 13 auditorias.
+Simulacao de commit sem recibo bloqueou replay; com recibo original
+reposto, tudo reconciliou. Acesso revogado apos fechamento.
+
+Reversao por revisao ja ensaiada (1889b421). Falta comparar backup
+com HML viva, conferir capacidade e obter aprovacao especifica.
+Sem apply em HML. Produtos aguardam gate separado.
+
 ## CPA3: pacote candidato dos 13 Centros centralizado
 
 Manifesto 57d3cbbb, pacote 3e18ac94, SHA conferido na VPS privada.
