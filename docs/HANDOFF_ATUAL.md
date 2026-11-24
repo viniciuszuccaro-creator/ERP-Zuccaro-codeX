@@ -1,3 +1,9 @@
+## CPA3: boot isolado parou no firmware com duas vCPUs (2026-11-24)
+
+Host atingiu 6.298 MiB disponiveis e VirtualBox iniciou a VM. Com duas vCPUs, firmware nao chegou ao instalador, video 0x0, inclusive apos VBoxSVGA/ICH9 e teste x2APIC. Com uma vCPU, exibiu prompt da ISO; teste diagnostico, nao configuracao de instalacao. Secure Boot e vTPM preservados.
+
+Disco de trabalho sem instalacao; nenhuma base anexada. VM desligada ao fim. Sem tocar originais, SQL legado do host, HML ou operacional. Proximo: investigar execucao EFI/SMP com o backend de virtualizacao do host ou usar executor Windows compativel, sem desativar protecoes.
+
 ## CPA3: VirtualBox instalado e VM Windows isolada configurada (2026-11-24)
 
 MSI Oracle 7.2.22 terminou com codigo 0. VM criada no HD com VDI dinamico 80 GiB, ISO anexada, UEFI Secure Boot, vTPM v2_0, 2 vCPU e 4.096 MiB. Oito NICs none, sem pastas compartilhadas, clipboard, drag-and-drop ou USB. Nenhuma base ou copia do ERP anexada.
