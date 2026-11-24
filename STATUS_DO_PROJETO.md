@@ -1,3 +1,9 @@
+## CPA3: VirtualBox instalado e VM Windows isolada configurada (2026-11-24)
+
+MSI Oracle 7.2.22 terminou com codigo 0. VM criada no HD com VDI dinamico 80 GiB, ISO anexada, UEFI Secure Boot, vTPM v2_0, 2 vCPU e 4.096 MiB. Oito NICs none, sem pastas compartilhadas, clipboard, drag-and-drop ou USB. Nenhuma base ou copia do ERP anexada.
+
+VM desligada: host com 5.004 MiB disponiveis (908 MiB residuais com convidado) e 790.265.856 bytes livres em C. Retomar com pelo menos 6 GiB disponiveis no host para o primeiro boot e reavaliar folga antes do SQL. Servico legado no host parado. Sem export, ensaio ou escrita HML.
+
 ## CPA3: margem no host e instalacao VirtualBox iniciada (2026-11-24)
 
 MSI temporario WSL 3.0.5 arquivado no HD, tamanho/SHA conferidos, retirado do C somente apos leitura exclusiva. C livre 781.824.000 -> 1.146.466.304 bytes na operacao. Sem fechar processos alheios; RAM disponivel 4.807 MiB antes do instalador.
