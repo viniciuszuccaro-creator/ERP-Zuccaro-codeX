@@ -1,3 +1,14 @@
+## CPA3: backup e pacote dos 273 revalidados sem escrita
+
+Snapshot READ ONLY: 21/21 tabelas iguais ao backup 6f9515a2
+por prova integral, sem divergencia. Copia HD 47.687.680 bytes
+e SHA 8e272347 conferidos novamente. Quatro hashes do pacote
+conferidos na VPS; sem lease e sem execucao de carga.
+
+Livre 22.743.441.408 na checagem, margem estreita sobre o piso.
+Continuar nao foi tratado como aprovacao de DDL/carga. Gate dos
+273 permanece pendente; timer automatico ainda futuro.
+
 ## CPA3: credencial temporaria e recibos da carga ensaiados
 
 Clone isolado, candidato 8ace33db com DB/socket de ensaio: SCRAM
