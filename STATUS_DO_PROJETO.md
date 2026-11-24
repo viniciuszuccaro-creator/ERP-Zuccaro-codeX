@@ -1,3 +1,14 @@
+## CPA3: 13 Centros auditados no clone; catalogo 046 alinhado
+
+Candidato e servico de Centros sem rota nova ou grants. Clone
+restaurado: 13 criados, 13 reusados, 13 auditorias, duas empresas
+e zero registros sem contexto. Recibo privado be7a80b9 na VPS.
+
+Testes reconhecem 046 ja versionada, mantendo 047-049 fora.
+Servidor: 663 passaram, 45 skip, zero falhas; typecheck/build,
+audit baseline e diff check passaram. Sem escrita HML. Proximo:
+revisar delta e papel, ensaiar reversao e fechar gate dos Centros.
+
 ## CPA3: vinculos contabeis do Base44 conferidos
 
 SyncMap paginado ate vazio: 29 Centros, 1.290 Contas, IDs unicos.
