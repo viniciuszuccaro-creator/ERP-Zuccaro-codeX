@@ -1,3 +1,12 @@
+## CPA3: identidade legada de Produtos validada no clone
+
+Backup 2f85fbdc restaurado em PG16 isolado. Em transacao,
+006/007/008/018/019/023 e apenas o recorte de Produto da 043
+criaram as cinco colunas de procedencia e o indice unico de
+identidade com FORCE RLS. Rollback confirmou a remocao da tabela.
+Node 24 localizado no WSL; sem escrita HML ou ensaio dos 273.
+Proximo: papel restrito e importador com procedencia preservada.
+
 ## CPA3: recorte de Produtos centralizado para ensaio
 
 Pacote privado de preflight a9b6c44e, 163.626 bytes, SHA-256
