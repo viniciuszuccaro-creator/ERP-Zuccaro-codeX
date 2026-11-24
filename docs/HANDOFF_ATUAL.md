@@ -1,3 +1,9 @@
+## CPA3: VM do legado preparada no HD (2026-11-24)
+
+Area privada nova no HD externo: QEMU 11.1.0 extraido sem instalar no host, instalador conferido por SHA-512, QCOW2 de 80 GiB virtuais criado. Smoke TCG com disco vazio, sem placa de rede ou acesso aos originais. Copia de trabalho EXETPS (1.022.492.672 bytes) conferida por SHA-256; ainda nao ligada a VM.
+
+ISO Windows LTSC x64 pt-BR oficial: download parcial 842.039.296 de 5.001.269.248 bytes, timeout; retomar transferencia e verificar integridade antes de boot. RAM livre do host cerca de 4,4 GiB, sem margem para Windows e SQL juntos. Sem Windows convidado instalado, export, ensaio ou escrita na HML. Sem alterar instancias do host.
+
 ## CPA3: abertura do ERP legado depende de executor Windows (2026-11-24)
 
 HD contem copia do aplicativo e ISO SQL Server, sem VM de Windows localizada na pasta de backup. Estacao: Windows 11 Home, vmcompute ativo, sem gerenciador Hyper-V/VirtualBox/VMware localizado, C com 812.040.192 bytes livres. VPS sem /dev/kvm e sem QEMU localizado. SQL legado do host permaneceu parado. Nenhum binario antigo executado.
