@@ -1,3 +1,9 @@
+## CPA3: leitura do backup e capacidade EMP05 (2026-11-24)
+
+Backup externo `6f9515a2`: pg_restore 16 inspecionou somente o dump, sem conectar a banco. Zero Marcas no schema HML; a tabela homonima de public foi excluida. Seis candidatas novas no snapshot, ainda sem ensaio de servico ou verificacao viva.
+
+Imagem SQL Server na VPS: 17.0.5035.5. Filesystem Docker com 22.800.236.544 bytes livres, apenas 61.483.963 acima do piso de backup registrado. Nao iniciou SQL nem anexou EMP05. Proximo: executor privado com capacidade independente para o leitor e ensaio de Marcas no clone. Sem cargas, deploy ou aceite comercial.
+
 ## CPA3: gates de carga e recuperacao externa (2026-11-24)
 
 HML `a305a143` conferida pelo papel da API em transacao somente leitura: banco e schema esperados, sem superuser/BYPASSRLS. Marcas existe, sem SELECT para o papel; Departamentos/Cargos ausentes no schema servido. Os 22 nao estao classificados nem ensaiados. Proximo: comparar Marcas em clone restaurado e localizar o contrato persistente de Organizacional.
