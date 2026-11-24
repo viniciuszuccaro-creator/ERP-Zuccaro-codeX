@@ -1,3 +1,14 @@
+## CPA3: executor candidato da HML centralizado
+
+Bundle privado 8ace33db conferido na VPS. Checagem offline fixou
+273 IDs e recusou apply sem pins. Exige socket privado, role sem
+BYPASSRLS e credencial temporaria via stdin. Recibo por postimage
+nao e sobrescrito; reuso sem recibo exige conciliacao na auditoria.
+
+Nao conectado em modo apply. Falta ensaiar autenticacao, retomada
+na fronteira banco/recibo e reversao com o pacote exato no clone;
+revalidar backup/folga antes do gate. Sem escrita HML.
+
 ## CPA3: SQL candidato de Produtos fixado por SHA
 
 Abertura b92d7332 e fechamento c299ffe1 centralizados na VPS.
