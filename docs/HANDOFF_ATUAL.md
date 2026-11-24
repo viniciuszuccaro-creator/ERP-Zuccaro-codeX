@@ -1,3 +1,11 @@
+## CPA3: executor verificado na imagem da VPS
+
+Imagem efetiva da API Node 22.23.3: container temporario sem rede,
+sem socket de banco e filesystem somente leitura verificou os 273
+IDs e o SHA 8cfcc611; connected=false. Socket da HML usa SCRAM.
+Livre 22.802.767.872 bytes; sem lease na checagem.
+Sem DDL/credencial/carga/deploy. Gate especifico ainda pendente.
+
 ## CPA3: margem ampliada com cache reconstruivel
 
 Somente /var/cache/apt/srcpkgcache.bin removido apos checagem
