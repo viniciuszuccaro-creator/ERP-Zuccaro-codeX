@@ -1,3 +1,9 @@
+## CPA3: gates de carga e recuperacao externa (2026-11-24)
+
+HML `a305a143` conferida pelo papel da API em transacao somente leitura: banco e schema esperados, sem superuser/BYPASSRLS. Marcas existe, sem SELECT para o papel; Departamentos/Cargos ausentes no schema servido. Os 22 nao estao classificados nem ensaiados. Proximo: comparar Marcas em clone restaurado e localizar o contrato persistente de Organizacional.
+
+Backup agendado falhou com `RECOVERY_SPACE_RESERVE`. O avulso `6f9515a2` restaurou 21 tabelas; copia no HD externo lida e conferida com VPS/recibo (47.687.680 bytes, SHA `8e272347`). Livre na VPS: 22.800.879.616 bytes; nao e medicao de pico. Pacotes 273 Produtos e 13 Centros conferidos por SHA, ainda sem autorizacao de escrita. Imagem SQL Server local identificada na VPS; EMP05 ainda nao aberta. Sem carga, deploy ou novo aceite comercial.
+
 ## CPA3: referencias organizacionais Base44 (2026-11-24)
 
 Preflight somente leitura: 6 Marcas, 8 Departamentos (2 inativos) e 8 Cargos (8 inativos), sem filtro de situacao. Export privado conferido na VPS (`faeb0b0e`); mapa privado por empresa e Grupo conferido (`058d0b08`), 22/22 vinculados. Nenhuma gravacao na HML. Proximo: confrontar chaves e campos com o cadastro atual e ensaiar os aptos no clone antes de solicitar escrita.
