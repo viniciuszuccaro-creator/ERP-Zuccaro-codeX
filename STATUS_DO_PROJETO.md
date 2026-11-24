@@ -1,3 +1,9 @@
+## CPA3: busca de export nativo e contrato atual de Obras (2026-11-24)
+
+Busca dirigida nos exports/staging/relatorios/arquivo Empresa do HD e no canal privado VPS: sem export nativo com escopo oficial. Export ClientesObras e recorte de vinculos ja verificados permanecem insuficientes para atribuir Empresa. ERP legado nao aberto; servico SQL parado, sem partida nesta rodada.
+
+Contrato existente: mestre Obra pertence ao Grupo; create operacional exige Empresa e vinculo autorizado. Sete testes sinteticos runtime06b passaram (API, RLS, multiempresa, auditoria, concorrencia); nao constituem ensaio do legado. Zero aptos/gravados. Retomar com export nativo do cadastro ou evidencias da tela do mesmo registro em duas empresas, distinguindo visibilidade de titularidade.
+
 ## CPA3: fonte oficial de empresa da Obra ainda pendente (2026-11-24)
 
 Catalogo SQL do HD: ClientesObras, DadosEspecificos, HistoricoAjustes, DadosInternacionaisLocalEntrega e cadeia Oportunidades nao exibem campo de empresa proprietaria. As combinacoes diretas Cliente/Empresa/Obra no catalogo ficaram em PedidoVenda e NotaFiscalSaidas, que nao comprovam titularidade. EMP05 ja lida no checkpoint anterior, sem movimento nessas fontes.
