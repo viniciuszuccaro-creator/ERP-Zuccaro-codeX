@@ -1,3 +1,18 @@
+## CPA3: contrato de escopo do importador Produto confirmado
+
+Os 273 candidatos ativos seguem mapeados no clone, mas o caminho
+persistirProdutoGrupoLegado rejeita contexto Empresa; ProdutoService
+tambem rejeita empresa no mestre com identidade legada. Dois testes
+legacy-product passaram: replay, auditoria/rollback e o guard de Grupo.
+
+A capacidade de operacao por Empresa e separada (041, flag explicita).
+Proximo: preparar o pacote mestre Grupo + vinculo por Empresa,
+preservando a procedencia; nao adaptar descartando empresa nem
+habilitar a flag sem ensaio e gate. Sem gravacao dos 273 ou manifesto.
+
+Recovery antigo parado, VPS livre 22.750.330.880 bytes; timer de
+25/11 ainda futuro. Sem consulta EMP, nova carga ou aceite navegador.
+
 ## CPA3: backup restaurado em memoria e Produto validado no clone
 
 Backup 2f85fbdc verificado e restaurado no WSL PG16.15, tmpfs
