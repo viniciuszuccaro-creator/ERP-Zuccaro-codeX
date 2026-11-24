@@ -1,3 +1,17 @@
+## CPA3: leitura EXETPS e referencias do Comercial
+
+Leitor SQL dedicado: localhost expirou; TCP loopback funcionou.
+LEGACY_TID_EXETPS ONLINE/READ_ONLY: 35.309 Obras, 3.096 ajustes,
+zero Propostas e zero DadosEspecificos. PedidoVenda e NotaFiscalSaidas
+nao existem nessa base anexada. Leitor encerrado, sem tocar originais.
+Proximo: consultar copias verificadas das EMP01 a EMP05 em executor
+isolado, com espaco medido e sem tratar origem transacional como dona.
+
+PRs comparadas com Casa: 596 1a5bc05ea, 599 cfb2c7319, 600 ac4fc8100.
+Sem composicao ou novo aceite na HML. Produtos e financeiro ainda
+sem clone novo com margem. Agenda permanece exit-code 1.
+Sem manifesto novo ou gravacao na HML; operacional preservado.
+
 ## CPA3: catalogo SQL de Obras conferido
 
 Catalogo privado: 116.445 colunas de 4.612 tabelas. Nenhuma
