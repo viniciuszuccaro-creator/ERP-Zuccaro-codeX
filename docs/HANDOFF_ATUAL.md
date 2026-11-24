@@ -1,3 +1,14 @@
+## CPA3: criacao e replay de Produtos sem UPDATE amplo
+
+Clone PG16: papel de carga sem UPDATE em Produtos. Checkpoint 100,
+retomada com 173 inseridos, 273 conciliados e 273 auditorias; replay
+integral sem duplicatas. Papel de reversao nao integra este ensaio.
+Sequencia/auditoria preservadas, trava de Unidade por updated_at.
+
+Nenhuma policy/grant aplicado na HML. Proximo: fixar SQL e review
+do papel efetivo, ampliar folga e restaurar backup fresco antes
+do gate dos 273. Sem novo backup ou escrita nesta rodada.
+
 ## CPA3: ACL efetiva de Produtos e retencao da HML conferidas
 
 Leitura com principal efetivo: API a305a143, sem superuser/BYPASSRLS.
