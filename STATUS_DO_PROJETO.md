@@ -1,3 +1,16 @@
+## CPA3: Pedidos ensaiado e empresas de Centros confirmadas
+
+PG16 isolado: 005/006/012/013/016/017 passaram em transacao.
+Pedidos, itens e orcamentos com RLS forcada, sem policies no recorte;
+rollback preservou os 17.472 mestres. Composicao focada 3/3.
+13 Centros com empresa conferidos por CNPJ no destino; um sem empresa
+na fonte. Mestres contabeis por empresa seguem ausentes no schema HML.
+
+HML a305a143 sem deploy ou aceite novo no navegador. Nenhuma onda de
+Obras com empresa comprovada. Grupos aguardam autorizacao especifica.
+Livre 22.812.381.184; ultimo backup agendado exit-code. Sem nova exclusao,
+escrita, DDL ou alteracao no operacional.
+
 ## CPA3: hierarquia financeira reconciliada na origem
 
 Plano: 21 de 26 cadeias completas, quatro pais diretos ausentes e um
