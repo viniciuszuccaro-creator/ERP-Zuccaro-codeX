@@ -1,3 +1,9 @@
+## CPA3: instalador Windows abriu e reprovou hardware diagnostico (2026-11-24)
+
+Duas vCPUs com x2APIC alinhado no firmware mantiveram video 0x0 no NEM; engine interpreter recusada com VERR_INVALID_PARAMETER. Uma vCPU iniciou WinPE e exibiu instalador pt-BR, que recusou requisitos minimos antes de selecionar disco. Sem bypass. vTPM/Secure Boot e isolamento preservados.
+
+Sem instalacao no VDI; VM desligada na configuracao de duas vCPUs. Retomar em executor Windows compativel com SMP/vTPM ou por correcao suportada do boot. Sem ERP aberto, export, ensaio ou escrita HML.
+
 ## CPA3: boot isolado parou no firmware com duas vCPUs (2026-11-24)
 
 Host atingiu 6.298 MiB disponiveis e VirtualBox iniciou a VM. Com duas vCPUs, firmware nao chegou ao instalador, video 0x0, inclusive apos VBoxSVGA/ICH9 e teste x2APIC. Com uma vCPU, exibiu prompt da ISO; teste diagnostico, nao configuracao de instalacao. Secure Boot e vTPM preservados.
