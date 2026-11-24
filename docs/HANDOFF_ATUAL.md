@@ -1,3 +1,17 @@
+## CPA3: fontes financeiras Base44 centralizadas
+
+14 Centros de Custo e 26 contas do Plano, duas paginas por entidade
+incluindo pagina vazia. Chaves unicas; 28.444 bytes na VPS com SHA.
+Quatro contas-pai ausentes inclusive por consulta direta. As 26 contas
+sao de Grupo; nao presumir parametrizacao de empresa. HML sem tabelas
+financeiras correspondentes ou Pedidos no schema servido.
+
+HML a305a143: 17.472 mestres, 5.423 fila, 14 Unidades, 11 Setores.
+Avulso 5dbeff99 e ACK conferidos por SHA na VPS e no HD; falta comparar
+o estado vivo completo na janela da escrita. Grupos aguardam aprovacao.
+Agendador segue exit-code/RECOVERY_SPACE_RESERVE. Sem nova exclusao,
+carga, DDL, deploy ou operacao comercial na HML.
+
 ## CPA3: arquivo externo e backup pos-Setores validados
 
 Cinco conjuntos historicos de 18/11: 15 arquivos com tamanhos e SHA
