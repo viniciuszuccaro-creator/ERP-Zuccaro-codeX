@@ -1,3 +1,17 @@
+## CPA3: WSL validado para PostgreSQL isolado
+
+PG16.15 iniciou em namespace sem rede com socket privado, PGDATA
+descartavel de 40.151.547 bytes, sem dados reais. Backup manual do
+HD revalidado por SHA; pg_restore leu catalogo de 21 TABLE DATA no
+schema HML. Produtos, Pedidos e mestres contabeis nao constam nesse
+schema do dump. Proximo: restauro independente com margem e deltas
+canonicos no clone, antes de ensaio de dados reais.
+
+C fisico 1.241.960.448 bytes livres; SQL Server 2025 ausente no WSL.
+Nenhuma EMP aberta; nenhum envio, carga ou ensaio de Produtos.
+VPS 22.750.392.320 bytes livres; recovery antigo parado. Timer de
+25/11 ainda futuro na checagem. Sem deploy ou mudanca operacional.
+
 ## CPA3: EMP05 conferida no HD e testes de Pedido/parcelas
 
 Par original EMP05 no HD e VPS: tamanho 23.068.672 bytes e SHA
