@@ -1,3 +1,11 @@
+## CPA3: Produtos e Centros conciliados; EMP05 lida (2026-11-24)
+
+HML: 13 Centros (57d3cbbb) em duas empresas, replay 13/13, 13 recibos/auditorias. 273 Produtos do Grupo (8cfcc611), checkpoints 100/200/273, replay 273/273, 273 recibos/auditorias e chaves unicas. Sem habilitacao empresarial; recorte de 87 em revisao fora. Papeis temporarios sem login e sem USAGE. 17.472 clientes preservados; HTTP 200. Sem deploy ou escrita no operacional.
+
+Backups frescos restaurados: `2c696e71` antes dos Centros, `b85f4ee2` antes dos Produtos, ambos com SHA do HD e ACK. Livre ao final dos lotes: 31.105.167.360 bytes. Recibos de carga no canal privado da VPS.
+
+EMP05 abriu em SQL Server 17.0.5035.5, leitura apos conversao apenas da copia verificada em tmpfs. Rede none, zero portas, sem mount HML. PedidoVenda, NotaFiscalSaidas e PropostaComercial: zero linhas; nenhum vinculo de Obra apto. Metadados no canal privado; leitor removido. Proximo: EMP04, seguida das demais pela capacidade medida.
+
 ## CPA3: par redundante de proveniencia EMP03 arquivado (2026-11-24)
 
 Dos cinco manifestos de recuperacao, nenhum reutiliza o par da pasta EMP03-PROVENANCE como fonte. Retirados somente os dois MDF/LDF dessa pasta de trabalho, com SHA conferido no HD e revalidado na VPS. Recibo de proveniencia, originais e copia principal preservados. Retomada: copiar os dois arquivos da pasta homonima no HD para staging privado, conferir SHA e usar somente uma copia de trabalho no leitor isolado.
