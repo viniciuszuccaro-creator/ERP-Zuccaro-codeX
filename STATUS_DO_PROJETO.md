@@ -1,3 +1,17 @@
+## CPA3: arquivo externo e backup pos-Setores validados
+
+Cinco conjuntos historicos de 18/11: 15 arquivos com tamanhos e SHA
+conferidos no HD USB, inventarios privados e ACL restrita. Somente as
+copias redundantes foram retiradas: 149.979.136 bytes liberados.
+Livre inicial 22.710.247.424; final 22.812.475.392 bytes. Preservados
+originais do legado, volumes, reversoes e backups recentes na VPS.
+
+Avulso 5dbeff99, 47.656.960 bytes: 20 tabelas restauradas, SHA no HD
+e ACK externo conferidos. Backup tambem mantido na VPS. Sem retencao.
+Kit exato de Grupos f6f1add9/af2be804/13409eba aprovado no clone: 91
+nulos, 51 inativos, replay 91, reversao 39/51/1 e isolamento por empresa.
+Aguardando autorizacao especifica de escrita. Sem carga ou deploy.
+
 ## CPA3: kit de Grupos centralizado; backup bloqueado por capacidade
 
 Manifesto f6f1add9 preservado (91 nulos, 51 inativos). Executor candidato
