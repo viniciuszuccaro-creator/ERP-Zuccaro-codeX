@@ -1,3 +1,17 @@
+## CPA3: historico de Produtos consultado no Base44 (2026-11-24)
+
+ERP Integra confirmado pelo conector autenticado. Historico de dados
+retornou needs_upgrade, sem janela informada. Lixeira consultada em
+GrupoProduto, SetorAtividade e Empresa: zero registros nas tres.
+Sem restaurar versao, alterar plano ou escrever no Base44.
+
+Dos 871 Produtos do export privado, os 91 Grupos e os 11 Setores atuais
+nao coincidem com nenhum ID referenciado; as duas Empresas atuais
+cobrem 494 Produtos por ID exato. Aptos: 0; sem ensaio ou manifesto.
+Retomada: localizar export anterior do ERP Integra que inclua os IDs
+originais, ou mapa aprovado que comprove equivalencias. Nao repetir
+a consulta do historico sem mudanca de disponibilidade. HML intacta.
+
 ## CPA3: busca dirigida do mapa historico de Produtos (2026-11-24)
 
 Acervo privado da VPS, pasta Base44 local e diretorios dirigidos do HD
