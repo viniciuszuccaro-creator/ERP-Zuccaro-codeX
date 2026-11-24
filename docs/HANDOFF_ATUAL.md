@@ -1,3 +1,23 @@
+## CPA3: Obras recontadas e contratos de Pedido verificados
+
+Recibo privado confirmou 17.472 mestres, 5.423 em revisao/historico,
+14 Unidades, 11 Setores e 91 Grupos; nao reaplicar. SHA do recibo
+de runtime a305a143; sem publicacao nesta rodada.
+
+Obras: SHA 6a8e2a64, 35.309 chaves unicas em 59 colunas; o export
+nao traz chave direta de empresa. Arquivo vinculado SHA 30e98ea0:
+27.765 linhas. Nao atribuir empresa pelo cliente; zero aptas neste
+cruzamento. Falta relacao oficial por chave de obra para a primeira onda.
+
+Produtos: recovery antigo continua parado. VPS 22.798.839.808 bytes
+livres, cerca de 60 MB acima da reserva anterior. Sem clone nessa
+margem; manter 273/87 como recortes, nao como lotes ensaiados.
+
+Comercial: 20 testes de Pedido HTTP/servico e 11 de contratos locais
+passaram. Sem aceite no navegador HML. Agendador hml-backup ainda
+exit-code 1 / SNAPSHOT_READ_FAILED; avulso nao comprova agenda.
+Sem exclusao, gravacao, deploy ou alteracao operacional.
+
 ## CPA3: mapa aprovado para clone; preflight dos 360 Produtos
 
 Mapa a2668529 autorizado somente para ensaio. SHA conferido; 360
