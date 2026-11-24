@@ -1,3 +1,20 @@
+## CPA3: catalogo SQL de Obras conferido
+
+Catalogo privado: 116.445 colunas de 4.612 tabelas. Nenhuma
+ClientesObras* tem coluna direta de empresa. PedidoVenda,
+NotaFiscalSaidas e PropostaComercial sao candidatos de contexto
+transacional, nao prova da proprietaria da Obra. Proximo: extrair
+chaves e conferir semantica no leitor isolado, sem inferir empresa.
+
+Uniao por chave: 27.765 unicas, todas no bruto, 7.544 fora do
+arquivo vinculado. A diferenca frente a 27.766 nao foi identificada
+sem o recorte anterior por chave. Zero obras aptas ou gravadas.
+
+Recibo: 17.472 mestres, 5.423 em revisao/historico, 14 unidades,
+11 setores, 91 grupos, 51 inativos e 91 margens nulas. Recovery
+parado; VPS 22.798.602.240 bytes livres; clone nao restaurado.
+Agenda segue SNAPSHOT_READ_FAILED. Sem carga, deploy ou operacional.
+
 ## CPA3: Obras recontadas e contratos de Pedido verificados
 
 Recibo privado confirmou 17.472 mestres, 5.423 em revisao/historico,
