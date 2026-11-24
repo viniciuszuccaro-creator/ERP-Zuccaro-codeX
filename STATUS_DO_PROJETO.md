@@ -1,3 +1,9 @@
+## CPA3: fonte oficial de empresa da Obra ainda pendente (2026-11-24)
+
+Catalogo SQL do HD: ClientesObras, DadosEspecificos, HistoricoAjustes, DadosInternacionaisLocalEntrega e cadeia Oportunidades nao exibem campo de empresa proprietaria. As combinacoes diretas Cliente/Empresa/Obra no catalogo ficaram em PedidoVenda e NotaFiscalSaidas, que nao comprovam titularidade. EMP05 ja lida no checkpoint anterior, sem movimento nessas fontes.
+
+OBRAS.TPS: original, copia de staging e quarentena conferidos pelo manifesto (2.048 bytes, SHA 56c1ac14). Leitor existente na copia falhou com ArgumentOutOfRangeException; nao e evidencia de zero linhas. CONSOBRA e PRODOBRA tem zero registros nos recibos de leitura existentes. Sem recorte apto, ensaio de carga ou escrita HML. Proximo: export nativo do cadastro de Obras com Cliente/Item/Sequencia e empresa explicita, ou prova oficial de que o cadastro e compartilhado por Grupo.
+
 ## CPA3: EMP03 lida e chave alternativa de Obras conferida (2026-11-24)
 
 Par de trabalho EMP01 retirado da VPS apos SHA nos dois lados e zero referencias de reutilizacao nos cinco manifestos; originais preservados. Livre 31.104.798.720 -> 34.916.114.432 bytes. EMP03 aberta ONLINE/READ_ONLY em copia verificada, staging isolado e sem rede. 231.601 notas, 250 pedidos, zero propostas e zero triades positivas pela chave CODIGOOBRA.
