@@ -1,3 +1,15 @@
+## CPA3: backup fresco restaurado e barreira de leitura confirmada
+
+Backup manual 6f9515a2: exit 0, 47.687.680 bytes, SHA 8e272347
+conferido no HD, ACK e restauro independente WSL confirmados.
+Baseline 17.472/5.423/91/11/14. Rotacao retirou apenas 7d624196
+ja verificado no HD. Menor folga observada 22.290.599.936 bytes.
+
+Papel efetivo em contexto Grupo ve 14 Unidades e zero Grupos/Setores
+empresariais. Nao replicar policy ampla do clone. Preparar leitura
+restrita ao lote e ensaiar delta final antes de pedir escrita HML.
+Sem importacao ou grants. Prova do timer permanece independente.
+
 ## CPA3: criacao e replay de Produtos sem UPDATE amplo
 
 Clone PG16: papel de carga sem UPDATE em Produtos. Checkpoint 100,
