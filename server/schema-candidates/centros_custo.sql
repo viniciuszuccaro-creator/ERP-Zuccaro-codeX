@@ -17,6 +17,7 @@ CREATE TABLE centros_custo (
   codigo text NOT NULL CHECK (codigo = btrim(codigo) AND length(codigo) BETWEEN 1 AND 80),
   descricao text NOT NULL CHECK (length(btrim(descricao)) BETWEEN 1 AND 255),
   ativo boolean NOT NULL,
+  revision integer NOT NULL DEFAULT 1 CHECK (revision > 0),
   source_system text,
   legacy_id text,
   UNIQUE (id, group_id, empresa_id),
@@ -32,6 +33,16 @@ CREATE UNIQUE INDEX centros_custo_empresa_codigo_uidx
 CREATE UNIQUE INDEX centros_custo_empresa_legacy_uidx
   ON centros_custo(group_id, empresa_id, source_system, legacy_id)
   WHERE source_system IS NOT NULL;
+
+CREATE FUNCTION centro_custo_next_revision() RETURNS trigger
+LANGUAGE plpgsql AS $$
+BEGIN
+  NEW.revision := OLD.revision + 1;
+  RETURN NEW;
+END $$;
+CREATE TRIGGER centros_custo_revision
+  BEFORE UPDATE ON centros_custo
+  FOR EACH ROW EXECUTE FUNCTION centro_custo_next_revision();
 
 ALTER TABLE centros_custo ENABLE ROW LEVEL SECURITY;
 ALTER TABLE centros_custo FORCE ROW LEVEL SECURITY;

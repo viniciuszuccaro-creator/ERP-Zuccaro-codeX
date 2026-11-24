@@ -1,3 +1,13 @@
+## CPA3: reversao auditada dos Centros ensaiada
+
+Clone: 13 criados, 13 reusados, 12 inativados com auditoria e
+uma revisao posterior preservada ativa. CAS usa evidencia de
+criacao e revisao; sem DELETE. Recibo privado 1889b421 na VPS.
+Servidor 663 PASS, 45 skip, zero falhas; typecheck/build/diff OK.
+
+Sem escrita HML. Proximo: empacotar ACL/manifesto e revisar gate
+dos Centros. Produtos seguem aguardando aprovacao especifica.
+
 ## CPA3: 13 Centros auditados no clone; catalogo 046 alinhado
 
 Candidato e servico de Centros sem rota nova ou grants. Clone

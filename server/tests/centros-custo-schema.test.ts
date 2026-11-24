@@ -6,7 +6,7 @@ import type { Pool } from 'pg';
 import { PostgresAuditRepository } from '../src/audit/auditRepository.ts';
 import { createPoolDbClient } from '../src/db/client.ts';
 import { InMemoryRbacGuard } from '../src/db/rbacGuard.ts';
-import { importCentroCusto } from '../src/services/centroCustoImport.ts';
+import { importCentroCusto, reverseCentroCustoImport } from '../src/services/centroCustoImport.ts';
 
 const group = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 const companyA = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
@@ -28,6 +28,7 @@ test('Centro de Custo candidato bloqueia fallback e restringe leitura e escrita 
     await pg.exec(sql);
     await pg.exec(`GRANT USAGE ON SCHEMA finance TO finance_probe;
       GRANT SELECT,INSERT ON centros_custo TO finance_probe;
+      GRANT UPDATE(ativo) ON centros_custo TO finance_probe;
       GRANT SELECT,INSERT ON audit_logs TO finance_probe;
       SET ROLE finance_probe;`);
     const scope = (empresa: string) => pg.query(
@@ -66,6 +67,21 @@ test('Centro de Custo candidato bloqueia fallback e restringe leitura e escrita 
     await scope(companyA);
     assert.equal((await pg.query("SELECT id FROM centros_custo WHERE codigo='003'")).rows.length, 0);
     assert.equal((await pg.query("SELECT entity_id FROM audit_logs WHERE entity='CentroCusto'")).rows.length, 1);
+
+    const later = await importCentroCusto(ctx, { ...payload, codigo: '004', legacyId: 'later-edit' }, deps);
+    await pg.exec("RESET ROLE; UPDATE centros_custo SET descricao=descricao WHERE codigo='004'; SET ROLE finance_probe;");
+    const proof = (id: string) => ({ id, importRequestId: ctx.requestId });
+    await assert.rejects(reverseCentroCustoImport(ctx, proof(first.id), deps), { code: 'PERMISSION_DENIED' });
+    rbac.link({ actorId, groupId: group, empresaId: companyA,
+      permissions: { Cadastros: { centros_custo: ['inativar'] } } });
+    const reversal = { ...ctx, requestId: 'finance-reversal' };
+    assert.deepEqual(await reverseCentroCustoImport(reversal, proof(later.id), deps),
+      { reversed: false, reason: 'postimage_changed' });
+    assert.deepEqual(await reverseCentroCustoImport(reversal, proof(first.id), deps), { reversed: true });
+    assert.deepEqual(await reverseCentroCustoImport(reversal, proof(first.id), deps),
+      { reversed: false, reason: 'postimage_changed' });
+    assert.equal((await pg.query("SELECT id FROM centros_custo WHERE codigo='004' AND ativo")).rows.length, 1);
+    assert.equal((await pg.query("SELECT entity_id FROM audit_logs WHERE action='soft_delete'")).rows.length, 1);
   } finally {
     await pg.close();
   }
