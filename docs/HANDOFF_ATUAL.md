@@ -1,3 +1,11 @@
+## CPA3: migrations comerciais no clone e dez precos fora do export (2026-11-25)
+
+Backup 54adc8e2 restaurado em clones isolados sem rede ou volume HML. 016 passou; 017 inicialmente bloqueada por obras ausente. Novo clone com 012, 013, 016, 017 passou as quatro migrations, sem fallback public. Candidato financeiro bloqueou corretamente por plano_contas ausente. 17.472 clientes preservados, clones removidos. Export privado PlanoDeContas e grafo financeiro localizados: proximo passo conciliar pais e escopo empresarial e ensaiar o contrato canonico no clone. Sem API/browser/deploy novos.
+
+Dos dez precos fora do export HD de 1.208, todos existem no CadastroMateriais por chave unica classe/material, relativos a dois produtos nativos; zero ligacoes oficiais Base44. Os 1.064 continuam pendentes de identidade, empresa e vigencia. Marca: adaptador local preservado, nao executado no clone nesta rodada. Obras sem nova prova de titularidade.
+
+Zero MDF/LDF no recovered inventariado, 67.353.792.512 bytes livres na verificacao; HML e operacional HTTP 200, sem nova exclusao, gravacao ou alteracao operacional.
+
 ## CPA3: cruzamento nativo do HD e preflight comercial (2026-11-25)
 
 Os 1.208 IDs nativos do export de Produtos do HD ocorreram unicamente no CadastroMateriais. Dos 1.064 candidatos positivos com unidade coincidente, 1.054 aparecem nesse export e 10 nao. A coincidencia nao comprova ID de Produto Base44, empresa ou vigencia: zero precos aptos ou gravados.
