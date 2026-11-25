@@ -1,3 +1,9 @@
+## CPA3: candidata a470accb verificada e EMP01 conciliada (2026-11-25)
+
+CI 45680437810 verde nos quatro jobs. Candidata a470accb r2 centralizada no canal privado: 20.434.432 bytes, 2.239 arquivos runtime e 39 pins conferidos individualmente. HML ainda serve a305a143; nenhum deploy, SQL ou carga. Plano de Contas por Empresa e habilitacao da consulta historica continuam gates separados.
+
+EMP01: pacote retomavel de 547.029.234 bytes, SHA e dois arquivos extraidos conferidos; 13.008 duplicatas, 163 codigos com mestre EXETPS unico, zero ausentes, ambiguos ou invalidos. Leitor isolado em READ_ONLY encerrado. Proximo: cruzar a cobertura com EMP02/EMP03 e o manifesto de Fornecedores; nao inferir propriedade. Marcas e baixas historicas seguem sem escrita.
+
 ## CPA3: consulta HTTP de baixas historicas ensaiada (2026-11-25)
 
 Rota somente leitura na API existente, desligada por padrao, com permissao granular por Empresa e sem fallback public. Clone restaurado e identidade sintetica: 12.514 linhas paginadas, duas Empresas, negativas 401/403/404/422/503, arquivados invisiveis. Nenhum pagamento ou saldo gerado.
