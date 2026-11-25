@@ -1,4 +1,6 @@
 import {createServer} from 'node:http';
+import {createHash} from 'node:crypto';
+import {bindMarcaImport} from '../../scripts/legado/marca-import-checkpoint.mjs';
 import {createApp} from '../src/app.ts';
 import {loadConfig} from '../src/config/env.ts';
 import {authColumnGrants} from './helpers/authBootstrapFixture.ts';
@@ -11,6 +13,7 @@ import {PostgresMarcaRepository} from '../src/repositories/postgresMarcaReposito
 import {PostgresAuditRepository} from '../src/audit/auditRepository.ts';
 import {PostgresTenantGuard} from '../src/db/tenantGuard.ts';
 import {PostgresRbacGuard} from '../src/db/rbacGuard.ts';
+import {createPoolDbClient} from '../src/db/client.ts';
 import {SEED_IDS as I} from '../scripts/seedDevIds.ts';
 async function prove(f:any,role:string){try{
  await f.exec(`GRANT SELECT,INSERT,UPDATE ON marcas TO ${role};GRANT SELECT ON empresas TO ${role};CREATE POLICY fixture_marca ON marcas FOR ALL TO ${role} USING(group_id=NULLIF(current_setting('app.group_id',true),'')::uuid) WITH CHECK(group_id=NULLIF(current_setting('app.group_id',true),'')::uuid);CREATE POLICY fixture_empresa_marca ON empresas FOR SELECT TO ${role} USING(group_id=NULLIF(current_setting('app.group_id',true),'')::uuid);`);
@@ -65,6 +68,57 @@ async function prove(f:any,role:string){try{
 }
 test('Marca persistent rollback restores record and code sequence',async()=>prove(await localCrmFixture(),ROLE));
 if(process.env.DATABASE_URL)test('Marca PostgreSQL real isolated persistence audit rollback and sequence',async()=>{const f=await realCrmFixture(process.env.DATABASE_URL!);await prove(f,f.role);});
+
+if(process.env.DATABASE_URL)test('Marca Grupo: origem, checkpoint, replay e reversao no login restrito',async()=>{
+ const f=await realCrmFixture(process.env.DATABASE_URL!,{restrictedLogin:true});
+ try {
+  const role=f.role;
+  await f.admin.query("INSERT INTO empresas(id,group_id,razao_social) VALUES ($1,$2,'Synthetic second company') ON CONFLICT(id) DO NOTHING",[I.empresaA2,I.groupA]);
+  await f.exec(`GRANT SELECT,INSERT,UPDATE ON marcas TO ${role}; GRANT SELECT(id,group_id) ON empresas TO ${role};
+   CREATE POLICY marca_shared_scope ON marcas FOR ALL TO ${role}
+     USING(group_id=NULLIF(current_setting('app.group_id',true),'')::uuid AND empresa_id IS NULL)
+     WITH CHECK(group_id=NULLIF(current_setting('app.group_id',true),'')::uuid AND empresa_id IS NULL);
+   CREATE POLICY marca_origin_read ON empresas FOR SELECT TO ${role}
+     USING(group_id=NULLIF(current_setting('app.group_id',true),'')::uuid);
+   CREATE POLICY marca_group_audit ON audit_logs FOR ALL TO ${role}
+     USING(group_id=NULLIF(current_setting('app.group_id',true),'')::uuid AND empresa_id IS NULL AND entity='Marca')
+     WITH CHECK(group_id=NULLIF(current_setting('app.group_id',true),'')::uuid AND empresa_id IS NULL
+       AND entity='Marca' AND actor_id='${I.runtimeActorA}' AND action IN ('create','link','soft_delete','inactivate'));`);
+  assert.ok(f.data.pool);
+  const db=createPoolDbClient(f.data.pool);
+  const rbacGuard=new PostgresRbacGuard(db), audit=new PostgresAuditRepository(db);
+  const service=new MarcaService(new PostgresMarcaRepository(db),audit,new PostgresTenantGuard(db),rbacGuard,db);
+  const ctx={groupId:I.groupA,empresaId:null,actorId:I.runtimeActorA};
+  const privateMarks=()=>f.admin.query('SELECT to_jsonb(m) AS row FROM marcas m WHERE group_id=$1 AND empresa_id IS NOT NULL ORDER BY id',[I.groupA]);
+  const privateBefore=(await privateMarks()).rows;
+  const rows=Array.from({length:6},(_,i)=>({id:'source-'+i,codigo:String(i+1).padStart(3,'0'),
+   nome_marca:'Shared '+i,ativo:i!==5,targetEmpresaId:null,sourceGroupId:'source-group',
+   sourceCompanyId:i<2?'source-a':'source-b',originEmpresaId:i<2?I.empresaA:I.empresaA2}));
+  const bind=(records=rows,executable=true)=>{
+   const bytes=Buffer.from(JSON.stringify({executable,destination:{groupId:I.groupA,empresaId:null,scope:'group'},
+    source:{system:'Base44',entity:'Marca',count:records.length},rows:records}));
+   return bindMarcaImport({db,service,audit,rbacGuard,ctx,bytes,sha256:createHash('sha256').update(bytes).digest('hex')});
+  };
+  assert.throws(()=>bind(rows,false),/MARCA_IMPORT_MANIFEST_INVALID/);
+  const wrong={...rows[0],originEmpresaId:I.empresaB};
+  await assert.rejects(()=>bind([wrong]).apply(wrong.id),/MARCA_IMPORT_ORIGIN_OUTSIDE_GROUP/);
+  const job=bind();
+  await assert.rejects(()=>job.runManifest({mode:'apply',onCommitted:()=>{throw Error('SIMULATED_RECEIPT_LOSS');}}),/SIMULATED_RECEIPT_LOSS/);
+  assert.deepEqual(await job.runManifest({mode:'apply'}),{reused:1,inserted:5});
+  assert.deepEqual(await job.runManifest({mode:'apply'}),{reused:6});
+  const marks=(await f.admin.query("SELECT codigo,empresa_id,ativo FROM marcas WHERE group_id=$1 AND empresa_id IS NULL ORDER BY codigo",[I.groupA])).rows;
+  assert.deepEqual(marks,rows.map(r=>({codigo:r.codigo,empresa_id:null,ativo:r.ativo})));
+  const origins=(await f.admin.query("SELECT after_data FROM audit_logs WHERE group_id=$1 AND entity='Marca' AND action='link' ORDER BY after_data->>'codigo'",[I.groupA])).rows;
+  assert.deepEqual(origins.map(r=>r.after_data.originEmpresaId),rows.map(r=>r.originEmpresaId));
+  const applied=await job.apply(rows[0].id);
+  await f.admin.query("UPDATE marcas SET descricao='Manual edit' WHERE id=$1",[applied.id]);
+  await f.exec(`REVOKE UPDATE ON marcas FROM ${role}; GRANT UPDATE(ativo) ON marcas TO ${role};`);
+  assert.deepEqual(await job.runManifest({mode:'reverse'}),{changed:1,reversed:5});
+  assert.deepEqual(await job.runManifest({mode:'reverse'}),{changed:1,reversed:5});
+  assert.deepEqual((await f.admin.query('SELECT descricao,ativo FROM marcas WHERE id=$1',[applied.id])).rows[0],{descricao:'Manual edit',ativo:true});
+  assert.deepEqual((await privateMarks()).rows,privateBefore);
+ }finally{await f.close();}
+});
 
 /** Uses the real persistent app and verified provider with a separate SELECT-only fixture role.
  * SET LOCAL ROLE proves SQL/RLS authorization; actual LOGIN startup is covered in TENANT_CONTEXT.

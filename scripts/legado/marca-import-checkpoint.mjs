@@ -6,16 +6,20 @@ const fields = ['nome_marca', 'descricao', 'pais_origem', 'categoria', 'ativo'];
 
 // Keep interactive creates unchanged; the import owns the source checkpoint.
 export function bindMarcaImport({ db, service, audit, rbacGuard, ctx, bytes, sha256 }) {
-  if (!db.withTenantContext || !uuid.test(ctx.groupId) || !uuid.test(ctx.empresaId) ||
+  if (!db.withTenantContext || !uuid.test(ctx.groupId) || (ctx.empresaId !== null && !uuid.test(ctx.empresaId)) ||
       !ctx.actorId || hash(bytes) !== sha256) throw new Error('MARCA_IMPORT_SCOPE_OR_HASH');
   const scope = Object.freeze({ ...ctx });
-  const { destination, source, rows } = JSON.parse(bytes.toString());
+  const { destination, source, rows, executable } = JSON.parse(bytes.toString());
+  const shared = scope.empresaId === null;
+  const nativeId = value => typeof value === 'string' && value.length > 0 && value === value.trim();
   if (destination?.groupId !== scope.groupId || destination.empresaId !== scope.empresaId ||
+      executable === false || (shared && (destination.scope !== 'group' || executable !== true)) ||
       source?.system !== 'Base44' || source.entity !== 'Marca' ||
       !Array.isArray(rows) || !rows.length || rows.length !== source.count ||
-      rows.some(r => !r || typeof r.id !== 'string' || !r.id.trim() ||
+      rows.some(r => !r || !nativeId(r.id) ||
         typeof r.codigo !== 'string' || !r.codigo || r.codigo !== r.codigo.trim() ||
-        typeof r.ativo !== 'boolean' || r.targetEmpresaId !== scope.empresaId || r.fornecedor_id) ||
+        typeof r.ativo !== 'boolean' || r.targetEmpresaId !== scope.empresaId || r.fornecedor_id ||
+        (shared && (!nativeId(r.sourceGroupId) || !nativeId(r.sourceCompanyId) || !uuid.test(r.originEmpresaId)))) ||
       new Set(rows.map(r => r.id)).size !== rows.length ||
       new Set(rows.map(r => r.codigo.toLowerCase())).size !== rows.length) {
     throw new Error('MARCA_IMPORT_MANIFEST_INVALID');
@@ -31,9 +35,13 @@ export function bindMarcaImport({ db, service, audit, rbacGuard, ctx, bytes, sha
         { allowGlobalWildcard: false, executor: q });
       await q.query("SET LOCAL TIME ZONE 'UTC'");
       await q.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', [requestId]);
+      if (shared) {
+        const origin = await q.query('SELECT id FROM empresas WHERE group_id=$1 AND id=$2', [scope.groupId, row.originEmpresaId]);
+        if (origin.rows.length !== 1) throw new Error('MARCA_IMPORT_ORIGIN_OUTSIDE_GROUP');
+      }
       const keys = [scope.groupId, scope.empresaId, requestId];
       const checkpoints = (await q.query(`SELECT action, entity_id, after_data FROM audit_logs
-        WHERE group_id=$1 AND empresa_id=$2 AND request_id=$3 AND entity='Marca'
+        WHERE group_id=$1 AND empresa_id IS NOT DISTINCT FROM $2 AND request_id=$3 AND entity='Marca'
           AND action IN ('create','link','inactivate')`, keys)).rows;
       const entries = action => checkpoints.filter(r => r.action === action);
       const [creates, links, reversals] = ['create', 'link', 'inactivate'].map(entries);
@@ -43,7 +51,7 @@ export function bindMarcaImport({ db, service, audit, rbacGuard, ctx, bytes, sha
         throw new Error('MARCA_IMPORT_CHECKPOINT_CONFLICT');
       }
       const snapshot = async target => (await q.query(`SELECT to_jsonb(m)::text AS image
-        FROM marcas m WHERE group_id=$1 AND empresa_id=$2 AND id=$3 FOR UPDATE`,
+        FROM marcas m WHERE group_id=$1 AND empresa_id IS NOT DISTINCT FROM $2 AND id=$3 FOR UPDATE`,
       [scope.groupId, scope.empresaId, target])).rows[0]?.image;
       const mark = (action, target, afterData) => audit.append({
         ...context, entity: 'Marca', entityId: target, action, afterData,
@@ -55,10 +63,13 @@ export function bindMarcaImport({ db, service, audit, rbacGuard, ctx, bytes, sha
           ...payload, codigo: row.codigo, codigo_origem: row.codigo, empresa_id: scope.empresaId,
         });
         const image = await snapshot(record.id);
-        if (!image || record.codigo !== row.codigo || record.codigo_origem !== row.codigo) {
+        if (!image || record.empresa_id !== scope.empresaId || record.codigo !== row.codigo || record.codigo_origem !== row.codigo) {
           throw new Error('MARCA_IMPORT_POSTIMAGE_MISMATCH');
         }
-        await mark('link', record.id, { fingerprint: hash(image), manifest: sha256, codigo: record.codigo });
+        const provenance = shared ? {
+          sourceId: row.id, sourceGroupId: row.sourceGroupId, sourceCompanyId: row.sourceCompanyId, originEmpresaId: row.originEmpresaId,
+        } : {};
+        await mark('link', record.id, { fingerprint: hash(image), manifest: sha256, codigo: record.codigo, ...provenance });
         return { state: 'inserted', id: record.id, codigo: record.codigo };
       }
       const target = created.entity_id;

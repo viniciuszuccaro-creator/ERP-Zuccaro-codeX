@@ -1,3 +1,9 @@
+## CPA3: executor de Marca por Grupo com checkpoint de origem (2026-11-25)
+
+Adaptador preserva o contrato anterior e aceita pacote de Grupo explicitamente executavel. Valida Empresa de procedencia no Grupo e registra origem no checkpoint. PG16 com login restrito: seis sinteticas, interrupcao pos-commit, retomada 1+5, replay seis, cinco reversoes e uma edicao preservada. Suite Ubuntu 3.043/3.043, audit:baseline, lint, tipos e builds verdes. Manifesto real 6c389e51 segue nao executavel.
+
+CI d43e44a1: backend verde, frontend com tres timeouts de Chrome; limita concorrencia do job a quatro sem suprimir testes. EMP03 alternativa no HD difere por SHA nos dois arquivos apesar dos mesmos tamanhos; manter snapshots separados. Sem carga ou deploy; proximo: verificar CI e ensaiar os bytes reais em clone antes do gate HML.
+
 ## CPA3: Marca compartilhada na leitura e manifesto de revisao por Grupo (2026-11-25)
 
 Marca de Grupo com empresa_id nulo aparece nas Empresas autorizadas sem duplicar ID. Registros privativos continuam filtrados e operacoes de escrita mantem o escopo anterior. PGlite e PG16: duas Empresas autorizadas, outro Grupo bloqueado, inativacao na visao Empresa negada. Suite Ubuntu 3.043/3.043, audit:baseline, lint, tipos e builds web/servidor verdes.
