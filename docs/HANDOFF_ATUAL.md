@@ -1,3 +1,9 @@
+## CPA3: TIDDF e TEMP arquivados e chaves nativas de Precos (2026-11-25)
+
+Retiradas quatro copias redundantes da arvore original da VPS, pares TIDDF e TEMP, com leitura de SHA-256 no HD e na VPS. Cinco manifestos, scripts consultados, mounts e arquivos abertos sem referencia aos quatro caminhos. Recibo privado 10:34:49Z: 49.047.015.424 -> 49.586.245.632 bytes livres (+539.230.208), oito MDF/LDF restantes. HD preservado; HML e operacional HTTP 200, API/web a305a143.
+
+Precos: leitura dos exports nativos privados confirmou seis cabecalhos, 5.162 itens vinculados a cabecalho, zero repeticoes da chave tabela/classe/material, 1.040 pares classe/material e 698 precos nulos ou nao positivos (nao promovidos). Sem colunas diretas de empresa/unidade nos itens. Pendente cruzar os 273 Produtos por identidade comprovada e validar vigencia na origem; nenhum manifesto ou nova escrita. Marcas, Obras e Comercial sem novo ensaio ou publicacao; preservar WIP e retomar a partir do clone restaurado e do consumidor #599, respectivamente.
+
 ## CPA3: seis copias originais redundantes e restauro de Marcas (2026-11-25)
 
 Retiradas somente da VPS seis copias MDF/LDF EMP02, EMP04 e EMP05 da arvore original. Tamanho e SHA-256 conferidos no HD, na VPS e no inventario; sem referencia direta nos cinco manifestos, scripts consultados, mounts ou arquivos abertos. Originais do HD preservados. Recibo privado de 10:30:14Z: livre 48.699.858.944 -> 49.047.068.672 bytes (+347.209.728). Restam 12 MDF/LDF na VPS; HML e operacional HTTP 200.
