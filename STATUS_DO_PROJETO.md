@@ -1,3 +1,9 @@
+## CPA3: pares redundantes EMP02, EMP04 e EMP05 retirados (2026-11-25)
+
+Seis MDF/LDF em 02_SQL_WORK/MDFSQL verificados por SHA nos dois lados e retirados somente da VPS, sem reutilizacao pelos cinco manifestos, mounts ou uso constatado. Originais na VPS e pares de trabalho no HD preservados. Retomada pelo HD ou par original conferido, sempre em copia de trabalho.
+
+Livre 34.870.226.944 -> 35.217.436.672 bytes (+347.209.728); restam 26 MDF/LDF do inventario. HML HTTP 200. Seis testes focados de composicao comercial, isolamento e parcelas passaram em ambiente sintetico. Sem carga, deploy, novo aceite no navegador ou Obra elegivel.
+
 ## CPA3: backup agendado restaurado e conferido no HD (2026-11-25)
 
 Timer disparou 03h33 de Brasilia; `54adc8e2` restaurou 26 tabelas. Copia externa de 47.779.840 bytes conferida (SHA `458c6f0d`), ACK aceito na VPS. HML `a305a143`, HTTP 200, sem deploy. Livres 34.870.321.152 bytes na medicao.
