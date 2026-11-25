@@ -37,7 +37,7 @@ export class InMemoryMarcaRepository implements MarcaRepository {
     const limit = Math.min(Math.max(filter.limit ?? 100, 1), 500);
     return [...this.rows.values()]
       .filter((row) => row.group_id === filter.groupId)
-      .filter((row) => (filter.empresaId ? row.empresa_id === filter.empresaId : true))
+      .filter((row) => !filter.empresaId || row.empresa_id === filter.empresaId || row.empresa_id === null)
       .filter((row) => (typeof filter.ativo === 'boolean' ? row.ativo === filter.ativo : true))
       .filter((row) => (
         filter.search
@@ -48,10 +48,10 @@ export class InMemoryMarcaRepository implements MarcaRepository {
       .slice(0, limit);
   }
 
-  async getById(scope: { groupId: string; empresaId?: string | null }, id: string): Promise<Marca | null> {
+  async getById(scope: { groupId: string; empresaId?: string | null }, id: string, _executor?: unknown, forUpdate = false): Promise<Marca | null> {
     const row = this.rows.get(id);
     if (!row || row.group_id !== scope.groupId) return null;
-    if (scope.empresaId && row.empresa_id !== scope.empresaId) return null;
+    if (scope.empresaId && row.empresa_id !== scope.empresaId && (forUpdate || row.empresa_id !== null)) return null;
     return row;
   }
 
@@ -89,7 +89,7 @@ export class InMemoryMarcaRepository implements MarcaRepository {
     id: string,
     data: MarcaUpdateInput,
   ): Promise<Marca | null> {
-    const current = await this.getById(scope, id);
+    const current = await this.getById(scope, id, undefined, true);
     if (!current) return null;
     const next: Marca = {
       ...current,

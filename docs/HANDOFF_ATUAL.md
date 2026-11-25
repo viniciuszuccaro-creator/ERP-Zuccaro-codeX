@@ -1,3 +1,9 @@
+## CPA3: Marca compartilhada na leitura e manifesto de revisao por Grupo (2026-11-25)
+
+Marca de Grupo com empresa_id nulo aparece nas Empresas autorizadas sem duplicar ID. Registros privativos continuam filtrados e operacoes de escrita mantem o escopo anterior. PGlite e PG16: duas Empresas autorizadas, outro Grupo bloqueado, inativacao na visao Empresa negada. Suite Ubuntu 3.043/3.043, audit:baseline, lint, tipos e builds web/servidor verdes.
+
+Manifesto privado 6c389e51: seis codigos literais, duas Empresas de procedencia e origem preservada; nao executavel e nao substitui 08f57c50 para escrita. Falta adaptar checkpoint, ensaiar o pacote por Grupo e revisar ACL/auditoria. CI de Cadastros 8b3ae461 verde. Doze relatorios adicionais do HD (19.054 bytes) ja identicos na VPS; sem transferencia, carga ou deploy.
+
 ## CPA3: Cadastros sem listagem antecipada e retomada do legado (2026-11-25)
 
 Cadastros abre sem entidade selecionada. Chrome sintetico: zero consultas antes do clique, uma listagem e uma contagem depois; menu 70,5 ms, prova apos clique 56,4 ms. Ubuntu 3.043/3.043, audit:baseline, lint, typecheck e build verdes. Medicao HML autenticada ainda pendente.

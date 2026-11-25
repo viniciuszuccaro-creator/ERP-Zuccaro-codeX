@@ -40,7 +40,7 @@ export class PostgresMarcaRepository implements MarcaRepository {
 
     if (filter.empresaId) {
       params.push(filter.empresaId);
-      where.push(`empresa_id = $${params.length}`);
+      where.push(`(empresa_id = $${params.length} OR empresa_id IS NULL)`);
     }
     if (typeof filter.ativo === 'boolean') {
       params.push(filter.ativo);
@@ -67,7 +67,7 @@ export class PostgresMarcaRepository implements MarcaRepository {
     let sql = 'SELECT * FROM marcas WHERE group_id = $1 AND id = $2';
     if (scope.empresaId) {
       params.push(scope.empresaId);
-      sql += ` AND empresa_id = $3`;
+      sql += forUpdate ? ' AND empresa_id = $3' : ' AND (empresa_id = $3 OR empresa_id IS NULL)';
     }
     if (forUpdate && executor) sql += ' FOR UPDATE';
     const result = await (executor??this.db).query(sql, params);

@@ -47,6 +47,20 @@ async function prove(f:any,role:string){try{
  await assert.rejects(()=>s.create({...ctx,groupId:I.groupB},{nome_marca:'Cross tenant'}),e=>e.code==='TENANT_MISMATCH'||e.code==='PERMISSION_DENIED');
  assert.equal((await f.admin.query("SELECT count(*)::int n FROM marcas WHERE nome_marca='Cross tenant'")).rows[0].n,0);
  await proveHttp(f,role);
+ await f.exec(`CREATE POLICY fixture_marca_group_audit ON audit_logs FOR INSERT TO ${role}
+   WITH CHECK (group_id=NULLIF(current_setting('app.group_id',true),'')::uuid
+     AND empresa_id IS NULL AND NULLIF(current_setting('app.empresa_id',true),'') IS NULL
+     AND actor_id='${I.runtimeActorA}' AND entity='Marca' AND action='create');`);
+ await f.admin.query("INSERT INTO empresas(id,group_id,razao_social) VALUES ($1,$2,'Synthetic second company') ON CONFLICT(id) DO NOTHING",[I.empresaA2,I.groupA]);
+ const shared=await s.create({...ctx,empresaId:null},{nome_marca:'Shared group brand'});
+ assert.equal(shared.empresa_id,null);
+ for(const empresaId of [I.empresaA,I.empresaA2]){
+  const companyCtx={...ctx,empresaId};
+  assert.equal((await s.list(companyCtx,{})).filter(item=>item.id===shared.id).length,1);
+  assert.equal((await s.get(companyCtx,shared.id)).id,shared.id);
+  await assert.rejects(()=>s.softDelete(companyCtx,shared.id),e=>e.code==='MARCA_NOT_FOUND');
+ }
+ assert(!(await s.list({...ctx,groupId:I.groupB,empresaId:I.empresaB,actorId:I.runtimeActorB},{})).some(item=>item.id===shared.id));
  }finally{await f.close();}
 }
 test('Marca persistent rollback restores record and code sequence',async()=>prove(await localCrmFixture(),ROLE));
