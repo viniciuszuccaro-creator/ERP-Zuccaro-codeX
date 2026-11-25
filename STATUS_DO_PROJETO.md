@@ -1,3 +1,11 @@
+## CPA3: EMP01 arquivada e triagem de Precos por unidade (2026-11-25)
+
+EMP01: par MDF/LDF redundante retirado somente da VPS apos SHA igual ao HD e verificacao de cinco manifestos, scripts, mounts e arquivos abertos. Recibo privado 10:58:38Z: 49.586.032.640 -> 53.397.352.448 bytes livres (+3.811.319.808). Restam pares EMP03, Auditoria e EXETPS; HD preservado.
+
+Precos: cruzamento de CadastroMateriais (2.360), selecao 8cfcc611 (273) e 5.162 itens por classe/material na fonte e codigo textual no destino: 3.798 sem candidato textual, 190 com rotulo de unidade diferente, 110 nulos/nao positivos apos filtro de unidade e 1.064 positivos com rotulo coincidente. Zero elegiveis: exigir correspondencia autoritativa de Produto, Empresa e vigencia. Nenhuma transferencia ou carga.
+
+Comercial e Marca: quatro testes focados verdes em fixture local, incluindo composicao persistente, isolamento e rollback de registro/sequencia. Nao equivale a execucao das quatro rotas no clone restaurado, ensaio das seis Marcas ou aceite no navegador. Obras segue sem nova prova de titularidade. Sem deploy, escrita HML ou alteracao operacional.
+
 ## CPA3: cruzamento preliminar de Precos com Produtos 8cfcc611 (2026-11-25)
 
 Manifesto privado 8cfcc611 conferido contra o SHA do preflight; 273 identidades Base44 selecionadas. Comparacao direta de codigo com todos os 5.162 itens: 1.364 coincidencias textuais, 1.239 com valor positivo. Nao equivale ao cruzamento autoritativo dos 1.831 candidatos: o preflight de Produtos nao traz a chave nativa classe/material. Zero elegiveis comprovados, sem transferencia ou carga; falta crosswalk oficial mais empresa/unidade e vigencia.
