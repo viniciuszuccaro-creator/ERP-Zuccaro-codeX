@@ -1,3 +1,9 @@
+## CPA3: abertura sob demanda de Cadastros Gerais em WIP (2026-11-25)
+
+Cadastros: #599 e inicio local abriam bloco1 e disparavam contagem geral; a contagem HTTP pode chamar listagem com limit=1. WIP fecha blocos e adia contagens ate janela de entidade selecionada, com chave por escopo/sessao/subconjunto. Sem redesenho, sem alterar o visualizador existente. 31 focados, lint focado, typecheck e audit baseline passaram; suite completa 2.992 pass, nove falhas e um cancelado, incluindo vps-gate-precheck sem progresso, interrompido. Sem commit de codigo, deploy, medicao real de requisicoes no navegador ou aceite HML.
+
+Quatro CSVs da arvore de export do HD conferidos por SHA na VPS (11.277.903 bytes): 18.458 Clientes, 26 linhas do mapa, 790 Fornecedores e 1.208 Produtos; sem reenvio. Busca dirigida por nome nao localizou export detalhado dos 3.096 ajustes. Proximo: extracao dirigida no controlador isolado a partir do par do HD. Sem nova carga, DDL, escrita HML ou alteracao operacional.
+
 ## CPA3: exports reaproveitados e schema financeiro ensaiado no clone (2026-11-25)
 
 Export HD de 1.208 Produtos (543.996 bytes) ja presente na VPS: SHA e tamanho iguais, recibo privado hd-products-1208-verified-20261125. Reconferidos por SHA os exports de 35.309 Obras, 2.360 Materiais, seis cabecalhos e 5.162 itens. Cinco arquivos, 47.799.603 bytes em conjunto, sem nova transferencia. Ajustes: acervo consultado tem prova agregada de 3.096, sem export detalhado localizado; preservar gate de titularidade e ordem.
