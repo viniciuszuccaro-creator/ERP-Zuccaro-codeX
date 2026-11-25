@@ -39,6 +39,15 @@ test('operational address wiring peels only exact additions and retains every an
     assert.equal(clienteLocalOperationalRemainder(file, source), previous);
     assert.equal(clienteLocalOperationalRemainder(file, previous), previous);
     assert.notEqual(clienteLocalOperationalRemainder(file, source + '\n// OUTSIDE\n'), previous);
+    if (file === 'src/api/httpApiClient.js') {
+      const match = source.match(/(  const pedidos = \{\n)([\s\S]+?titulos\/baixa[^\n]*\n)/);
+      assert.ok(match);
+      const [, anchor, finance] = match;
+      const changed = source.replace(finance, finance.replace("method: 'POST'", "method: 'PATCH'"));
+      assert.throws(() => clienteLocalOperationalRemainder(file, changed));
+      assert.throws(() => clienteLocalOperationalRemainder(file, source.replace(anchor + finance, anchor) + finance));
+      assert.throws(() => clienteConferenciaRemainder(file, source.replace(finance, finance + finance)));
+    }
     if (file.endsWith('.jsx')) {
       assert.notEqual(clienteLocalOperationalRemainder(file, source.replace('allowReviewEdit />', 'allowReviewEdit={false} />')), previous);
       continue;

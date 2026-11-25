@@ -37,6 +37,12 @@ export function financialUiBoundaryRemainder(file, text) {
   const hunks = financialUiBoundaryHunks[file];
   if (!hunks) return text;
   let source = text.replace(/\r\n/g, '\n');
+  if (file === 'src/components/comercial/FechamentoFinanceiroTab.jsx' && source.includes('PedidoTitulosHttp')) {
+    for (const exact of ["import PedidoTitulosHttp from './pedido/PedidoTitulosHttp';\n","      {isHttpBackendMode && formData?.id && <PedidoTitulosHttp key={formData.id} pedido={formData} />}\n"]) {
+      assert.equal(source.split(exact).length, 2, 'exact financial tab integration');
+      source = source.replace(exact, '');
+    }
+  }
   for (const [current, previous] of hunks) {
     assert.equal(source.split(current).length - 1, 1, `${file}: exact financial UI hunk`);
     source = source.replace(current, previous);

@@ -27,6 +27,13 @@ export function clienteDocumentoRemainder(text) {
 
 // Only the reviewed transport wiring is peeled; all ancestral pins remain intact.
 export function clienteLocalOperationalRemainder(file, text) {
+  if (file === 'src/api/httpApiClient.js' && /baixarTitulo\(|titulos\/baixa/.test(text)) {
+    const approved = "    /** @param {string} id @param {{signal?: AbortSignal}} options */\n    titulos(id, { signal } = {}) { return request(`/api/v1/pedidos/${encodeURIComponent(id)}/titulos`, { signal }); },\n    /** @param {string} id @param {unknown} body @param {{signal?: AbortSignal}} options */\n    faturar(id, body, { signal } = {}) { return request(`/api/v1/pedidos/${encodeURIComponent(id)}/faturar`, { method: 'POST', body, signal }); },\n    /** @param {string} id @param {unknown} body @param {{signal?: AbortSignal}} options */\n    baixarTitulo(id, body, { signal } = {}) { return request(`/api/v1/pedidos/${encodeURIComponent(id)}/titulos/baixa`, { method: 'POST', body, signal }); },\n    /** @param {string} id @param {{signal?: AbortSignal}} options */\n    vinculosContabeis(id, { signal } = {}) { return request(`/api/v1/pedidos/${encodeURIComponent(id)}/vinculos-contabeis`, { signal }); },\n";
+    const exact = text.includes('\r\n') ? approved.replace(/\n/g, '\r\n') : approved;
+    const anchor = '  const pedidos = {' + (text.includes('\r\n') ? '\r\n' : '\n');
+    assert.equal(text.split(anchor + exact).length, 2, 'exact HTTP billing client delta');
+    text = text.replace(anchor + exact, anchor);
+  }
   if (file === 'src/components/cadastros/CadastroClienteCompleto.jsx') text = clienteDocumentoRemainder(text);
   let source = text.replace(/\r\n/g, '\n');
   const changes = file === 'src/api/httpApiClient.js' ? [

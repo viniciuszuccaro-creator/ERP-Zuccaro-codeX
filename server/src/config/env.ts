@@ -28,6 +28,7 @@ const envSchema = z.object({
   ENABLE_CRM_HTTP: z.string().optional(),
   ENABLE_PRODUTO_EMPRESA: z.string().optional(),
   ENABLE_FORNECEDOR_HTTP: z.string().optional(),
+  ENABLE_PEDIDO_FINANCEIRO_HML: z.string().optional(),
 });
 
 export type AppConfig = {
@@ -54,6 +55,7 @@ export type AppConfig = {
   crmHttpEnabled?: boolean;
   produtoEmpresaEnabled?:boolean;
   fornecedorHttpEnabled?: boolean;
+  pedidoFinanceiroEnabled?: boolean;
 };
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
@@ -67,6 +69,10 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
   const requireDatabase = boolFromEnv(data.REQUIRE_DATABASE, data.NODE_ENV === 'production');
   const authMode = data.ERP_AUTH_MODE ?? (data.ERP_ENV === 'dev' && data.NODE_ENV !== 'production' ? 'dev_headers' : 'supabase_user');
   const tenantContextEnabled = boolFromEnv(data.ENABLE_TENANT_CONTEXT, false);
+  const pedidoFinanceiroEnabled = boolFromEnv(data.ENABLE_PEDIDO_FINANCEIRO_HML, false);
+  if (pedidoFinanceiroEnabled && (data.ERP_ENV !== 'hml' || !tenantContextEnabled || authMode !== 'supabase_user' || !data.DATABASE_URL)) {
+    throw new Error('Pedido financeiro requires HML PostgreSQL and authenticated tenant context');
+  }
   if (data.AUTH_DATABASE_URL && (!data.DATABASE_URL || authMode !== 'supabase_user')) {
     throw new Error('AUTH_DATABASE_URL requires DATABASE_URL and supabase_user authentication');
   }
@@ -109,6 +115,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     crmHttpEnabled: boolFromEnv(data.ENABLE_CRM_HTTP, false),
     produtoEmpresaEnabled:boolFromEnv(data.ENABLE_PRODUTO_EMPRESA,false),
     fornecedorHttpEnabled: boolFromEnv(data.ENABLE_FORNECEDOR_HTTP, false),
+    pedidoFinanceiroEnabled,
   };
 }
 

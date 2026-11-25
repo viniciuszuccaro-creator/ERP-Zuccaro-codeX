@@ -40,8 +40,22 @@ export function mountPedidoFinanceiroRoutes(app: Express, db: DbClient, rbac: Rb
   }
   const scopeWhere = 'pedido_id=$1 AND group_id=$2 AND empresa_id=$3';
   const titles = async (q: DbQueryExecutor, scope: string[]) => (await q.query(
-    'SELECT parcela, data_vencimento::text, valor::text, valor_recebido::text, (valor-valor_recebido)::text AS saldo FROM contas_receber WHERE ' + scopeWhere + ' ORDER BY parcela', scope,
+    'SELECT pedido_id, parcela, data_vencimento::text, valor::text, valor_recebido::text, (valor-valor_recebido)::text AS saldo FROM contas_receber WHERE ' + scopeWhere + ' ORDER BY parcela', scope,
   )).rows;
+
+  app.get(base + '/vinculos-contabeis', requireTenantScope, async (req, res, next) => {
+    try {
+      const data = await run(req, 'faturar', async (q, ctx, scope) => {
+        if (!(await q.query('SELECT 1 FROM pedidos WHERE id=$1 AND group_id=$2 AND empresa_id=$3 AND ativo', scope)).rowCount)
+          reject(404, 'PEDIDO_NAO_ENCONTRADO');
+        const tenant = [ctx.groupId, ctx.empresaId];
+        const centros = await q.query('SELECT id,descricao FROM centros_custo WHERE group_id=$1 AND empresa_id=$2 ORDER BY descricao,id LIMIT 100', tenant);
+        const planos = await q.query('SELECT id,descricao_conta AS descricao FROM plano_contas WHERE group_id=$1 AND empresa_id=$2 ORDER BY descricao_conta,id LIMIT 100', tenant);
+        return { centros: centros.rows, planos: planos.rows };
+      });
+      res.set('Cache-Control', 'no-store').json({ data });
+    } catch (error) { next(error); }
+  });
 
   app.post(base + '/faturar', requireTenantScope, async (req, res, next) => {
     try {

@@ -1,3 +1,9 @@
+## CPA3: titulos do Pedido e baixa HTTP com teste no Chrome (2026-11-25)
+
+Fechamento consome as rotas canonicas de vinculos, faturamento e baixa. Opt-in desligado por padrao e limitado a HML com PostgreSQL, Auth e contexto tenant. Preserva RBAC/RLS, auditoria e idempotencia. No PG16 sintetico: 4/4. Chrome com fronteiras sinteticas: parcial, 502 apos baixa, replay do mesmo evento, quitacao e reabertura com saldo zero.
+
+Suite Ubuntu 3.042/3.042, verificacoes historicas 77/77, audit:baseline, lint, typecheck e builds web/servidor verdes. Sem deploy ou escrita HML. Proximo: CI do SHA e jornada autenticada nas telas completas do clone; Plano de Contas real por empresa permanece em conciliacao.
+
 ## CPA3: precheck Comercial sem subprocessos no catalogo (2026-11-25)
 
 O precheck extrai os nomes dos arquivos com Bash, sem um processo basename por migration. Preserva os bloqueios de duplicidade e a checagem de identidade. Suite Ubuntu 3.041/3.041, focados Windows 40/40, cinco rechecados em Ubuntu com LF, audit:baseline, lint, typecheck, build e diff check aprovados.

@@ -721,6 +721,14 @@ SeparacaoConferencia: {
     },
   };
   const pedidos = {
+    /** @param {string} id @param {{signal?: AbortSignal}} options */
+    titulos(id, { signal } = {}) { return request(`/api/v1/pedidos/${encodeURIComponent(id)}/titulos`, { signal }); },
+    /** @param {string} id @param {unknown} body @param {{signal?: AbortSignal}} options */
+    faturar(id, body, { signal } = {}) { return request(`/api/v1/pedidos/${encodeURIComponent(id)}/faturar`, { method: 'POST', body, signal }); },
+    /** @param {string} id @param {unknown} body @param {{signal?: AbortSignal}} options */
+    baixarTitulo(id, body, { signal } = {}) { return request(`/api/v1/pedidos/${encodeURIComponent(id)}/titulos/baixa`, { method: 'POST', body, signal }); },
+    /** @param {string} id @param {{signal?: AbortSignal}} options */
+    vinculosContabeis(id, { signal } = {}) { return request(`/api/v1/pedidos/${encodeURIComponent(id)}/vinculos-contabeis`, { signal }); },
     /** @param {{ limit?: number, offset?: number, search?: string, status?: string, clienteEmpresaId?: string, clienteId?: string, tipoOperacao?: string, signal?: AbortSignal }} [options] */
     list({ limit = 50, offset = 0, search, status, clienteEmpresaId, clienteId, tipoOperacao, signal } = {}) {
       return request('/api/v1/pedidos', { query: { limit, offset, search, status, clienteEmpresaId, clienteId, tipoOperacao }, signal, unwrap: false });

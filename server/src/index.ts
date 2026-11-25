@@ -7,7 +7,8 @@ async function main() {
   const clients = await createRuntimeDbClients(config);
   const { db, authDb } = clients;
   let app: ReturnType<typeof createApp>['app'];
-  try { app = createApp({ config, db, authDb, tenantContextEnabled: config.tenantContextEnabled }).app; }
+  try { app = createApp({ config, db, authDb, tenantContextEnabled: config.tenantContextEnabled,
+    pedidoFinanceiroEnabled: config.pedidoFinanceiroEnabled }).app; }
   catch (error) { await clients.end(); throw error; }
 
   const server = app.listen(config.port, () => {

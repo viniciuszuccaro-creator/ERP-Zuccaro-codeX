@@ -17,6 +17,7 @@ import { faturarPedidoCompleto } from '@/components/lib/useFluxoPedido';
 import { assertFaturamentoDentroDoPedido } from '@/components/lib/pedidoFaturamentoPolicy';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { isHttpBackendMode } from '@/api/base44Client';
+import PedidoTitulosHttp from './pedido/PedidoTitulosHttp';
 
 const faturamentoHttpIndisponivel = 'Faturamento indisponível neste ambiente: o pedido não pode gerar títulos pela API atual.';
 
@@ -87,6 +88,7 @@ export default function FechamentoFinanceiroTab({ formData, setFormData, onNext 
 
   return (
     <div className="w-full h-full space-y-6" role="region" aria-label="Fechamento Financeiro do Pedido">
+      {isHttpBackendMode && formData?.id && <PedidoTitulosHttp key={formData.id} pedido={formData} />}
       {/* V21.1: Barra de Progresso do Faturamento */}
       {etapas.length > 0 && (
         <Card className="border-2 border-sky-300 bg-sky-50">

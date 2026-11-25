@@ -167,12 +167,18 @@ async function rehearseSettlement(f: Awaited<ReturnType<typeof realCrmFixture>>,
     assert.match(scope.schemas[0], /^crm_test_[a-f0-9]{18}$/);
     assert.deepEqual(scope.schemas.slice(1), ['pg_catalog']);
     await tx.query(`CREATE TABLE centros_custo (
-      id uuid, group_id uuid, empresa_id uuid, PRIMARY KEY(id,group_id,empresa_id));
+      id uuid, group_id uuid, empresa_id uuid, descricao text NOT NULL, PRIMARY KEY(id,group_id,empresa_id));
       CREATE TABLE plano_contas (
-      id uuid, group_id uuid, empresa_id uuid, PRIMARY KEY(id,group_id,empresa_id))`);
+      id uuid, group_id uuid, empresa_id uuid, descricao_conta text NOT NULL, PRIMARY KEY(id,group_id,empresa_id))`);
     for (const [table, index] of [['centros_custo', 0], ['plano_contas', 1]] as const) {
-      await tx.query(`INSERT INTO ${table} VALUES ($1,$2,$3),($4,$2,$5)`,
+      await tx.query(`INSERT INTO ${table} VALUES ($1,$2,$3,'Synthetic A'),($4,$2,$5,'Synthetic B')`,
         [accounting[index], ctx.groupId, ctx.empresaId, otherAccounting[index], ID.empresaB]);
+      await tx.query(`ALTER TABLE ${table} ENABLE ROW LEVEL SECURITY;
+        ALTER TABLE ${table} FORCE ROW LEVEL SECURITY;
+        CREATE POLICY rehearsal_accounting_read ON ${table} FOR SELECT TO "${f.role}"
+        USING (group_id=NULLIF(current_setting('app.group_id',true),'')::uuid
+          AND empresa_id=NULLIF(current_setting('app.empresa_id',true),'')::uuid);
+        GRANT SELECT ON ${table} TO "${f.role}"`);
     }
     await tx.query(candidate);
     await tx.query(`GRANT SELECT, INSERT ON contas_receber, contas_receber_recebimentos TO "${f.role}";
@@ -280,10 +286,18 @@ async function rehearseSettlement(f: Awaited<ReturnType<typeof realCrmFixture>>,
         ...(authenticated ? { authorization: 'Bearer synthetic' } : {}) },
     });
     const billing = { centro_custo_id: accounting[0], plano_contas_id: accounting[1] };
+    const catalog = await http('/vinculos-contabeis');
+    assert.equal(catalog.status, 200);
+    assert.deepEqual((await catalog.json()).data, {
+      centros: [{ id: accounting[0], descricao: 'Synthetic A' }],
+      planos: [{ id: accounting[1], descricao: 'Synthetic A' }],
+    });
+    assert.equal((await http('/vinculos-contabeis', undefined, ID.empresaA2)).status, 404);
     assert.equal((await http('/faturar', billing, ctx.empresaId, false)).status, 401);
     assert.equal((await http('/faturar', {})).status, 422);
     assert.equal((await http('/faturar', { ...billing, plano_contas_id: otherAccounting[1] })).status, 422);
     await f.admin.query("UPDATE profiles SET permissoes='{}'::jsonb WHERE id=$1", [ctx.actorId]);
+    assert.equal((await http('/vinculos-contabeis')).status, 403);
     assert.equal((await http('/faturar', billing)).status, 403);
     await f.admin.query('UPDATE profiles SET permissoes=$1 WHERE id=$2', [permissions, ctx.actorId]);
     await f.exec(`CREATE FUNCTION rehearsal_finance_audit_failure() RETURNS trigger LANGUAGE plpgsql AS $$
@@ -297,12 +311,19 @@ async function rehearseSettlement(f: Awaited<ReturnType<typeof realCrmFixture>>,
     const responses = await Promise.all(replay.map(r => r.json()));
     assert.deepEqual(replay.map(r => r.status), [200, 200], responses.map(r => r.error?.code).join(','));
     assert.deepEqual(responses.map(r => r.data.replay).sort(), [false, true]);
+    for (const response of responses) {
+      assert.deepEqual(response.data.titulos.map(({ pedido_id, parcela }: { pedido_id: string; parcela: number }) =>
+        [pedido_id, parcela]), installments.map(part => [orderId, part.ordem]));
+    }
     assert.equal((await http('/titulos', undefined, ID.empresaB)).status, 403);
     assert.equal((await http('/titulos', undefined, ID.empresaA2)).status, 404);
     assert.equal((await http('/titulos/baixa', { parcela: first.ordem, evento: 'cross', valor: '0.01' }, ID.empresaA2)).status, 404);
     const partial = await http('/titulos/baixa', { parcela: first.ordem, evento: 'partial', valor: '0.01' });
     assert.equal(partial.status, 200);
-    assert.equal((await partial.json()).data.titulos[0].saldo, money(asCents(first.valor) - 1n));
+    const partialTitle = (await partial.json()).data.titulos[0];
+    assert.equal(partialTitle.pedido_id, orderId);
+    assert.equal(partialTitle.parcela, first.ordem);
+    assert.equal(partialTitle.saldo, money(asCents(first.valor) - 1n));
     for (const part of installments) {
       const payload = { parcela: part.ordem, evento: 'settle', valor: part === first ? money(asCents(part.valor) - 1n) : part.valor };
       const paid = await http('/titulos/baixa', payload);
@@ -313,13 +334,32 @@ async function rehearseSettlement(f: Awaited<ReturnType<typeof realCrmFixture>>,
     }
     const reopened = await http('/titulos');
     assert.equal(reopened.status, 200);
-    assert.deepEqual((await reopened.json()).data.map((item: { saldo: string }) => item.saldo), installments.map(() => '0.00'));
+    assert.deepEqual((await reopened.json()).data.map(({ pedido_id, parcela, saldo }: { pedido_id: string; parcela: number; saldo: string }) =>
+      [pedido_id, parcela, saldo]), installments.map(part => [orderId, part.ordem, '0.00']));
     assert.equal((await audit.listByEntity('FaturamentoPedido', orderId)).length, 1);
     assert.equal((await audit.listByEntity('RecebimentoPedido', orderId)).length, installments.length + 1);
   } finally {
     await new Promise<void>((resolve, reject) => listener.close(error => error ? reject(error) : resolve()));
   }
 }
+
+test('Inicializacao financeira e opt-in somente em HML com Auth e contexto tenant', () => {
+  const base = {
+    NODE_ENV: 'test', ERP_ENV: 'hml',
+    DATABASE_URL: 'postgresql://synthetic@localhost/erp_test',
+    AUTH_DATABASE_URL: 'postgresql://synthetic@localhost/erp_auth_test',
+    ERP_AUTH_MODE: 'supabase_user', ENABLE_TENANT_CONTEXT: 'true',
+    SUPABASE_URL: 'https://synthetic.invalid', SUPABASE_ANON_KEY: 'synthetic-not-a-secret',
+  };
+  const optIn = { ...base, ENABLE_PEDIDO_FINANCEIRO_HML: 'true' };
+  assert.equal(loadConfig(base).pedidoFinanceiroEnabled, false);
+  assert.equal(loadConfig(optIn).pedidoFinanceiroEnabled, true);
+  for (const invalid of [
+    { ERP_ENV: 'dev' }, { ENABLE_TENANT_CONTEXT: 'false' }, { ERP_AUTH_MODE: 'dev_headers' },
+  ]) {
+    assert.throws(() => loadConfig({ ...optIn, ...invalid }), /Pedido financeiro requires HML/);
+  }
+});
 
 test('Composição persistida: Cliente→Orçamento→Pedido→Expedição, rollback, replay, parcial, devolução e cancelamento', async () => {
   const f = await localCrmFixture();
