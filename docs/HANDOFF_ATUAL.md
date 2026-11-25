@@ -1,3 +1,9 @@
+## CPA3: delta candidato limitado a Marcas (2026-11-25)
+
+HML READ ONLY: marcas sem codigo/codigo_origem no pg_attribute, sem grants e sem policies. No clone 54adc8e2, manifesto exato 08f57c50 passou reutilizando ACL/policies de auditoria, perfis, empresas e sequencias. Seis codigos preservados, seis replays, quatro negativas, cinco reversoes e uma edicao preservada. Delta 5b5a7bdc, recibo 0d125d1d. Duas colunas, indice, SELECT/INSERT e UPDATE(ativo), policies por Grupo/Empresa.
+
+Template privado nao executavel, sem ALTER ROLE ou UPDATE de perfil do clone. Falta validar identidade/permissoes da conta real, candidata e backup e obter autorizacao especifica. Sem escrita HML, deploy ou alteracao operacional.
+
 ## CPA3: delta restrito de Marcas ensaiado no clone (2026-11-25)
 
 Manifesto exato 08f57c50 no clone 54adc8e2: policies separadas SELECT/INSERT/UPDATE, UPDATE(ativo) em Marcas e auditoria por Grupo/Empresa/ator com grants por coluna no delta. Seis criadas/reaproveitadas, quatro negativas entre Empresas, cinco reversoes e uma edicao posterior preservada. 17.472 clientes intactos. Template privado 8e38aaf2 e recibo 8f256e10; template contem passos exclusivos do clone e nao e executavel na HML.
