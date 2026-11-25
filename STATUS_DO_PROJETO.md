@@ -1,3 +1,9 @@
+## CPA3: seis Marcas reais ensaiadas e candidata 6066d9b6 centralizada (2026-11-25)
+
+Clone restaurado 54adc8e2: seis Marcas de 6c389e51 em Grupo, login restrito equivalente, retomada 1+5, replay seis, origem auditada para as duas Empresas, sequencia 7 (maximo 6), reversao cinco e uma edicao posterior preservada. 17.472 mestres intactos. Recibo privado 8dce70e4; pacote de ensaio 218c0217 nao autoriza escrita na HML.
+
+Candidata web/API 6066d9b6, CI 45660111268 sucesso, 2.237 arquivos relidos no TAR privado de 20.241.408 bytes, SHA 7a35e489; manifesto de hashes das 35 migrations e executor 832155c9, sem SQL executado. Main baba91a6 e HML a305a143 nao sao esta candidata. Bootstrap HML ainda nao repassa opt-in financeiro; faltam schema/acessos e Plano de Contas aprovado. Sem deploy ou carga na HML; quitacao comprovada apenas no clone.
+
 ## CPA3: EXETPS alternativa lida e comparada por chave (2026-11-25)
 
 Leitor isolado da copia b10a3a3e: 981 tabelas inventariadas; 35.309 Obras e 3.096 ajustes identicos ao snapshot anterior por SHA e chave, zero adicoes, remocoes ou alteracoes. Recibo privado 1b7ab7f0. Par arquivado reconferido intacto. Leitor parado, volume de trabalho preservado; livre 65.168.809.984 bytes. Sem novo vinculo ou carga de Obras.
