@@ -1,3 +1,11 @@
+## CPA3: codigos literais e sequencia concorrente em Fornecedores e Marcas (2026-11-25)
+
+Fornecedores no clone 54adc8e2: 789/789 codigos exibidos identicos ao codigo legado, maximo 1065. Duas reservas concorrentes pelo gerador canonico produziram 001066 e 001067. Replay 789, duas negativas e uma reversao; 17.472 clientes preservados. Recibo privado 28285d0e. Nao altera gate do manifesto 4905483e nem comprova o mapa oficial do Grupo.
+
+Marcas: adaptador WIP ed2c1b0e envia codigo literal e codigo_origem e confere ambos no retorno. Servico canonico e papel restrito em clone: seis codigos com zeros preservados, perda de recibo recuperada, seis reaproveitados, cinco reversoes e uma edicao posterior preservada, seis create/link e cinco soft_delete auditados. Duas criacoes concorrentes receberam 000007/000008. Recibo a8885d89. Reversao compilada chama update geral; exigiu no clone as onze colunas desse metodo, nao aprovar mero UPDATE(ativo) na HML. Clones removidos; sem escrita HML.
+
+Referencia de escopo: Marca, Fornecedor, Cliente, Produto e auxiliares do repositorio usam reserva por Grupo; Orcamento e Pedido tem unicidade Empresa/numero separada. Sem auditoria integral dos cadastros anteriores. Sem novos deploy, aceite autenticado, carga ou alteracao operacional. Adaptador permanece WIP, sem publicar com suite ampla pendente.
+
 ## CPA3: manifesto de revisao dos 789 Fornecedores e destino vivo (2026-11-25)
 
 Papel restrito da API em transacao READ ONLY confirmou banco/schema HML, um Grupo CPA no UUID dos mapas existentes, 17.472 clientes no Grupo, 17.471 com codigo presente no CSV e procedencia preenchida. Fornecedores e Clientes usam mesmo rotulo de origem; isto corrobora o escopo, nao equivale a mapa oficial dos fornecedores. Tabela fornecedores ausente no destino vivo. Recibo privado efc859d0.
