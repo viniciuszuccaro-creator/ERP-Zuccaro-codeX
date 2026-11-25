@@ -1,3 +1,9 @@
+## CPA3: conciliacao do Plano de Contas e simulacao do adaptador Marca (2026-11-25)
+
+SHA dos exports financeiros reconferido contra o grafo. Plano: 26 chaves unicas, todas do Grupo e ativas, 12 analiticas. 21 ordenaveis, cinco bloqueadas por ancestral ausente (quatro referencias diretas). Zero contas explicitamente vinculadas a Empresa e zero centros com conta padrao na fonte. Os 13 Centros previamente conciliados se dividem em 12 e 1 por empresa. O contrato financeiro exige FK composta por Empresa e nao pode usar essas contas de Grupo como contrapartes sem regra comprovada. Sem lote apto, novo saldo zero em clone restaurado ou escrita HML.
+
+Marca: simulacao de seis chaves sinteticas sem banco: perda de recibo apos 3, retomada reutilizou 3 e criou 3, replay reutilizou 6, reversao de 5 preservou uma edicao posterior, seis eventos create. Nao comprova PostgreSQL, ACL, reserva canonica ou auditoria real. Adaptador WIP preservado; falta executar com servico e papel restrito no clone antes do gate de escrita. Operacional intacto.
+
 ## CPA3: migrations comerciais no clone e dez precos fora do export (2026-11-25)
 
 Backup 54adc8e2 restaurado em clones isolados sem rede ou volume HML. 016 passou; 017 inicialmente bloqueada por obras ausente. Novo clone com 012, 013, 016, 017 passou as quatro migrations, sem fallback public. Candidato financeiro bloqueou corretamente por plano_contas ausente. 17.472 clientes preservados, clones removidos. Export privado PlanoDeContas e grafo financeiro localizados: proximo passo conciliar pais e escopo empresarial e ensaiar o contrato canonico no clone. Sem API/browser/deploy novos.
