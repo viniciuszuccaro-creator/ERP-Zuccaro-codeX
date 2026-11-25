@@ -1,3 +1,11 @@
+## CPA3: ajustes de Obras extraidos e abertura testada no Chrome (2026-11-25)
+
+EXETPS do HD em staging privado retomavel, par conferido e leitor isolado somente leitura. Export ClientesObrasHistoricoAjustes: 3.096 linhas, 3.096 sequencias distintas, 2.522.659 bytes, SHA e299704911e9bba0d3a62f177d9e3474caf35637b457070c32a7a847713c6726, relido na VPS no recibo privado erp344-reader-20261125T130112Z. Chaves de cliente/local, sequencia, data/hora e alteracoes preservadas; nao prova titularidade ou ordem de aplicacao. Leitor parado e staging temporario retirado; 67.350.659.072 bytes livres, HML/operacional HTTP 200.
+
+Cadastros local: comparacao Chrome com pagina/atalhos reais e transporte/visualizador sinteticos, base 2d8a7e9ac: contagens antes do clique 1 -> 0, montagem antecipada 0, uma apos selecao. Menu 177 -> 110 ms, probe apos clique 39 -> 54 ms, amostra sintetica sem prova de performance HML. 32 testes focados e lint focado verdes. Teste antigo montado passou isolado; duas provas historicas falharam na base Linux e vps-gate-precheck voltou a exceder janela. Gates completos nao verdes, codigo e teste novos ficam no WIP sem deploy ou aceite autenticado.
+
+Fornecedores: 790 chaves/fingerprints unicos, escopo Grupo, nenhum autorizado no pacote; tabela fornecedores ausente no schema do dump. Sem carga, DDL ou alteracao operacional.
+
 ## CPA3: abertura sob demanda de Cadastros Gerais em WIP (2026-11-25)
 
 Cadastros: #599 e inicio local abriam bloco1 e disparavam contagem geral; a contagem HTTP pode chamar listagem com limit=1. WIP fecha blocos e adia contagens ate janela de entidade selecionada, com chave por escopo/sessao/subconjunto. Sem redesenho, sem alterar o visualizador existente. 31 focados, lint focado, typecheck e audit baseline passaram; suite completa 2.992 pass, nove falhas e um cancelado, incluindo vps-gate-precheck sem progresso, interrompido. Sem commit de codigo, deploy, medicao real de requisicoes no navegador ou aceite HML.
