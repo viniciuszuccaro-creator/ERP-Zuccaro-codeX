@@ -1,3 +1,9 @@
+## CPA3: 789 Fornecedores ensaiados pelo servico em clone restaurado (2026-11-25)
+
+54adc8e2 restaurado em PostgreSQL isolado sem rede externa ou volume HML. Servico compilado a305a143 com papel restrito executou 789 criacoes em 7.582 ms (~6.244 registros/min, transacoes unitarias), repetiu 789 sem novos registros e reaproveitou um commit sem recibo. Chaves/codigos/documentos distintos 789; auditoria 789 create, 790 possible_duplicate, um soft_delete, duas negativas de Grupo/Empresa. Uma reversao e 17.472 clientes preservados. Clone removido; nenhum dado aplicado na HML.
+
+Recibo privado 216bbf6f, CSV bcf9f2f9, candidato schema 40490a3b. Um email invalido segregado. Grupo de origem sem UUID de destino no CSV; ensaio aplicou escopo controlado no clone, nao comprova vinculo de producao. Proximo: selar mapa origem para Grupo CPA, delta de acesso revisado e manifesto; submeter o pacote exato ao gate HML. Sem ensaio novo de Marcas, aceite autenticado de Cadastros ou Comercial.
+
 ## CPA3: preflight de 790 fornecedores e gargalo do precheck (2026-11-25)
 
 Validador canonico do Fornecedor: 789/790 payloads validos na projecao de ensaio, um email invalido; zero documentos duplicados nos validos. No clone 54adc8e2, delta candidato SELECT/INSERT com policies de Grupo: uma criacao e leitura sinteticas pelo papel restrito, zero visibilidade e escrita negada em Empresa/outro Grupo. 17.472 clientes preservados, clone removido. Sem executar o lote real pelo servico, sem manifesto apto ou autorizacao de escrita HML.
