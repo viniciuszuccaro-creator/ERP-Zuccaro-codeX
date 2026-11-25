@@ -1,3 +1,11 @@
+## CPA3: cruzamento nativo do HD e preflight comercial (2026-11-25)
+
+Os 1.208 IDs nativos do export de Produtos do HD ocorreram unicamente no CadastroMateriais. Dos 1.064 candidatos positivos com unidade coincidente, 1.054 aparecem nesse export e 10 nao. A coincidencia nao comprova ID de Produto Base44, empresa ou vigencia: zero precos aptos ou gravados.
+
+Inventario do dump 54adc8e2 leu centros_custo e audit_logs mas nao encontrou orcamentos, orcamento_itens, pedidos, pedido_itens, contas_receber ou recebimentos no schema HML. Proximo: aplicar 016/017 e dependencias e o candidato financeiro apenas no clone, com grants minimos e sem fallback, antes de ensaiar o consumidor. HML a305a143, 67.353.870.336 bytes livres na medicao; sem deploy ou navegador.
+
+Marca: adaptador local ainda sem commit, baseado no checkpoint de Unidade, chama o servico canonico com identidade por Grupo/Empresa/origem, lock e fingerprint para preservar edicoes na reversao. So sintaxe conferida. Nao homologar: falta validar seis chaves, ACL, falha pos-commit e reversao no clone. Sem nova carga, escrita HML ou alteracao operacional.
+
 ## CPA3: retomada EXETPS pelo HD e Comercial HTTP em PostgreSQL 16 (2026-11-25)
 
 Par original EXETPS do HD transferido por SFTP retomavel para hd-exetps-verified-staging-20261125 sob SOURCE; tamanho e SHA conferidos. Controlador existente executado com origem restrita ao staging, sem rede/porta/mount HML, e consulta somente leitura confirmou 35.309 ClientesObras. Primeira partida falhou antes do attach; segunda passou. Leitor e volume de teste removidos; recovery HML antigo permaneceu parado. Retomada: recriar staging privado sob SOURCE, enviar par original do HD, conferir os pins e usar o controlador em copia isolada.
