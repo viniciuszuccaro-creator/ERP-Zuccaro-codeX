@@ -1,3 +1,11 @@
+## CPA3: seis arquivos verificados, ACL de Marcas e origem de Precos (2026-11-25)
+
+Leitura integral dos seis MDF/LDF de EMP03, Auditoria e EXETPS: SHA-256 iguais entre HD e VPS; 14.965.590.016 bytes no inventario. Cinco manifestos sem reutilizacao direta, nenhum mount ou arquivo aberto na checagem. EXETPS ainda tem pins no controlador de leitura; nenhuma retirada nesta rodada.
+
+Backup 54adc8e2 restaurado em clone PostgreSQL sem rede ou volume HML. Papel efetivo da API confirmado pela configuracao: o mesmo papel no clone nao tem SELECT/INSERT/UPDATE em marcas, e a tabela tem zero policies. Nao houve escrita privilegiada para contornar ACL. Clone removido. Retomada: delta restrito no clone e checkpoint por identidade de origem antes de executar/reverter as seis Marcas.
+
+Precos: confirmados 273 IDs unicos no export original Base44, zero colunas de identidade legada e zero empresa proprietaria preenchida nesse recorte; mapa historico marcado nao autoritativo e nao executavel. Os 1.064 permanecem candidatos, zero liberados. Falta mapa oficial classe/material para ID do Produto, escopo empresarial e vigencia. HML a305a143, sem carga, deploy ou alteracao operacional.
+
 ## CPA3: EMP01 arquivada e triagem de Precos por unidade (2026-11-25)
 
 EMP01: par MDF/LDF redundante retirado somente da VPS apos SHA igual ao HD e verificacao de cinco manifestos, scripts, mounts e arquivos abertos. Recibo privado 10:58:38Z: 49.586.032.640 -> 53.397.352.448 bytes livres (+3.811.319.808). Restam pares EMP03, Auditoria e EXETPS; HD preservado.
