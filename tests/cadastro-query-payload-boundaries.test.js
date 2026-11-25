@@ -27,6 +27,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { createHash } from 'node:crypto';
 import ts from 'typescript';
+import { pr353ReviewRemainder } from './helpers/pr353ReviewRemainder.js';
 
 const read = path => fs.readFileSync(path, 'utf8').replace(/\r\n/g, '\n');
 const parse = (path, source = read(path)) => ts.createSourceFile(path, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.JSX);
@@ -57,7 +58,7 @@ const forms = [
 for (const [name, recordKey, entity, previousHash] of forms) {
   const path = `src/components/cadastros/${name}.jsx`;
   test(`${name}: stage48 complete source retained except payload annotation and proven default export`, () => {
-    let source = once(read(path), '    /** @param {Record<string, unknown>} data */\n    mutationFn: async (data) => {', '    mutationFn: async (data) => {');
+    let source = once(pr353ReviewRemainder(read(path), name, once), '    /** @param {Record<string, unknown>} data */\n    mutationFn: async (data) => {', '    mutationFn: async (data) => {');
     if (name === 'CadastroClienteCompleto') source = once(source, 'default: m.default }', 'default: m.default || m.TimelineCliente }');
     if (name === 'CadastroClienteCompleto') source = clienteContactPresenceRemainder(source);
     assert.match(source, /useCadastroReopenOnIdentity/);
@@ -68,6 +69,11 @@ for (const [name, recordKey, entity, previousHash] of forms) {
   const options = declaration.initializer.arguments[0];
   const callback = key => options.properties.find(node => node.name?.getText(tree) === key).initializer.getText(tree);
   const make = (text, bindings) => new Function(...Object.keys(bindings), `return (${text});`)(...Object.values(bindings));
+  const draftGuard = nodes(tree, node => ts.isVariableDeclaration(node) && node.name.getText(tree) === 'assertDraftCurrent')[0]?.initializer;
+  const guardedScope = (assertFormScopeCurrent, identityMismatch = false) => ({
+    assertFormScopeCurrent,
+    ...(draftGuard && { assertDraftCurrent: make(draftGuard.getText(tree), { assertFormScopeCurrent, identityMismatch }) }),
+  });
   test(`${name}: actual insert/update passes its canonical payload, existing company ownership and permission gates`, async () => {
     const input = { nome: 'Synthetic record', group_id: 'group-a', empresa_id: 'company-a' };
     for (const editing of [false, true]) {
@@ -75,7 +81,7 @@ for (const [name, recordKey, entity, previousHash] of forms) {
       const canonical = { ...input, normalized: true };
       const boundId = editing ? 'synthetic-a' : null;
       const fn = make(callback('mutationFn'), {
-        assertFormScopeCurrent() {}, contextoValido: true,
+        ...guardedScope(() => {}), contextoValido: true,
         podeEditar: true, podeCriar: true, [recordKey]: editing ? { id: 'synthetic-a' } : null,
         // P1 switch-reject: mutação usa identidade do rascunho (formData.id / *BoundId), não só props.
         formData: editing ? { id: 'synthetic-a' } : {},
@@ -91,12 +97,12 @@ for (const [name, recordKey, entity, previousHash] of forms) {
       if (entity === 'Fornecedor') expected.push('empresa_dona_id');
       assert.deepEqual(calls, [expected]);
     }
-    for (const blocked of ['context', 'scope', 'create', 'update']) {
+    for (const blocked of ['context', 'scope', 'create', 'update', ...(draftGuard ? ['identity'] : [])]) {
       let writes = 0;
       const boundId = blocked === 'update' ? 'synthetic-a' : null;
       const fn = make(callback('mutationFn'), {
-        assertFormScopeCurrent() { if (blocked === 'scope') throw Error('Synthetic scope changed'); },
-        contextoValido: blocked !== 'context', podeEditar: false, podeCriar: false,
+        ...guardedScope(() => { if (blocked === 'scope') throw Error('Synthetic scope changed'); }, blocked === 'identity'),
+        contextoValido: blocked !== 'context', podeEditar: false, podeCriar: blocked === 'identity',
         [recordKey]: blocked === 'update' ? { id: 'synthetic-a' } : null,
         formData: blocked === 'update' ? { id: 'synthetic-a' } : {},
         representanteBoundId: recordKey === 'representante' ? boundId : undefined,

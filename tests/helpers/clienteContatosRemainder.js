@@ -116,3 +116,4 @@ export function clienteContatosHistoricalInput(file, text, selectedReference) {
   if (hash(source) === historicalInputHashes[file]) return text;
   return selectedReference(clienteContatosRemainder(file, text));
 }
+

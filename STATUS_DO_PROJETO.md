@@ -3,6 +3,8 @@
 PR #353: reconciliados STATUS/HANDOFF com a base atual, preservando os historicos.
 Cadastros: permissao de criacao no rascunho, bloqueio em troca recusada e
 projecao explicita de contatos sem perda de cargo. Verificacao focada: 63 testes.
+CI da PR: provas historicas reconhecem apenas o delta exato revisado;
+guardas reais exercitadas no teste e helper congelado restaurado. 130 testes focados.
 
 DECISAO COMERCIAL posterior do proprietario: ENDERECO do mestre e FISCAL
 (residencia PF/sede PJ); nao presumir tambem outras finalidades. ENDERECOCOBRANCA
