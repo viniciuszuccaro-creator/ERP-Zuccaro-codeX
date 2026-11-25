@@ -1,3 +1,9 @@
+## CPA3: backup agendado restaurado e conferido no HD (2026-11-25)
+
+Timer disparou 03h33 de Brasilia; `54adc8e2` restaurou 26 tabelas. Copia externa de 47.779.840 bytes conferida (SHA `458c6f0d`), ACK aceito na VPS. HML `a305a143`, HTTP 200, sem deploy. Livres 34.870.321.152 bytes na medicao.
+
+Restam 32 MDF/LDF (32.492.879.872 bytes) do inventario na VPS. Nenhuma nova exclusao ou carga. Produtos/Centros ja conciliados; nao reaplicar. Obras ainda depende de fonte oficial de Empresa e Comercial sem novo aceite no navegador.
+
 ## CPA3: instalador Windows abriu e reprovou hardware diagnostico (2026-11-24)
 
 Duas vCPUs com x2APIC alinhado no firmware mantiveram video 0x0 no NEM; engine interpreter recusada com VERR_INVALID_PARAMETER. Uma vCPU iniciou WinPE e exibiu instalador pt-BR, que recusou requisitos minimos antes de selecionar disco. Sem bypass. vTPM/Secure Boot e isolamento preservados.
