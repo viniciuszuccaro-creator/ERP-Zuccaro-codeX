@@ -1,3 +1,9 @@
+## CPA3: EXETPS alternativa lida e comparada por chave (2026-11-25)
+
+Leitor isolado da copia b10a3a3e: 981 tabelas inventariadas; 35.309 Obras e 3.096 ajustes identicos ao snapshot anterior por SHA e chave, zero adicoes, remocoes ou alteracoes. Recibo privado 1b7ab7f0. Par arquivado reconferido intacto. Leitor parado, volume de trabalho preservado; livre 65.168.809.984 bytes. Sem novo vinculo ou carga de Obras.
+
+HML serve API/web a305a143. Leitura confirmou as duas Empresas de procedencia do manifesto 6c389e51 no Grupo, zero Marcas, 17.472 mestres, 5.384 revisoes, 39 historicos e 91 Grupos (51 inativos, 91 margens nulas). Ultimo backup agendado com sucesso. Proximo: ensaio dos seis registros reais no clone com papel previsto. Nenhuma escrita HML ou publicacao de runtime.
+
 ## CPA3: EXETPS alternativa transferida e CI do executor verde (2026-11-25)
 
 Par MDF/LDF de snapshot alternativo do HD enviado por SFTP retomavel para a VPS privada; 1.022.492.672 bytes e dois SHA-256 conferidos. Recibo privado b10a3a3e. Espaco livre 67.346.284.544 antes e 66.323.718.144 depois. Nenhum original alterado, nenhuma exclusao. Ainda nao aberto no leitor: nao prova vinculo de Obras nem libera carga.
