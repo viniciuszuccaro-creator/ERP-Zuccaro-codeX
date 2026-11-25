@@ -1,3 +1,9 @@
+## CPA3: precheck Comercial sem subprocessos no catalogo (2026-11-25)
+
+O precheck extrai os nomes dos arquivos com Bash, sem um processo basename por migration. Preserva os bloqueios de duplicidade e a checagem de identidade. Suite Ubuntu 3.041/3.041, focados Windows 40/40, cinco rechecados em Ubuntu com LF, audit:baseline, lint, typecheck, build e diff check aprovados.
+
+Sem executar precheck na VPS, deploy ou escrita HML. Proximo: confirmar a CI do commit e manter o gate especifico de Marcas separado.
+
 ## CPA3: suite Linux verde com a candidata de Marcas (2026-11-25)
 
 Suite Ubuntu: 3.041/3.041 com sandbox do Chrome sob conta sem privilegios. Os tres timeouts vinham da recusa do Chrome sob root. Duas provas historicas agora reconhecem somente os deltas 045/046 versionados, preservando comparacao do catalogo e hash ancestral. Focados 39/39, lint, tipos e builds aprovados na candidata.

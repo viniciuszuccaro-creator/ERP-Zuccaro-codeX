@@ -92,7 +92,7 @@ list_candidate_ids() {
     [[ -f "$CANDIDATE_LIST" ]] || { echo "BLOCKED: candidate-list ausente: $CANDIDATE_LIST" >&2; return 1; }
     while IFS= read -r line || [[ -n "$line" ]]; do
       [[ -z "$line" || "$line" =~ ^# ]] && continue
-      base="$(basename "$line")"
+      base="${line##*/}"
       id="${base%%_*}"
       id="${id%%.sql}"
       if [[ "$id" =~ ^[0-9]{3}$ ]]; then
@@ -103,7 +103,7 @@ list_candidate_ids() {
   fi
   for f in "$CANDIDATE_DIR"/*.sql; do
     [[ -f "$f" ]] || continue
-    base="$(basename "$f")"
+    base="${f##*/}"
     id="${base%%_*}"
     if [[ "$id" =~ ^[0-9]{3}$ ]]; then
       printf '%s\n' "$id"
