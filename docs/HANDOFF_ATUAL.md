@@ -1,3 +1,9 @@
+## CPA3: delta restrito de Marcas ensaiado no clone (2026-11-25)
+
+Manifesto exato 08f57c50 no clone 54adc8e2: policies separadas SELECT/INSERT/UPDATE, UPDATE(ativo) em Marcas e auditoria por Grupo/Empresa/ator com grants por coluna no delta. Seis criadas/reaproveitadas, quatro negativas entre Empresas, cinco reversoes e uma edicao posterior preservada. 17.472 clientes intactos. Template privado 8e38aaf2 e recibo 8f256e10; template contem passos exclusivos do clone e nao e executavel na HML.
+
+Sem carga ou deploy. Falta validar a candidata, separar o SQL de promocao dos passos do clone, revalidar backup e obter gate especifico. Operacional e WIP preservados.
+
 ## CPA3: isolamento de Marca nos dois sentidos entre Empresas (2026-11-25)
 
 Clone 54adc8e2 e manifesto exato 08f57c50: leitura e inativacao por ID de outra Empresa negadas nos dois sentidos (quatro negativas) pelo servico e papel restrito. Seis inseridas/reaproveitadas, cinco reversoes com UPDATE(ativo), uma edicao preservada e 17.472 clientes intactos. Recibo privado 3a503d8c. Clone removido; API/web HML a305a143, sem carga ou deploy.
