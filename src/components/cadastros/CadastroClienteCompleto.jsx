@@ -467,6 +467,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
   });
 
   const deleteMutation = useMutation({
+    /** @param {string} id */
     mutationFn: async (id) => {
       assertDraftCurrent();
       if (!clienteBoundId || id !== clienteBoundId) throw new Error("Identidade do cliente alterada.");
