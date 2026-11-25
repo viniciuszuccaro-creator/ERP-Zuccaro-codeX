@@ -282,6 +282,16 @@ test('LocalEstoque residual graduation retains beforeSha and rejects omission, r
  assert.throws(()=>restoreApprovedLocalEstoqueResidualDelta(source+approvedLocalEstoqueGraduationTest));
  assert.throws(()=>restoreApprovedLocalEstoqueResidualDelta(source.replace("CentroOperacao',","CentroOperacao', 'Webhook',")));
 });
+function restoreApprovedMigration046Catalogue(source, file){
+ const commit='20db327cbef0ceb839435a4805691c2a4fece7dd';
+ const block=/test\('Infra: migration catalogue retains the complete remote set without adopting pending packages', \(\) => \{\n[\s\S]*?\n\}\);/;
+ const readBlock=ref=>execFileSync('git',['show',`${ref}:${file}`],{encoding:'utf8'}).match(block)[0];
+ const approved=readBlock(commit);
+ const start=source.indexOf(approved);
+ assert.notEqual(start,-1,'The approved migration 046 catalogue assertion must remain intact');
+ assert.equal(source.lastIndexOf(approved),start);
+ return source.slice(0,start)+readBlock('fa17c5c828f1faffb7fe98e89d5c12a167325523^')+source.slice(start+approved.length);
+}
 for(const entry of manifest.cases)test(entry.path+': publication fixes only Git reference, preserving every prior assertion',()=>{
  const source=readOrganizacionalSource(entry.path,'utf8').replace(/\r\n/g,'\n');
  assert.equal(source.includes('HEAD:'),false);
@@ -306,6 +316,8 @@ for(const entry of manifest.cases)test(entry.path+': publication fixes only Git 
                           restoreApprovedCatalogoWebCallbackDelta(reviewed))))))))))
       : entry.path==='tests/cursor-residual-independent.test.js'
         ? restoreApprovedLocalEstoqueResidualDelta(reviewed)
+        : entry.path==='server/tests/infra-consolidacao.test.ts'
+          ? restoreApprovedMigration046Catalogue(reviewed,entry.path)
         : reviewed;
  const restored=prior.replaceAll(base+':','HEAD:').replaceAll(JSON.stringify(base),"'HEAD'");
  assert.equal(crypto.createHash('sha256').update(restored).digest('hex'),entry.beforeSha256);

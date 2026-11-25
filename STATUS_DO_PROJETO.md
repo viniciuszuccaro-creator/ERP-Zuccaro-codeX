@@ -1,3 +1,9 @@
+## CPA3: suite Linux verde com a candidata de Marcas (2026-11-25)
+
+Suite Ubuntu: 3.041/3.041 com sandbox do Chrome sob conta sem privilegios. Os tres timeouts vinham da recusa do Chrome sob root. Duas provas historicas agora reconhecem somente os deltas 045/046 versionados, preservando comparacao do catalogo e hash ancestral. Focados 39/39, lint, tipos e builds aprovados na candidata.
+
+Backup 54adc8e2: 26 tabelas conferidas com a HML em leitura. Marcas 08f57c50 e delta 5b5a7bdc seguem sem aplicacao. Proximo: validar a CI do SHA publicado e solicitar gate especifico de escrita, sem deploy nesta etapa.
+
 ## CPA3: perfil real de Marcas e preflight parcial do backup (2026-11-25)
 
 Leitura HML com papel da API: um perfil de Grupo autorizado com Cadastros/marca visualizar, criar, inativar, sem wildcard. Backup 54adc8e2 com SHA conferido e recibo restauravel. Comparacao restrita: Grupo, Empresas, 17.472 Clientes e sequencias iguais; perfil com visibilidade parcial (1 de 2 do backup), marcas sem SELECT (42501). Nao interpretar visibilidade como alteracao ou validar recuperacao integral. Recibo privado 7330d411.

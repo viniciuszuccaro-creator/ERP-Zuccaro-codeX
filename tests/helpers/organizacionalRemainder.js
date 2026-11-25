@@ -673,6 +673,14 @@ const entries = {
 export function organizacionalRemainder(file, source) {
  const entry=entries[file]; if(!entry) return source;
  let result=source.replace(/\r\n/g,'\n');
+ if(file==='tests/legado-importador-consolidacao.test.js') {
+  const approved="  // Include the reviewed 046 migration, while still rejecting any other catalogue change.\n  assert.equal(execFileSync('git',['diff','7d69e43ab','--','server/migrations'],{encoding:'utf8'}),'');\n";
+  const prior=entry.hunks.at(-1).after.match(/^  \/\/ Baseline[^\n]+\n[^\n]+\n/m)[0];
+  if(result.includes(approved)){
+   assert.equal(result.split(approved).length,2);
+   result=result.replace(approved,prior);
+  }
+ }
  if(createHash('sha256').update(result).digest('hex')===entry.baseline) return result;
  for(const {before,after} of entry.hunks) {
   assert.equal(result.split(after).length,2,`Exact organizational hunk: ${file}: ${after.slice(0,80)}`);
