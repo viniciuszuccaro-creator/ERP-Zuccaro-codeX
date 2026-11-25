@@ -1,3 +1,9 @@
+## CPA3: isolamento de Marca nos dois sentidos entre Empresas (2026-11-25)
+
+Clone 54adc8e2 e manifesto exato 08f57c50: leitura e inativacao por ID de outra Empresa negadas nos dois sentidos (quatro negativas) pelo servico e papel restrito. Seis inseridas/reaproveitadas, cinco reversoes com UPDATE(ativo), uma edicao preservada e 17.472 clientes intactos. Recibo privado 3a503d8c. Clone removido; API/web HML a305a143, sem carga ou deploy.
+
+Proximo gate: revisar delta final, validar candidata e obter aprovacao especifica. Manifesto segue nao executavel. WIP e operacional preservados.
+
 ## CPA3: bytes exatos do manifesto Marca ensaiados (2026-11-25)
 
 Manifesto privado 08f57c50 e SHA/tamanho das duas partes por Empresa conferidos; adaptador recebeu bytes originais sem reserializar. Clone 54adc8e2: seis criadas com codigo literal, seis replays, perda de recibo recuperada, cinco reversoes com UPDATE(ativo) e uma edicao posterior preservada. Codigos concorrentes 000007/000008, 17.472 clientes preservados. Recibo privado 2ab5a306. Clone removido.
