@@ -1,3 +1,9 @@
+## CPA3: inativacao de Marca com UPDATE(ativo) e auditoria de codigos Cliente (2026-11-25)
+
+WIP restringe softDelete no repositorio Marca ao campo ativo, preservando filtros Grupo/Empresa e auditoria do servico. Teste focado verde com UPDATE(ativo) e rollback. Clone 54adc8e2 com repositorio transpilado local e adaptador: seis codigos literais, replay seis, cinco reversoes, uma edicao posterior preservada, novos 000007/000008. Nenhum UPDATE cadastral amplo necessario no clone. Recibo privado 8196b258. Sem publicar codigo ou gravar HML; falta suite ampla e gate do pacote.
+
+Auditoria READ ONLY do papel HML: 17.472 Clientes (1.500 inativos) conservam o numero original, mas nenhum codigo coincide literalmente: exibido com zeros a esquerda, largura 6, codigo_legado de ate 5. Maior exibido numerico 24782, contador Cliente 24783, sem reserva. Recibo e0a023f6; nao alterar codigos historicos sem validar consumidores/formato. Fornecedores 4905483e segue sem mapa oficial e gate. Sem novo aceite de Cadastros/Comercial ou alteracao operacional.
+
 ## CPA3: codigos literais e sequencia concorrente em Fornecedores e Marcas (2026-11-25)
 
 Fornecedores no clone 54adc8e2: 789/789 codigos exibidos identicos ao codigo legado, maximo 1065. Duas reservas concorrentes pelo gerador canonico produziram 001066 e 001067. Replay 789, duas negativas e uma reversao; 17.472 clientes preservados. Recibo privado 28285d0e. Nao altera gate do manifesto 4905483e nem comprova o mapa oficial do Grupo.
