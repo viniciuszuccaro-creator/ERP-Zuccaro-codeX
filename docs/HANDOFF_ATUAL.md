@@ -1,3 +1,9 @@
+## CPA3: seis Marcas ensaiadas por SQL em clone restrito (2026-11-25)
+
+Backup 54adc8e2 restaurado em clone sem rede e sem volume HML. Primeiro ensaio detectou ausencia de codigo; no novo clone aplicado apenas recorte Marca da 038, grants seletivos e policies por Grupo e empresas mapeadas. Seis chaves reais do preflight: commit 3, retomada 3 por identidade deterministica, replay 0; seis codigos distintos, zero leitura em outro Grupo, zero ativos apos reversao por inativacao. Clone removido. Prova SQL nao valida rota/servico, reserva canonica, auditoria ou preservacao de edicoes posteriores; nao liberar carga HML por este ensaio.
+
+Precos: seis cabecalhos e 5.162 itens nativos reconferidos por tamanho e SHA-256 contra recibos. O acervo consultado nao trouxe mapa autoritativo classe/material para ID do Produto, escopo empresarial ou vigencia. Dos 1.064 candidatos, zero liberados; sem manifesto de escrita. Sem deploy, escrita HML ou alteracao operacional.
+
 ## CPA3: seis arquivos verificados, ACL de Marcas e origem de Precos (2026-11-25)
 
 Leitura integral dos seis MDF/LDF de EMP03, Auditoria e EXETPS: SHA-256 iguais entre HD e VPS; 14.965.590.016 bytes no inventario. Cinco manifestos sem reutilizacao direta, nenhum mount ou arquivo aberto na checagem. EXETPS ainda tem pins no controlador de leitura; nenhuma retirada nesta rodada.
