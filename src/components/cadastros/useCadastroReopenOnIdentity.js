@@ -44,7 +44,7 @@ export default function useCadastroReopenOnIdentity(record, {
 
   const [boundId, setBoundId] = useState(() => record?.id || null);
   const propId = record?.id || null;
-  const identityMismatch = Boolean(boundId && propId && String(boundId) !== String(propId));
+  const identityMismatch = String(boundId ?? '') !== String(propId ?? '');
 
   useEffect(() => {
     const nextId = record?.id || null;

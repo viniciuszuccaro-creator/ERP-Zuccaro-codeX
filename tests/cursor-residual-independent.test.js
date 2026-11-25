@@ -4,7 +4,8 @@ import fs from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import ts from 'typescript';
 const parse = (file, source) => ts.createSourceFile(file, source.replace(/\r\n/g, '\n'), ts.ScriptTarget.Latest, true, ts.ScriptKind.JSX);
-const names = ['CentroOperacao', 'LocalEstoque', 'TabelaFiscal', 'ParametroOrigemPedido', 'ConfiguracaoNFe'];
+const names = ['CentroOperacao', 'TabelaFiscal', 'ParametroOrigemPedido', 'ConfiguracaoNFe'];
+// LocalEstoque graduou para useCadastroReopenOnIdentity — cobertos no teste seguinte (não no pin RecordState).
 function find(tree, predicate) {
   const found = [];
   function visit(node) { if (predicate(node)) found.push(node); ts.forEachChild(node, visit); }
@@ -27,6 +28,17 @@ for (const name of names) test(`${name}: reopen keeps complete default values, h
     && ['value', 'onChange', 'onValueChange', 'onCheckedChange', 'onClick', 'disabled', 'data-permission', 'data-action'].includes(node.name.getText(tree)))
     .map(node => node.getText(tree));
   assert.deepEqual(controls(after), controls(before));
+});
+
+test('LocalEstoque graduou do pin RecordState para useCadastroReopenOnIdentity com localBoundId', () => {
+  const file = 'src/components/cadastros/LocalEstoqueForm.jsx';
+  const source = fs.readFileSync(file, 'utf8');
+  assert.equal(names.includes('LocalEstoque'), false);
+  assert.match(source, /useCadastroReopenOnIdentity/);
+  assert.match(source, /localBoundId/);
+  assert.match(source, /estrutura_fisica/);
+  assert.doesNotMatch(source, /useCadastroRecordState/);
+  assert.doesNotMatch(source, /prevUpdatedRef/);
 });
 
 for (const [name, variable, primary] of [['TabelaFiscal', 'tabela', 'tabelaProp'], ['ParametroOrigemPedido', 'parametro', 'parametroProp'], ['ConfiguracaoNFe', 'config', 'configProp']]) {

@@ -1,4 +1,3 @@
-import useCadastroRecordState from './useCadastroRecordState';
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,39 +8,83 @@ import { Textarea } from '@/components/ui/textarea';
 import { Users } from 'lucide-react';
 import usePermissions from '@/components/lib/usePermissions';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
-import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
+import CadastroCodigoRegistroField from '@/components/cadastros/CadastroCodigoRegistroField';
+import useCadastroReopenOnIdentity from '@/components/cadastros/useCadastroReopenOnIdentity';
 
 const sanitizeText = (value, max = 500) => String(value ?? '').replace(/[<>]/g, '').slice(0, max).trim();
 
-export default function SegmentoClienteForm({ segmento, segmentoCliente, item, data, initialData, defaultValues, onSubmit, onSave, onClose, windowMode = false }) {
+const EMPTY_SEGMENTO = {
+  nome_segmento: '',
+  codigo: '',
+  tipo_segmento: 'Comercial',
+  descricao: '',
+  ativo: true,
+  empresa_id: '',
+  group_id: '',
+};
+
+const mapSegmentoClienteToForm = (record, defaults = {}) => {
+  if (!record) {
+    return {
+      ...EMPTY_SEGMENTO,
+      empresa_id: defaults.empresa_id || '',
+      group_id: defaults.group_id || '',
+    };
+  }
+  return {
+    ...EMPTY_SEGMENTO,
+    ...record,
+    nome_segmento: record.nome_segmento || record.nome || '',
+    descricao: record.descricao == null ? '' : String(record.descricao),
+    ativo: record.ativo !== false,
+  };
+};
+
+/**
+ * Reopen canônico (#353): useCadastroReopenOnIdentity — updated_at|updated_date,
+ * preservação de nome/tipo/descrição, código/ID no boundId.
+ */
+export default function SegmentoClienteForm({
+  segmento, segmentoCliente, item, data, initialData, defaultValues,
+  onSubmit, onSave, onClose, windowMode = false,
+}) {
   const dadosIniciais = item || data || initialData || defaultValues || segmentoCliente || segmento;
   const { canCreate, canEdit } = usePermissions();
   const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || null;
   const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciais?.empresa_id || dadosIniciais?.group_id);
+  const emptyForm = mapSegmentoClienteToForm(null, {
+    empresa_id: empresaAtual?.id || '',
+    group_id: groupId || '',
+  });
+  const [formData, setFormData] = useState(() => mapSegmentoClienteToForm(dadosIniciais, emptyForm));
+
+  const { boundId: segmentoBoundId } = useCadastroReopenOnIdentity(dadosIniciais, {
+    formData,
+    setFormData,
+    emptyForm,
+    mapToForm: (record) => mapSegmentoClienteToForm(record, emptyForm),
+  });
+
   const podeCriar = canCreate('Cadastros', 'SegmentoCliente') || canCreate('Comercial', 'SegmentoCliente') || canCreate('Cadastros', null);
   const podeEditar = canEdit('Cadastros', 'SegmentoCliente') || canEdit('Comercial', 'SegmentoCliente') || canEdit('Cadastros', null);
-  const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useCadastroRecordState(dadosIniciais || {
-    nome_segmento: '',
-    tipo_segmento: 'Comercial',
-    ativo: true
-  }, JSON.stringify([dadosIniciais?.id ?? null, dadosIniciais?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]));
+  const podeSalvar = segmentoBoundId ? podeEditar : podeCriar;
 
   const buildPayload = () => ({
     ...formData,
+    ...(segmentoBoundId ? { id: segmentoBoundId } : {}),
     nome_segmento: sanitizeText(formData.nome_segmento, 180),
     nome: sanitizeText(formData.nome_segmento, 180),
     tipo_segmento: sanitizeText(formData.tipo_segmento, 80),
     descricao: sanitizeText(formData.descricao, 1000),
     group_id: groupId || formData.group_id,
-    empresa_id: contexto === 'empresa' ? empresaAtual?.id : formData.empresa_id
+    empresa_id: contexto === 'empresa' ? empresaAtual?.id : formData.empresa_id,
   });
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!podeSalvar) {
-      alert(dadosIniciais?.id ? 'Sem permissao para editar segmento de cliente.' : 'Sem permissao para criar segmento de cliente.');
+      alert(segmentoBoundId ? 'Sem permissao para editar segmento de cliente.' : 'Sem permissao para criar segmento de cliente.');
       return;
     }
     if (!contextoValido) {
@@ -66,8 +109,8 @@ export default function SegmentoClienteForm({ segmento, segmentoCliente, item, d
   const content = (
     <form onSubmit={handleSubmit} className="space-y-4 p-4">
       <CadastroCodigoRegistroField
-        hasId={Boolean(dadosIniciais?.id)}
-        entityId={dadosIniciais?.id}
+        hasId={Boolean(segmentoBoundId)}
+        entityId={segmentoBoundId}
         value={formData.codigo}
         action="codigo-registro-segmento-cliente"
       />
@@ -116,7 +159,7 @@ export default function SegmentoClienteForm({ segmento, segmentoCliente, item, d
         />
       </div>
 
-      <div className="flex items-center justify-between p-3 border rounded bg-slate-50">
+      <div className="flex items-center justify-between p-3 border border-sky-100 rounded bg-sky-50/50">
         <Label className="font-semibold">Segmento Ativo</Label>
         <Switch
           checked={formData.ativo}
@@ -128,19 +171,26 @@ export default function SegmentoClienteForm({ segmento, segmentoCliente, item, d
         />
       </div>
 
-      <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700" disabled={!podeSalvar} data-permission="Cadastros.SegmentoCliente.salvar" data-action="Cadastros.SegmentoCliente.salvar" data-sensitive>
-        {dadosIniciais ? 'Atualizar Segmento' : 'Criar Segmento'}
+      <Button
+        type="submit"
+        className="w-full bg-sky-600 hover:bg-sky-700"
+        disabled={!podeSalvar || !contextoValido}
+        data-permission="Cadastros.SegmentoCliente.salvar"
+        data-action="Cadastros.SegmentoCliente.salvar"
+        data-sensitive
+      >
+        {segmentoBoundId ? 'Atualizar Segmento' : 'Criar Segmento'}
       </Button>
     </form>
   );
 
   if (windowMode) {
     return (
-      <div className="w-full h-full flex flex-col">
-        <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-blue-50 to-blue-100">
-          <Users className="w-6 h-6 text-blue-600" />
-          <h2 className="text-lg font-bold text-slate-900">
-            {dadosIniciais ? 'Editar Segmento' : 'Novo Segmento de Cliente'}
+      <div className="w-full h-full flex flex-col bg-sky-50/40">
+        <div className="flex items-center gap-3 p-4 border-b border-sky-200 bg-sky-100/80">
+          <Users className="w-6 h-6 text-sky-600" />
+          <h2 className="text-lg font-bold text-sky-950">
+            {segmentoBoundId ? 'Editar Segmento' : 'Novo Segmento de Cliente'}
           </h2>
         </div>
         <div className="flex-1 overflow-auto">{content}</div>

@@ -17,9 +17,9 @@ import usePermissions from "@/components/lib/usePermissions";
  * Dialogs internos são permitidos quando fazem parte de um fluxo maior
  * Lacuna vs erp-integra-novo / Regra-Mãe: mutações sem RBAC fail-closed.
  */
-export default function GerenciarEnderecosClienteForm({ enderecos = [], onChange, assertScopeCurrent }) {
+export default function GerenciarEnderecosClienteForm({ enderecos = [], onChange, assertScopeCurrent, podeAlterar = undefined }) {
   const { canEdit } = usePermissions();
-  const podeEditar = canEdit("Cadastros", "Cliente") || canEdit("Cadastros", null);
+  const podeEditar = podeAlterar ?? (canEdit("Cadastros", "Cliente") || canEdit("Cadastros", null));
   const assertScope = () => {
     if (typeof assertScopeCurrent !== "function") return;
     assertScopeCurrent();

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,44 +13,77 @@ import { toast } from "sonner";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
+import useCadastroReopenOnIdentity from "@/components/cadastros/useCadastroReopenOnIdentity";
 
+const EMPTY_OPERADOR = {
+  usuario_id: "",
+  usuario_nome: "",
+  colaborador_id: "",
+  codigo_operador: "",
+  nome_caixa: "Caixa Principal",
+  turno_id: "",
+  status_caixa: "Fechado",
+  permissoes_especiais: [],
+  pode_emitir_nfe: false,
+  pode_gerar_boleto: false,
+  pode_fazer_sangria: false,
+  limite_desconto_percentual: 5,
+  limite_valor_venda: 0,
+  observacoes: "",
+  ativo: true,
+  empresa_id: "",
+  group_id: "",
+};
+
+const mapOperadorToForm = (record, defaults = {}) => {
+  if (!record) {
+    return {
+      ...EMPTY_OPERADOR,
+      empresa_id: defaults.empresa_id || "",
+      group_id: defaults.group_id || "",
+    };
+  }
+  return {
+    ...EMPTY_OPERADOR,
+    ...record,
+    permissoes_especiais: Array.isArray(record.permissoes_especiais) ? record.permissoes_especiais : [],
+    limite_desconto_percentual: Number.isFinite(Number(record.limite_desconto_percentual))
+      ? Number(record.limite_desconto_percentual) : 5,
+    limite_valor_venda: Number.isFinite(Number(record.limite_valor_venda))
+      ? Number(record.limite_valor_venda) : 0,
+    pode_emitir_nfe: Boolean(record.pode_emitir_nfe),
+    pode_gerar_boleto: Boolean(record.pode_gerar_boleto),
+    pode_fazer_sangria: Boolean(record.pode_fazer_sangria),
+    ativo: record.ativo !== false,
+  };
+};
+
+/**
+ * Reopen canônico (#353): useCadastroReopenOnIdentity — anti-wipe em troca de
+ * registro/updated_at|updated_date; código/ID vinculados ao boundId.
+ */
 export default function OperadorCaixaForm({ operador, item, data, initialData, defaultValues, onSubmit, onSave, onClose, onCancel, windowMode = false }) {
   const { empresaAtual, grupoAtual, filterInContext, createInContext, updateInContext } = useContextoVisual();
   const { canCreate, canEdit } = usePermissions();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const contextKey = empresaAtual?.id || groupId || "sem-contexto";
   const contextoValido = contextKey !== "sem-contexto";
-  const podeSalvar = operador?.id
+  const dadosIniciais = item || data || initialData || defaultValues || operador;
+  const emptyForm = mapOperadorToForm(null, {
+    empresa_id: empresaAtual?.id || "",
+    group_id: groupId || "",
+  });
+  const [formData, setFormData] = useState(() => mapOperadorToForm(dadosIniciais, emptyForm));
+
+  const { boundId: operadorBoundId } = useCadastroReopenOnIdentity(dadosIniciais, {
+    formData,
+    setFormData,
+    emptyForm,
+    mapToForm: (record) => mapOperadorToForm(record, emptyForm),
+  });
+  const podeSalvar = operadorBoundId
     ? (canEdit("Cadastros", "OperadorCaixa") || canEdit("Financeiro", "Caixa") || canEdit("Cadastros", null))
     : (canCreate("Cadastros", "OperadorCaixa") || canCreate("Financeiro", "Caixa") || canCreate("Cadastros", null));
-  const dadosIniciais = item || data || initialData || defaultValues || operador;
-  const [formData, setFormData] = useState(dadosIniciais || {
-    usuario_id: "",
-    usuario_nome: "",
-    colaborador_id: "",
-    codigo_operador: "",
-    nome_caixa: "Caixa Principal",
-    turno_id: "",
-    status_caixa: "Fechado",
-    permissoes_especiais: [],
-    pode_emitir_nfe: false,
-    pode_gerar_boleto: false,
-    pode_fazer_sangria: false,
-    limite_desconto_percentual: 5,
-    limite_valor_venda: 0,
-    observacoes: "",
-    ativo: true,
-    empresa_id: empresaAtual?.id || "",
-    group_id: groupId || ""
-  });
-
-  const prevIdRef = React.useRef(dadosIniciais?.id);
-  useEffect(() => {
-    if (dadosIniciais?.id && dadosIniciais.id !== prevIdRef.current) {
-      prevIdRef.current = dadosIniciais.id;
-      setFormData({ ...dadosIniciais });
-    }
-  }, [dadosIniciais?.id]);
 
   const { data: colaboradores = [] } = useQuery({
     queryKey: ['colaboradores', contextKey],
@@ -70,8 +103,6 @@ export default function OperadorCaixaForm({ operador, item, data, initialData, d
     enabled: contextoValido,
   });
 
-  // prevIdRef já cobre a sincronização acima
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     // Injeta 'nome' para compatibilidade com o Visualizador Universal
@@ -85,19 +116,21 @@ export default function OperadorCaixaForm({ operador, item, data, initialData, d
     }
     const payload = {
       ...formData,
+      ...(operadorBoundId ? { id: operadorBoundId } : {}),
       nome: formData.nome_caixa || formData.usuario_nome || '',
+      permissoes_especiais: Array.isArray(formData.permissoes_especiais) ? formData.permissoes_especiais : [],
       ...(empresaAtual?.id && !formData.empresa_id ? { empresa_id: empresaAtual.id } : {}),
       ...(groupId && !formData.group_id ? { group_id: groupId } : {})
     };
     try {
-      if (operador?.id) {
-        await updateInContext('OperadorCaixa', operador.id, payload);
-        toast.success("✅ Operador atualizado!");
+      if (operadorBoundId) {
+        await updateInContext('OperadorCaixa', operadorBoundId, payload);
+        toast.success("Operador atualizado!");
       } else {
         await createInContext('OperadorCaixa', payload);
-        toast.success("✅ Operador criado!");
+        toast.success("Operador criado!");
       }
-      onSubmit?.();
+      onSubmit?.(payload);
     } catch (error) {
       toast.error("Erro: " + error.message);
     }
@@ -136,15 +169,15 @@ export default function OperadorCaixaForm({ operador, item, data, initialData, d
       <form onSubmit={handleSubmit} className="space-y-6">
       <CadastroCodigoRegistroField
         idOnly
-        hasId={Boolean(dadosIniciais?.id)}
-        entityId={dadosIniciais?.id}
+        hasId={Boolean(operadorBoundId)}
+        entityId={operadorBoundId}
         action="id-tecnico-operador-caixa"
       />
         <Card>
-          <CardHeader className="bg-gradient-to-r from-emerald-50 to-green-50 border-b">
+          <CardHeader className="bg-gradient-to-r from-sky-50 to-blue-50 border-b">
             <CardTitle className="flex items-center gap-2">
-              <Wallet className="w-5 h-5 text-emerald-600" />
-              {operador ? 'Editar' : 'Novo'} Operador de Caixa
+              <Wallet className="w-5 h-5 text-sky-600" />
+              {operadorBoundId ? 'Editar' : 'Novo'} Operador de Caixa
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6 space-y-4">
@@ -328,7 +361,7 @@ export default function OperadorCaixaForm({ operador, item, data, initialData, d
             <X className="w-4 h-4 mr-2" />
             Cancelar
           </Button>
-          <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700" disabled={!contextoValido || !podeSalvar}>
+          <Button type="submit" className="bg-sky-600 hover:bg-sky-700" disabled={!contextoValido || !podeSalvar}>
             <Save className="w-4 h-4 mr-2" />
             Salvar Operador
           </Button>

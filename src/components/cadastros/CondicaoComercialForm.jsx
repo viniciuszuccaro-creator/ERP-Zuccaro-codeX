@@ -8,42 +8,84 @@ import { Textarea } from '@/components/ui/textarea';
 import { DollarSign } from 'lucide-react';
 import usePermissions from '@/components/lib/usePermissions';
 import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
+import useCadastroReopenOnIdentity from "@/components/cadastros/useCadastroReopenOnIdentity";
 
-export default function CondicaoComercialForm({ condicao, condicaoComercial, onSubmit, windowMode = false }) {
-  const dadosIniciais = condicaoComercial || condicao;
+const EMPTY_CONDICAO = {
+  nome_condicao: '',
+  tipo_condicao: 'Pagamento',
+  forma_pagamento: 'À Vista',
+  numero_parcelas: 1,
+  intervalo_parcelas_dias: 30,
+  desconto_percentual: 0,
+  tipo_frete: 'CIF',
+  descricao: '',
+  ativo: true,
+};
+
+const mapCondicaoToForm = (record) => {
+  if (!record) return { ...EMPTY_CONDICAO };
+  return {
+    ...EMPTY_CONDICAO,
+    ...record,
+    nome_condicao: record.nome_condicao || record.nome || '',
+    numero_parcelas: Number.isFinite(Number(record.numero_parcelas)) ? Number(record.numero_parcelas) : 1,
+    intervalo_parcelas_dias: Number.isFinite(Number(record.intervalo_parcelas_dias))
+      ? Number(record.intervalo_parcelas_dias) : 30,
+    desconto_percentual: Number.isFinite(Number(record.desconto_percentual))
+      ? Number(record.desconto_percentual) : 0,
+    ativo: record.ativo !== false,
+  };
+};
+
+/**
+ * Reopen canônico: useCadastroReopenOnIdentity (updated_at ?? updated_date).
+ * ≠ CondicaoPagamento dos leitores de Orçamento (reserva Codespace).
+ */
+export default function CondicaoComercialForm({
+  condicao,
+  condicaoComercial,
+  item,
+  data,
+  initialData,
+  defaultValues,
+  onSubmit,
+  windowMode = false,
+}) {
+  const dadosIniciais = item || data || initialData || defaultValues || condicaoComercial || condicao;
   const { canCreate, canEdit } = usePermissions();
   const podeCriar = canCreate("Cadastros", "CondicaoComercial") || canCreate("Financeiro", "CondicaoComercial") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "CondicaoComercial") || canEdit("Financeiro", "CondicaoComercial") || canEdit("Cadastros", null);
-  const [formData, setFormData] = useState(dadosIniciais || {
-    nome_condicao: '',
-    tipo_condicao: 'Pagamento',
-    forma_pagamento: 'À Vista',
-    numero_parcelas: 1,
-    intervalo_parcelas_dias: 30,
-    desconto_percentual: 0,
-    tipo_frete: 'CIF',
-    ativo: true
+  const [formData, setFormData] = useState(() => mapCondicaoToForm(dadosIniciais));
+
+  const { boundId: condicaoBoundId } = useCadastroReopenOnIdentity(dadosIniciais, {
+    formData,
+    setFormData,
+    emptyForm: EMPTY_CONDICAO,
+    mapToForm: mapCondicaoToForm,
   });
+  const podeSalvar = condicaoBoundId ? podeEditar : podeCriar;
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (dadosIniciais?.id && !podeEditar) {
-      alert("Sem permissao para editar condicoes comerciais.");
+    if (!podeSalvar) {
+      alert(condicaoBoundId
+        ? "Sem permissao para editar condicoes comerciais."
+        : "Sem permissao para criar condicoes comerciais.");
       return;
     }
-    if (!dadosIniciais?.id && !podeCriar) {
-      alert("Sem permissao para criar condicoes comerciais.");
-      return;
-    }
-    onSubmit({ ...formData, nome: formData.nome_condicao || formData.nome || '' });
+    onSubmit({
+      ...formData,
+      ...(condicaoBoundId ? { id: condicaoBoundId } : {}),
+      nome: formData.nome_condicao || formData.nome || '',
+    });
   };
 
   const content = (
     <form onSubmit={handleSubmit} className="space-y-4 p-4">
       <CadastroCodigoRegistroField
         idOnly
-        hasId={Boolean(dadosIniciais?.id)}
-        entityId={dadosIniciais?.id}
+        hasId={Boolean(condicaoBoundId)}
+        entityId={condicaoBoundId}
         action="id-tecnico-condicao-comercial"
       />
       <div>
@@ -146,7 +188,7 @@ export default function CondicaoComercialForm({ condicao, condicaoComercial, onS
         />
       </div>
 
-      <div className="flex items-center justify-between p-3 border rounded bg-slate-50">
+      <div className="flex items-center justify-between p-3 border rounded bg-sky-50">
         <Label className="font-semibold">Condição Ativa</Label>
         <Switch
           checked={formData.ativo}
@@ -156,12 +198,12 @@ export default function CondicaoComercialForm({ condicao, condicaoComercial, onS
 
       <Button
         type="submit"
-        className="w-full bg-green-600 hover:bg-green-700"
-        disabled={dadosIniciais?.id ? !podeEditar : !podeCriar}
+        className="w-full bg-sky-600 hover:bg-sky-700"
+        disabled={!podeSalvar}
         data-permission="Cadastros.CondicaoComercial.salvar"
         data-sensitive
       >
-        {dadosIniciais ? 'Atualizar Condição' : 'Criar Condição Comercial'}
+        {condicaoBoundId ? 'Atualizar Condição' : 'Criar Condição Comercial'}
       </Button>
     </form>
   );
@@ -169,10 +211,10 @@ export default function CondicaoComercialForm({ condicao, condicaoComercial, onS
   if (windowMode) {
     return (
       <div className="w-full h-full flex flex-col">
-        <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-green-50 to-green-100">
-          <DollarSign className="w-6 h-6 text-green-600" />
+        <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-sky-50 to-blue-50">
+          <DollarSign className="w-6 h-6 text-sky-600" />
           <h2 className="text-lg font-bold text-slate-900">
-            {dadosIniciais ? 'Editar Condição' : 'Nova Condição Comercial'}
+            {condicaoBoundId ? 'Editar Condição' : 'Nova Condição Comercial'}
           </h2>
         </div>
         <div className="flex-1 overflow-auto">{content}</div>

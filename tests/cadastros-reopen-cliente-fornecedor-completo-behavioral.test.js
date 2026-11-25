@@ -457,7 +457,7 @@ test('CadastroClienteCompleto: updated_date externo com rascunho sujo exige conf
   assert.equal(h.confirms.length, 1);
 });
 
-test('CadastroClienteCompleto: troca cancelada — salvar usa boundId A, não id B das props', async () => {
+test('CadastroClienteCompleto: troca cancelada bloqueia salvamento até realinhar seleção', async () => {
   const h = await mountCompleto('src/components/cadastros/CadastroClienteCompleto.jsx', {
     propName: 'cliente',
     initial: clienteA,
@@ -467,6 +467,9 @@ test('CadastroClienteCompleto: troca cancelada — salvar usa boundId A, não id
   h.render({ cliente: clienteB, item: clienteB });
   h.render();
   assert.equal(h.getNome(), 'Rascunho A');
+  await h.save();
+  assert.equal(h.updates.length, 0);
+  h.render({ cliente: clienteA, item: clienteA });
   await h.save();
   assert.equal(h.updates.length, 1);
   assert.equal(h.updates[0].entity, 'Cliente');

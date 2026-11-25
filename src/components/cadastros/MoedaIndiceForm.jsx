@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,39 +8,70 @@ import { TrendingUp } from 'lucide-react';
 import usePermissions from '@/components/lib/usePermissions';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
+import useCadastroReopenOnIdentity from "@/components/cadastros/useCadastroReopenOnIdentity";
 
+const EMPTY_MOEDA = {
+  codigo: '',
+  nome: '',
+  tipo: 'Moeda',
+  cotacao_atual: 1,
+  ativo: true,
+  empresa_id: '',
+  group_id: '',
+};
+
+const mapMoedaIndiceToForm = (record, defaults = {}) => {
+  if (!record) {
+    return {
+      ...EMPTY_MOEDA,
+      empresa_id: defaults.empresa_id || '',
+      group_id: defaults.group_id || '',
+    };
+  }
+  return {
+    ...EMPTY_MOEDA,
+    ...record,
+    cotacao_atual: Number.isFinite(Number(record.cotacao_atual))
+      ? Number(record.cotacao_atual)
+      : 1,
+    ativo: record.ativo !== false,
+  };
+};
+
+/**
+ * Reopen canônico (#353): useCadastroReopenOnIdentity — anti-wipe em troca de
+ * registro/updated_at|updated_date; código/ID vinculados ao boundId.
+ */
 export default function MoedaIndiceForm({ moeda, moedaIndice, item, data, onSubmit, onSave, onClose, windowMode = false }) {
   const dadosIniciais = item || data || moedaIndice || moeda;
   const { canCreate, canEdit } = usePermissions();
   const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || null;
   const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciais?.empresa_id || dadosIniciais?.group_id);
-  const podeCriar = canCreate("Cadastros", "MoedaIndice") || canCreate("Financeiro", "MoedaIndice") || canCreate("Cadastros", null);
-  const podeEditar = canEdit("Cadastros", "MoedaIndice") || canEdit("Financeiro", "MoedaIndice") || canEdit("Cadastros", null);
-  const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState(dadosIniciais || {
-    codigo: '',
-    nome: '',
-    tipo: 'Moeda',
-    cotacao_atual: 1,
-    ativo: true
+  const emptyForm = mapMoedaIndiceToForm(null, {
+    empresa_id: empresaAtual?.id || '',
+    group_id: groupId || '',
+  });
+  const [formData, setFormData] = useState(() => mapMoedaIndiceToForm(dadosIniciais, emptyForm));
+
+  const { boundId: moedaBoundId } = useCadastroReopenOnIdentity(dadosIniciais, {
+    formData,
+    setFormData,
+    emptyForm,
+    mapToForm: (record) => mapMoedaIndiceToForm(record, emptyForm),
   });
 
-  const prevIdRef = React.useRef(dadosIniciais?.id);
-  useEffect(() => {
-    if (dadosIniciais?.id && dadosIniciais.id !== prevIdRef.current) {
-      prevIdRef.current = dadosIniciais.id;
-      setFormData({ ...dadosIniciais });
-    }
-  }, [dadosIniciais?.id]);
+  const podeCriar = canCreate("Cadastros", "MoedaIndice") || canCreate("Financeiro", "MoedaIndice") || canCreate("Cadastros", null);
+  const podeEditar = canEdit("Cadastros", "MoedaIndice") || canEdit("Financeiro", "MoedaIndice") || canEdit("Cadastros", null);
+  const podeSalvar = moedaBoundId ? podeEditar : podeCriar;
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (dadosIniciais?.id && !podeEditar) {
+    if (moedaBoundId && !podeEditar) {
       alert("Sem permissao para editar moedas e indices.");
       return;
     }
-    if (!dadosIniciais?.id && !podeCriar) {
+    if (!moedaBoundId && !podeCriar) {
       alert("Sem permissao para criar moedas e indices.");
       return;
     }
@@ -50,6 +81,7 @@ export default function MoedaIndiceForm({ moeda, moedaIndice, item, data, onSubm
     }
     const payload = {
       ...formData,
+      ...(moedaBoundId ? { id: moedaBoundId } : {}),
       group_id: groupId || formData.group_id,
       empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id,
     };
@@ -65,8 +97,8 @@ export default function MoedaIndiceForm({ moeda, moedaIndice, item, data, onSubm
     <form onSubmit={handleSubmit} className="space-y-4 p-4">
       <CadastroCodigoRegistroField
         idOnly
-        hasId={Boolean(dadosIniciais?.id)}
-        entityId={dadosIniciais?.id}
+        hasId={Boolean(moedaBoundId)}
+        entityId={moedaBoundId}
         action="id-tecnico-moeda-indice"
       />
       <div className="grid grid-cols-2 gap-4">
@@ -139,13 +171,13 @@ export default function MoedaIndiceForm({ moeda, moedaIndice, item, data, onSubm
 
       <Button
         type="submit"
-        className="w-full bg-emerald-600 hover:bg-emerald-700"
+        className="w-full bg-sky-600 hover:bg-sky-700"
         disabled={!contextoValido || !podeSalvar}
         data-permission="Cadastros.MoedaIndice.salvar"
         data-action="salvar-moeda-indice"
         data-sensitive
       >
-        {dadosIniciais ? 'Atualizar' : 'Criar Moeda/Índice'}
+        {moedaBoundId ? 'Atualizar' : 'Criar Moeda/Índice'}
       </Button>
     </form>
   );
@@ -153,10 +185,10 @@ export default function MoedaIndiceForm({ moeda, moedaIndice, item, data, onSubm
   if (windowMode) {
     return (
       <div className="w-full h-full flex flex-col">
-        <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-emerald-50 to-emerald-100">
-          <TrendingUp className="w-6 h-6 text-emerald-600" />
+        <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-sky-50 to-sky-100">
+          <TrendingUp className="w-6 h-6 text-sky-600" />
           <h2 className="text-lg font-bold text-slate-900">
-            {dadosIniciais ? 'Editar Moeda/Índice' : 'Nova Moeda/Índice'}
+            {moedaBoundId ? 'Editar Moeda/Índice' : 'Nova Moeda/Índice'}
           </h2>
         </div>
         <div className="flex-1 overflow-auto">{content}</div>

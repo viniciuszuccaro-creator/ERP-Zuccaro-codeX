@@ -1,5 +1,11 @@
 ## Estado vigente - matriz restante e preparacao Cliente-only (2026-11-11)
 
+PR #353: reconciliados STATUS/HANDOFF com a base atual, preservando os historicos.
+Cadastros: permissao de criacao no rascunho, bloqueio em troca recusada e
+projecao explicita de contatos sem perda de cargo. Verificacao focada: 63 testes.
+CI da PR: provas historicas reconhecem apenas o delta exato revisado;
+guardas reais exercitadas no teste e helper congelado restaurado. 130 testes focados.
+
 DECISAO COMERCIAL posterior do proprietario: ENDERECO do mestre e FISCAL
 (residencia PF/sede PJ); nao presumir tambem outras finalidades. ENDERECOCOBRANCA
 dispensado da migracao ativa; manter raw/procedencia, nao apagar eventual dado
@@ -3136,6 +3142,430 @@ Previa sintetica ficou PRIVATE e chegou a READY, mas perdeu o processo antes da 
 Proximo passo preciso: identificar o emissor/condicao do SIGTERM sem ampliar permissoes; concluir checks sequenciais e retomar harness sintetico com o mesmo snapshot para criar/editar/reabrir Orcamento e converter/editar/reabrir Pedido. Somente apos gates verdes atualizar recibo, commitar e publicar a candidata. Nao repetir pilotos/transferencias nem provas PG anteriores sem delta.
 
 ### Historico anterior preservado
+
+## CURSOR — CI SUCCESS tip cc7ccb6c7 CatalogoWeb (2026-10-27)
+
+| Campo | Valor |
+|-------|-------|
+| Tip | **`cc7ccb6c7`** (reopen `fb45e367b` + typecheck) |
+| CI | frontend / backend / expedicao **SUCCESS** neste SHA |
+| Pacote | reopen …/RotaPadrao/**CatalogoWeb** + Historico HTTP |
+| Correção | `catalogoBoundId` + `syncFlagsCatalogoProduto`; typecheck flags/nome |
+| Pedido | **@codex review** tip `cc7ccb6c7` — todos os deltas |
+| Parecer Codex | `b4e659af` APROVADO + remainder mestres Pedido |
+| Próximo indep. | ApiExterna / ParametroRoteirizacao / ChatbotCanal |
+| Modalidade | runner `/workspace` |
+| Fora | Orçamento leitores Codespace; merge/deploy/carga |
+
+(2026-10-27 11:12 America/Sao_Paulo)
+
+## CURSOR — CatalogoWeb reopen tip (histórico CI FAIL → SUCCESS) (2026-10-27)
+
+| Campo | Valor |
+|-------|-------|
+| Tip reopen | **`fb45e367b`** frontend FAIL typecheck |
+| Tip fix | **`cc7ccb6c7`** SUCCESS |
+| Modalidade | runner `/workspace` |
+
+(2026-10-27 11:00 America/Sao_Paulo)
+
+## CURSOR — CI SUCCESS tip final 151ae5590 (2026-10-27)
+
+| Campo | Valor |
+|-------|-------|
+| Tip | **`151ae5590`** |
+| CI | frontend / backend / expedicao **SUCCESS** neste SHA |
+| Pacote | reopen …/RotaPadrao + CodigoField (`5b98cefb2`) + docs |
+| Pedido | **@codex review** tip `151ae5590` — todos os deltas (não tip ancestral) |
+| Parecer Codex | `b4e659af` APROVADO + remainder mestres Pedido |
+| Próximo indep. | CatalogoWeb |
+| Modalidade | runner `/workspace` |
+| Fora | Orçamento leitores Codespace; merge/deploy/carga |
+
+(2026-10-27 10:55 America/Sao_Paulo)
+
+## CURSOR — CI SUCCESS tip ccb7bfe3c RotaPadrao+CodigoField (2026-10-27)
+
+| Campo | Valor |
+|-------|-------|
+| Tip | **`ccb7bfe3c`** (código fix `5b98cefb2`; Rota `9460d682a`) |
+| CI | frontend / backend / expedicao **SUCCESS** em `5b98cefb2` e `ccb7bfe3c` |
+| Pacote | reopen …/JobAgendado/**RotaPadrao** + CodigoField attrs `rotaBoundId` |
+| Pedido | supersedido pelo tip `151ae5590` |
+| Modalidade | runner `/workspace` |
+
+(2026-10-27 10:48 America/Sao_Paulo)
+
+## CURSOR — RotaPadrao CodigoField pin fix (histórico CI pendente → SUCCESS) (2026-10-27)
+
+| Campo | Valor |
+|-------|-------|
+| Tip | **`5b98cefb2`** / docs **`ccb7bfe3c`** |
+| CI | **SUCCESS** — ver entrada acima |
+| Causa | remainder CodigoField pinava `dadosIniciais?.id`; form usa `rotaBoundId` |
+| Correção | AUTHORIZED attrs → `rotaBoundId` / `formData.codigo` |
+| Modalidade | runner `/workspace` |
+
+(2026-10-27 10:42 America/Sao_Paulo)
+
+## CURSOR — RotaPadrao reopen tip (CI FAIL frontend 9460d682a) (2026-10-27)
+
+| Campo | Valor |
+|-------|-------|
+| Tip | **`9460d682a`** |
+| CI | frontend **FAIL** (CodigoField attr pin); backend/expedicao SUCCESS |
+| Pacote indep. | **RotaPadrao** — RecordState só `updated_date`; origem/destino/distância; CodigoField |
+| Correção form | `useCadastroReopenOnIdentity` + `rotaBoundId` + map anti-wipe; sky |
+| Fix follow-up | ver entrada acima (AUTHORIZED attrs) |
+| Modalidade | runner `/workspace` |
+
+(2026-10-27 10:35 America/Sao_Paulo)
+
+## CURSOR — CI SUCCESS tip 40f9cb515 / d92659241 JobAgendado (2026-10-27)
+
+| Campo | Valor |
+|-------|-------|
+| Tip código | **`d92659241`** |
+| Tip docs | **`40f9cb515`** |
+| CI | frontend / backend / expedicao **SUCCESS** em ambos |
+| Pacote | reopen …/CentroResultado/**JobAgendado** + Historico HTTP |
+| Pedido | **@codex review** tip `40f9cb515` — todos os deltas |
+| Parecer Codex | `b4e659af` APROVADO + remainder mestres Pedido |
+| Próximo indep. | RotaPadrao |
+| Modalidade | runner `/workspace` |
+| Fora | Orçamento leitores Codespace; merge/deploy/carga |
+
+(2026-10-27 10:33 America/Sao_Paulo)
+
+## CURSOR — JobAgendado reopen tip (histórico CI pendente → SUCCESS) (2026-10-27)
+
+| Campo | Valor |
+|-------|-------|
+| Tip | **`d92659241`** / docs **`40f9cb515`** |
+| CI | **SUCCESS** — ver entrada acima |
+| Pacote indep. | **JobAgendado** — RecordState só `updated_date`; nested `parametros_execucao` |
+| Modalidade | runner `/workspace` |
+
+(2026-10-27 10:28 America/Sao_Paulo)
+
+## CURSOR — CI SUCCESS tip 5081a79c2 CentroResultado (2026-10-27)
+
+| Campo | Valor |
+|-------|-------|
+| Tip | **`5081a79c2`** |
+| CI | frontend / backend / expedicao **SUCCESS** neste SHA |
+| Pacote | reopen …/Filial/**CentroResultado** + Historico HTTP |
+| Pedido | **@codex review** tip `5081a79c2` — todos os deltas |
+| Parecer Codex | `b4e659af` APROVADO + remainder mestres Pedido |
+| Próximo indep. | JobAgendado |
+| Modalidade | runner `/workspace` |
+| Fora | Orçamento leitores Codespace; merge/deploy/carga |
+
+(2026-10-27 10:26 America/Sao_Paulo)
+
+## CURSOR — CentroResultado reopen tip (histórico CI pendente → SUCCESS) (2026-10-27)
+
+| Campo | Valor |
+|-------|-------|
+| Tip | **`5081a79c2`** |
+| CI | **SUCCESS** — ver entrada acima |
+| Pacote indep. | **CentroResultado** — RecordState só `updated_date` + useEffect wipe por id |
+| Modalidade | runner `/workspace` |
+
+(2026-10-27 10:20 America/Sao_Paulo)
+
+## CURSOR — CI SUCCESS tip 0988697f3 Filial (2026-10-27)
+
+| Campo | Valor |
+|-------|-------|
+| Tip | **`0988697f3`** |
+| CI | frontend / backend / expedicao **SUCCESS** neste SHA |
+| Pacote | reopen …/KitProduto/**Filial** + Historico HTTP |
+| Pedido | **@codex review** tip `0988697f3` — todos os deltas |
+| Parecer Codex | `b4e659af` APROVADO + remainder mestres Pedido |
+| Próximo indep. | CentroResultado |
+| Modalidade | runner `/workspace` |
+| Fora | Orçamento leitores Codespace; merge/deploy/carga |
+
+(2026-10-27 10:18 America/Sao_Paulo)
+
+## CURSOR — Filial reopen tip (histórico CI pendente → SUCCESS) (2026-10-27)
+
+| Campo | Valor |
+|-------|-------|
+| Tip | **`0988697f3`** |
+| CI | **SUCCESS** — ver entrada acima |
+| Pacote indep. | **Filial** — RecordState só `updated_date`; CNPJ/IE/matriz_id |
+| Modalidade | runner `/workspace` |
+
+(2026-10-27 10:12 America/Sao_Paulo)
+
+## CURSOR — CI SUCCESS tip d0ba56007 KitProduto (2026-10-27)
+
+| Campo | Valor |
+|-------|-------|
+| Tip | **`d0ba56007`** |
+| CI | frontend / backend / expedicao **SUCCESS** neste SHA |
+| Pacote | reopen …/SegmentoCliente/**KitProduto** + Historico HTTP |
+| Pedido | **@codex review** tip `d0ba56007` — todos os deltas |
+| Parecer Codex | `b4e659af` APROVADO + remainder mestres Pedido |
+| Próximo indep. | Filial (RecordState só `updated_date`; pin callback) |
+| Modalidade | runner `/workspace` |
+| Fora | Orçamento leitores Codespace; merge/deploy/carga |
+
+(2026-10-27 10:10 America/Sao_Paulo)
+
+## CURSOR — KitProduto reopen tip (CI pendente) (2026-10-27)
+
+| Campo | Valor |
+|-------|-------|
+| Tip | **`d0ba56007`** (histórico: era pendente) |
+| CI | **SUCCESS** — ver entrada acima |
+| Pacote indep. | **KitProduto** — RecordState só `updated_date`; nested `itens_kit` |
+| Modalidade | runner `/workspace` |
+
+(2026-10-27 10:05 America/Sao_Paulo)
+
+## CURSOR — CI SUCCESS tip c319b20e3 SegmentoCliente (2026-10-27)
+
+| Campo | Valor |
+|-------|-------|
+| Tip | **`c319b20e3`** |
+| CI | frontend / backend / expedicao **SUCCESS** neste SHA |
+| Pacote | reopen ContatoB2B/Regiao/Operador/Condicao/Moeda/LocalEstoque/Servico/TipoFrete/**SegmentoCliente** + Historico HTTP |
+| Pedido | **@codex review** tip `c319b20e3` — todos os deltas |
+| Parecer Codex | `b4e659af` APROVADO + remainder mestres Pedido |
+| Próximo indep. | KitProduto (RecordState só `updated_date`; pin callback) |
+| Modalidade | runner `/workspace` |
+| Fora | Orçamento leitores Codespace; merge/deploy/carga |
+
+(2026-10-27 09:52 America/Sao_Paulo)
+
+## CURSOR — CI SUCCESS tip 7d9eade5 Servico/TipoFrete (2026-10-27)
+
+| Campo | Valor |
+|-------|-------|
+| Tip | **`7d9eade5`** |
+| CI | frontend / backend / expedicao **SUCCESS** neste SHA |
+| Pacote | ContatoB2B + Regiao REAL + reopen set + Historico + LocalEstoque + Servico/TipoFrete |
+| Pedido | **@codex review** tip `7d9eade5` (comment novo) — todos os deltas |
+| Parecer Codex | `b4e659af` APROVADO + remainder mestres Pedido |
+| Próximo indep. | SegmentoCliente / KitProduto (ainda RecordState só `updated_date`; pin callback) |
+| Fora | Orçamento leitores Codespace; merge/deploy/carga |
+| Modalidade | runner `/workspace` (não Codespace) |
+
+(2026-10-27 09:40 America/Sao_Paulo)
+
+## CURSOR — CI SUCCESS tip dd79932a LocalEstoque (2026-10-27)
+
+| Campo | Valor |
+|-------|-------|
+| Tip | **`dd79932a`** |
+| CI | frontend / backend / expedicao **SUCCESS** neste SHA |
+| Pacote | ContatoB2B pin + Regiao REAL + reopen set + Historico + LocalEstoque |
+| Pedido | **@codex review** tip `dd79932a` (comment 6441861597) — todos os deltas |
+| Parecer Codex | `b4e659af` APROVADO + remainder mestres Pedido |
+| Próximo indep. | Servico/TipoFrete/SegmentoCliente (RecordState só `updated_date`; pin callback) |
+| Fora | Orçamento leitores Codespace; merge/deploy/carga |
+
+(2026-10-27 09:30 America/Sao_Paulo)
+
+## CURSOR — LocalEstoque reopen + tip CI SUCCESS 47553607 (2026-10-27)
+
+| Campo | Valor |
+|-------|-------|
+| CI verde anterior | **`47553607`** frontend/backend/expedicao SUCCESS |
+| Pedido revisão | `@codex review` tip `47553607` (comment 6441681864) |
+| Pacote indep. | **LocalEstoque** — RecordState só `updated_date`; nested `estrutura_fisica` |
+| Correção | `useCadastroReopenOnIdentity` + `localBoundId` + map anti-wipe; sky |
+| Pin residual | graduação + publication reverse (`beforeSha256` `f6265528…` intacto) |
+| Provas | local-estoque behavioral + residual + publication + representante = PASS |
+| Fora | Orçamento leitores Codespace; Codex; merge/deploy/carga |
+
+Pedido: **@codex review** tip HEAD após CI verde deste SHA (inclui LocalEstoque + deltas anteriores).
+
+(2026-10-27 09:25 America/Sao_Paulo)
+
+## CURSOR — parecer Codex b4e659af (somente leitura) (2026-10-27)
+
+| Campo | Valor |
+|-------|-------|
+| SHA Codex | **`b4e659af`** (tip `codex/consolidacao-infra-20261017`; sucessor não há) |
+| Branch Codex | **não editada** |
+| Leitores mestres | `http.comercialMasters.list` + `resolveComercialMasterPages` — IDs canônicos, vínculo empresa_operacao, paginação incompleta → erro explícito |
+| Orçamento | mastersQuery HTTP; CONTEXT_CHANGED/abort; save bloqueado se masters error; sem fallback `filterInContext` |
+| Pedido sessão | `sessionIdentity = sessionToken \|\| readErpHttpSession()?.token`; queryKey inclui sessão; não inventa token |
+| Negativas | 401 sem empresa; CONTEXT_CHANGED pós-troca; abort; search >200; 403 permissão |
+| Rascunho | Dialog/form Orçamento preservado; masters refetch não fecha form; marker sem gravar (recibo Codex) |
+| Remainder | `PedidoCanonicoPanel` masters ainda `filterInContext` — lacuna Codex, não reimplementar aqui |
+| Veredicto | **APROVADO com remainder** mestres Pedido locais |
+
+Tip candidata em CI: **`ad843a74`**. Pedido `@codex review` após verde deste SHA.
+
+(2026-10-27 09:15 America/Sao_Paulo)
+
+## CURSOR — ContatoB2B pin + Regiao mapper REAL (2026-10-27)
+
+| Campo | Valor |
+|-------|-------|
+| HEAD anterior | `5a44609b` — CI FAIL (ContatoB2B ainda no pin RecordState) |
+| Correção pin | ContatoB2B sai de `cursor-callback-record-state` names; graduação + publication reverse (`beforeSha256` `62a49942…` intacto) |
+| Regiao lacuna | harness carrega `mapRegiaoToForm` REAL (AST); contraprova remove merge logistica → perde custo/prazo/expressa |
+| Provas | callback + publication + regiao + contato-b2b + identidade = PASS |
+| CI | tip deste commit — não creditado verde ancestral `d1e1c44b` |
+| Fora | Orçamento leitores Codespace; branch Codex; merge/deploy/carga |
+
+Pedido: **@codex review** tip HEAD após CI verde deste SHA (deltas ContatoB2B+Regiao+reopen).
+
+(2026-10-27 09:15 America/Sao_Paulo)
+
+## CURSOR — CI SUCCESS d1e1c44b + ContatoB2B reopen (2026-10-27)
+
+| Campo | Valor |
+|-------|-------|
+| CI verde | tip **`d1e1c44b`** — frontend/backend/expedicao SUCCESS |
+| Pacote fechado | Regiao/Operador/Condicao/MoedaIndice + Historico HTTP |
+| Próximo indep. | **ContatoB2B** — RecordState só `updated_date` ignorava HTTP `updated_at`; nested prefs |
+| Correção ContatoB2B | `useCadastroReopenOnIdentity` + `contatoBoundId` + map prefs; sky; CANAL chain rebuild |
+| Provas | contato-b2b + consolidacao/publication/counterproof = PASS |
+| Fora | Orçamento leitores; merge/deploy/carga |
+
+Pedido: **@codex review** tip HEAD (CI verde `d1e1c44b` + ContatoB2B).
+
+(2026-10-27 09:00 America/Sao_Paulo)
+
+## CURSOR — CI typecheck HistoricoProdutos Error.code (2026-10-27)
+
+| Campo | Valor |
+|-------|-------|
+| Tip | **`393e75d6`** |
+| HEAD reprovado | `4e0c58eb` / `b21e509d` (frontend typecheck) |
+| Causa | `err.code = ...` em `Error` sem tipagem — TS2339 |
+| Correção | `Object.assign(new Error(...), { code })` + leitura segura no Alert |
+| Provas | `npm run typecheck` PASS; historico 11 PASS |
+| Fora | Orçamento leitores; CANAL; merge/deploy |
+
+Pedido: **@codex review** tip HEAD após CI verde.
+
+(2026-10-27 08:52 America/Sao_Paulo)
+
+## CURSOR — CI4886/4887 + fechamento provas reopen/historico (2026-10-27)
+
+| Campo | Valor |
+|-------|-------|
+| Tip | **`b21e509d`** (pin `4452aed9` + provas) |
+| HEAD reprovado | `fad1f469` (CI FAIL frontend 1/2418) |
+| Causa | Guarda pin ID-only MoedaIndice (`prevIdRef` + proibia reopen) |
+| Correção | Graduação pin MoedaIndice/CondicaoComercial; CANAL intocado |
+| Fechamento | updated_date legado (Moeda/Operador/Condicao); Historico HTTP: link ausente, vazio, ordenação, produto repetido, queryKey empresa |
+| Provas locais | representante + reopen + historico + CANAL = PASS |
+| Fora | Orçamento leitores; merge/deploy/carga |
+
+Pedido: **@codex review** tip HEAD após CI verde (não homologar `fad1f469`).
+
+(2026-10-27 08:45 America/Sao_Paulo)
+
+## CURSOR — MoedaIndice reopen + CANAL chain (2026-10-27)
+
+| Campo | Valor |
+|-------|-------|
+| Tip | **`2cf6f729`** (código `d91d49a8`) |
+| Pai | `b2eeee52` (CANAL Operador/Condicao) |
+| Defeito | MoedaIndice só reagia a troca de `id` — `updated_at` ignorado (reproduzido) |
+| Correção | `useCadastroReopenOnIdentity` + `moedaBoundId` + sky; graduação consolidacao |
+| CANAL | hunks rebuild current→66ff41b1→golden `53ed9f42…` (5 hunks; todo `after` no source atual) |
+| Provas | moeda 4 + consolidacao/publication/counterproof/CANAL = PASS |
+| Fora | Orçamento leitores; merge/deploy/carga |
+
+Pedido: **@codex review** tip deste push (MoedaIndice + remainder + docs).
+
+(2026-10-27 08:35 America/Sao_Paulo)
+
+## CURSOR — CANAL remainder graduação Operador/Condicao (2026-10-27)
+
+| Campo | Valor |
+|-------|-------|
+| Tip | **`b2eeee52`** |
+| Pai tip | `981ebf8b` (CI FAIL: CANAL/publication hash consolidacao) |
+| Causa | Graduação ID-only→boundId em `cursor-identidade-consolidacao` sem hunks reverse no canal |
+| Correção | 3 hunks prepended em `clienteConferenciaHunks` → restaura previous byte-exact → golden `53ed9f42…` |
+| Provas | consolidacao + publication-baseline + channel-counterproof + CANAL integrity + regiao/operador/historico = PASS |
+| Fora | Orçamento leitores Codespace; merge/deploy/carga; sem micro-PR |
+
+Pedido: **@codex review** do delta `b2eeee52` (somente remainder + docs).
+
+(2026-10-27 08:27 America/Sao_Paulo)
+
+## CURSOR — CI fix consolidacao ID-only → boundId (2026-10-27)
+
+Tip anterior `f33633d6` falhou em `cursor-identidade-consolidacao` (esperava `dadosIniciais?.id` em OperadorCaixa). Graduação documentada: OperadorCaixa/CondicaoComercial saem da coorte ID-only golden e passam a assert de boundId + reopen canônico. Sem esconder delta. Orçamento leitores intactos.
+
+(2026-10-27 08:13 America/Sao_Paulo)
+
+## CURSOR — Regiao fechada + Operador/Condicao + Historico HTTP (2026-10-27)
+
+| Campo | Valor |
+|-------|-------|
+| Responsável | Cursor Cloud `/workspace` (runner) |
+| Base tip | **`64d48dea`** (CI SUCCESS prévio `66ff41b1`) |
+| WIP Codespace | leitores Orçamento **intactos** (não editados) |
+| Regiao | provas updated_at/aninhados/boundId/switch/late — 10 PASS; **@codex review** por SHA |
+| Cadastros | `OperadorCaixaForm` + `CondicaoComercialForm` → `useCadastroReopenOnIdentity` |
+| Historico | HTTP canônico via Central360→`pedidos.list(clienteEmpresaId)`; sem facade silenciosa |
+| Dependência Codex | filtro opcional `cliente_id` mestre em GET /pedidos (itens) — documentada |
+| Provas | regiao 10 + operador/condicao + historico + coorte = **35 PASS** |
+| Visual | azul-claro sky nos forms tocados (sem redesign amplo) |
+| Fora | CondicaoPagamento leitores; merge/deploy/carga |
+
+Classificação recuperação:
+- Regiao/Operador/Condicao: **funcionalidade existente com reopen deficiente** (corrigida).
+- Historico HTTP: **escondida/quebrada por fonte** (filterInContext→local); não era ausência de tela.
+- Registros reais: **não** declarados recuperados.
+
+(2026-10-27 08:06 America/Sao_Paulo)
+
+## CURSOR — tip `66ff41b1` CI SUCCESS (Regiao + remarge e916d467) (2026-10-26)
+
+| Campo | Valor |
+|-------|-------|
+| Tip | **`66ff41b1`** |
+| Remarge | `8d0580e1` ← Codex `e916d467` |
+| CI | 6/6 **SUCCESS** (sem falhas) |
+| Parecer | 4/4 APROVADO em `e916d467` |
+| Pacote | RegiaoAtendimento reopen HTTP; leitores Orçamento intactos |
+| Aceite | CI ≠ merge/deploy/carga; WIP Codespace permanece reservado |
+
+(2026-10-26 18:21 America/Sao_Paulo)
+
+## CURSOR — parecer e916d467 + pacote RegiaoAtendimento (2026-10-26)
+
+| Campo | Valor |
+|-------|-------|
+| Responsável | Cursor Cloud `/workspace` (runner) |
+| Remarge tip | **`8d0580e1`** (parents `1d3540ff` + Codex **`e916d467`**) |
+| Branch Codex | **não editada** |
+| WIP Codespace | leitores Orçamento (ClienteEmpresa/Produto/CondicaoPagamento/TabelaPreco) **reservados** — não tocados |
+| Pacote indep. | `RegiaoAtendimentoForm` reopen HTTP `updated_at` + preservação aninhados |
+| Provas | `tests/cursor-regiao-reopen.test.js` **8 PASS / 0 FAIL** |
+| Preservado | P1 CodigoField/contatos/guardas ENCERRADOS; Condicao ID-only pin; sem merge/deploy/carga |
+
+### Parecer por SHA — composição Codex `e916d467` (CI4864/4865)
+
+1. **Marca `updated_at` reopen** — **APROVADO** em `e916d467` (`useCadastroReopenOnIdentity`: `recordVersion = updated_at ?? updated_date`). Contraprova no tip composto: reopen Marca HTTP 2 testes + suite behavioral PASS. Sem defeito reproduzível no código publicado.
+2. **Ausência de `contatos` HTTP** — **APROVADO** em `e916d467` (`CadastroClienteCompleto`: omit quando `undefined`; não fabrica `[]`). Guarda stage48 limita a dois hunks exatos. Adapter/boundary PASS.
+3. **`sessionIdentity` Orçamento** — **APROVADO** em `e916d467` (`OrcamentosTab` transporte usa `sessionIdentity` das guardas). Contraprova `orcamento-component-behavior` PASS. **Reservado:** leitores canônicos dos seletores ainda WIP Codespace — não revisados/alterados aqui.
+4. **Guarda stage48 (dois hunks)** — **APROVADO** em `e916d467` (`clienteContactPresenceRemainder` + contraprovas omissão/repetição/Object.assign/alteração externa; golden hash preservado). Suite `cadastro-query-payload-boundaries` PASS no remarge.
+
+Remarge candidata #353: `8d0580e1` (sem editar branch Codex). Suites dirigidas pós-remarge: 66 PASS (boundaries+contatos+orcamento+reopen behavioral).
+
+### Pacote independente — RegiaoAtendimento (fora reservas)
+
+Defeito reproduzível pré-fix: reopen só observava `updated_date`; HTTP com `updated_at` não reidratava; payload parcial omitindo `logistica`/`comercial` podia wipe aninhados.
+Correção no existente: `mapRegiaoToForm` + versão `updated_at ?? updated_date` + submit ancora `prevIdRef` (boundId). Sem módulo paralelo; sem tocar Orçamento/Condicao/leitores.
+
+Próximo independente (sem esperar leitores): continua matriz — HistóricoProdutos ainda `filterInContext("Pedido")` em HTTP; OperadorCaixa/CondicaoComercialForm sem reopen canônico. Coordenar leitores com Codex quando publicar.
+
+(Atualizado 2026-10-26 18:14 America/Sao_Paulo)
 
 ## Estado vigente - composicao e navegador isolado (2026-10-26)
 

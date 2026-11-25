@@ -41,6 +41,56 @@ const ESTADOS_BRASIL = [
   "RS", "RO", "RR", "SC", "SP", "SE", "TO"
 ];
 
+/** Shape canônico do formulário — evita wipe de aninhados quando HTTP omite chaves. */
+const EMPTY_REGIAO = {
+  nome_regiao: "",
+  codigo_regiao: "",
+  descricao: "",
+  tipo_regiao: "Personalizada",
+  estados_abrangidos: [],
+  cidades_abrangidas: [],
+  cor_identificacao: "#3B82F6",
+  vendedores_ids: [],
+  transportadoras_preferenciais_ids: [],
+  logistica: {
+    prazo_entrega_padrao_dias: 0,
+    custo_frete_base: 0,
+    permite_entrega_expressa: false,
+    prazo_entrega_expressa_dias: 0,
+    acrescimo_frete_expresso_percentual: 0,
+    distancia_centro_distribuicao_km: 0,
+    dificuldade_acesso: "Fácil"
+  },
+  comercial: {
+    meta_vendas_mensal: 0,
+    comissao_extra_percentual: 0,
+    desconto_maximo_permitido_percentual: 0,
+    exige_aprovacao_acima_valor: 0,
+    prioridade_atendimento: "Normal"
+  },
+  ativo: true,
+  observacoes: ""
+};
+
+/** HTTP owns updated_at; retain legacy updated_date without changing draft/identity decisions. */
+const regiaoRecordVersion = (record) => record?.updated_at ?? record?.updated_date;
+
+const mapRegiaoToForm = (record) => {
+  if (!record) return { ...EMPTY_REGIAO, logistica: { ...EMPTY_REGIAO.logistica }, comercial: { ...EMPTY_REGIAO.comercial } };
+  return {
+    ...EMPTY_REGIAO,
+    ...record,
+    estados_abrangidos: Array.isArray(record.estados_abrangidos) ? record.estados_abrangidos : [],
+    cidades_abrangidas: Array.isArray(record.cidades_abrangidas) ? record.cidades_abrangidas : [],
+    vendedores_ids: Array.isArray(record.vendedores_ids) ? record.vendedores_ids : [],
+    transportadoras_preferenciais_ids: Array.isArray(record.transportadoras_preferenciais_ids)
+      ? record.transportadoras_preferenciais_ids
+      : [],
+    logistica: { ...EMPTY_REGIAO.logistica, ...(record.logistica || {}) },
+    comercial: { ...EMPTY_REGIAO.comercial, ...(record.comercial || {}) },
+  };
+};
+
 export default function RegiaoAtendimentoForm({ regiaoId, regiaoAtendimento, item, data, initialData, defaultValues, open, onOpenChange, onSubmit, onSave, onClose, windowMode = false }) {
   const { filterInContext, getInContext, empresaAtual, grupoAtual, contexto } = useContextoVisual();
   const { canCreate, canEdit, canDelete } = usePermissions();
@@ -49,9 +99,10 @@ export default function RegiaoAtendimentoForm({ regiaoId, regiaoAtendimento, ite
   const { isCurrent: isFormScopeCurrent } = useCadastroFormScopeGuard(groupId, empresaAtual?.id);
   const [loadFailed, setLoadFailed] = useState(false);
   const [loading, setLoading] = useState(Boolean(regiaoId && !dadosIniciaisProps));
+  const recordVersion = regiaoRecordVersion(dadosIniciaisProps);
   const prevIdRef = useRef(dadosIniciaisProps?.id || null);
-  const prevUpdatedRef = useRef(dadosIniciaisProps?.updated_date);
-  const baselineRef = useRef(cadastroFormSnapshot(dadosIniciaisProps || {}));
+  const prevUpdatedRef = useRef(recordVersion);
+  const baselineRef = useRef(cadastroFormSnapshot(dadosIniciaisProps ? mapRegiaoToForm(dadosIniciaisProps) : EMPTY_REGIAO));
   const formDataRef = useRef(null);
   const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciaisProps?.empresa_id || dadosIniciaisProps?.group_id);
   const podeCriar = canCreate("Cadastros", "RegiaoAtendimento") || canCreate("Logistica", "RegiaoAtendimento") || canCreate("Cadastros", null);
@@ -60,35 +111,9 @@ export default function RegiaoAtendimentoForm({ regiaoId, regiaoAtendimento, ite
   const requestedId = dadosIniciaisProps?.id || regiaoId || null;
   const loadReady = !loading && !loadFailed && prevIdRef.current === requestedId;
   const podeSalvar = (dadosIniciaisProps?.id || regiaoId ? podeEditar : podeCriar) && loadReady && isFormScopeCurrent();
-  const [formData, setFormData] = useState(dadosIniciaisProps || {
-    nome_regiao: "",
-    codigo_regiao: "",
-    descricao: "",
-    tipo_regiao: "Personalizada",
-    estados_abrangidos: [],
-    cidades_abrangidas: [],
-    cor_identificacao: "#3B82F6",
-    vendedores_ids: [],
-    transportadoras_preferenciais_ids: [],
-    logistica: {
-      prazo_entrega_padrao_dias: 0,
-      custo_frete_base: 0,
-      permite_entrega_expressa: false,
-      prazo_entrega_expressa_dias: 0,
-      acrescimo_frete_expresso_percentual: 0,
-      distancia_centro_distribuicao_km: 0,
-      dificuldade_acesso: "Fácil"
-    },
-    comercial: {
-      meta_vendas_mensal: 0,
-      comissao_extra_percentual: 0,
-      desconto_maximo_permitido_percentual: 0,
-      exige_aprovacao_acima_valor: 0,
-      prioridade_atendimento: "Normal"
-    },
-    ativo: true,
-    observacoes: ""
-  });
+  const [formData, setFormData] = useState(() => (
+    dadosIniciaisProps ? mapRegiaoToForm(dadosIniciaisProps) : mapRegiaoToForm(null)
+  ));
 
   const [novaCidade, setNovaCidade] = useState({ cidade: "", estado: "", cep_inicial: "", cep_final: "" });
   formDataRef.current = formData;
@@ -109,24 +134,27 @@ export default function RegiaoAtendimentoForm({ regiaoId, regiaoAtendimento, ite
     if (!(open || windowMode) || !isFormScopeCurrent()) return;
     let cancelled = false;
     const nextId = dadosIniciaisProps?.id || regiaoId || null;
+    // Prefer HTTP updated_at; keep legacy updated_date for reopen versioning.
+    const version = dadosIniciaisProps?.updated_at ?? dadosIniciaisProps?.updated_date;
     const propsUpdatedChanged = Boolean(
       dadosIniciaisProps?.id
-        && dadosIniciaisProps?.updated_date
-        && dadosIniciaisProps.updated_date !== prevUpdatedRef.current,
+        && version
+        && version !== prevUpdatedRef.current,
     );
     if (dadosIniciaisProps && nextId && (nextId !== prevIdRef.current || propsUpdatedChanged)) {
       const idChanged = nextId !== prevIdRef.current;
+      const mapped = mapRegiaoToForm(dadosIniciaisProps);
       const decision = decideCadastroReopen({
         idChanged,
         updatedChanged: propsUpdatedChanged && !idChanged,
         isDirty: isCadastroFormDirty(formDataRef.current, baselineRef.current),
-        matchesIncoming: cadastroFormMatchesIncoming(formDataRef.current, dadosIniciaisProps),
+        matchesIncoming: cadastroFormMatchesIncoming(formDataRef.current, mapped),
         confirmDiscard: () => window.confirm(CADASTRO_DIRTY_REOPEN_CONFIRM),
         confirmSwitch: () => window.confirm(CADASTRO_DIRTY_SWITCH_CONFIRM),
       });
       if (decision === "acknowledge") {
         if (propsUpdatedChanged && !idChanged) {
-          prevUpdatedRef.current = dadosIniciaisProps.updated_date;
+          prevUpdatedRef.current = version;
         }
         setLoadFailed(false);
         setLoading(false);
@@ -136,11 +164,11 @@ export default function RegiaoAtendimentoForm({ regiaoId, regiaoAtendimento, ite
         return;
       }
       prevIdRef.current = nextId;
-      prevUpdatedRef.current = dadosIniciaisProps.updated_date;
-      baselineRef.current = cadastroFormSnapshot(dadosIniciaisProps);
+      prevUpdatedRef.current = version;
+      baselineRef.current = cadastroFormSnapshot(mapped);
       setLoadFailed(false);
       setLoading(false);
-      setFormData(dadosIniciaisProps);
+      setFormData(mapped);
     } else if (regiaoId && !dadosIniciaisProps && regiaoId !== prevIdRef.current) {
       setLoading(true);
       setLoadFailed(false);
@@ -152,10 +180,11 @@ export default function RegiaoAtendimentoForm({ regiaoId, regiaoAtendimento, ite
             && !window.confirm(CADASTRO_DIRTY_SWITCH_CONFIRM)) {
             return;
           }
+          const mapped = mapRegiaoToForm(regiao);
           prevIdRef.current = regiaoId;
-          prevUpdatedRef.current = regiao.updated_date;
-          baselineRef.current = cadastroFormSnapshot(regiao);
-          setFormData(regiao);
+          prevUpdatedRef.current = regiao?.updated_at ?? regiao?.updated_date;
+          baselineRef.current = cadastroFormSnapshot(mapped);
+          setFormData(mapped);
         } else {
           setLoadFailed(true);
           toast.error('Carga incompleta da regiao. Reabra o cadastro.');
@@ -168,35 +197,7 @@ export default function RegiaoAtendimentoForm({ regiaoId, regiaoAtendimento, ite
         if (!cancelled && isFormScopeCurrent()) setLoading(false);
       });
     } else if (!regiaoId && !dadosIniciaisProps && prevIdRef.current !== null) {
-      const emptyRegiao = {
-        nome_regiao: "",
-        codigo_regiao: "",
-        descricao: "",
-        tipo_regiao: "Personalizada",
-        estados_abrangidos: [],
-        cidades_abrangidas: [],
-        cor_identificacao: "#3B82F6",
-        vendedores_ids: [],
-        transportadoras_preferenciais_ids: [],
-        logistica: {
-          prazo_entrega_padrao_dias: 0,
-          custo_frete_base: 0,
-          permite_entrega_expressa: false,
-          prazo_entrega_expressa_dias: 0,
-          acrescimo_frete_expresso_percentual: 0,
-          distancia_centro_distribuicao_km: 0,
-          dificuldade_acesso: "Fácil"
-        },
-        comercial: {
-          meta_vendas_mensal: 0,
-          comissao_extra_percentual: 0,
-          desconto_maximo_permitido_percentual: 0,
-          exige_aprovacao_acima_valor: 0,
-          prioridade_atendimento: "Normal"
-        },
-        ativo: true,
-        observacoes: ""
-      };
+      const emptyRegiao = mapRegiaoToForm(null);
       prevIdRef.current = null;
       prevUpdatedRef.current = undefined;
       baselineRef.current = cadastroFormSnapshot(emptyRegiao);
@@ -205,10 +206,11 @@ export default function RegiaoAtendimentoForm({ regiaoId, regiaoAtendimento, ite
       setFormData(emptyRegiao);
     }
     return () => { cancelled = true; };
-  }, [regiaoId, dadosIniciaisProps?.id, dadosIniciaisProps?.updated_date, open, windowMode, groupId, empresaAtual?.id]);
+  }, [regiaoId, dadosIniciaisProps?.id, recordVersion, open, windowMode, groupId, empresaAtual?.id]);
 
   const buildPayload = () => ({
     ...formData,
+    ...(prevIdRef.current ? { id: prevIdRef.current } : {}),
     nome_regiao: sanitizeText(formData.nome_regiao, 180),
     nome: sanitizeText(formData.nome_regiao, 180),
     codigo_regiao: sanitizeCode(formData.codigo_regiao, 80),

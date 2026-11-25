@@ -6,12 +6,21 @@ import ts from 'typescript';
 import {iaResponseValidationRemainder} from './helpers/iaResponseValidationRemainder.js';
 import {cadastroCodigoRegistroRemainder} from './helpers/cadastroCodigoRegistroRemainder.js';
 
-const names = ['ApiExterna', 'CatalogoWeb', 'CentroResultado', 'ChatbotCanal', 'ChatbotIntent',
-  'ConfiguracaoIntegracao', 'ConfiguracaoWhatsApp', 'EventoNotificacao', 'Filial', 'GatewayPagamento',
-  'JobAgendado', 'KitProduto', 'ParametroCaixaDiario', 'ParametroConciliacaoBancaria',
-  'ParametroPortalCliente', 'ParametroRecebimentoNFe', 'ParametroRoteirizacao', 'RotaPadrao',
-  'SegmentoCliente', 'Servico', 'TabelaPreco', 'TipoFrete', 'CadastroFiscal', 'ContatoB2B',
+const names = ['ApiExterna', 'ChatbotCanal', 'ChatbotIntent',
+  'ConfiguracaoIntegracao', 'ConfiguracaoWhatsApp', 'EventoNotificacao', 'GatewayPagamento',
+  'ParametroCaixaDiario', 'ParametroConciliacaoBancaria',
+  'ParametroPortalCliente', 'ParametroRecebimentoNFe', 'ParametroRoteirizacao',
+  'TabelaPreco', 'CadastroFiscal',
   'GrupoEmpresarial', 'Usuario', 'ConfiguracaoBoletos', 'Webhook'];
+// ContatoB2B graduou para useCadastroReopenOnIdentity — cobertos no teste seguinte (não no pin RecordState).
+// Servico e TipoFrete graduaram para useCadastroReopenOnIdentity — cobertos nos testes seguintes.
+// SegmentoCliente graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.
+// KitProduto graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.
+// Filial graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.
+// CentroResultado graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.
+// JobAgendado graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.
+// RotaPadrao graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.
+// CatalogoWeb graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.
 const parse = (path, text) => ts.createSourceFile(path, text.replace(/\r\n/g, '\n'), ts.ScriptTarget.Latest, true, ts.ScriptKind.JSX);
 function find(tree, predicate) {
   const found = [];
@@ -74,6 +83,113 @@ for (const name of names) test(`${name}: unchanged save, permission, fields and 
   const fields = tree => find(tree, node => ts.isJsxAttribute(node) && ['value', 'onChange', 'onValueChange', 'onCheckedChange', 'disabled', 'data-permission', 'data-action'].includes(node.name.getText(tree)))
     .map(node => node.getText(tree));
   assert.deepEqual(fields(after), fields(before));
+});
+
+test('ContatoB2B graduou do pin RecordState para useCadastroReopenOnIdentity com contatoBoundId', () => {
+  const file = 'src/components/cadastros/ContatoB2BForm.jsx';
+  const source = fs.readFileSync(file, 'utf8');
+  assert.equal(names.includes('ContatoB2B'), false);
+  assert.match(source, /useCadastroReopenOnIdentity/);
+  assert.match(source, /contatoBoundId/);
+  assert.match(source, /preferencias_comunicacao/);
+  assert.doesNotMatch(source, /useCadastroRecordState/);
+  assert.doesNotMatch(source, /prevUpdatedRef/);
+});
+
+test('Servico graduou do pin RecordState para useCadastroReopenOnIdentity com servicoBoundId', () => {
+  const file = 'src/components/cadastros/ServicoForm.jsx';
+  const source = fs.readFileSync(file, 'utf8');
+  assert.equal(names.includes('Servico'), false);
+  assert.match(source, /useCadastroReopenOnIdentity/);
+  assert.match(source, /servicoBoundId/);
+  assert.doesNotMatch(source, /useCadastroRecordState/);
+  assert.doesNotMatch(source, /prevUpdatedRef/);
+});
+
+test('TipoFrete graduou do pin RecordState para useCadastroReopenOnIdentity com tipoFreteBoundId', () => {
+  const file = 'src/components/cadastros/TipoFreteForm.jsx';
+  const source = fs.readFileSync(file, 'utf8');
+  assert.equal(names.includes('TipoFrete'), false);
+  assert.match(source, /useCadastroReopenOnIdentity/);
+  assert.match(source, /tipoFreteBoundId/);
+  assert.doesNotMatch(source, /useCadastroRecordState/);
+  assert.doesNotMatch(source, /prevUpdatedRef/);
+});
+
+test('SegmentoCliente graduou do pin RecordState para useCadastroReopenOnIdentity com segmentoBoundId', () => {
+  const file = 'src/components/cadastros/SegmentoClienteForm.jsx';
+  const source = fs.readFileSync(file, 'utf8');
+  assert.equal(names.includes('SegmentoCliente'), false);
+  assert.match(source, /useCadastroReopenOnIdentity/);
+  assert.match(source, /segmentoBoundId/);
+  assert.doesNotMatch(source, /useCadastroRecordState/);
+  assert.doesNotMatch(source, /prevUpdatedRef/);
+});
+
+test('KitProduto graduou do pin RecordState para useCadastroReopenOnIdentity com kitBoundId', () => {
+  const file = 'src/components/cadastros/KitProdutoForm.jsx';
+  const source = fs.readFileSync(file, 'utf8');
+  assert.equal(names.includes('KitProduto'), false);
+  assert.match(source, /useCadastroReopenOnIdentity/);
+  assert.match(source, /kitBoundId/);
+  assert.match(source, /itens_kit/);
+  assert.doesNotMatch(source, /useCadastroRecordState/);
+  assert.doesNotMatch(source, /prevUpdatedRef/);
+});
+
+test('Filial graduou do pin RecordState para useCadastroReopenOnIdentity com filialBoundId', () => {
+  const file = 'src/components/cadastros/FilialForm.jsx';
+  const source = fs.readFileSync(file, 'utf8');
+  assert.equal(names.includes('Filial'), false);
+  assert.match(source, /useCadastroReopenOnIdentity/);
+  assert.match(source, /filialBoundId/);
+  assert.match(source, /matriz_id/);
+  assert.doesNotMatch(source, /useCadastroRecordState/);
+  assert.doesNotMatch(source, /prevUpdatedRef/);
+});
+
+test('CentroResultado graduou do pin RecordState para useCadastroReopenOnIdentity com centroBoundId', () => {
+  const file = 'src/components/cadastros/CentroResultadoForm.jsx';
+  const source = fs.readFileSync(file, 'utf8');
+  assert.equal(names.includes('CentroResultado'), false);
+  assert.match(source, /useCadastroReopenOnIdentity/);
+  assert.match(source, /centroBoundId/);
+  assert.match(source, /CadastroCodigoRegistroField/);
+  assert.doesNotMatch(source, /useCadastroRecordState/);
+  assert.doesNotMatch(source, /prevUpdatedRef/);
+});
+
+test('JobAgendado graduou do pin RecordState para useCadastroReopenOnIdentity com jobBoundId', () => {
+  const file = 'src/components/cadastros/JobAgendadoForm.jsx';
+  const source = fs.readFileSync(file, 'utf8');
+  assert.equal(names.includes('JobAgendado'), false);
+  assert.match(source, /useCadastroReopenOnIdentity/);
+  assert.match(source, /jobBoundId/);
+  assert.match(source, /parametros_execucao/);
+  assert.doesNotMatch(source, /useCadastroRecordState/);
+  assert.doesNotMatch(source, /prevUpdatedRef/);
+});
+
+test('RotaPadrao graduou do pin RecordState para useCadastroReopenOnIdentity com rotaBoundId', () => {
+  const file = 'src/components/cadastros/RotaPadraoForm.jsx';
+  const source = fs.readFileSync(file, 'utf8');
+  assert.equal(names.includes('RotaPadrao'), false);
+  assert.match(source, /useCadastroReopenOnIdentity/);
+  assert.match(source, /rotaBoundId/);
+  assert.match(source, /CadastroCodigoRegistroField/);
+  assert.doesNotMatch(source, /useCadastroRecordState/);
+  assert.doesNotMatch(source, /prevUpdatedRef/);
+});
+
+test('CatalogoWeb graduou do pin RecordState para useCadastroReopenOnIdentity com catalogoBoundId', () => {
+  const file = 'src/components/cadastros/CatalogoWebForm.jsx';
+  const source = fs.readFileSync(file, 'utf8');
+  assert.equal(names.includes('CatalogoWeb'), false);
+  assert.match(source, /useCadastroReopenOnIdentity/);
+  assert.match(source, /catalogoBoundId/);
+  assert.match(source, /syncFlagsCatalogoProduto/);
+  assert.doesNotMatch(source, /useCadastroRecordState/);
+  assert.doesNotMatch(source, /prevUpdatedRef/);
 });
 
 test('Produto keeps the complete initializer and HTTP GET contract; props version cannot overwrite a loaded HTTP draft', () => {

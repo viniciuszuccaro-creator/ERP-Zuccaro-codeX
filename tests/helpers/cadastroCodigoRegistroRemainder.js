@@ -34,10 +34,11 @@ const AUTHORIZED = {
   },
   'src/components/cadastros/RotaPadraoForm.jsx': {
     action: 'codigo-registro-rota-padrao',
+    // #353 reopen: RotaPadrao graduou para rotaBoundId; CodigoField ancora na identidade aceita.
     attrs: [
-      'hasId={Boolean(dadosIniciais?.id)}',
-      'entityId={dadosIniciais?.id}',
-      'value={dadosIniciais?.codigo ?? formData.codigo}',
+      'hasId={Boolean(rotaBoundId)}',
+      'entityId={rotaBoundId}',
+      'value={formData.codigo}',
       'action="codigo-registro-rota-padrao"',
     ],
   },

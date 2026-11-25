@@ -61,7 +61,12 @@ test('os quatro formulários próprios usam o guard no envio e descartam respost
   for (const name of ['CadastroClienteCompleto.jsx', 'CadastroFornecedorCompleto.jsx', 'RepresentanteFormCompleto.jsx']) {
     const source = await readFile(new URL(`../src/components/cadastros/${name}`, import.meta.url), 'utf8');
     assert.match(source, /useCadastroFormScopeGuard\(groupId, empresaAtual\?\.id\)/);
-    assert.match(source, /mutationFn:[\s\S]*?assertFormScopeCurrent\(\)/);
+    if (name === 'CadastroFornecedorCompleto.jsx') {
+      assert.match(source, /mutationFn:[\s\S]*?assertFormScopeCurrent\(\)/);
+    } else {
+      assert.match(source, /const assertDraftCurrent = \(\) => \{\s*assertFormScopeCurrent\(\);/);
+      assert.match(source, /mutationFn:[^\n]*\n\s*assertDraftCurrent\(\)/);
+    }
     assert.match(source, /onSuccess:[\s\S]*?if \(!isFormScopeCurrent\(\)\) return/);
     if (name !== 'CadastroClienteCompleto.jsx') {
       assert.match(source, /onError:[\s\S]*?if \(!isFormScopeCurrent\(\)\) return/);

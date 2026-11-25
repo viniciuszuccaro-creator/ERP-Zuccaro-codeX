@@ -135,7 +135,17 @@ test('CadastroClienteCompleto: saveMutation exige podeEditar e passa assertScope
   const slice = text.slice(start, start + 900);
   assert.match(slice, /if \(!podeEditar\) throw new Error\("Seu perfil nao permite editar clientes\."\);/);
   assert.match(slice, /return updateInContext\('Cliente'/);
-  assert.match(text, /assertScopeCurrent=\{assertFormScopeCurrent\}/);
+  assert.match(text, /assertScopeCurrent=\{assertDraftCurrent\}/);
+});
+
+test('rascunho autorizado pelo pai habilita contatos e endereços sem permissão de editar', async () => {
+  for (const name of ['GerenciarContatosClienteForm', 'GerenciarEnderecosClienteForm']) {
+    const { buttons, render } = await loadForm(`../src/components/cadastros/${name}.jsx`, { canEditCliente: false });
+    render({ podeAlterar: true, onChange() {} });
+    const add = buttons.find((button) => String(button['data-action']).endsWith('.adicionar'));
+    assert.ok(add, name);
+    assert.equal(add.disabled, false);
+  }
 });
 
 test('UI contatos: mudança de Grupo/sessão bloqueia excluir no componente real', async () => {
