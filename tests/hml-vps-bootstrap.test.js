@@ -225,6 +225,17 @@ test('produtos: fonte base/master/FKs/material e gate043 preservados em memoria'
 
 
 
+test('bootstrap HML aceita somente opt-in financeiro booleano no arquivo privado', () => {
+  assert.equal(validateHmlConfig(fixture()).enablePedidoFinanceiro, undefined);
+  for (const enabled of [false, true]) {
+    assert.equal(validateHmlConfig({ ...fixture(), enablePedidoFinanceiro: enabled }).enablePedidoFinanceiro, enabled);
+  }
+  for (const invalid of ['true', 1, null, undefined]) {
+    assert.throws(() => validateHmlConfig({ ...fixture(), enablePedidoFinanceiro: invalid }));
+  }
+  assert.throws(() => validateHmlConfig({ ...fixture(), ENABLE_PEDIDO_FINANCEIRO_HML: true }));
+});
+
 function fixture() {
   const expected = { database: 'hml_test', schema: 'hml_test', role: 'hml_app',
     clusterIdentifier: '123456', schemaOid: '17000',

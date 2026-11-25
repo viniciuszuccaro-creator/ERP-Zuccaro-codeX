@@ -1,3 +1,7 @@
+## CPA3: opt-in financeiro no bootstrap HML (2026-11-25)
+
+O bootstrap repassa o opt-in booleano privado ao servidor, desligado por padrao. Nenhum deploy ou SQL. Os quatro exports conferidos no HD ja tem SHA-256 correspondente no acervo privado da VPS; nenhuma copia repetida. A candidata exige CI no SHA exato e ensaio do delta comercial em clone antes da publicacao.
+
 ## CPA3: seis Marcas reais ensaiadas e candidata 6066d9b6 centralizada (2026-11-25)
 
 Clone restaurado 54adc8e2: seis Marcas de 6c389e51 em Grupo, login restrito equivalente, retomada 1+5, replay seis, origem auditada para as duas Empresas, sequencia 7 (maximo 6), reversao cinco e uma edicao posterior preservada. 17.472 mestres intactos. Recibo privado 8dce70e4; pacote de ensaio 218c0217 nao autoriza escrita na HML.

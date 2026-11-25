@@ -183,7 +183,10 @@ function reviewOverlayRepository() {
 // Portable form of the recovered private HML bootstrap; app/Auth/DB remain canonical.
 export function validateHmlConfig(value, now = Date.now()) {
   assert.ok(value && typeof value === 'object' && !Array.isArray(value));
-  assert.deepEqual(Object.keys(value).filter(key => key !== 'a1VaultConfigFile').sort(), ['databaseUrl', 'expected', 'origin', 'provider', 'sha']);
+  assert.deepEqual(Object.keys(value).filter(key => key !== 'a1VaultConfigFile' && key !== 'enablePedidoFinanceiro').sort(), ['databaseUrl', 'expected', 'origin', 'provider', 'sha']);
+  if (Object.hasOwn(value, 'enablePedidoFinanceiro')) {
+    assert.equal(typeof value.enablePedidoFinanceiro, 'boolean');
+  }
   if (value.a1VaultConfigFile !== undefined) {
     assert.equal(typeof value.a1VaultConfigFile, 'string');
     assert.match(value.a1VaultConfigFile, /^\/run\/a1-config\/[a-zA-Z0-9_-]+\.json$/);
@@ -284,7 +287,8 @@ export async function startHml(file, apiRoot) {
   const { createApp } = await import(pathToFileURL(path.join(apiRoot, 'dist/app.js')));
   const config = loadConfig({ NODE_ENV: 'production', ERP_ENV: 'hml', ERP_AUTH_MODE: 'supabase_user',
     REQUIRE_DATABASE: 'true', ENABLE_TENANT_CONTEXT: 'true', DATABASE_URL: source.databaseUrl,
-    AUTH_DATABASE_URL: source.databaseUrl, ...source.provider, APP_VERSION: source.sha, CORS_ORIGINS: source.origin });
+    AUTH_DATABASE_URL: source.databaseUrl, ...source.provider, APP_VERSION: source.sha, CORS_ORIGINS: source.origin,
+    ENABLE_PEDIDO_FINANCEIRO_HML: String(source.enablePedidoFinanceiro === true) });
   const clients = await createRuntimeDbClients(config);
   const originalFetch = globalThis.fetch;
   try {
@@ -295,7 +299,8 @@ export async function startHml(file, apiRoot) {
     const { createConfiguredA1Vault } = await import(pathToFileURL(path.join(apiRoot, 'dist/services/a1VaultConfiguration.js')));
     const a1VaultService = await createConfiguredA1Vault(clients.db, source.a1VaultConfigFile);
     const { app } = createApp({ config, db: clients.db, authDb: clients.authDb,
-      tenantContextEnabled: true, authFetchImpl: authFetch, a1VaultService });
+      tenantContextEnabled: true, authFetchImpl: authFetch, a1VaultService,
+      pedidoFinanceiroEnabled: config.pedidoFinanceiroEnabled });
     const server = app.listen(config.port, '0.0.0.0');
     await new Promise((resolve, reject) => { server.once('listening', resolve); server.once('error', reject); });
     let closing = false;
