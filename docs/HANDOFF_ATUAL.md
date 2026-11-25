@@ -1,3 +1,9 @@
+## CPA3: seis copias originais redundantes e restauro de Marcas (2026-11-25)
+
+Retiradas somente da VPS seis copias MDF/LDF EMP02, EMP04 e EMP05 da arvore original. Tamanho e SHA-256 conferidos no HD, na VPS e no inventario; sem referencia direta nos cinco manifestos, scripts consultados, mounts ou arquivos abertos. Originais do HD preservados. Recibo privado de 10:30:14Z: livre 48.699.858.944 -> 49.047.068.672 bytes (+347.209.728). Restam 12 MDF/LDF na VPS; HML e operacional HTTP 200.
+
+Backup 54adc8e2 restaurado integralmente em PostgreSQL descartavel sem rede, sem porta e sem volume HML, com nove papeis locais NOLOGIN e ACL/policies do dump. Conferidos 17.472 clientes, zero Marcas e 26 policies no schema HML. Clone removido. Proximo: executar as seis Marcas pelo servico canonico com papel restrito, checkpoint e reversao; nao houve carga nem gate de escrita. API e web servem a305a143; sem novo aceite de Comercial, preco ou obra nesta rodada.
+
 ## CPA3: ultimos pares de trabalho arquivados no HD (2026-11-25)
 
 Retirados somente os oito MDF/LDF de trabalho TIDDF, Auditoria, EMP03 e TEMP, com tamanho e SHA-256 iguais no HD e na VPS. Nenhuma referencia direta nos cinco manifestos de recuperacao, scripts consultados, mounts ou arquivos abertos na retirada. Restam 18 MDF/LDF originais. Retomada: copiar o par correspondente do HD para staging privado e conferir seu SHA antes de abrir.
