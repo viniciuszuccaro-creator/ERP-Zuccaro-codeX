@@ -1,3 +1,11 @@
+## CPA3: cruzamento preliminar de Precos com Produtos 8cfcc611 (2026-11-25)
+
+Manifesto privado 8cfcc611 conferido contra o SHA do preflight; 273 identidades Base44 selecionadas. Comparacao direta de codigo com todos os 5.162 itens: 1.364 coincidencias textuais, 1.239 com valor positivo. Nao equivale ao cruzamento autoritativo dos 1.831 candidatos: o preflight de Produtos nao traz a chave nativa classe/material. Zero elegiveis comprovados, sem transferencia ou carga; falta crosswalk oficial mais empresa/unidade e vigencia.
+
+Oito MDF/LDF restantes: pares EMP01, EMP03, Auditoria e EXETPS, somando 17.776.902.144 bytes. Tamanhos conferidos contra inventario, oito arquivos presentes no HD e zero referencias diretas nos cinco manifestos. Preservados nesta rodada; falta fechar verificacao de integridade/retomada por par antes da retirada. Livre 49.586.126.848 bytes; marcador HML a305a143; operacional HTTP 200.
+
+Comercial: as quatro chamadas do consumidor #599 correspondem as rotas do WIP local (vinculos, titulos, faturar, baixa). Conferencia estatica, sem composicao executada ou navegador. Marcas ainda precisa da prova de identidade/replay no clone; Obras sem nova fonte oficial. Sem escrita HML ou deploy.
+
 ## CPA3: TIDDF e TEMP arquivados e chaves nativas de Precos (2026-11-25)
 
 Retiradas quatro copias redundantes da arvore original da VPS, pares TIDDF e TEMP, com leitura de SHA-256 no HD e na VPS. Cinco manifestos, scripts consultados, mounts e arquivos abertos sem referencia aos quatro caminhos. Recibo privado 10:34:49Z: 49.047.015.424 -> 49.586.245.632 bytes livres (+539.230.208), oito MDF/LDF restantes. HD preservado; HML e operacional HTTP 200, API/web a305a143.
