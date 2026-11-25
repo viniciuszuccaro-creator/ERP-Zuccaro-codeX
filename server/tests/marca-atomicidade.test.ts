@@ -29,7 +29,10 @@ async function prove(f:any,role:string){try{
  assert.equal((await f.admin.query("SELECT count(*)::int n FROM audit_logs WHERE entity='Marca'")).rows[0].n,auditBefore);
  await assert.rejects(()=>s.update(ctx,row.id,{descricao:'Must rollback'}),/synthetic audit failure/);
  assert.equal((await f.admin.query('SELECT descricao FROM marcas WHERE id=$1',[row.id])).rows[0].descricao,null);
- await f.exec('DROP TRIGGER fixture_fail ON audit_logs');await s.update(ctx,row.id,{descricao:'Preserved'});await s.softDelete(ctx,row.id);
+ await f.exec('DROP TRIGGER fixture_fail ON audit_logs');await s.update(ctx,row.id,{descricao:'Preserved'});
+ await f.exec(`REVOKE UPDATE ON marcas FROM ${role}; GRANT UPDATE(ativo) ON marcas TO ${role};`);
+ await s.softDelete(ctx,row.id);
+ await f.exec(`GRANT UPDATE ON marcas TO ${role};`);
  const persisted=(await f.admin.query('SELECT * FROM marcas WHERE id=$1',[row.id])).rows[0];assert.equal(persisted.ativo,false);assert.equal(persisted.pais_origem,'Brasil');assert.equal(persisted.descricao,'Preserved');
  await s.update(ctx,row.id,{ativo:true});
  const reopened=(await f.admin.query('SELECT * FROM marcas WHERE id=$1',[row.id])).rows[0];

@@ -179,6 +179,14 @@ export class PostgresMarcaRepository implements MarcaRepository {
   }
 
   async softDelete(scope: { groupId: string; empresaId?: string | null }, id: string, executor?: DbQueryExecutor): Promise<Marca | null> {
-    return this.update(scope, id, { ativo: false }, executor);
+    const params = [scope.groupId, id];
+    let sql = 'UPDATE marcas SET ativo = false WHERE group_id = $1 AND id = $2';
+    if (scope.empresaId) {
+      params.push(scope.empresaId);
+      sql += ' AND empresa_id = $3';
+    }
+    const result = await (executor ?? this.db).query(sql + ' RETURNING *', params);
+    const row = result.rows[0];
+    return row ? mapRow(row as Record<string, unknown>) : null;
   }
 }
