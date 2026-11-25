@@ -1,3 +1,11 @@
+## CPA3: ultimos pares de trabalho arquivados no HD (2026-11-25)
+
+Retirados somente os oito MDF/LDF de trabalho TIDDF, Auditoria, EMP03 e TEMP, com tamanho e SHA-256 iguais no HD e na VPS. Nenhuma referencia direta nos cinco manifestos de recuperacao, scripts consultados, mounts ou arquivos abertos na retirada. Restam 18 MDF/LDF originais. Retomada: copiar o par correspondente do HD para staging privado e conferir seu SHA antes de abrir.
+
+Recibos privados archived-work-sql de 10:13:36Z e 10:14:40Z: 13.482.340.352 bytes recuperados nas duas operacoes; medicao final 48.699.748.352 bytes livres. HML e operacional HTTP 200. Marcador API/web HML a305a143. Backup automatico 54adc8e2 reconferido por SHA na VPS e no HD; aplicabilidade a uma nova escrita ainda depende de comparar o estado vivo.
+
+EMP05 ja lida no recibo anterior; nova busca por fonte oficial de Obras no HD nao localizou export autoritativo. Zero aptos novos. Comercial: comparados os heads #596/#599/#600; #599 tem o consumidor financeiro existente para integracao, sem merge, deploy ou aceite no navegador nesta rodada. Marcas: reutilizar rota e servico existentes; retomar restauracao com papeis sem login e provar repeticao e reversao antes de pedir escrita. Produtos e Centros nao reaplicados.
+
 ## CPA3: pares redundantes EMP02, EMP04 e EMP05 retirados (2026-11-25)
 
 Seis MDF/LDF em 02_SQL_WORK/MDFSQL verificados por SHA nos dois lados e retirados somente da VPS, sem reutilizacao pelos cinco manifestos, mounts ou uso constatado. Originais na VPS e pares de trabalho no HD preservados. Retomada pelo HD ou par original conferido, sempre em copia de trabalho.
