@@ -1,3 +1,9 @@
+## CPA3: historico de baixas EMP03 ensaiado sem efeito financeiro (2026-11-25)
+
+Pacote privado de revisao: 12.514 baixas sem comprovante, duas empresas, 107 pendentes excluidos. Executor restrito ao banco descartavel reaproveita contexto e auditoria canonicos. PostgreSQL restaurado: falha de auditoria reverteu a carga, retomada 1.000 + 11.514, replay zero, 14 eventos de carga e 14 de reversao, 12.514 arquivadas e 17.472 clientes preservados.
+
+SQL candidato fora das migrations, RLS forcada, sem grants publicados. Proximo: revisar perfil, ACLs e acesso somente leitura antes de qualquer gate HML. Nenhum pagamento, saldo a pagar, deploy ou escrita HML/operacional.
+
 ## CPA3: opt-in financeiro no bootstrap HML (2026-11-25)
 
 O bootstrap repassa o opt-in booleano privado ao servidor, desligado por padrao. Nenhum deploy ou SQL. Os quatro exports conferidos no HD ja tem SHA-256 correspondente no acervo privado da VPS; nenhuma copia repetida. A candidata exige CI no SHA exato e ensaio do delta comercial em clone antes da publicacao.
