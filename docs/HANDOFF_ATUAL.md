@@ -1,3 +1,11 @@
+## CPA3: conciliacao dos ajustes e schema Fornecedor no clone (2026-11-25)
+
+SHA dos exports de Obras e ajustes reconferidos na VPS. Cruzamento Cliente + Item/ItemLocalEntrega: 1.536 ajustes com uma Obra candidata, 1.560 sem par, zero ambiguos. Todos os 3.096 com data/hora, sequencias distintas e zero empates de data/hora por cliente/local. Isso nao prova titularidade empresarial ou ordem de aplicacao; zero ajustes liberados.
+
+Fornecedores: candidato canonico aplicado apenas em clone restaurado 54adc8e2, sem rede/volume HML. RLS ativa e forcada, zero policies e sem SELECT pelo papel restrito; 17.472 clientes preservados, clone removido. 19 testes do servico e HTTP verdes em fixture sintetica. Os 790 reais nao foram aplicados: falta delta de acesso revisado, prova de conciliacao por identidade no clone e autorizacao do lote. Sem escrita HML ou operacional.
+
+Cadastros ainda no WIP validado no Chrome sintetico; sem comparacao autenticada com API real, CI verde ou deploy nesta rodada. Precos e Marcas sem novo lote apto.
+
 ## CPA3: ajustes de Obras extraidos e abertura testada no Chrome (2026-11-25)
 
 EXETPS do HD em staging privado retomavel, par conferido e leitor isolado somente leitura. Export ClientesObrasHistoricoAjustes: 3.096 linhas, 3.096 sequencias distintas, 2.522.659 bytes, SHA e299704911e9bba0d3a62f177d9e3474caf35637b457070c32a7a847713c6726, relido na VPS no recibo privado erp344-reader-20261125T130112Z. Chaves de cliente/local, sequencia, data/hora e alteracoes preservadas; nao prova titularidade ou ordem de aplicacao. Leitor parado e staging temporario retirado; 67.350.659.072 bytes livres, HML/operacional HTTP 200.
