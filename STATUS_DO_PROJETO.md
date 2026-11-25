@@ -1,3 +1,11 @@
+## CPA3: exports reaproveitados e schema financeiro ensaiado no clone (2026-11-25)
+
+Export HD de 1.208 Produtos (543.996 bytes) ja presente na VPS: SHA e tamanho iguais, recibo privado hd-products-1208-verified-20261125. Reconferidos por SHA os exports de 35.309 Obras, 2.360 Materiais, seis cabecalhos e 5.162 itens. Cinco arquivos, 47.799.603 bytes em conjunto, sem nova transferencia. Ajustes: acervo consultado tem prova agregada de 3.096, sem export detalhado localizado; preservar gate de titularidade e ordem.
+
+Clone restaurado 54adc8e2, sem rede/volume HML: 012/013/016/017 e candidato de Contas a Receber passaram com plano_contas criado exclusivamente como fixture sintetica para a FK composta. 17.472 clientes preservados, clone removido. Nao comprova contrato canonico do Plano nem execucao de API, consumidor ou saldo zero neste clone. Proximo: exercitar pedido e titulos sob papel restrito no clone e manter conciliacao das contas reais separada.
+
+Sem lote apto novo, escrita HML, deploy ou alteracao operacional. Adaptador Marca preservado sem novo ensaio pelo servico.
+
 ## CPA3: conciliacao do Plano de Contas e simulacao do adaptador Marca (2026-11-25)
 
 SHA dos exports financeiros reconferido contra o grafo. Plano: 26 chaves unicas, todas do Grupo e ativas, 12 analiticas. 21 ordenaveis, cinco bloqueadas por ancestral ausente (quatro referencias diretas). Zero contas explicitamente vinculadas a Empresa e zero centros com conta padrao na fonte. Os 13 Centros previamente conciliados se dividem em 12 e 1 por empresa. O contrato financeiro exige FK composta por Empresa e nao pode usar essas contas de Grupo como contrapartes sem regra comprovada. Sem lote apto, novo saldo zero em clone restaurado ou escrita HML.
