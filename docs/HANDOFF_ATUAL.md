@@ -1,3 +1,9 @@
+## CPA3: bytes exatos do manifesto Marca ensaiados (2026-11-25)
+
+Manifesto privado 08f57c50 e SHA/tamanho das duas partes por Empresa conferidos; adaptador recebeu bytes originais sem reserializar. Clone 54adc8e2: seis criadas com codigo literal, seis replays, perda de recibo recuperada, cinco reversoes com UPDATE(ativo) e uma edicao posterior preservada. Codigos concorrentes 000007/000008, 17.472 clientes preservados. Recibo privado 2ab5a306. Clone removido.
+
+Sem alterar HML ou operacional. Falta revisao do delta de ACL/policies, validacao da candidata e autorizacao especifica. Manifesto permanece nao executavel e WIP de codigo preservado.
+
 ## CPA3: manifesto das seis Marcas e suite ampla de backend (2026-11-25)
 
 Manifesto privado 08f57c50 com seis Marcas em duas partes por Empresa, vinculado ao adaptador e ao recibo 8196b258. Nao executavel. Retomada: revisar grants/policies de Grupo/Empresa, ensaiar os bytes exatos do pacote, validar a versao candidata e aprovar escrita HML.
