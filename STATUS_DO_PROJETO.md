@@ -1,3 +1,9 @@
+## CPA3: faturamento e baixa no detalhe canonico do Pedido (2026-11-25)
+
+Central 360 reutiliza PedidoTitulosHttp; duplo clique abre consulta quando o pedido nao e editavel. Chrome com login real do ERP, Auth sintetico, API e PG16 do clone restaurado: titulo de R$ 100, parcial R$ 40, quitacao R$ 60 e reabertura em nova sessao com saldo zero. Um titulo, dois eventos distintos e tres auditorias; 17.472 clientes preservados.
+
+Ubuntu 3.042/3.042, audit:baseline, lint, typecheck, build e diff check verdes. Plano de Contas e ACL de ensaio nao certificam promocao. Proximo: CI do SHA e separar pacote de schema/acesso, deploy e dados para o gate da HML. Sem deploy ou escrita na HML.
+
 ## CPA3: titulos do Pedido e baixa HTTP com teste no Chrome (2026-11-25)
 
 Fechamento consome as rotas canonicas de vinculos, faturamento e baixa. Opt-in desligado por padrao e limitado a HML com PostgreSQL, Auth e contexto tenant. Preserva RBAC/RLS, auditoria e idempotencia. No PG16 sintetico: 4/4. Chrome com fronteiras sinteticas: parcial, 502 apos baixa, replay do mesmo evento, quitacao e reabertura com saldo zero.
