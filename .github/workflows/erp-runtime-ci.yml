@@ -60,7 +60,7 @@ jobs:
       - name: Install backend dependencies used by root contract tests
         run: npm ci --prefix server
       - run: npm run audit:baseline
-      - run: npm test
+      - run: npm test -- --test-concurrency=4 'tests/**/*.test.js'
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run build
