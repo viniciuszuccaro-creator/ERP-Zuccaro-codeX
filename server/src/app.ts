@@ -15,6 +15,7 @@ import { createErrorHandler, notFoundHandler } from './middleware/errorHandler.j
 import { createSupabaseAuthMiddleware, requestIdMiddleware, scopeMiddleware } from './middleware/requestContext.js';
 import { mountLegacyClientReviewRead } from './api/legacyClientReviewRoute.js';
 import { mountPedidoFinanceiroRoutes } from './api/pedidoFinanceiroRoutes.js';
+import { mountSupplierSettlementHistoryRead } from './api/supplierSettlementHistoryRead.js';
 import {
   createInMemoryGrupoProdutoRepo,
   createInMemorySetorRepo,
@@ -98,6 +99,7 @@ export type CreateAppOptions = {
   /** Explicit opt-in after verified Auth; never enables tenant context from dev headers. */
   tenantContextEnabled?: boolean;
   pedidoFinanceiroEnabled?: boolean;
+  supplierSettlementHistoryEnabled?: boolean;
   storagePort?: StoragePort;
   malwareScanPort?: MalwareScanPort;
   /** Porta de custo para alçada de margem (Onda 2). Null/omitido = skip (não inventa custo). */
@@ -318,6 +320,7 @@ export function createApp(options: CreateAppOptions) {
   }));
   if (!useMemory && config.authMode === 'supabase_user' && options.tenantContextEnabled === true) mountLegacyClientReviewRead(app, db, rbacGuard);
   if (!useMemory && config.authMode === 'supabase_user' && options.tenantContextEnabled === true && options.pedidoFinanceiroEnabled === true) mountPedidoFinanceiroRoutes(app, db, rbacGuard);
+  if (!useMemory && config.erpEnv === 'hml' && config.authMode === 'supabase_user' && options.tenantContextEnabled === true && options.supplierSettlementHistoryEnabled === true) mountSupplierSettlementHistoryRead(app, db, rbacGuard);
   app.use(notFoundHandler);
   app.use(createErrorHandler(config));
 

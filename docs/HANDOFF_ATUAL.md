@@ -1,3 +1,9 @@
+## CPA3: consulta HTTP de baixas historicas ensaiada (2026-11-25)
+
+Rota somente leitura na API existente, desligada por padrao, com permissao granular por Empresa e sem fallback public. Clone restaurado e identidade sintetica: 12.514 linhas paginadas, duas Empresas, negativas 401/403/404/422/503, arquivados invisiveis. Nenhum pagamento ou saldo gerado.
+
+Preflight HML somente leitura: perfil ativo, duas Empresas, sem permissao especifica e sem tabela. Backup agendado restaurado, TAR privado e copia externa com SHA igual. Proximo: conferir CI e revisar delta/ator de importacao antes de solicitar escrita; sem deploy ou mudanca de permissao.
+
 ## CPA3: historico de baixas EMP03 ensaiado sem efeito financeiro (2026-11-25)
 
 Pacote privado de revisao: 12.514 baixas sem comprovante, duas empresas, 107 pendentes excluidos. Executor restrito ao banco descartavel reaproveita contexto e auditoria canonicos. PostgreSQL restaurado: falha de auditoria reverteu a carga, retomada 1.000 + 11.514, replay zero, 14 eventos de carga e 14 de reversao, 12.514 arquivadas e 17.472 clientes preservados.
