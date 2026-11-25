@@ -1,3 +1,9 @@
+## CPA3: EXETPS alternativa transferida e CI do executor verde (2026-11-25)
+
+Par MDF/LDF de snapshot alternativo do HD enviado por SFTP retomavel para a VPS privada; 1.022.492.672 bytes e dois SHA-256 conferidos. Recibo privado b10a3a3e. Espaco livre 67.346.284.544 antes e 66.323.718.144 depois. Nenhum original alterado, nenhuma exclusao. Ainda nao aberto no leitor: nao prova vinculo de Obras nem libera carga.
+
+CI 45656925129 verde nos quatro jobs para 76a8d93a. Proximo: abrir somente copia do par no leitor isolado, comparar chaves nativas com o snapshot anterior e ensaiar o manifesto real de Marca por Grupo. Fornecedores 4905483e, 789 candidatos e um bloqueado, segue sem mapa oficial de origem. Sem gravar HML ou publicar runtime.
+
 ## CPA3: executor de Marca por Grupo com checkpoint de origem (2026-11-25)
 
 Adaptador preserva o contrato anterior e aceita pacote de Grupo explicitamente executavel. Valida Empresa de procedencia no Grupo e registra origem no checkpoint. PG16 com login restrito: seis sinteticas, interrupcao pos-commit, retomada 1+5, replay seis, cinco reversoes e uma edicao preservada. Suite Ubuntu 3.043/3.043, audit:baseline, lint, tipos e builds verdes. Manifesto real 6c389e51 segue nao executavel.
