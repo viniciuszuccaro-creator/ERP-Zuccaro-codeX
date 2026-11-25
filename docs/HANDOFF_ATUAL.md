@@ -1,3 +1,9 @@
+## CPA3: manifesto das seis Marcas e suite ampla de backend (2026-11-25)
+
+Manifesto privado 08f57c50 com seis Marcas em duas partes por Empresa, vinculado ao adaptador e ao recibo 8196b258. Nao executavel. Retomada: revisar grants/policies de Grupo/Empresa, ensaiar os bytes exatos do pacote, validar a versao candidata e aprovar escrita HML.
+
+Backend WIP: 708 testes, 663 aprovados, 45 skips, zero falhas. Focados Marca/Fornecedor 20/20, typecheck, build e diff check passaram. Suite ampla da aplicacao ainda sem verde registrado; nao publicar codigo ou misturar outros WIPs. Backup 54adc8e2 reconferido por SHA no HD/VPS; aplicabilidade ao estado vivo exige comparacao antes da escrita. HML a305a143, sem escrita, deploy ou mudanca no operacional.
+
 ## CPA3: inativacao de Marca com UPDATE(ativo) e auditoria de codigos Cliente (2026-11-25)
 
 WIP restringe softDelete no repositorio Marca ao campo ativo, preservando filtros Grupo/Empresa e auditoria do servico. Teste focado verde com UPDATE(ativo) e rollback. Clone 54adc8e2 com repositorio transpilado local e adaptador: seis codigos literais, replay seis, cinco reversoes, uma edicao posterior preservada, novos 000007/000008. Nenhum UPDATE cadastral amplo necessario no clone. Recibo privado 8196b258. Sem publicar codigo ou gravar HML; falta suite ampla e gate do pacote.
