@@ -15,7 +15,6 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { useEffect } from "react";
 import {
   BLOCOS_ENTITIES,
-  ALL_ENTITIES,
   buildCadastrosAllCountsFilter,
   fetchCadastrosAllCounts as fetchCountsCore,
 } from "./cadastrosAllCountsCore.js";
@@ -38,13 +37,15 @@ function readSessionCacheKey() {
  * @typedef {{ counts: Record<string, number>, missing: string[] }} CadastrosCountsPayload
  */
 
-export default function useCadastrosAllCounts() {
+export default function useCadastrosAllCounts(openBlocks = []) {
   const { empresaAtual, grupoAtual, empresasDoGrupo } = useContextoVisual();
   const empresaId = empresaAtual?.id || null;
   const groupId = grupoAtual?.id || empresaAtual?.group_id || null;
   const actorId = readSessionActorId();
   const sessionKey = readSessionCacheKey();
   const contextoValido = Boolean(empresaId || groupId);
+  const entitiesKey = [...new Set(openBlocks.flatMap(block => BLOCOS_ENTITIES[block] || []))].sort().join(",");
+  const enabled = contextoValido && Boolean(entitiesKey);
   const queryClient = useQueryClient();
   const grupoEmpIds = (Array.isArray(empresasDoGrupo) ? empresasDoGrupo : [])
     .map((e) => e?.id)
@@ -53,21 +54,16 @@ export default function useCadastrosAllCounts() {
     .join(",");
 
   const { data, isLoading, isError, error, isFetching, failureReason } = useQuery({
-    queryKey: ["cadastros-all-counts-v5", empresaId, groupId, grupoEmpIds, actorId, sessionKey],
+    queryKey: ["cadastros-all-counts-v5", empresaId, groupId, grupoEmpIds, actorId, sessionKey, entitiesKey],
+    enabled,
     queryFn: async () => {
-      if (!contextoValido) {
-        // Sem grupo/empresa: indisponível (—), nunca fabricar 0 como total confirmado.
-        return /** @type {CadastrosCountsPayload} */ ({
-          counts: {},
-          missing: ALL_ENTITIES.slice(),
-        });
-      }
       try {
         const counts = await fetchCountsCore({
           invoke: (name, body) => base44.functions.invoke(name, body),
           empresaId,
           groupId,
           empresasDoGrupo,
+          entities: entitiesKey.split(","),
         });
         return /** @type {CadastrosCountsPayload} */ ({ counts, missing: [] });
       } catch (err) {
@@ -90,18 +86,14 @@ export default function useCadastrosAllCounts() {
     gcTime: 10 * 60_000,
     placeholderData: undefined,
     refetchOnWindowFocus: false,
-    refetchOnMount: "always",
+    refetchOnMount: true,
     retry: 1,
     retryDelay: (attempt) => Math.min(2000 * (attempt + 1), 8000),
   });
 
   useEffect(() => {
-    queryClient.invalidateQueries({ queryKey: ["cadastros-all-counts-v5"] });
-    queryClient.invalidateQueries({ queryKey: ["entityCounts_v5"] });
-  }, [empresaId, groupId, grupoEmpIds, actorId, sessionKey, queryClient]);
-
-  useEffect(() => {
-    const unsubs = ALL_ENTITIES.map((name) => {
+    if (!enabled) return;
+    const unsubs = entitiesKey.split(",").map((name) => {
       const api = base44.entities?.[name];
       if (!api?.subscribe) return null;
       return api.subscribe(() => {
@@ -110,14 +102,14 @@ export default function useCadastrosAllCounts() {
       });
     }).filter(Boolean);
     return () => { unsubs.forEach((u) => { if (typeof u === "function") u(); }); };
-  }, [empresaId, groupId, actorId, sessionKey, queryClient]);
+  }, [enabled, entitiesKey, empresaId, groupId, actorId, sessionKey, queryClient]);
 
   const counts = isError ? {} : (data?.counts || {});
-  const missing = isError ? ALL_ENTITIES.slice() : (data?.missing || []);
+  const missing = isError ? entitiesKey.split(",") : (data?.missing || []);
   const missingSet = new Set(missing);
   const totals = Object.fromEntries(
     Object.entries(BLOCOS_ENTITIES).map(([bloco, entities]) => {
-      if (isError) return [bloco, null];
+      if (isError || entities.some(e => !Object.hasOwn(counts, e))) return [bloco, null];
       const blocoMissing = entities.some((e) => missingSet.has(e));
       if (blocoMissing) return [bloco, null];
       return [bloco, entities.reduce((sum, e) => sum + (Number(counts[e]) || 0), 0)];

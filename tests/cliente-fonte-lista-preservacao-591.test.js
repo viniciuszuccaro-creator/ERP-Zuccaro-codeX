@@ -63,10 +63,16 @@ test('CadastroClienteCompleto: locais/contatos/documentos omitidos quando ausent
   assert.doesNotMatch(src, /Number\(data\.cpf\)|parseInt\(data\.cpf|Number\(data\.cnpj\)|Number\(.*\.cep/);
 });
 
-test('useCadastrosAllCounts: sem contexto → missing ALL (não 0 fabricado)', () => {
+test('Cadastros Gerais: inicio sem consulta; sem contexto nao fabrica total zero', () => {
   const src = read('src/components/cadastros/hooks/useCadastrosAllCounts.jsx');
-  assert.match(src, /if \(!contextoValido\)/);
-  assert.match(src, /missing: ALL_ENTITIES\.slice\(\)/);
+  const page = read('src/pages/Cadastros.jsx');
+  assert.match(page, /\[acordeonAberto, setAcordeonAberto\] = useState\(\[\]\)/);
+  assert.match(page, /window.id === activeWindowId && !window.isMinimized/);
+  assert.match(page, /useCadastrosAllCounts\(podeVerCadastros && cadastroSelecionado && abaGerenciamento === "cadastros" \? acordeonAberto : \[\]\)/);
+  assert.match(src, /const enabled = contextoValido && Boolean\(entitiesKey\)/);
+  assert.match(src, /\benabled,\s*queryFn:/);
+  assert.match(src, /entities: entitiesKey\.split\(","\)/);
+  assert.match(src, /!Object.hasOwn\(counts, e\)\)\) return \[bloco, null\]/);
   assert.doesNotMatch(src, /emptyCadastrosCounts\(\)/);
 });
 

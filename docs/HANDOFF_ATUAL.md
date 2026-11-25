@@ -1,3 +1,9 @@
+## CPA3: Cadastros sem listagem antecipada e retomada do legado (2026-11-25)
+
+Cadastros abre sem entidade selecionada. Chrome sintetico: zero consultas antes do clique, uma listagem e uma contagem depois; menu 70,5 ms, prova apos clique 56,4 ms. Ubuntu 3.043/3.043, audit:baseline, lint, typecheck e build verdes. Medicao HML autenticada ainda pendente.
+
+HD/VPS: 50 exports e manifestos identicos por SHA-256, 69.296.551 bytes; zero transferencias repetidas. HML em leitura: 17.472 mestres, 5.384 em revisao e 39 no historico; 91 Grupos, 51 inativos e 91 margens nulas. CI do Comercial 34f01191 verde. Base44 descreve Marca compartilhada por Grupo; reconciliar com o manifesto por Empresa antes do gate. Sem carga, deploy ou mudanca operacional.
+
 ## CPA3: perfil real de Marcas e preflight parcial do backup (2026-11-25)
 
 Leitura HML com papel da API: um perfil de Grupo autorizado com Cadastros/marca visualizar, criar, inativar, sem wildcard. Backup 54adc8e2 com SHA conferido e recibo restauravel. Comparacao restrita: Grupo, Empresas, 17.472 Clientes e sequencias iguais; perfil com visibilidade parcial (1 de 2 do backup), marcas sem SELECT (42501). Nao interpretar visibilidade como alteracao ou validar recuperacao integral. Recibo privado 7330d411.

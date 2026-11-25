@@ -1,3 +1,9 @@
+## CPA3: Cadastros sem listagem antecipada e retomada do legado (2026-11-25)
+
+Cadastros abre sem entidade selecionada. Chrome sintetico: zero consultas antes do clique, uma listagem e uma contagem depois; menu 70,5 ms, prova apos clique 56,4 ms. Ubuntu 3.043/3.043, audit:baseline, lint, typecheck e build verdes. Medicao HML autenticada ainda pendente.
+
+HD/VPS: 50 exports e manifestos identicos por SHA-256, 69.296.551 bytes; zero transferencias repetidas. HML em leitura: 17.472 mestres, 5.384 em revisao e 39 no historico; 91 Grupos, 51 inativos e 91 margens nulas. CI do Comercial 34f01191 verde. Base44 descreve Marca compartilhada por Grupo; reconciliar com o manifesto por Empresa antes do gate. Sem carga, deploy ou mudanca operacional.
+
 ## CPA3: faturamento e baixa no detalhe canonico do Pedido (2026-11-25)
 
 Central 360 reutiliza PedidoTitulosHttp; duplo clique abre consulta quando o pedido nao e editavel. Chrome com login real do ERP, Auth sintetico, API e PG16 do clone restaurado: titulo de R$ 100, parcial R$ 40, quitacao R$ 60 e reabertura em nova sessao com saldo zero. Um titulo, dois eventos distintos e tres auditorias; 17.472 clientes preservados.

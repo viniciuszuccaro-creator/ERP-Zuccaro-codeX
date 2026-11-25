@@ -20,13 +20,20 @@ import Bloco6Tecnologia from "@/components/cadastros/blocks/Bloco6Tecnologia";
 import GroupCountBadge from "@/components/cadastros/GroupCountBadge";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { useUser } from "@/components/lib/UserContext";
+import { useWindowManager } from "@/components/lib/WindowManager";
 import { useToast } from "@/components/ui/use-toast";
 import ExternalAppsHub from "@/components/administracao-sistema/ExternalAppsHub";
 
 export default function Cadastros() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [acordeonAberto, setAcordeonAberto] = useState(["bloco1"]);
+  const [acordeonAberto, setAcordeonAberto] = useState([]);
   const [abaGerenciamento, setAbaGerenciamento] = useState("cadastros");
+  const { windows, activeWindowId } = useWindowManager();
+  const cadastroSelecionado = windows.some(window =>
+    window.id === activeWindowId && !window.isMinimized &&
+    /^Cadastros\..+\.visualizador$/.test(window.uniqueKey || ""));
+  const { isAdmin, hasPermission } = usePermissions();
+  const podeVerCadastros = isAdmin?.() || hasPermission("Cadastros", null, "visualizar") || hasPermission("Cadastros", null, "ver") || hasPermission("Cadastros", "Cadastros Gerais", "visualizar") || hasPermission("Cadastros", "Cadastros Gerais", "ver");
   const {
     counts: allCounts,
     totals,
@@ -34,14 +41,12 @@ export default function Cadastros() {
     countsUnavailable,
     countsPartial,
     missing: countsMissing,
-  } = useCadastrosAllCounts();
-  const { isAdmin, hasPermission } = usePermissions();
+  } = useCadastrosAllCounts(podeVerCadastros && cadastroSelecionado && abaGerenciamento === "cadastros" ? acordeonAberto : []);
   const { empresaAtual, grupoAtual, createInContext } = useContextoVisual();
   const { user } = useUser();
   const { toast } = useToast();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || null;
   const empresaId = empresaAtual?.id || null;
-  const podeVerCadastros = isAdmin?.() || hasPermission("Cadastros", null, "visualizar") || hasPermission("Cadastros", null, "ver") || hasPermission("Cadastros", "Cadastros Gerais", "visualizar") || hasPermission("Cadastros", "Cadastros Gerais", "ver");
   const podeVerAppsExternos = isAdmin?.() || hasPermission("Sistema", "Integracoes", "visualizar") || hasPermission("Sistema", "Integracoes", "ver");
   const contextoAtivo = Boolean(empresaAtual?.id || grupoAtual?.id);
   const blocosMeta = {

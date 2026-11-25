@@ -276,7 +276,7 @@ test('resposta tardia de outro escopo é descartável via queryKey (hooks sem pl
     'utf8',
   );
   const ent = readOrganizacionalSource(path.join(ROOT, 'components/lib/useEntityCounts.jsx'), 'utf8');
-  assert.match(all, /queryKey:\s*\["cadastros-all-counts-v5",\s*empresaId,\s*groupId,\s*grupoEmpIds,\s*actorId,\s*sessionKey\]/);
+  assert.match(all, /queryKey:\s*\["cadastros-all-counts-v5",\s*empresaId,\s*groupId,\s*grupoEmpIds,\s*actorId,\s*sessionKey,\s*entitiesKey\]/);
   assert.match(ent, /const queryKey = \['entityCounts_v5',\s*entitiesKey,\s*groupId,\s*empresaId,\s*grupoEmpIdsKey,\s*actorId,\s*sessionKey\];/);
   assert.match(all, /placeholderData:\s*undefined/);
   assert.match(ent, /placeholderData:\s*undefined/);
