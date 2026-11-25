@@ -1,3 +1,9 @@
+## CPA3: EMP03 e Auditoria arquivadas; EXETPS preservada (2026-11-25)
+
+Quatro MDF/LDF EMP03 e Auditoria retirados somente da VPS. HD Novo volume e arvore original conferidos; leitura SHA anterior do HD e nova leitura VPS iguais ao inventario. Cinco manifestos, scripts e jobs consultados, mounts e arquivos abertos sem dependencia dos quatro caminhos. Recibo privado 11:26:54Z: livre 53.388.632.064 -> 66.331.738.112 bytes (+12.943.106.048). EXETPS preservada: controlador procura o par fixado sob SOURCE na VPS; falta provar staging do HD pelo controlador antes de retirar. HML e operacional responderam HTTP 200.
+
+MarcaService.create reserva codigo e grava auditoria na mesma transacao, mas a interface atual nao recebe identidade de origem nem checkpoint de importacao. Nao usar repeticao de create como replay. Ensaiar adaptacao ao importador existente antes de propor escrita. Comercial tem prova HTTP de fixture no WIP com quatro rotas, saldo e replay; sem nova execucao no clone ou navegador nesta rodada. Precos e Obras sem nova prova autoritativa ou manifesto; sem escrita HML, deploy ou mudanca operacional.
+
 ## CPA3: seis Marcas ensaiadas por SQL em clone restrito (2026-11-25)
 
 Backup 54adc8e2 restaurado em clone sem rede e sem volume HML. Primeiro ensaio detectou ausencia de codigo; no novo clone aplicado apenas recorte Marca da 038, grants seletivos e policies por Grupo e empresas mapeadas. Seis chaves reais do preflight: commit 3, retomada 3 por identidade deterministica, replay 0; seis codigos distintos, zero leitura em outro Grupo, zero ativos apos reversao por inativacao. Clone removido. Prova SQL nao valida rota/servico, reserva canonica, auditoria ou preservacao de edicoes posteriores; nao liberar carga HML por este ensaio.
