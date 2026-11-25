@@ -1,3 +1,9 @@
+## CPA3: perfil real de Marcas e preflight parcial do backup (2026-11-25)
+
+Leitura HML com papel da API: um perfil de Grupo autorizado com Cadastros/marca visualizar, criar, inativar, sem wildcard. Backup 54adc8e2 com SHA conferido e recibo restauravel. Comparacao restrita: Grupo, Empresas, 17.472 Clientes e sequencias iguais; perfil com visibilidade parcial (1 de 2 do backup), marcas sem SELECT (42501). Nao interpretar visibilidade como alteracao ou validar recuperacao integral. Recibo privado 7330d411.
+
+Sem alterar perfil, banco ou operacional. Proximos gates: publicar e validar a candidata conforme suite, prova de backup com cobertura adequada, autorizacao especifica. Manifesto nao executavel.
+
 ## CPA3: delta candidato limitado a Marcas (2026-11-25)
 
 HML READ ONLY: marcas sem codigo/codigo_origem no pg_attribute, sem grants e sem policies. No clone 54adc8e2, manifesto exato 08f57c50 passou reutilizando ACL/policies de auditoria, perfis, empresas e sequencias. Seis codigos preservados, seis replays, quatro negativas, cinco reversoes e uma edicao preservada. Delta 5b5a7bdc, recibo 0d125d1d. Duas colunas, indice, SELECT/INSERT e UPDATE(ativo), policies por Grupo/Empresa.
