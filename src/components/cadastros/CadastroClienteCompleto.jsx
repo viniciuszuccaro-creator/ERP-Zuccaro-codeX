@@ -74,6 +74,10 @@ const sanitizeContatos = (contatos) => Array.isArray(contatos) ? contatos.slice(
   valor: sanitizeText(contato?.valor, 180),
   principal: sanitizeBoolean(contato?.principal)
 })) : [];
+const replaceDraftContatos = ({ email: _email, telefone: _telefone, celular: _celular, ...data }, contatos) => ({
+  ...data,
+  contatos,
+});
 const sanitizeDocumentos = (documentos) => Array.isArray(documentos) ? documentos.slice(0, 100).map((doc) => ({
   ...doc,
   nome_arquivo: sanitizeText(doc?.nome_arquivo, 180),
@@ -340,7 +344,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
   });
 
 
-  const { boundId: clienteBoundId } = useCadastroReopenOnIdentity(cliente, {
+  const { boundId: clienteBoundId, identityMismatch } = useCadastroReopenOnIdentity(cliente, {
     formData,
     setFormData,
     emptyForm: {
@@ -418,10 +422,16 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     }),
   });
 
+  const podeAlterarRascunho = contextoValido && !identityMismatch && (clienteBoundId ? podeEditar : podeCriar);
+  const assertDraftCurrent = () => {
+    assertFormScopeCurrent();
+    if (identityMismatch) throw new Error("Reabra o cadastro antes de alterar o cliente.");
+  };
+
   const saveMutation = useMutation({
     /** @param {Record<string, unknown>} data */
     mutationFn: async (data) => {
-      assertFormScopeCurrent();
+      assertDraftCurrent();
       if (!contextoValido) {
         throw new Error("Selecione um grupo ou empresa antes de salvar o cliente.");
       }
@@ -429,7 +439,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
       const payload = buildPayload(data);
 
       // Identidade do rascunho (boundId), não props — evita salvar A em B após reject switch.
-      const targetId = clienteBoundId || formData?.id || null;
+      const targetId = clienteBoundId;
       if (targetId) {
         if (!podeEditar) throw new Error("Seu perfil nao permite editar clientes.");
         return updateInContext('Cliente', targetId, payload);
@@ -458,7 +468,8 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
 
   const deleteMutation = useMutation({
     mutationFn: async (id) => {
-      assertFormScopeCurrent();
+      assertDraftCurrent();
+      if (!clienteBoundId || id !== clienteBoundId) throw new Error("Identidade do cliente alterada.");
       if (!contextoValido) throw new Error("Selecione um grupo ou empresa antes de excluir clientes.");
       if (!podeExcluir) throw new Error("Seu perfil nao permite excluir clientes.");
       return deleteInContext('Cliente', id);
@@ -481,13 +492,13 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
   });
 
   const handleExcluir = () => {
-    try { assertFormScopeCurrent(); }
+    try { assertDraftCurrent(); }
     catch (error) { toast({ title: 'Contexto alterado', description: error.message, variant: 'destructive' }); return; }
     if (!window.confirm(`Tem certeza que deseja excluir o cliente "${formData.nome}"? Esta ação não pode ser desfeita.`)) {
       return;
     }
-    if (!formData?.id) return;
-    deleteMutation.mutate(formData.id);
+    if (!clienteBoundId) return;
+    deleteMutation.mutate(clienteBoundId);
   };
 
   const handleAlternarStatus = () => {
@@ -504,7 +515,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
   };
 
   const handleSave = () => {
-    try { assertFormScopeCurrent(); }
+    try { assertDraftCurrent(); }
     catch (error) { toast({ title: 'Contexto alterado', description: error.message, variant: 'destructive' }); return; }
     setIsSaving(true);
     saveMutation.mutate(buildPayload(formData), {
@@ -666,7 +677,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                                     data-permission="Cadastros.Cliente.excluir"
                                     data-sensitive
                                     onClick={handleExcluir}
-                                    disabled={deleteMutation.isPending || !podeExcluir || !contextoValido}
+                                    disabled={deleteMutation.isPending || !podeExcluir || !contextoValido || identityMismatch}
                   >
                     <Trash2 className="w-4 h-4 mr-2" />
                     {deleteMutation.isPending ? 'Excluindo...' : 'Excluir'}
@@ -678,7 +689,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                 data-permission={cliente?.id ? "Cadastros.Cliente.editar" : "Cadastros.Cliente.criar"}
                 data-action="Cadastros.Cliente.salvar"
                 data-sensitive
-                disabled={isSaving || saveMutation.isPending || !contextoValido || (clienteBoundId ? !podeEditar : !podeCriar)}
+                disabled={isSaving || saveMutation.isPending || !podeAlterarRascunho}
                 className="bg-sky-600 hover:bg-sky-700"
               >
                 <Save className="w-4 h-4 mr-2" />
@@ -1175,9 +1186,10 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
 
             <TabsContent value="contatos" className="m-0 mt-4">
               <GerenciarContatosClienteForm
-                contatos={formData.contatos || []}
-                onChange={(novosContatos) => setFormData({ ...formData, contatos: novosContatos })}
-                assertScopeCurrent={assertFormScopeCurrent}
+                contatos={formData.contatos ?? formData.contatos_escalares?.items ?? []}
+                onChange={(novosContatos) => setFormData((prev) => replaceDraftContatos(prev, novosContatos))}
+                podeAlterar={podeAlterarRascunho}
+                assertScopeCurrent={assertDraftCurrent}
               />
             </TabsContent>
 
@@ -1185,7 +1197,8 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
               <GerenciarEnderecosClienteForm
                 enderecos={formData.locais_entrega || []}
                 onChange={(novosEnderecos) => setFormData({ ...formData, locais_entrega: novosEnderecos })}
-                assertScopeCurrent={assertFormScopeCurrent}
+                podeAlterar={podeAlterarRascunho}
+                assertScopeCurrent={assertDraftCurrent}
               />
             </TabsContent>
 

@@ -32,7 +32,7 @@ function actualClienteFormPayload() {
   visit(tree);
   assert.ok(payload && mapper, 'real payload and reopen mapper must exist');
   const helpers = source.slice(source.indexOf('const sanitizeText ='), source.indexOf('export default function'));
-  return vm.runInNewContext(`${helpers}; ({ buildPayload: ${payload}, mapToForm: ${mapper} })`, {
+  return vm.runInNewContext(`${helpers}; ({ buildPayload: ${payload}, mapToForm: ${mapper}, replaceDraftContatos })`, {
     empresaAtual: { id: 'synthetic-company' }, groupId: 'synthetic-group', calcularSituacaoCredito: () => 'OK',
   });
 }
@@ -40,7 +40,7 @@ function actualClienteFormPayload() {
 test('form real: ausencia de contatos HTTP nao vira intencao de apagar escalares', () => {
   const { buildPayload, mapToForm } = actualClienteFormPayload();
   const record = { id: 'synthetic-client', tipo: 'Pessoa Jurídica', razao_social: 'SYNTHETIC', email: 'kept@example.test', telefone: '1133334444' };
-  const draft = mapToForm(record);
+  const draft = mapToForm(withHydratedContatos(record));
   assert.equal(Object.hasOwn(draft, 'contatos'), false);
   const uiPayload = buildPayload({ ...draft, nome_fantasia: 'SYNTHETIC EDIT' });
   assert.equal(Object.hasOwn(uiPayload, 'contatos'), false);
@@ -49,6 +49,29 @@ test('form real: ausencia de contatos HTTP nao vira intencao de apagar escalares
   assert.equal(wire.telefone, record.telefone);
   assert.equal(wire.nome_fantasia, 'SYNTHETIC EDIT');
   assert.equal(Object.hasOwn(record, 'contatos'), false);
+});
+
+test('form real: editar e excluir contatos escalares sobrevive ao save e reopen', () => {
+  const { buildPayload, mapToForm, replaceDraftContatos } = actualClienteFormPayload();
+  const row = withHydratedContatos({ id: 'c1', email: 'old@example.test', telefone: '1133334444' });
+  const draft = mapToForm(row);
+  const changed = row.contatos_escalares.items.map((item) => item.canal === 'email'
+    ? { ...item, valor: 'new@example.test' } : item);
+  const wire = toClienteMasterHttpPayload(buildPayload(replaceDraftContatos(draft, changed)));
+  const reopened = withHydratedContatos({ ...row, ...wire });
+  assert.equal(reopened.contatos_escalares.items.find((item) => item.canal === 'email').valor, 'new@example.test');
+  assert.equal(reopened.telefone, '1133334444');
+  const cleared = toClienteMasterHttpPayload(buildPayload(replaceDraftContatos(mapToForm(reopened), [])));
+  assert.equal(cleared.email, null);
+  assert.equal(cleared.telefone, null);
+  assert.equal(cleared.celular, null);
+  assert.equal(withHydratedContatos({ ...reopened, ...cleared }).contatos_escalares, undefined);
+});
+
+test('cargo isolado nao pode desaparecer na projecao escalar', () => {
+  assert.throws(() => toClienteMasterHttpPayload({
+    contatos: [{ tipo: 'E-mail', valor: 'compras@example.test', cargo: 'Compras' }],
+  }), (error) => error.code === CONTATOS_SCALAR_OVERFLOW && error.losses.includes('cargo_perdido:0'));
 });
 
 test('form real: lista explicita divergente e metadata continuam bloqueadas', () => {

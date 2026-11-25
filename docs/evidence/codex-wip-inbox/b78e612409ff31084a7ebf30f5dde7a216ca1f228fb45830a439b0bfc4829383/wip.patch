@@ -1,0 +1,694 @@
+diff --git a/.gitattributes b/.gitattributes
+index ed8bd369..df99c20a 100644
+--- a/.gitattributes
++++ b/.gitattributes
+@@ -1,2 +1,7 @@
+ public/base44-local-core-snapshot.json -diff
+ public/base44-local-snapshot.json -diff
++
++# Preservation counterproofs compare canonical source hunks, including newlines.
++*.js text eol=lf
++*.jsx text eol=lf
++*.ts text eol=lf
+diff --git a/docs/PROGRAMA_COMERCIAL_360_OMNICANAL_EXECUCAO_AUTONOMA.md b/docs/PROGRAMA_COMERCIAL_360_OMNICANAL_EXECUCAO_AUTONOMA.md
+index 774af423..d05c6ffe 100644
+--- a/docs/PROGRAMA_COMERCIAL_360_OMNICANAL_EXECUCAO_AUTONOMA.md
++++ b/docs/PROGRAMA_COMERCIAL_360_OMNICANAL_EXECUCAO_AUTONOMA.md
+@@ -1,4 +1,15 @@
+-## Continuidade atual #342/#344/#350 (2026-10-24)
++## Continuidade vigente - decisao desktop temporario (2026-10-28)
++
++Desenvolvimento no clone desktop independente existente; Codespace unico reservado
++para validacao integrada e navegacao quando houver franquia, sem habilitar gastos.
++GitHub segue canonico, VPS separada por gates. Lista unica e resultados vigentes no
++STATUS/HANDOFF. Codex: backend/contratos/persistencia/legado; Cursor: interface,
++formularios/navegacao/recuperacao. Um escritor por checkout e reservas na PR342.
++Nao presumir WIP/staging/chaves remotos locais nem reconstruir trabalho inacessivel.
++Preservados programa, visual azul-claro com funcionalidades, IDs/codigos/vinculos
++e contratos atuais; nenhuma nova aprovacao visual ou carga acompanha a retomada.
++
++## Historico #342/#344/#350 (2026-10-24)
+ 
+ Retomada no Codespace unico e branch de consolidacao, base4ab7a61b. Defeito de
+ captura assincrona na correcao canonica do nome inativo reproduzido e corrigido:
+diff --git a/scripts/legado/pilot-functional-load-plan.mjs b/scripts/legado/pilot-functional-load-plan.mjs
+index 77cbe879..59090d77 100644
+--- a/scripts/legado/pilot-functional-load-plan.mjs
++++ b/scripts/legado/pilot-functional-load-plan.mjs
+@@ -1,4 +1,6 @@
+-import { rowHash } from './pilot-functional-policy.mjs';
++import { createHash } from 'node:crypto';
++import { rowHash, projectionDifferences } from './pilot-functional-policy.mjs';
++import { isValidCpf, isValidCnpj } from '../../src/api/localCadastroMasterPolicy.js';
+ const hash = value => typeof value === 'string' && /^[a-f0-9]{64}$/.test(value);
+ const proven = (value, target) => value?.verified === true && hash(value.proofSha256) && hash(target)
+   && value.targetIdentitySha256 === target && value.environment === 'OPERATIONAL_DESTINATION'
+@@ -77,3 +79,202 @@ export function buildOperationalLoadCandidate({ candidates, proofs = {}, migrati
+     backupRestoreScope: 'ACTUAL_DESTINATION_REQUIRED_NOT_WORKSPACE_OR_LEGACY_SOURCE_RESTORE',
+     isolatedProofDoesNotReleaseDestination: true };
+ }
++
++const uuid = value => typeof value === 'string'
++  && /^[a-f0-9]{8}-[a-f0-9]{4}-[1-5][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i.test(value);
++const clientReadFields = Object.freeze(['id', 'group_id', 'empresa_id', 'codigo', 'tipo',
++  'documento', 'documento_normalizado', 'nome', 'razao_social', 'nome_fantasia', 'ativo',
++  'status', 'email', 'telefone', 'celular', 'origem', 'codigo_legado',
++  'legacy_id', 'source_system', 'migration_batch']);
++const comparisonFields = Object.freeze(['tipo', 'documento', 'nome', 'razao_social',
++  'nome_fantasia', 'ativo', 'status', 'email', 'telefone', 'celular']);
++const cloneFrozen = value => {
++  const copy = structuredClone(value);
++  const freeze = item => {
++    if (item && typeof item === 'object') { Object.values(item).forEach(freeze); Object.freeze(item); }
++    return item;
++  };
++  return freeze(copy);
++};
++
++/** Fixed read proposal in the existing load preparation flow; no connection or authorization is created. */
++export function buildClientReconciliationReadPlan({ sourceBytes, expectedSourceSha256, expectedCohortSha256, target }) {
++  if (!Buffer.isBuffer(sourceBytes) || sourceBytes.length > 2 * 1024 * 1024
++    || !hash(expectedSourceSha256)
++    || createHash('sha256').update(sourceBytes).digest('hex') !== expectedSourceSha256)
++    throw new Error('RECONCILIATION_SOURCE_PIN_REQUIRED');
++  if (!target || target.schema !== 'public' || !hash(target.identitySha256) || !uuid(target.groupId)
++    || !Array.isArray(target.companyIds) || target.companyIds.length < 1 || target.companyIds.length > 200
++    || !target.companyIds.every(uuid) || new Set(target.companyIds).size !== target.companyIds.length
++    || typeof target.database !== 'string' || !/^[a-z_][a-z0-9_]{0,62}$/.test(target.database)
++    || typeof target.executorRole !== 'string' || !/^[a-z_][a-z0-9_]{0,62}$/.test(target.executorRole))
++    throw new Error('RECONCILIATION_TARGET_BINDING_REQUIRED');
++  target = { identitySha256: target.identitySha256, database: target.database, schema: target.schema,
++    executorRole: target.executorRole, groupId: target.groupId, companyIds: [...target.companyIds] };
++  let source;
++  try { source = JSON.parse(sourceBytes.toString('utf8')); }
++  catch { throw new Error('RECONCILIATION_SOURCE_INVALID'); }
++  if (!source || typeof source !== 'object' || Array.isArray(source)
++    || !Array.isArray(source.cohort) || source.cohort.length < 1 || source.cohort.length > 100
++    || !hash(expectedCohortSha256) || source.cohortSha256 !== expectedCohortSha256
++    || source.cohortSha256 !== rowHash(source.cohort) || !Array.isArray(source.selectedDetails)
++    || source.selectedDetails.length !== source.cohort.length)
++    throw new Error('RECONCILIATION_COHORT_INVALID');
++  const details = new Map();
++  for (const row of source.selectedDetails) {
++    if (!row || !Number.isSafeInteger(row.sourceIndex) || row.sourceIndex < 0 || row.sourceIndex > 2147483647
++      || details.has(row.sourceIndex)) throw new Error('RECONCILIATION_SOURCE_IDENTITY_INVALID');
++    details.set(row.sourceIndex, row);
++  }
++  const seen = new Set(), rows = [];
++  for (const ref of source.cohort) {
++    const row = details.get(ref?.sourceIndex);
++    if (!row || seen.has(ref.sourceIndex) || !hash(ref.sourceFingerprint) || !hash(ref.fileSha256)
++      || row.sourceFingerprint !== ref.sourceFingerprint || row.fileSha256 !== ref.fileSha256
++      || !row.canonical || typeof row.canonical !== 'object' || Array.isArray(row.canonical))
++      throw new Error('RECONCILIATION_SOURCE_IDENTITY_INVALID');
++    seen.add(ref.sourceIndex);
++    const documentAbsent = row.canonical.documento == null;
++    const documentValid = documentAbsent || typeof row.canonical.documento === 'string'
++      && /^(?:\d{11}|\d{14})$/.test(row.canonical.documento)
++      && (isValidCpf(row.canonical.documento) || isValidCnpj(row.canonical.documento));
++    const projection = Object.fromEntries(comparisonFields.filter(key => Object.hasOwn(row.canonical, key)
++      && !(key === 'documento' && documentAbsent))
++      .map(key => [key, row.canonical[key]]));
++    rows.push({ sourceIndex: ref.sourceIndex, sourceFingerprint: ref.sourceFingerprint,
++      fileSha256: ref.fileSha256, projection, documento: documentAbsent ? null : row.canonical.documento,
++      sourceMissingDocument: documentAbsent,
++      uncomparedSourceFields: Object.keys(row.canonical).filter(key => !Object.hasOwn(projection, key)),
++      sourceSystem: row.canonical.source_system ?? null, codigoLegado: row.canonical.codigo_legado ?? null,
++      blockedReason: documentValid ? null : 'SOURCE_DOCUMENT_UNVERIFIED' });
++  }
++  const occurrences = new Map();
++  for (const row of rows) if (!row.blockedReason && row.documento !== null)
++    occurrences.set(row.documento, (occurrences.get(row.documento) || 0) + 1);
++  for (const row of rows) if (!row.blockedReason && row.documento !== null && occurrences.get(row.documento) !== 1)
++    row.blockedReason = 'SOURCE_DOCUMENT_AMBIGUOUS';
++  const nativeOccurrences = new Map();
++  for (const row of rows) {
++    const native = [row.sourceSystem, row.codigoLegado];
++    row.nativeIdentityValid = native.every(value => typeof value === 'string'
++      && value === value.trim() && value.length > 0 && value.length <= 80);
++    if (!native.every(value => value === null) && !row.nativeIdentityValid)
++      row.blockedReason ||= 'SOURCE_LEGACY_IDENTITY_INCOMPLETE';
++    if (row.sourceMissingDocument && !row.nativeIdentityValid)
++      row.blockedReason ||= 'SOURCE_IDENTITY_UNVERIFIED';
++    if (row.nativeIdentityValid) {
++      const key = JSON.stringify(native);
++      nativeOccurrences.set(key, (nativeOccurrences.get(key) || 0) + 1);
++    }
++  }
++  for (const row of rows) if (row.nativeIdentityValid
++    && nativeOccurrences.get(JSON.stringify([row.sourceSystem, row.codigoLegado])) !== 1)
++    row.blockedReason ||= 'SOURCE_LEGACY_IDENTITY_AMBIGUOUS';
++  const identities = rows.filter(row => !row.blockedReason).map(row => ({ source_index: row.sourceIndex,
++    documento: row.documento, source_system: row.sourceSystem, codigo_legado: row.codigoLegado }));
++  const documents = identities.filter(row => row.documento !== null).map(row => row.documento);
++  const precheck = {
++    sql: `SELECT current_database() AS database_name,current_user AS executor_role,
++      session_user AS session_role,current_setting('transaction_read_only') AS read_only,
++      current_setting('transaction_isolation') AS isolation,current_setting('search_path') AS search_path,
++      (SELECT count(*)::int FROM public.groups WHERE id=$1::uuid) AS group_matches,
++      (SELECT count(*)::int FROM public.empresas WHERE group_id=$1::uuid
++        AND id=ANY($2::uuid[])) AS company_matches`,
++    params: [target.groupId, target.companyIds],
++  };
++  const query = identities.length ? {
++    sql: `WITH requested AS (SELECT source_index,documento,source_system,codigo_legado
++        FROM jsonb_to_recordset($2::jsonb) AS r(source_index int,documento text,source_system text,codigo_legado text)),
++      matched AS MATERIALIZED (SELECT r.source_index,c.id,
++        (c.documento_normalizado=r.documento) AS document_match,
++        (r.source_system IS NOT NULL AND c.source_system=r.source_system AND c.codigo_legado=r.codigo_legado) AS legacy_match
++        FROM requested r JOIN public.clientes c ON c.group_id=$1::uuid AND
++          (c.documento_normalizado=r.documento OR (r.source_system IS NOT NULL
++            AND c.source_system=r.source_system AND c.codigo_legado=r.codigo_legado))),
++      counts AS (SELECT source_index,count(*)::int AS matches,
++        count(*) FILTER (WHERE document_match)::int AS document_matches,
++        count(*) FILTER (WHERE legacy_match)::int AS legacy_matches FROM matched GROUP BY source_index)
++      SELECT r.source_index,r.documento,coalesce(n.matches,0) AS matches,
++        coalesce(n.document_matches,0) AS document_matches,coalesce(n.legacy_matches,0) AS legacy_matches,
++        CASE WHEN n.matches=1 THEN jsonb_build_object(${clientReadFields.map(key => `'${key}',c.${key}`).join(',')}) END AS record,
++        CASE WHEN n.matches=1 THEN (SELECT count(*)::int FROM public.cliente_empresas ce
++          WHERE ce.group_id=$1::uuid AND ce.cliente_id=c.id AND ce.empresa_id=ANY($3::uuid[])) ELSE 0 END AS company_links,
++        CASE WHEN n.matches=1 THEN (SELECT count(*)::int FROM public.cliente_locais cl
++          WHERE cl.group_id=$1::uuid AND cl.cliente_id=c.id) ELSE 0 END AS address_links
++      FROM requested r LEFT JOIN counts n ON n.source_index=r.source_index
++      LEFT JOIN matched m ON n.matches=1 AND m.source_index=r.source_index
++      LEFT JOIN public.clientes c ON c.id=m.id AND c.group_id=$1::uuid ORDER BY r.source_index`,
++    params: [target.groupId, JSON.stringify(identities), target.companyIds],
++  } : null;
++  return cloneFrozen({ status: 'PREPARED_NOT_AUTHORIZED_READ', privateOnly: true,
++    sourceArtifactSha256: expectedSourceSha256, cohortSha256: source.cohortSha256,
++    target, rows, documents, identities, precheck, query,
++    transaction: { begin: 'BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY',
++      settings: ["SET LOCAL search_path=pg_catalog", "SET LOCAL statement_timeout='10s'", "SET LOCAL lock_timeout='2s'",
++        "SET LOCAL idle_in_transaction_session_timeout='30s'"], end: 'ROLLBACK' },
++    operationalAuthorized: false, operationalEligible: 0, executorIsRestrictedReader: false,
++    authenticationProven: false, physicalDestinationProofRequired: true,
++    codeCollisionCheckOutsideCohortPending: true, auxiliaryCompletenessPending: true });
++}
++
++/** Validates the exact statement's private output, not authentication, freshness or load authorization. */
++export function classifyClientReconciliationReadResult(plan, { session, rows }) {
++  if (!plan?.privateOnly || plan.status !== 'PREPARED_NOT_AUTHORIZED_READ'
++    || session?.database_name !== plan.target.database || session.executor_role !== plan.target.executorRole
++    || session.session_role !== plan.target.executorRole || session.read_only !== 'on'
++    || session.isolation !== 'repeatable read' || session.search_path !== 'pg_catalog' || session.group_matches !== 1
++    || session.company_matches !== plan.target.companyIds.length)
++    throw new Error('RECONCILIATION_SESSION_UNVERIFIED');
++  if (!Array.isArray(rows) || rows.length !== plan.identities.length)
++    throw new Error('RECONCILIATION_RESULT_INCOMPLETE');
++  const actual = new Map();
++  for (const row of rows) {
++    const requested = plan.identities.find(item => item.source_index === row?.source_index);
++    if (!row || !requested || requested.documento !== row.documento || actual.has(row.source_index)
++      || !Number.isSafeInteger(row.matches) || row.matches < 0
++      || !Number.isSafeInteger(row.document_matches) || row.document_matches < 0 || row.document_matches > row.matches
++      || !Number.isSafeInteger(row.legacy_matches) || row.legacy_matches < 0 || row.legacy_matches > row.matches
++      || (requested.source_system === null && row.legacy_matches !== 0)
++      || row.matches > row.document_matches + row.legacy_matches
++      || !Number.isSafeInteger(row.company_links) || row.company_links < 0
++      || row.company_links > plan.target.companyIds.length
++      || !Number.isSafeInteger(row.address_links) || row.address_links < 0
++      || (row.matches !== 1 && (row.company_links !== 0 || row.address_links !== 0))
++      || (row.matches !== 1 && row.record != null)) throw new Error('RECONCILIATION_RESULT_INVALID');
++    if (row.matches === 1 && (!row.record || !uuid(row.record.id)
++      || row.record.group_id !== plan.target.groupId
++      || (requested.documento !== null && row.record.documento_normalizado === row.documento) !== (row.document_matches === 1)
++      || (requested.source_system !== null && row.record.source_system === requested.source_system
++        && row.record.codigo_legado === requested.codigo_legado) !== (row.legacy_matches === 1)
++      || !clientReadFields.every(key => Object.hasOwn(row.record, key))
++      || Object.keys(row.record).some(key => !clientReadFields.includes(key))))
++      throw new Error('RECONCILIATION_RESULT_SCOPE_INVALID');
++    actual.set(row.source_index, row);
++  }
++  const details = plan.rows.map(source => {
++    if (source.blockedReason) return { sourceIndex: source.sourceIndex, status: 'BLOCKED', reason: source.blockedReason };
++    const found = actual.get(source.sourceIndex);
++    if (found.matches === 0) return { sourceIndex: source.sourceIndex, status: 'NEW', scope: 'APPROVED_DOCUMENT_OR_NATIVE_SNAPSHOT_ONLY' };
++    if (found.matches > 1) return { sourceIndex: source.sourceIndex,
++      status: found.matches === 2 && found.document_matches === 1 && found.legacy_matches === 1
++        ? 'DIVERGENT' : 'DUPLICATE', reason: 'AMBIGUOUS_DOCUMENT_OR_LEGACY_IDENTITY', matches: found.matches };
++    const differences = projectionDifferences(source.projection, { ...found.record, documento: found.record.documento_normalizado });
++    const legacyConflict = source.sourceSystem !== null && found.legacy_matches === 0
++      && (found.record.source_system != null || found.record.codigo_legado != null);
++    return { sourceIndex: source.sourceIndex,
++      status: found.record.empresa_id != null ? 'BLOCKED' : differences.length || legacyConflict ? 'DIVERGENT' : 'COMPATIBLE',
++      reason: found.record.empresa_id != null ? 'EXISTING_RECORD_IS_NOT_GROUP_MASTER'
++        : legacyConflict ? 'EXISTING_LEGACY_PROVENANCE_DIFFERS' : null,
++      differences, record: found.record, uncomparedSourceFields: source.uncomparedSourceFields,
++      legacyBindingMatches: found.legacy_matches === 1,
++      sourceMissingDocument: source.sourceMissingDocument,
++      comparisonScope: 'DECLARED_CANONICAL_FIELDS_ONLY',
++      companyLinks: found.company_links, addressLinks: found.address_links };
++  });
++  const counts = Object.fromEntries(['NEW', 'COMPATIBLE', 'DUPLICATE', 'DIVERGENT', 'BLOCKED']
++    .map(status => [status, details.filter(row => row.status === status).length]));
++  return { privateOnly: true, details, publicSummary: { total: details.length, counts,
++    operationalAuthorized: false, operationalEligible: 0, authenticationProven: false,
++    physicalDestinationProofRequired: true, codeCollisionCheckOutsideCohortPending: true,
++    auxiliaryCompletenessPending: true } };
++}
+diff --git a/scripts/legado/pilot-isolated.mjs b/scripts/legado/pilot-isolated.mjs
+index cecdb351..b623072e 100644
+--- a/scripts/legado/pilot-isolated.mjs
++++ b/scripts/legado/pilot-isolated.mjs
+@@ -89,7 +89,7 @@ print(json.dumps({k:len(v) for k,v in rows.items()}))
+ // Execution-only harness: existing mappers, services, repositories and audit own
+ // business behavior. No operational URL or private migration is accepted.
+ export function assertIsolationDescriptor(c, { name, batchId, image, privateRoot }) {
+-  const allowed = new Set([path.join(privateRoot, 'pgdata'), path.join(privateRoot, 'socket')]);
++  const allowed = new Set([path.posix.join(privateRoot, 'pgdata'), path.posix.join(privateRoot, 'socket')]);
+   if (c.Name !== '/' + name || c.Config.Labels['erp.legacy.pilot'] !== batchId
+     || c.HostConfig.NetworkMode !== 'none' || c.HostConfig.Privileged
+     || !c.HostConfig.ReadonlyRootfs || Object.keys(c.HostConfig.PortBindings || {}).length
+diff --git a/server/src/services/orcamentoService.ts b/server/src/services/orcamentoService.ts
+index 0b6cb486..c769500f 100644
+--- a/server/src/services/orcamentoService.ts
++++ b/server/src/services/orcamentoService.ts
+@@ -367,6 +367,7 @@ export class OrcamentoService {
+   }
+ 
+   private async prepare(ctx: RequestContext, action: RbacAction, executor?: DbQueryExecutor): Promise<OrcamentoScope> {
++    ctx = Object.freeze({ ...ctx });
+     if (!ctx.groupId) throw new AppError(400, 'GROUP_ID_REQUIRED', 'groupId is required');
+     if (!ctx.empresaId) throw new AppError(400, 'EMPRESA_ID_REQUIRED', 'empresaId is required');
+     if (!ctx.actorId) throw new AppError(403, 'ACTOR_REQUIRED', 'actorId is required');
+diff --git a/server/src/services/pedidoService.ts b/server/src/services/pedidoService.ts
+index 028f6831..d8dacef4 100644
+--- a/server/src/services/pedidoService.ts
++++ b/server/src/services/pedidoService.ts
+@@ -352,6 +352,7 @@ export class PedidoService {
+   }
+ 
+   private async prepare(ctx: RequestContext, action: RbacAction, executor?: DbQueryExecutor): Promise<PedidoScope> {
++    ctx = Object.freeze({ ...ctx });
+     if (!ctx.groupId) throw new AppError(400, 'GROUP_ID_REQUIRED', 'groupId is required');
+     if (!ctx.empresaId) throw new AppError(400, 'EMPRESA_ID_REQUIRED', 'empresaId is required');
+     if (!ctx.actorId) throw new AppError(403, 'ACTOR_REQUIRED', 'actorId is required');
+diff --git a/server/tests/cliente-conferencia-duplicates.test.ts b/server/tests/cliente-conferencia-duplicates.test.ts
+index ed6feac6..f1d4139f 100644
+--- a/server/tests/cliente-conferencia-duplicates.test.ts
++++ b/server/tests/cliente-conferencia-duplicates.test.ts
+@@ -1,6 +1,6 @@
+ import test from 'node:test';
+ import assert from 'node:assert/strict';
+-import { randomUUID } from 'node:crypto';
++import { randomUUID, createHash } from 'node:crypto';
+ import { fileURLToPath } from 'node:url';
+ import type { QueryResultRow } from 'pg';
+ import { localCrmFixture } from './helpers/crmFixture.ts';
+@@ -12,6 +12,9 @@ import type { DbClient } from '../src/db/client.ts';
+ import { createApp } from '../src/app.ts';
+ import { loadConfig } from '../src/config/env.ts';
+ import { createHttpApiClient } from '../../src/api/httpApiClient.js';
++import { rowHash } from '../../scripts/legado/pilot-functional-policy.mjs';
++import { buildClientReconciliationReadPlan, classifyClientReconciliationReadResult }
++  from '../../scripts/legado/pilot-functional-load-plan.mjs';
+ 
+ test('canonical memory document lookup refuses duplicates instead of choosing an arbitrary inactive/history row', async () => {
+   const repo = createInMemoryClienteRepo(), scope = { groupId: ID.groupA };
+@@ -24,6 +27,199 @@ test('canonical memory document lookup refuses duplicates instead of choosing an
+   assert.equal(first.ativo, true); assert.equal(second.ativo, false);
+ });
+ 
++function fixedReadInput(canonicals: Array<Record<string, unknown>>) {
++  const selectedDetails = canonicals.map((canonical, sourceIndex) => ({ sourceIndex,
++    sourceFingerprint: rowHash({ canonical, sourceIndex }), fileSha256: rowHash('SYNTHETIC_SOURCE_ONLY'),
++    canonical, original: { retainedInPrivateSource: true } }));
++  const cohort = selectedDetails.map(({ sourceIndex, sourceFingerprint, fileSha256 }) =>
++    ({ sourceIndex, sourceFingerprint, fileSha256 }));
++  const sourceBytes = Buffer.from(JSON.stringify({ cohort, cohortSha256: rowHash(cohort), selectedDetails,
++    validationContextIsNotOperationalCrosswalk: true }));
++  return { sourceBytes, expectedSourceSha256: createHash('sha256').update(sourceBytes).digest('hex'),
++    expectedCohortSha256: rowHash(cohort),
++    target: { identitySha256: rowHash('SYNTHETIC_TARGET_ONLY'), database: 'postgres', schema: 'public', executorRole: 'postgres',
++      groupId: ID.groupA, companyIds: [ID.empresaA] } };
++}
++
++test('fixed reconciliation plan pins existing source bytes, preserves binding and refuses broad or ambiguous inputs', () => {
++  const input = fixedReadInput([{ documento: DOC.clientePjA, empresa_id: 'SOURCE_CONTEXT_IS_NOT_BINDING' }]);
++  const before = Buffer.from(input.sourceBytes), plan = buildClientReconciliationReadPlan(input);
++  assert.deepEqual(input.sourceBytes, before);
++  assert.equal(plan.operationalAuthorized, false); assert.equal(plan.authenticationProven, false);
++  assert.equal(plan.query.params[0], ID.groupA);
++  assert.deepEqual(JSON.parse(plan.query.params[1]), [{ source_index: 0, documento: DOC.clientePjA,
++    source_system: null, codigo_legado: null }]);
++  assert.deepEqual(plan.query.params[2], [ID.empresaA]);
++  assert.equal(plan.query.sql.includes(DOC.clientePjA), false);
++  assert.equal(plan.query.sql.includes('SOURCE_CONTEXT_IS_NOT_BINDING'), false);
++  const extraTarget = buildClientReconciliationReadPlan({ ...input,
++    target: { ...input.target, forbiddenCredentialField: 'SYNTHETIC_NOT_TO_PROPAGATE' } });
++  assert.equal(JSON.stringify(extraTarget).includes('SYNTHETIC_NOT_TO_PROPAGATE'), false);
++  assert.doesNotMatch(plan.query.sql, /SELECT\s+\*|LIMIT\s+1\b|\b(?:UPDATE|INSERT|DELETE|CREATE|GRANT|REVOKE)\b/i);
++  assert.equal(Object.isFrozen(plan.query.params[1]), true);
++  input.target.groupId = ID.groupB;
++  assert.equal(plan.target.groupId, ID.groupA);
++  for (const bad of [{ ...input, sourceBytes: Buffer.concat([input.sourceBytes, Buffer.from(' ')]) },
++    { ...input, target: { ...input.target, companyIds: [ID.empresaA, ID.empresaA] } },
++    { ...input, target: { ...input.target, schema: 'other_schema' } },
++    { ...input, target: { ...input.target, executorRole: 'postgres; SELECT 1' } }])
++    assert.throws(() => buildClientReconciliationReadPlan(bad));
++  const excessive = fixedReadInput(Array.from({ length: 101 }, () => ({ documento: DOC.clientePjA })));
++  assert.throws(() => buildClientReconciliationReadPlan(excessive), /COHORT_INVALID/);
++  assert.throws(() => buildClientReconciliationReadPlan({ ...input,
++    expectedCohortSha256: rowHash('OTHER_COHORT') }), /COHORT_INVALID/);
++  const empty = Buffer.from('null');
++  assert.throws(() => buildClientReconciliationReadPlan({ ...input, sourceBytes: empty,
++    expectedSourceSha256: createHash('sha256').update(empty).digest('hex') }), /COHORT_INVALID/);
++  const changed = JSON.parse(input.sourceBytes.toString('utf8'));
++  changed.selectedDetails[0].sourceFingerprint = rowHash('DIFFERENT_SOURCE');
++  const bytes = Buffer.from(JSON.stringify(changed));
++  assert.throws(() => buildClientReconciliationReadPlan({ ...input, sourceBytes: bytes,
++    expectedSourceSha256: createHash('sha256').update(bytes).digest('hex') }), /SOURCE_IDENTITY_INVALID/);
++});
++
++test('fixed reconciliation withholds bad or repeated source documents without blocking independent rows', () => {
++  const plan = buildClientReconciliationReadPlan(fixedReadInput([
++    { documento: '00000000000' }, { documento: DOC.clientePfA },
++    { documento: DOC.clientePfA }, { documento: DOC.clientePjA },
++  ]));
++  assert.deepEqual(plan.documents, [DOC.clientePjA]);
++  assert.deepEqual(plan.rows.map(row => row.blockedReason), ['SOURCE_DOCUMENT_UNVERIFIED',
++    'SOURCE_DOCUMENT_AMBIGUOUS', 'SOURCE_DOCUMENT_AMBIGUOUS', null]);
++  const native = buildClientReconciliationReadPlan(fixedReadInput([
++    { documento: DOC.clientePjA, source_system: 'SYNTHETIC_NATIVE', codigo_legado: '001' },
++    { documento: DOC.clientePfA, source_system: 'SYNTHETIC_NATIVE', codigo_legado: '001' },
++    { documento: DOC.clientePjB, source_system: 'SYNTHETIC_NATIVE' },
++  ]));
++  assert.equal(native.query, null);
++  assert.deepEqual(native.rows.map(row => row.blockedReason), ['SOURCE_LEGACY_IDENTITY_AMBIGUOUS',
++    'SOURCE_LEGACY_IDENTITY_AMBIGUOUS', 'SOURCE_LEGACY_IDENTITY_INCOMPLETE']);
++});
++
++test('fixed reconciliation accepts a proven native-only identity without inventing a document', () => {
++  const plan = buildClientReconciliationReadPlan(fixedReadInput([
++    { source_system: 'SYNTHETIC_NATIVE', codigo_legado: '001' },
++  ]));
++  assert.equal(plan.identities.length, 1);
++  assert.equal(plan.identities[0].documento, null);
++  assert.equal(Object.hasOwn(plan.rows[0].projection, 'documento'), false);
++  assert.equal(plan.operationalAuthorized, false);
++});
++
++test('fixed reconciliation detects native collisions across rejected and eligible source rows', () => {
++  const plan = buildClientReconciliationReadPlan(fixedReadInput([
++    { documento: '00000000000', source_system: 'SYNTHETIC_NATIVE', codigo_legado: '001' },
++    { documento: DOC.clientePfA, source_system: 'SYNTHETIC_NATIVE', codigo_legado: '001' },
++    { documento: DOC.clientePjA, source_system: 'SYNTHETIC_INDEPENDENT', codigo_legado: '002' },
++  ]));
++  assert.equal(plan.rows[1].blockedReason, 'SOURCE_LEGACY_IDENTITY_AMBIGUOUS');
++  assert.deepEqual(plan.identities.map(row => row.source_index), [2]);
++});
++
++test('fixed reconciliation executes exact SQL and rollback on canonical isolated fixture; duplicates never select a row', async t => {
++  const fixture = await localCrmFixture(), { admin } = fixture;
++  try {
++    await admin.query('UPDATE clientes SET empresa_id=NULL,nome=$1,razao_social=$2,ativo=false WHERE id=$3',
++      ['SYNTHETIC PRESERVED NAME', 'SYNTHETIC LEGAL NAME', ID.clientePjA]);
++    await fixture.exec('DROP INDEX uq_clientes_group_documento');
++    await admin.query(`INSERT INTO clientes SELECT (jsonb_populate_record(NULL::clientes,to_jsonb(c)
++      ||jsonb_build_object('id',$1::text,'codigo','900098','ativo',false,'source_system',NULL,
++        'codigo_legado',NULL,'email',NULL))).* FROM clientes c WHERE c.id=$2`, [randomUUID(), ID.clientePfA]);
++    const input = fixedReadInput([{ documento: DOC.clientePjA, nome: 'SYNTHETIC PRESERVED NAME',
++      razao_social: 'SYNTHETIC LEGAL NAME', ativo: false }, { documento: DOC.clientePfA },
++      { documento: DOC.clientePjB }]);
++    const plan = buildClientReconciliationReadPlan(input);
++    const snapshot = async () => JSON.stringify((await admin.query(
++      'SELECT to_jsonb(c) AS value FROM clientes c ORDER BY id')).rows);
++    const before = await snapshot();
++    let result;
++    await fixture.exec(plan.transaction.begin);
++    try {
++      for (const sql of plan.transaction.settings) await fixture.exec(sql);
++      const session = (await admin.query(plan.precheck.sql, plan.precheck.params)).rows[0];
++      assert.equal(session.executor_role, session.session_role);
++      const rows = (await admin.query(plan.query.sql, plan.query.params)).rows;
++      result = classifyClientReconciliationReadResult(plan, { session, rows });
++      const replay = classifyClientReconciliationReadResult(plan,
++        { session, rows: (await admin.query(plan.query.sql, plan.query.params)).rows });
++      assert.deepEqual(replay, result);
++      assert.deepEqual(result.publicSummary.counts, { NEW: 1, COMPATIBLE: 1, DUPLICATE: 1, DIVERGENT: 0, BLOCKED: 0 });
++      assert.equal(result.details[0].record.id, ID.clientePjA);
++      assert.equal(result.details[0].record.ativo, false);
++      assert.equal(result.details[0].record.nome, 'SYNTHETIC PRESERVED NAME');
++      assert.equal(result.details[1].matches, 2);
++      assert.equal(Object.hasOwn(result.details[1], 'record'), false);
++      assert.equal(JSON.stringify(result.publicSummary).includes('SYNTHETIC PRESERVED NAME'), false);
++      assert.equal(JSON.stringify(result.publicSummary).includes(DOC.clientePjA), false);
++      assert.equal(result.publicSummary.operationalEligible, 0);
++      for (const patch of [{ database_name: 'wrong_destination' }, { executor_role: 'wrong_role' },
++        { session_role: 'different_login' }, { read_only: 'off' }, { isolation: 'read committed' }, { search_path: 'public' },
++        { group_matches: 0 }, { company_matches: 0 }])
++        assert.throws(() => classifyClientReconciliationReadResult(plan,
++          { session: { ...session, ...patch }, rows }), /SESSION_UNVERIFIED/);
++      assert.throws(() => classifyClientReconciliationReadResult(plan, { session, rows: rows.slice(1) }), /INCOMPLETE/);
++      assert.throws(() => classifyClientReconciliationReadResult(plan, { session, rows: [rows[0], rows[0], rows[2]] }), /INVALID/);
++      const forged = structuredClone(rows);
++      forged[0].record.group_id = ID.groupB;
++      assert.throws(() => classifyClientReconciliationReadResult(plan, { session, rows: forged }), /SCOPE_INVALID/);
++      const multipleAddresses = structuredClone(rows);
++      multipleAddresses[0].address_links = 2;
++      assert.equal(classifyClientReconciliationReadResult(plan,
++        { session, rows: multipleAddresses }).details[0].addressLinks, 2);
++      for (const [index, field, value] of [
++        [0, 'company_links', plan.target.companyIds.length + 1],
++        [1, 'company_links', 1], [1, 'address_links', 1],
++        [2, 'company_links', 1], [2, 'address_links', 1],
++      ] as const) {
++        const impossible = structuredClone(rows);
++        impossible[index][field] = value;
++        assert.throws(() => classifyClientReconciliationReadResult(plan,
++          { session, rows: impossible }), /RESULT_INVALID/);
++      }
++      await assert.rejects(admin.query('UPDATE public.clientes SET ativo=true WHERE id=$1', [ID.clientePjA]), /read.only/i);
++    } finally { await fixture.exec(plan.transaction.end); }
++    assert.equal(await snapshot(), before);
++    assert.ok(result);
++    t.diagnostic('PGlite canonical fixture/READ ONLY/ROLLBACK only; no network login, actual destination or load authorization proven');
++  } finally { await fixture.close(); }
++});
++
++test('fixed reconciliation refuses divergent native/document identities and company-owned records without modifying them', async () => {
++  const fixture = await localCrmFixture(), { admin } = fixture;
++  try {
++    await admin.query('UPDATE clientes SET empresa_id=NULL,source_system=$1,codigo_legado=$2 WHERE id=$3',
++      ['SYNTHETIC_NATIVE_344', 'legacy-001', ID.clientePjA]);
++    const snapshot = async () => JSON.stringify((await admin.query('SELECT to_jsonb(c) AS value FROM clientes c ORDER BY id')).rows);
++    const before = await snapshot();
++    const cases = [
++      { canonical: { documento: DOC.clientePjB, source_system: 'SYNTHETIC_NATIVE_344', codigo_legado: 'legacy-001' },
++        expected: 'DIVERGENT', matches: 1 },
++      { canonical: { documento: DOC.clientePfA, source_system: 'SYNTHETIC_NATIVE_344', codigo_legado: 'legacy-001' },
++        expected: 'DIVERGENT', matches: 2 },
++      { canonical: { documento: DOC.clientePjA, source_system: 'SYNTHETIC_OTHER', codigo_legado: 'other-code' },
++        expected: 'DIVERGENT', matches: 1 },
++      { canonical: { documento: DOC.clientePfA }, expected: 'BLOCKED', matches: 1 },
++      { canonical: { source_system: 'SYNTHETIC_NATIVE_344', codigo_legado: 'legacy-001' },
++        expected: 'COMPATIBLE', matches: 1 },
++    ];
++    for (const item of cases) {
++      const plan = buildClientReconciliationReadPlan(fixedReadInput([item.canonical]));
++      await fixture.exec(plan.transaction.begin);
++      try {
++        for (const sql of plan.transaction.settings) await fixture.exec(sql);
++        const session = (await admin.query(plan.precheck.sql, plan.precheck.params)).rows[0];
++        const rows = (await admin.query(plan.query.sql, plan.query.params)).rows;
++        const result = classifyClientReconciliationReadResult(plan, { session, rows });
++        assert.equal(rows[0].matches, item.matches);
++        assert.equal(result.details[0].status, item.expected);
++        if (item.matches > 1) assert.equal(Object.hasOwn(result.details[0], 'record'), false);
++        assert.equal(result.publicSummary.operationalAuthorized, false);
++      } finally { await fixture.exec(plan.transaction.end); }
++    }
++    assert.equal(await snapshot(), before);
++  } finally { await fixture.close(); }
++});
++
+ test('canonical SQL + Supabase middleware + RBAC + HTTP adapter deny ambiguous documents without business writes', async t => {
+   const url = process.env.CLIENTE_CONFERENCIA_PG_TEST_URL;
+   const fixture = url ? await realCrmFixture(url) : await localCrmFixture();
+diff --git a/server/tests/comercial-expedicao-composicao.test.ts b/server/tests/comercial-expedicao-composicao.test.ts
+index afc5f3db..db7fb64a 100644
+--- a/server/tests/comercial-expedicao-composicao.test.ts
++++ b/server/tests/comercial-expedicao-composicao.test.ts
+@@ -118,3 +118,67 @@ if (process.env.DATABASE_URL) test('Composição PostgreSQL real isolado executa
+   const f = await realCrmFixture(process.env.DATABASE_URL!);
+   try { await journey(f); } finally { await f.close(); }
+ });
++
++test('Leitores comerciais persistidos nao promovem ator nem tenant trocados durante validacao SQL', async () => {
++  const f = await localCrmFixture();
++  const config = loadConfig({ NODE_ENV: 'test', ERP_ENV: 'dev', REQUIRE_DATABASE: 'false', DATABASE_URL: 'postgresql://synthetic@localhost/erp_test' });
++  const ctx = { groupId: ID.groupA, empresaId: ID.empresaA, actorId: ID.runtimeActorA, requestId: 'synthetic-read-context' };
++  let afterTenant: (() => void) | undefined;
++  let mutations = 0;
++  const db: typeof f.admin = { ...f.admin, query: async (sql, params) => {
++    const result = await f.admin.query(sql, params);
++    if (afterTenant && sql === 'SELECT 1 AS ok FROM empresas WHERE id = $1 AND group_id = $2 LIMIT 1') {
++      const mutate = afterTenant;
++      afterTenant = undefined;
++      mutations++;
++      mutate();
++    }
++    return result;
++  } };
++  try {
++    const runtime = createApp({ config, db, useMemory: false });
++    const link = await runtime.clienteService.getEmpresaLink(ctx, ID.clientePjA, ID.empresaA);
++    const quote = await runtime.orcamentoService.create(ctx, { cliente_empresa_id: link.id,
++      condicao_pagamento_id: ID.condicaoPagamentoA, validade_em: '2027-06-01T00:00:00.000Z',
++      itens: [{ produto_id: ID.produtoA, unidade_id: ID.unidadeA, descricao: 'Synthetic immutable read',
++        unidade_sigla: 'KG', quantidade: '2', preco_unitario: '999', desconto: '0' }] });
++    const order = await runtime.pedidoService.convert(ctx, quote.id,
++      { tipo_operacao: 'RETIRADA', data_entrega_solicitada: '2027-06-01T00:00:00.000Z' });
++    const snapshot = async () => (await f.admin.query(`SELECT
++      (SELECT jsonb_agg(to_jsonb(q) ORDER BY id) FROM orcamentos q) quotes,
++      (SELECT jsonb_agg(to_jsonb(i) ORDER BY id) FROM orcamento_itens i) quote_items,
++      (SELECT jsonb_agg(to_jsonb(p) ORDER BY id) FROM pedidos p) orders,
++      (SELECT jsonb_agg(to_jsonb(i) ORDER BY id) FROM pedido_itens i) order_items,
++      (SELECT jsonb_agg(to_jsonb(h) ORDER BY id) FROM pedido_historico h) history,
++      (SELECT jsonb_agg(to_jsonb(a) ORDER BY id) FROM audit_logs a) audit,
++      (SELECT jsonb_agg(to_jsonb(s) ORDER BY group_id,entity_name) FROM entity_code_sequences s) sequences`)).rows;
++    const before = await snapshot();
++    const readers = [
++      async (input: typeof ctx) => [await runtime.orcamentoService.get(input, quote.id)],
++      async (input: typeof ctx) => (await runtime.orcamentoService.list(input)).data,
++      async (input: typeof ctx) => [await runtime.pedidoService.get(input, order.id)],
++      async (input: typeof ctx) => (await runtime.pedidoService.list(input)).data,
++      async (input: typeof ctx) => runtime.pedidoService.history(input, order.id),
++    ];
++    for (const read of readers) {
++      const unauthorized = { ...ctx, actorId: randomUUID() };
++      afterTenant = () => Object.assign(unauthorized, ctx);
++      await assert.rejects(() => read(unauthorized), (error: unknown) =>
++        typeof error === 'object' && error !== null && 'statusCode' in error && error.statusCode === 403);
++      assert.equal(afterTenant, undefined);
++      const initial = await read({ ...ctx });
++      assert.ok(Array.isArray(initial) && initial.length > 0);
++      assert.ok(initial.every(row => row.group_id === ctx.groupId && row.empresa_id === ctx.empresaId));
++      assert.ok(initial.some(row => 'pedido_id' in row ? row.pedido_id === order.id : row.id === quote.id || row.id === order.id));
++      const mutable = { ...ctx };
++      afterTenant = () => Object.assign(mutable, { groupId: ID.groupB, empresaId: ID.empresaB, actorId: ID.runtimeActorB });
++      assert.deepEqual(await read(mutable), initial);
++      assert.equal(afterTenant, undefined);
++    }
++    assert.equal(mutations, 10);
++    assert.deepEqual(await snapshot(), before);
++    await assert.rejects(() => runtime.pedidoService.get({ ...ctx, empresaId: ID.empresaB }, order.id));
++    await assert.rejects(() => runtime.orcamentoService.get({ ...ctx, actorId: randomUUID() }, quote.id));
++    assert.deepEqual(await snapshot(), before);
++  } finally { await f.close(); }
++});
+diff --git a/server/tests/runtime08c-orcamento-service.test.ts b/server/tests/runtime08c-orcamento-service.test.ts
+index 2689bc88..cf4f4670 100644
+--- a/server/tests/runtime08c-orcamento-service.test.ts
++++ b/server/tests/runtime08c-orcamento-service.test.ts
+@@ -349,3 +349,30 @@ test('Orcamento captura contexto e consulta autoria no executor transacional', a
+   f.audit.listByEntity=async (...args:any[])=>{executorSeen=args[2]===f.repo.executor;return (read as any)(...args);};
+   await f.service.update(ctx,row.id,payload);assert.equal(executorSeen,true);
+ });
++
++test('Orcamento get/list nao promovem ator trocado durante a espera de tenant', async () => {
++  for (const method of ['get', 'list'] as const) {
++    const f = fixture();
++    const row = await f.service.create(ctx, payload);
++    const caller = { ...ctx, actorId: '99999999-9999-4999-8999-999999999999' };
++    const pending = method === 'get' ? f.service.get(caller, row.id) : f.service.list(caller);
++    caller.actorId = ctx.actorId;
++    assert.equal(await code(pending), 'PERMISSION_DENIED', method);
++    assert.equal((await f.repo.list({ groupId, empresaId })).total, 1);
++    assert.equal((await f.audit.listByEntity('Orcamento', row.id)).length, 1);
++  }
++});
++
++test('Orcamento get/list preservam o tenant e ator capturados na reabertura', async () => {
++  const f = fixture();
++  const row = await f.service.create(ctx, payload);
++  const caller = { ...ctx };
++  const pendingGet = f.service.get(caller, row.id);
++  const pendingList = f.service.list(caller);
++  caller.groupId = otherEmpresa;
++  caller.empresaId = otherEmpresa;
++  caller.actorId = otherEmpresa;
++  const [reopened, page] = await Promise.all([pendingGet, pendingList]);
++  assert.equal(reopened.id, row.id);
++  assert.equal(page.data[0].id, row.id);
++});
+diff --git a/server/tests/runtime09-pedido-service.test.ts b/server/tests/runtime09-pedido-service.test.ts
+index 78a6da7f..71d6af81 100644
+--- a/server/tests/runtime09-pedido-service.test.ts
++++ b/server/tests/runtime09-pedido-service.test.ts
+@@ -88,6 +88,37 @@ test('Pedido captura tenant e ator antes da espera sem seguir alteracao do chama
+  assert.equal((await f.audit.listByEntity('Pedido',order.id))[0].actorId,ctx.actorId);
+ });
+ 
++test('Pedido get/list/history nao promovem ator trocado durante espera de tenant', async () => {
++  for (const method of ['get', 'list', 'history'] as const) {
++    const f = fixture();
++    const row = await f.service.create(ctx, direct);
++    const caller = { ...ctx, actorId: '99999999-9999-4999-8999-999999999999' };
++    const pending = method === 'get' ? f.service.get(caller, row.id)
++      : method === 'list' ? f.service.list(caller) : f.service.history(caller, row.id);
++    caller.actorId = ctx.actorId;
++    await assert.rejects(pending, error => error instanceof Error
++      && 'code' in error && error.code === 'PERMISSION_DENIED', method);
++    assert.equal((await f.repo.list({ groupId, empresaId })).total, 1);
++    assert.equal((await f.audit.listByEntity('Pedido', row.id)).length, 1);
++  }
++});
++
++test('Pedido reabertura lista e historico preservam contexto capturado', async () => {
++  const f = fixture();
++  const row = await f.service.create(ctx, direct);
++  const caller = { ...ctx };
++  const pendingGet = f.service.get(caller, row.id);
++  const pendingList = f.service.list(caller);
++  const pendingHistory = f.service.history(caller, row.id);
++  caller.groupId = '99999999-9999-4999-8999-999999999999';
++  caller.empresaId = caller.groupId;
++  caller.actorId = caller.groupId;
++  const [reopened, page, history] = await Promise.all([pendingGet, pendingList, pendingHistory]);
++  assert.equal(reopened.id, row.id);
++  assert.equal(page.data[0].id, row.id);
++  assert.equal(history[0].status_novo, 'EM_ABERTO');
++});
++
+ test('Pedido exige motivo explicito de cancelamento sem efeitos em tentativas invalidas', async()=>{
+   const f=fixture(), order=await f.service.create(ctx,direct);
+   const scope={groupId,empresaId};
+diff --git a/tests/legado-filesystem-precheck.test.js b/tests/legado-filesystem-precheck.test.js
+index 54515c85..e3bdde2b 100644
+--- a/tests/legado-filesystem-precheck.test.js
++++ b/tests/legado-filesystem-precheck.test.js
+@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
+ import { spawnSync } from 'node:child_process';
+ import { fileURLToPath } from 'node:url';
+ test('private staging precheck uses real synthetic filesystem metadata only', () => {
+-  const run = spawnSync('python3', [fileURLToPath(new URL('./legado_filesystem_precheck_test.py', import.meta.url))], { encoding: 'utf8' });
++  const run = spawnSync(process.env.TEST_PYTHON_EXECUTABLE || 'python3', [fileURLToPath(new URL('./legado_filesystem_precheck_test.py', import.meta.url))], { encoding: 'utf8' });
+   assert.equal(run.status, 0, run.stderr);
+   assert.match(run.stderr, /Ran 6 tests/);
+ });
+diff --git a/tests/legado-piloto-funcional.test.js b/tests/legado-piloto-funcional.test.js
+index d1de5c0c..50589424 100644
+--- a/tests/legado-piloto-funcional.test.js
++++ b/tests/legado-piloto-funcional.test.js
+@@ -73,7 +73,7 @@ test('verified CSV parser preserves escaped billing JSON and rejects shifted col
+         entity: 'fornecedor', relativePath: 'synthetic.csv', sha256: crypto.createHash('sha256').update(text).digest('hex'),
+       }] }));
+       // Match the JavaScript template literal escape processing used by the harness.
+-      return spawnSync('python3', ['-c', python.replaceAll('\\\\', '\\'), job], { encoding: 'utf8' });
++      return spawnSync(process.env.TEST_PYTHON_EXECUTABLE || 'python3', ['-c', python.replaceAll('\\\\', '\\'), job], { encoding: 'utf8' });
+     };
+     const valid = prepare(csv);
+     assert.equal(valid.status, 0, valid.stderr);
+diff --git a/tests/legado-piloto-isolado.test.js b/tests/legado-piloto-isolado.test.js
+index f921549b..5b0f42b9 100644
+--- a/tests/legado-piloto-isolado.test.js
++++ b/tests/legado-piloto-isolado.test.js
+@@ -22,6 +22,7 @@ for (const [name, change] of [
+   ['privilegio', d => { d.HostConfig.Privileged = true; }],
+   ['root gravavel', d => { d.HostConfig.ReadonlyRootfs = false; }],
+   ['montagem externa', d => { d.Mounts[0].Source = '/operational'; }],
++  ['montagem com separador Windows', d => { d.Mounts[0].Source = root.replaceAll('/', '\\') + '\\pgdata'; }],
+   ['montagem adicional', d => { d.Mounts.push({ Type: 'volume', Source: '/other' }); }],
+   ['imagem diferente', d => { d.Image = 'sha256:other'; }],
+   ['lote diferente', d => { d.Config.Labels['erp.legacy.pilot'] = 'other'; }],

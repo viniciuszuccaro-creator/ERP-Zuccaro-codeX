@@ -22,6 +22,8 @@ export const componentContractHunks = {
     ]),
   ],
   'src/components/comercial/pedidoUiPolicy.js': [
+    // Reabertura de Pedido convertido: preservar somente a origem canônica.
+    ["  return {\n    orcamento_id: row.orcamento_id || '',\n    cliente_empresa_id: row.cliente_empresa_id || '',", "  return {\n    cliente_empresa_id: row.cliente_empresa_id || '',", 1],
     [
       'subscribe(listener) { listeners.add(listener); return () => { listeners.delete(listener); }; },',
       'subscribe(listener) { listeners.add(listener); return () => listeners.delete(listener); },', 1,

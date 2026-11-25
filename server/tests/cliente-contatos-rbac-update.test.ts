@@ -8,12 +8,12 @@ import { InMemoryTenantGuard } from '../src/db/tenantGuard.ts';
 
 /**
  * Contatos/endereços do Cliente na UI local passam por updateInContext + podeEditar.
- * O schema HTTP de Cliente é .strict() e NÃO aceita `contatos`/`locais_entrega`.
+ * Cliente MASTER exige CAS para contatos ricos e rejeita locais_entrega.
  *
  * Camadas cobertas neste arquivo:
  * - serviço: PERMISSION_DENIED no update sem editar
  * - HTTP PATCH /api/v1/clientes/:id: 403 real + sem mutação persistida (GET)
- * - HTTP: payload com `contatos` → VALIDATION_ERROR (não bypassa RBAC)
+ * - HTTP: contatos sem expectedVersion → VALIDATION_ERROR (não bypassa RBAC)
  *
  * Esconder botão na UI não basta; este arquivo prova bloqueio de mutação.
  */
@@ -85,6 +85,65 @@ function headers(actorId: string) {
   };
 }
 
+test('servico: GET reautoriza depois da leitura quando a permissao e revogada', async () => {
+  const runtime = fixture();
+  const request = ctx(ACTOR_EDIT, 'get-revoked');
+  const created = await runtime.clienteService.create(request, {
+    tipo: 'Pessoa Física', documento: '52998224725', nome: 'SYNTHETIC revocation',
+  });
+  const original = runtime.rbacGuard.assertAllowed.bind(runtime.rbacGuard);
+  let checks = 0;
+  runtime.rbacGuard.assertAllowed = async (...args) => {
+    checks += 1;
+    await original(...args);
+    if (checks === 1) {
+      (runtime.rbacGuard as InMemoryRbacGuard).link({
+        actorId: ACTOR_EDIT, groupId: GROUP, permissions: {},
+      });
+    }
+  };
+  await assert.rejects(
+    () => runtime.clienteService.get(request, created.id),
+    (error: any) => error.statusCode === 403 && error.code === 'PERMISSION_DENIED',
+  );
+  assert.equal(checks, 2, 'a segunda autorizacao deve falhar antes de retornar o registro');
+});
+
+test('servico: UPDATE captura ator e payload antes do primeiro await', async () => {
+  const runtime = fixture();
+  const created = await runtime.clienteService.create(ctx(ACTOR_EDIT, 'create-capture'), {
+    tipo: 'Pessoa Física', documento: '52998224725', nome: 'SYNTHETIC capture',
+  });
+  (runtime.rbacGuard as InMemoryRbacGuard).link({
+    actorId: ACTOR_VIEW, groupId: GROUP,
+    permissions: { Cadastros: { cliente: ['visualizar', 'editar'] } },
+  });
+  const request = ctx(ACTOR_EDIT, 'update-capture');
+  const payload = { observacoes: 'original-intent' };
+  const original = runtime.rbacGuard.assertAllowed.bind(runtime.rbacGuard);
+  const actors: Array<string | null | undefined> = [];
+  runtime.rbacGuard.assertAllowed = async (...args) => {
+    actors.push(args[0].actorId);
+    await original(...args);
+    if (actors.length === 1) {
+      request.actorId = ACTOR_VIEW;
+      payload.observacoes = 'mutated-after-await';
+    }
+  };
+  const changed = await runtime.clienteService.update(request, created.id, payload);
+  assert.equal(changed?.observacoes, 'original-intent');
+  assert.ok(actors.length >= 2, 'escrita exige reautorizacao');
+  assert.ok(actors.every((actor) => actor === ACTOR_EDIT));
+  const updates = (await runtime.auditRepo.listByEntity('Cliente', created.id))
+    .filter((entry) => entry.action === 'update');
+  assert.equal(updates.length, 1);
+  assert.equal(updates[0].actorId, ACTOR_EDIT);
+  assert.equal(updates[0].groupId, GROUP);
+  assert.equal(updates[0].empresaId, EMPRESA);
+  const reopened = await runtime.clienteService.get(ctx(ACTOR_EDIT, 'reopen-capture'), created.id);
+  assert.equal(reopened?.observacoes, 'original-intent');
+});
+
 async function http(
   app: ReturnType<typeof createApp>['app'],
   path: string,
@@ -101,6 +160,35 @@ async function http(
     await new Promise<void>((resolve, reject) => server.close((error) => (error ? reject(error) : resolve())));
   }
 }
+
+test('HTTP MASTER: existing GET provides contacts CAS; PATCH persists rich channels and rejects stale/viewer tokens', async () => {
+  const runtime = fixture();
+  const created = await http(runtime.app, '/api/v1/clientes', { method: 'POST', headers: headers(ACTOR_EDIT),
+    body: JSON.stringify({ tipo: 'Pessoa Física', documento: '52998224725', nome: 'SYNTHETIC rich contacts' }) });
+  assert.equal(created.status, 201);
+  const url = `/api/v1/clientes/${created.body.data.id}`;
+  const initial = await http(runtime.app, url, { headers: headers(ACTOR_EDIT) });
+  assert.equal(initial.body.data.contatos, null);
+  const expectedVersion = initial.body.data.contatos_version;
+  assert.match(expectedVersion, /^[a-f0-9]{64}$/);
+  const contatos = [{ id: 'native-001', tipo: 'Telefone', valor: '001122', ramal: '0007', nome: 'SYNTHETIC' }];
+  const denied = await http(runtime.app, url, { method: 'PATCH', headers: headers(ACTOR_VIEW),
+    body: JSON.stringify({ expectedVersion, contatos }) });
+  assert.equal(denied.status, 403);
+  const changed = await http(runtime.app, url, { method: 'PATCH', headers: headers(ACTOR_EDIT),
+    body: JSON.stringify({ expectedVersion, contatos }) });
+  assert.equal(changed.status, 200, JSON.stringify(changed.body));
+  assert.deepEqual(changed.body.data.contatos, contatos);
+  const stale = await http(runtime.app, url, { method: 'PATCH', headers: headers(ACTOR_EDIT),
+    body: JSON.stringify({ expectedVersion, contatos: [] }) });
+  assert.equal(stale.status, 409); assert.equal(stale.body.error.code, 'CLIENTE_CONTATOS_VERSION_CONFLICT');
+  const reopened = await http(runtime.app, url, { headers: headers(ACTOR_EDIT) });
+  assert.deepEqual(reopened.body.data.contatos, contatos);
+  assert.equal(reopened.body.data.contatos_version, changed.body.data.contatos_version);
+  const cleared = await http(runtime.app, url, { method: 'PATCH', headers: headers(ACTOR_EDIT),
+    body: JSON.stringify({ expectedVersion: reopened.body.data.contatos_version, contatos: [] }) });
+  assert.equal(cleared.status, 200); assert.deepEqual(cleared.body.data.contatos, []);
+});
 
 test('serviço: viewer sem editar recebe PERMISSION_DENIED no update (sessão/RBAC)', async () => {
   const runtime = fixture();
@@ -120,7 +208,7 @@ test('serviço: viewer sem editar recebe PERMISSION_DENIED no update (sessão/RB
   assert.notEqual(reloaded?.observacoes, 'tentativa sem editar');
 });
 
-test('serviço: payload com contatos é rejeitado pelo schema strict (não bypassa RBAC)', async () => {
+test('serviço: contatos sem CAS são rejeitados (não bypassa RBAC)', async () => {
   const runtime = fixture();
   const created = await runtime.clienteService.create(ctx(ACTOR_EDIT, 'c2'), {
     tipo: 'Pessoa Jurídica',
@@ -172,7 +260,7 @@ test('HTTP PATCH: viewer recebe 403 e não persiste mutação (GET inalterado)',
   assert.equal(got.body.data.observacoes, 'original-safe');
 });
 
-test('HTTP PATCH: editor autorizado muta; payload com contatos continua 400', async () => {
+test('HTTP PATCH: editor autorizado muta; contatos sem CAS continuam 400', async () => {
   const runtime = fixture();
   const created = await http(runtime.app, '/api/v1/clientes', {
     method: 'POST',

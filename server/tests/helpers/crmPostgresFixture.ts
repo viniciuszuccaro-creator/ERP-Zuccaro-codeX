@@ -7,6 +7,19 @@ import pg from 'pg';
 import type { DbClient, DbQueryExecutor } from '../../src/db/client.ts';
 import { setupCrmFixture } from './crmFixture.ts';
 
+type BackupToolProbe={status:number|null;stdout:string;error?:unknown};
+/** Never drop a fixture schema with a backup toolchain that cannot restore it. */
+export function assertCrmBackupToolchain(serverVersion:number,probes:Record<'pg_dump'|'pg_restore',BackupToolProbe>) {
+  const major=Math.floor(serverVersion/10000);
+  if(!Number.isSafeInteger(serverVersion)||major<10)throw new Error('CRM_BACKUP_SERVER_VERSION_INVALID');
+  for(const program of ['pg_dump','pg_restore'] as const) {
+    const probe=probes[program];
+    const version=probe.stdout.match(/\(PostgreSQL\)\s+(\d+)(?:\.|\s|$)/);
+    if(probe.error||probe.status!==0||!version)throw new Error(`CRM_BACKUP_TOOLCHAIN_UNAVAILABLE:${program}`);
+    if(Number(version[1])!==major)throw new Error(`CRM_BACKUP_TOOLCHAIN_VERSION_MISMATCH:${program}:server=${major}:client=${version[1]}`);
+  }
+}
+
 export function assertCrmIsolatedUrl(value:string|undefined) {
   let parsed:URL;try{parsed=new URL(value ?? '');}catch{throw new Error('CRM_ISOLATED_POSTGRES_REQUIRED');}
   if(!['postgres:','postgresql:'].includes(parsed.protocol)
@@ -19,11 +32,16 @@ export async function proveCrmFixtureBackup(value:string,f:Awaited<ReturnType<ty
   assertCrmIsolatedUrl(value);
   if(!/^crm_test_[a-f0-9]{18}$/.test(f.schema))throw new Error('CRM_BACKUP_SCHEMA_INVALID');
   const url=new URL(value),database=url.pathname.slice(1);
-  const identity=(await f.admin.query<{database:string;schema:string;user:string}>(
-    'SELECT current_database() AS database,current_schema() AS schema,current_user AS user')).rows[0];
+  const identity=(await f.admin.query<{database:string;schema:string;user:string;version:number}>(
+    "SELECT current_database() AS database,current_schema() AS schema,current_user AS user,current_setting('server_version_num')::int AS version")).rows[0];
   if(identity.database!==database||identity.schema!==f.schema||identity.user!==decodeURIComponent(url.username))throw new Error('CRM_BACKUP_DESTINATION_MISMATCH');
   const env={...process.env,PGHOST:url.hostname.replace(/^\[|\]$/g,''),PGPORT:url.port||'5432',PGDATABASE:database,
     PGUSER:decodeURIComponent(url.username),PGPASSWORD:decodeURIComponent(url.password),PGOPTIONS:''};
+  const probe=(program:string)=>{
+    const result=spawnSync(program,['--version'],{env,encoding:'utf8',timeout:60000,maxBuffer:4096});
+    return {status:result.status,stdout:result.stdout??'',error:result.error};
+  };
+  assertCrmBackupToolchain(identity.version,{'pg_dump':probe('pg_dump'),'pg_restore':probe('pg_restore')});
   const run=(program:string,args:string[])=>{
     const result=spawnSync(program,args,{env,encoding:'utf8',timeout:60000,maxBuffer:4*1024*1024});
     if(result.status!==0||result.error)throw new Error(`CRM_BACKUP_TOOL_FAILED:${program}:${result.status??'unavailable'}`); // No private stderr/connection/rows.
@@ -98,8 +116,8 @@ export async function realCrmFixture(value:string,options:{restrictedLogin?:bool
   const admin=make(adminPool,false);
   const cleanup=async()=>{
     await dataPool.end();
-    try{if(schemaCreated)await adminPool.query(`DROP SCHEMA "${schema}" CASCADE`);
-      if(roleCreated)await adminPool.query(`DROP ROLE "${role}"`);
+    try{if(schemaCreated)await adminPool.query(`DROP SCHEMA IF EXISTS "${schema}" CASCADE`);
+      if(roleCreated)await adminPool.query(`DROP ROLE IF EXISTS "${role}"`);
     }finally{await adminPool.end();}
   };
   try{

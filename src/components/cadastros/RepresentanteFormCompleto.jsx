@@ -159,7 +159,7 @@ export default function RepresentanteFormCompleto({ representante: representante
     enabled: contextoValido,
   });
 
-  const { boundId: representanteBoundId } = useCadastroReopenOnIdentity(representante, {
+  const { boundId: representanteBoundId, identityMismatch } = useCadastroReopenOnIdentity(representante, {
     formData,
     setFormData,
     clearOnNull: false,
@@ -183,10 +183,15 @@ export default function RepresentanteFormCompleto({ representante: representante
     enabled: !!representanteBoundId && contextoValido
   });
 
+  const assertDraftCurrent = () => {
+    assertFormScopeCurrent();
+    if (identityMismatch) throw new Error("Reabra o cadastro antes de alterar o representante.");
+  };
+
   const saveMutation = useMutation({
     /** @param {Record<string, unknown>} data */
     mutationFn: async (data) => {
-      assertFormScopeCurrent();
+      assertDraftCurrent();
       if (!contextoValido) {
         throw new Error("Selecione um grupo ou empresa antes de salvar o representante.");
       }
@@ -216,7 +221,8 @@ export default function RepresentanteFormCompleto({ representante: representante
   const deleteMutation = useMutation({
     /** @param {string} id */
     mutationFn: (id) => {
-      assertFormScopeCurrent();
+      assertDraftCurrent();
+      if (!representanteBoundId || id !== representanteBoundId) throw new Error("Identidade do representante alterada.");
       if (!contextoValido) throw new Error("Selecione um grupo ou empresa antes de excluir representantes.");
       if (!podeExcluir) throw new Error("Seu perfil nao permite excluir representantes.");
       return deleteInContext('Representante', id);
@@ -231,12 +237,12 @@ export default function RepresentanteFormCompleto({ representante: representante
   });
 
   const handleSave = () => {
-    try { assertFormScopeCurrent(); }
+    try { assertDraftCurrent(); }
     catch (error) { toast({ title: 'Contexto alterado', description: error.message, variant: 'destructive' }); return; }
     saveMutation.mutate(buildPayload(formData));
   };
   const handleExcluir = () => {
-    try { assertFormScopeCurrent(); }
+    try { assertDraftCurrent(); }
     catch (error) { toast({ title: 'Contexto alterado', description: error.message, variant: 'destructive' }); return; }
     if (!representanteBoundId) return;
     if (window.confirm(`Excluir "${formData.nome}"?`)) {
@@ -341,7 +347,7 @@ export default function RepresentanteFormCompleto({ representante: representante
                 <Button
                   variant="destructive"
                   onClick={handleExcluir}
-                  disabled={deleteMutation.isPending || !podeExcluir || !contextoValido}
+                  disabled={deleteMutation.isPending || !podeExcluir || !contextoValido || identityMismatch}
                   data-permission="Cadastros.Representante.excluir"
                   data-sensitive
                 >
@@ -352,7 +358,7 @@ export default function RepresentanteFormCompleto({ representante: representante
             )}
             <Button
               onClick={handleSave}
-              disabled={saveMutation.isPending || !contextoValido || (representante?.id ? !podeEditar : !podeCriar)}
+              disabled={saveMutation.isPending || !contextoValido || identityMismatch || (representanteBoundId ? !podeEditar : !podeCriar)}
               data-permission="Cadastros.Representante.salvar"
               data-sensitive
               className="bg-sky-600 hover:bg-sky-700"

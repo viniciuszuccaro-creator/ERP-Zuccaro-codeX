@@ -73,5 +73,6 @@ test('address persistence has no default transaction, rejects company/actor mism
   }
   assert.equal(permissionCalls,0);
   assert.equal(clienteConferenciaRemainder('server/src/api/router.ts',fs.readFileSync('server/src/api/router.ts','utf8')),readHead('server/src/api/router.ts'));
-  assert.equal(execFileSync('git',['diff',"e36231b3a7e546aa9fd2529abb8d5edb61d8189c",'--','server/migrations','server/src/app.ts'],{encoding:'utf8'}),'');
+  assert.equal(clienteConferenciaRemainder('server/src/app.ts',fs.readFileSync('server/src/app.ts','utf8')).replaceAll('\r\n','\n'),readHead('server/src/app.ts'));
+  assert.equal(execFileSync('git',['diff',"e36231b3a7e546aa9fd2529abb8d5edb61d8189c",'--','server/migrations'],{encoding:'utf8'}),'');
 });

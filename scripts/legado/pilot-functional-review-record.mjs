@@ -4,10 +4,10 @@ import { SECRET_MIGRACAO_KEYS } from '../../src/components/lib/migracaoErpPolicy
 const uuid = value => typeof value === 'string' && /^[a-f0-9]{8}-[a-f0-9]{4}-[1-5][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i.test(value);
 const hash = value => typeof value === 'string' && /^[a-f0-9]{64}$/.test(value);
 const fields = new Set(['codigo', 'codigo_legado', 'nome', 'razao_social', 'nome_fantasia', 'descricao',
-  'cep', 'logradouro', 'numero', 'bairro', 'cidade', 'uf', 'estado', 'pais', 'finalidades',
+  'cep', 'logradouro', 'numero', 'complemento', 'referencia', 'bairro', 'cidade', 'uf', 'estado', 'pais', 'finalidades',
   'unidade_origem', 'unidade_principal', 'codigo_classe', 'email', 'contato_email', 'documento', 'cpf', 'cnpj']);
 const protectedFields = new Set(['codigo', 'codigo_legado', 'nome', 'razao_social', 'nome_fantasia', 'email', 'contato_email', 'documento', 'cpf', 'cnpj',
-  'cep', 'logradouro', 'numero', 'bairro', 'cidade', 'uf', 'estado', 'pais', 'finalidades']);
+  'cep', 'logradouro', 'numero', 'complemento', 'referencia', 'bairro', 'cidade', 'uf', 'estado', 'pais', 'finalidades']);
 const secret = key => SECRET_MIGRACAO_KEYS.some(value => value.toLowerCase() === key.toLowerCase());
 const immutable = new Set(['codigo', 'codigo_legado', 'codigo_classe', 'unidade_origem']);
 const fail = code => { throw new Error(code); };

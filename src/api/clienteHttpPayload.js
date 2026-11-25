@@ -113,10 +113,11 @@ export function assessContatosScalarFidelity(contatos, scalars = {}) {
     const channel = normalizeContatoTipo(c.tipo);
     const valor = String(c.valor ?? '').trim();
     const nome = String(c.nome ?? '').trim();
+    const cargo = String(c.cargo ?? '').trim();
     const observacao = String(c.observacao ?? c.obs ?? '').trim();
     const hasId = c.id != null && String(c.id).trim() !== '';
     const hasOrdem = c.ordem != null && String(c.ordem).trim() !== '';
-    const hasMeta = Boolean(nome || observacao || hasId || hasOrdem);
+    const hasMeta = Boolean(nome || cargo || observacao || hasId || hasOrdem);
     const isPrincipal = c.principal === true;
 
     if (isPrincipal) principalTrueCount += 1;
@@ -137,6 +138,7 @@ export function assessContatosScalarFidelity(contatos, scalars = {}) {
     valuedCount += 1;
     byChannel[channel].push(valor);
     if (nome) losses.push(`nome_perdido:${index}`);
+    if (cargo) losses.push(`cargo_perdido:${index}`);
     if (observacao) losses.push(`observacao_perdida:${index}`);
     if (hasId) losses.push(`id_perdido:${index}`);
     if (hasOrdem) losses.push(`ordem_perdida:${index}`);

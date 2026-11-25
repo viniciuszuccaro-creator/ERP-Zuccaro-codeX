@@ -310,6 +310,7 @@ export function mapPedidoRowToForm(row) {
     throw new Error('Pedido inválido para recarregar o formulário.');
   }
   return {
+    orcamento_id: row.orcamento_id || '',
     cliente_empresa_id: row.cliente_empresa_id || '',
     cliente_local_id: row.cliente_local_id || '',
     obra_id: row.obra_id || '',

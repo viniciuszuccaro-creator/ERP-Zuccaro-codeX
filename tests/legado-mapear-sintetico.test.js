@@ -5,6 +5,7 @@ import {
   buildChaveIdempotenteMigracaoLegado,
   mapLegadoLoteSintetico,
   mapLegadoRowToCanonicalStub,
+  mapLegadoClienteContatos,
   resolverEmpresaLegadoCodigo,
 } from '../scripts/legado/mapear-registro-sintetico.mjs';
 
@@ -315,4 +316,121 @@ test('catalogo preserva codigos e separa pares ambiguos sem aceitar mapa implici
  assert.equal(out.grupos.length,2);assert.equal(out.quantidade_sem_mapa,2);
  assert(out.grupos.every(g=>g.motivos.includes('chave_mapeamento_ambigua')));
  assert.throws(()=>catalogarProdutoClasseUnidadeLegado(null),/LEGACY_ROWS_REQUIRED/);
+});
+
+const contactBatch = '11111111-1111-4111-8111-111111111111';
+const contactRecord = () => ({
+  nativeParent: { CODIGOCLIENTE: '0007', EMAIL: 'parent@example.invalid', ENDERECO: 'Incomplete source' },
+  nativeKey: '0007', sourceSystem: 'SYNTHETIC',
+  canonical: { id: '22222222-2222-4222-8222-222222222222', group_id: contactBatch,
+    empresa_id: null, codigo_legado: '0007', source_system: 'SYNTHETIC', contatos: null },
+  contacts34: [
+    { CODIGOCLIENTE: '0007', SEQUENCIA: 1, TELEFCLIENTE: '001122', EMAIL: 'one@example.invalid',
+      NOMECONTATO: 'SYNTHETIC one', CARGOSETOR: 'Compras', TIPO: 'WhatsApp', LOCALIDADE: 'Not an address' },
+    { CODIGOCLIENTE: '0007', SEQUENCIA: 2, TELEFCLIENTE: '001122', NOMECONTATO: 'SYNTHETIC two' },
+  ],
+});
+// Tests dependency injection/field isolation here; backend tests use the actual strict schema.
+const contactOptions = { batchUUID: contactBatch,
+  validateContact: value => ({ success: !Object.values(value).includes('INVALID') }) };
+
+test('native contacts: exact approved fields, typed PK provenance and no inferred flags or address dependency', () => {
+  const input = contactRecord(), before = structuredClone(input);
+  const result = mapLegadoClienteContatos(input, contactOptions);
+  assert.deepEqual(input, before); assert.equal(result.status, 'ready'); assert.equal(result.operationalImport, false);
+  assert.equal(result.contatos.length, 4);
+  const phones = result.contatos.filter(c => c.tipo === 'Telefone');
+  assert.equal(phones.length, 2); assert.equal(phones[0].valor, phones[1].valor);
+  assert.notEqual(phones[0].id, phones[1].id); assert.notEqual(phones[0].legacy_id, phones[1].legacy_id);
+  assert.equal(new Set(result.contatos.map(c => c.id)).size, 4);
+  for (const channel of result.contatos) {
+    assert.match(channel.id, /^[a-f0-9]{64}$/);
+    assert.equal(channel.migration_batch, contactBatch);
+    for (const absent of ['principal', 'ativo', 'endereco', 'ramal']) assert.equal(Object.hasOwn(channel, absent), false);
+    assert(['Telefone', 'E-mail'].includes(channel.tipo));
+  }
+  assert.deepEqual(result.provenance.find(p => p.table === 'ClientesTelefones' && p.field === 'TELEFCLIENTE').pk, ['0007', 1]);
+  assert.deepEqual(mapLegadoClienteContatos({ ...input, contacts34: [...input.contacts34].reverse() }, contactOptions).contatos, result.contatos);
+});
+
+test('native contacts: per-field rejection retains other fields and prior canonical channels', () => {
+  const input = contactRecord(), initial = mapLegadoClienteContatos(input, contactOptions);
+  input.canonical.contatos = initial.contatos;
+  input.contacts34[0].TELEFCLIENTE = 'INVALID'; input.contacts34[0].NOMECONTATO = 'INVALID';
+  input.contacts34[0].CARGOSETOR = 'Financeiro';
+  const result = mapLegadoClienteContatos(input, contactOptions);
+  assert.equal(result.status, 'partial'); assert.equal(result.contatos.length, 4);
+  const phone = initial.contatos.find(c => c.tipo === 'Telefone' && c.nome === 'SYNTHETIC one');
+  assert.deepEqual(result.contatos.find(c => c.id === phone.id), phone);
+  const email = result.contatos.find(c => c.tipo === 'E-mail' && c.valor === 'one@example.invalid');
+  assert.equal(email.nome, 'SYNTHETIC one'); assert.equal(email.cargo, 'Compras');
+  assert.deepEqual(result.contatos, initial.contatos);
+  assert(result.quarentena.some(q => q.reason === 'CONTACT_EXISTING_CHANNEL_CONFLICT'));
+  assert(result.quarentena.some(q => q.field === 'TELEFCLIENTE'));
+  assert(result.quarentena.some(q => q.field === 'NOMECONTATO'));
+  assert.equal(input.contacts34[0].TELEFCLIENTE, 'INVALID');
+  const repeat = mapLegadoClienteContatos({ ...input, canonical: { ...input.canonical, contatos: result.contatos } }, contactOptions);
+  assert.deepEqual(repeat.contatos, result.contatos);
+});
+
+test('native contacts: manual value/name/cargo survive reprocessing; conflict is explicit and new PK still appends', () => {
+  for (const field of ['valor', 'nome', 'cargo']) {
+    const input = contactRecord(), first = mapLegadoClienteContatos(input, contactOptions);
+    const prior = structuredClone(first.contatos);
+    const phone = prior.find(c => c.tipo === 'Telefone' && c.nome === 'SYNTHETIC one');
+    phone[field] = `MANUAL ${field}`;
+    phone.observacao = 'MANUAL note'; phone.principal = true; phone.ativo = false;
+    input.canonical.contatos = prior;
+    input.contacts34.push({ CODIGOCLIENTE: '0007', SEQUENCIA: 3, TELEFCLIENTE: '009988' });
+    const before = structuredClone(input);
+    const result = mapLegadoClienteContatos(input, contactOptions);
+    assert.deepEqual(input, before);
+    assert.equal(result.status, 'partial'); assert.equal(result.contatos.length, prior.length + 1);
+    assert.deepEqual(result.contatos.slice(0, prior.length), prior, 'every pre-existing channel stays byte-for-value equivalent');
+    assert.deepEqual(result.contatos.find(c => c.id === phone.id), phone);
+    assert.equal(result.contatos.at(-1).valor, '009988');
+    assert(result.quarentena.some(q => q.field === 'TELEFCLIENTE' && q.reason === 'CONTACT_EXISTING_CHANNEL_CONFLICT'));
+    const again = mapLegadoClienteContatos({ ...input, canonical: { ...input.canonical, contatos: result.contatos } }, contactOptions);
+    assert.deepEqual(again.contatos, result.contatos);
+    assert(again.quarentena.some(q => q.reason === 'CONTACT_EXISTING_CHANNEL_CONFLICT'));
+  }
+});
+
+test('native contacts: over 200 or conflicting native PK is whole-client pending without truncation', () => {
+  const input = contactRecord();
+  input.nativeParent.EMAIL = null;
+  input.contacts34 = Array.from({ length: 200 }, (_, i) => ({ CODIGOCLIENTE: '0007', SEQUENCIA: i, TELEFCLIENTE: '001122' }));
+  assert.equal(mapLegadoClienteContatos(input, contactOptions).contatos.length, 200);
+  input.contacts34.push({ CODIGOCLIENTE: '0007', SEQUENCIA: 200, TELEFCLIENTE: '001122' });
+  const overflow = mapLegadoClienteContatos(input, contactOptions);
+  assert.equal(overflow.status, 'pending'); assert.equal(Object.hasOwn(overflow, 'contatos'), false);
+  assert.equal(overflow.proposedCount, 201); assert(overflow.reasons.includes('CONTACT_LIMIT_EXCEEDED'));
+  for (const contacts34 of [[input.contacts34[0], input.contacts34[0]],
+    [{ ...input.contacts34[0], CODIGOCLIENTE: 7 }]]) {
+    const result = mapLegadoClienteContatos({ ...input, contacts34 }, contactOptions);
+    assert.equal(result.status, 'pending'); assert.equal(Object.hasOwn(result, 'contatos'), false);
+  }
+});
+
+test('native contacts: missing baseline/binding/validator rejects; no valid channels never clears contacts', () => {
+  const input = contactRecord();
+  assert.throws(() => mapLegadoClienteContatos(input, { batchUUID: contactBatch }), /CONTACT_VALIDATOR_REQUIRED/);
+  assert.throws(() => mapLegadoClienteContatos(input, { ...contactOptions, batchUUID: 'bad' }), /CONTACT_BATCH_UUID_REQUIRED/);
+  for (const delta of [{ nativeKey: 7 }, { sourceSystem: 'OTHER' },
+    { canonical: { ...input.canonical, empresa_id: contactBatch } }]) {
+    assert.throws(() => mapLegadoClienteContatos({ ...input, ...delta }, contactOptions), /CONTACT_NATIVE_CANONICAL_BINDING_REQUIRED/);
+  }
+  assert.throws(() => mapLegadoClienteContatos({ ...input, canonical: { ...input.canonical, contatos: undefined } }, contactOptions),
+    /CONTACT_COMPLETE_BASELINE_REQUIRED/);
+  const result = mapLegadoClienteContatos({ ...input, nativeParent: { CODIGOCLIENTE: '0007', EMAIL: null },
+    contacts34: [{ CODIGOCLIENTE: '0007', SEQUENCIA: 1, NOMECONTATO: 'SYNTHETIC only name' }] }, contactOptions);
+  assert.equal(result.status, 'pending'); assert.equal(Object.hasOwn(result, 'contatos'), false);
+  assert(result.quarentena.some(q => q.field === 'NOMECONTATO'));
+  const baseline = mapLegadoClienteContatos(input, contactOptions).contatos;
+  const mismatched = structuredClone(baseline); mismatched[0].codigo_legado = 'OTHER';
+  const conflict = mapLegadoClienteContatos({ ...input, canonical: { ...input.canonical, contatos: mismatched } }, contactOptions);
+  assert(conflict.reasons.includes('CONTACT_IDENTITY_CONFLICT')); assert.equal(Object.hasOwn(conflict, 'contatos'), false);
+  const principals = baseline.map(c => ({ ...c, principal: true }));
+  assert.throws(() => mapLegadoClienteContatos({ ...input, canonical: { ...input.canonical, contatos: principals } }, contactOptions),
+    /CONTACT_CANONICAL_BASELINE_INVALID/);
 });

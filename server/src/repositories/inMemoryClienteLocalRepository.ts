@@ -28,8 +28,9 @@ export type ClienteLocalListFilter = ClienteLocalScope & {
 };
 
 export interface ClienteLocalRepository {
+  lockScope(scope: ClienteLocalScope, executor?: DbQueryExecutor): Promise<void>;
   withTransaction<T>(fn: (executor?: DbQueryExecutor) => Promise<T>): Promise<T>;
-  listPage(filter: ClienteLocalListFilter): Promise<{ rows: ClienteLocal[]; total: number }>;
+  listPage(filter: ClienteLocalListFilter, executor?: DbQueryExecutor): Promise<{ rows: ClienteLocal[]; total: number }>;
   get(scope: ClienteLocalScope, localId: string, executor?: DbQueryExecutor): Promise<ClienteLocal | null>;
   create(
     scope: ClienteLocalScope,
@@ -70,6 +71,7 @@ function timestamp() {
 }
 
 export class InMemoryClienteLocalRepository implements ClienteLocalRepository {
+  async lockScope(_scope: ClienteLocalScope, _executor?: DbQueryExecutor): Promise<void> {}
   private readonly rows = new Map<string, ClienteLocal>();
   private readonly purposes = new Map<string, ClienteLocalFinalidade>();
   private transactionQueue: Promise<void> = Promise.resolve();

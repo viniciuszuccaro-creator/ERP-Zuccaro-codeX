@@ -94,11 +94,16 @@ const LOCAL_SELECT = `
 export class PostgresClienteLocalRepository implements ClienteLocalRepository {
   constructor(private readonly db: DbClient) {}
 
+  async lockScope(scope: ClienteLocalScope, executor?: DbQueryExecutor) {
+    if (!executor) throw new Error('TRANSACTION_REQUIRED');
+    await this.lockCliente(executor, scope);
+  }
+
   withTransaction<T>(fn: (executor?: DbQueryExecutor) => Promise<T>): Promise<T> {
     return this.db.withTransaction(fn);
   }
 
-  async listPage(filter: ClienteLocalListFilter) {
+  async listPage(filter: ClienteLocalListFilter, executor?: DbQueryExecutor) {
     const params: unknown[] = [filter.groupId, filter.clienteId];
     const where = ['cl.group_id=$1', 'cl.cliente_id=$2'];
     params.push(typeof filter.ativo === 'boolean' ? filter.ativo : true);
@@ -143,14 +148,14 @@ export class PostgresClienteLocalRepository implements ClienteLocalRepository {
       ? 'cl.nome'
       : filter.orderBy === 'cidade' ? 'cl.cidade' : 'cl.created_at';
     const orderDirection = filter.orderDir === 'desc' ? 'DESC' : 'ASC';
-    const count = await this.db.query(
+    const count = await (executor ?? this.db).query(
       `SELECT count(*)::int AS total FROM cliente_locais cl WHERE ${whereSql}`,
       params,
     );
     const limit = Math.min(Math.max(filter.limit ?? 50, 1), 200);
     const offset = Math.max(filter.offset ?? 0, 0);
     params.push(limit, offset);
-    const result = await this.db.query(
+    const result = await (executor ?? this.db).query(
       `${LOCAL_SELECT}
        WHERE ${whereSql}
        GROUP BY cl.id
@@ -321,6 +326,8 @@ export class PostgresClienteLocalRepository implements ClienteLocalRepository {
     actorId?: string | null,
     executor?: DbQueryExecutor,
   ): Promise<ClienteLocal | null> {
+    if (!executor) return this.db.withTransaction(q => this.softDelete(scope, localId, actorId, q));
+    await this.lockCliente(executor, scope);
     const result = await (executor ?? this.db).query(
       `UPDATE cliente_locais SET ativo=false, updated_by=$1
        WHERE group_id=$2 AND cliente_id=$3 AND id=$4 AND ativo=true`,
@@ -336,6 +343,8 @@ export class PostgresClienteLocalRepository implements ClienteLocalRepository {
     actorId?: string | null,
     executor?: DbQueryExecutor,
   ): Promise<ClienteLocal | null> {
+    if (!executor) return this.db.withTransaction(q => this.restore(scope, localId, actorId, q));
+    await this.lockCliente(executor, scope);
     const result = await (executor ?? this.db).query(
       `UPDATE cliente_locais SET ativo=true, updated_by=$1
        WHERE group_id=$2 AND cliente_id=$3 AND id=$4 AND ativo=false`,
