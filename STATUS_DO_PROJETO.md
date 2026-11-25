@@ -1,3 +1,9 @@
+## CPA3: preflight de 790 fornecedores e gargalo do precheck (2026-11-25)
+
+Validador canonico do Fornecedor: 789/790 payloads validos na projecao de ensaio, um email invalido; zero documentos duplicados nos validos. No clone 54adc8e2, delta candidato SELECT/INSERT com policies de Grupo: uma criacao e leitura sinteticas pelo papel restrito, zero visibilidade e escrita negada em Empresa/outro Grupo. 17.472 clientes preservados, clone removido. Sem executar o lote real pelo servico, sem manifesto apto ou autorizacao de escrita HML.
+
+vps-gate-precheck: rastreado Git Bash criando subprocessos basename no loop de migrations; WIP substitui por expansao nativa. Quatro testes diretos passaram em 8,2s; suite ampla nao revalidada, sem commit de codigo/deploy. Cadastros permanece WIP, sem comparacao autenticada. Marcas e Comercial sem nova homologacao. HML e operacional intactos.
+
 ## CPA3: conciliacao dos ajustes e schema Fornecedor no clone (2026-11-25)
 
 SHA dos exports de Obras e ajustes reconferidos na VPS. Cruzamento Cliente + Item/ItemLocalEntrega: 1.536 ajustes com uma Obra candidata, 1.560 sem par, zero ambiguos. Todos os 3.096 com data/hora, sequencias distintas e zero empates de data/hora por cliente/local. Isso nao prova titularidade empresarial ou ordem de aplicacao; zero ajustes liberados.
