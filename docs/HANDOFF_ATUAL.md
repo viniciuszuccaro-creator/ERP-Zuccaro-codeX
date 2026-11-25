@@ -1,3 +1,11 @@
+## CPA3: manifesto de revisao dos 789 Fornecedores e destino vivo (2026-11-25)
+
+Papel restrito da API em transacao READ ONLY confirmou banco/schema HML, um Grupo CPA no UUID dos mapas existentes, 17.472 clientes no Grupo, 17.471 com codigo presente no CSV e procedencia preenchida. Fornecedores e Clientes usam mesmo rotulo de origem; isto corrobora o escopo, nao equivale a mapa oficial dos fornecedores. Tabela fornecedores ausente no destino vivo. Recibo privado efc859d0.
+
+Manifesto privado 4905483e, 769.853 bytes, 789 payloads canonicos, um email invalido segregado, hashes do CSV/clone/destino/schema vinculados. Nao executavel: falta revisar delta/flag e grants, confirmar mapa de origem e backup atual restauravel, e aprovar escrita HML. Sem carga ou alteracao do operacional.
+
+Cinco exports SQL reconferidos por SHA e bytes: Obras, ajustes, Materiais e dois Precos (49.778.266 bytes), zero esperados ausentes. Quatro CSVs previamente verificados, sem reenvio. Sem novo aceite de Cadastros, Marcas ou Comercial.
+
 ## CPA3: 789 Fornecedores ensaiados pelo servico em clone restaurado (2026-11-25)
 
 54adc8e2 restaurado em PostgreSQL isolado sem rede externa ou volume HML. Servico compilado a305a143 com papel restrito executou 789 criacoes em 7.582 ms (~6.244 registros/min, transacoes unitarias), repetiu 789 sem novos registros e reaproveitou um commit sem recibo. Chaves/codigos/documentos distintos 789; auditoria 789 create, 790 possible_duplicate, um soft_delete, duas negativas de Grupo/Empresa. Uma reversao e 17.472 clientes preservados. Clone removido; nenhum dado aplicado na HML.
