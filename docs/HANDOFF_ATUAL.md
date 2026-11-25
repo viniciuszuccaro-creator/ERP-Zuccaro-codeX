@@ -1,3 +1,11 @@
+## CPA3: retomada EXETPS pelo HD e Comercial HTTP em PostgreSQL 16 (2026-11-25)
+
+Par original EXETPS do HD transferido por SFTP retomavel para hd-exetps-verified-staging-20261125 sob SOURCE; tamanho e SHA conferidos. Controlador existente executado com origem restrita ao staging, sem rede/porta/mount HML, e consulta somente leitura confirmou 35.309 ClientesObras. Primeira partida falhou antes do attach; segunda passou. Leitor e volume de teste removidos; recovery HML antigo permaneceu parado. Retomada: recriar staging privado sob SOURCE, enviar par original do HD, conferir os pins e usar o controlador em copia isolada.
+
+Recibo 11:39:57Z: retirados somente o par redundante e o par temporario do ensaio. Livre 65.308.999.680 -> 67.353.993.216 bytes; ganho decorrente da retirada da copia anterior aproximado de 1,02 GB sem contar a devolucao do staging. Zero MDF/LDF em recovered do inventario; HD intacto, HML e operacional HTTP 200.
+
+Comercial: teste focado PostgreSQL 16 e API local descartaveis no WSL, dados sinteticos, passou vinculos, titulos, faturar, baixa, rollback de auditoria, isolamento, replay e saldo zero. Binario Linux esbuild temporario resolveu incompatibilidade das dependencias Windows. Sem clone restaurado do Comercial, deploy ou aceite no navegador. Marca: identificado adaptador de Unidade com lock, auditoria e postimage reutilizaveis; sem implementacao ou ensaio novo. Export HD de 1.208 Produtos nativos e apenas staging, zero empresa e zero autorizados; nao comprova vinculo Base44 nem libera Precos. Obras sem nova prova de titularidade. Sem nova escrita HML.
+
 ## CPA3: EMP03 e Auditoria arquivadas; EXETPS preservada (2026-11-25)
 
 Quatro MDF/LDF EMP03 e Auditoria retirados somente da VPS. HD Novo volume e arvore original conferidos; leitura SHA anterior do HD e nova leitura VPS iguais ao inventario. Cinco manifestos, scripts e jobs consultados, mounts e arquivos abertos sem dependencia dos quatro caminhos. Recibo privado 11:26:54Z: livre 53.388.632.064 -> 66.331.738.112 bytes (+12.943.106.048). EXETPS preservada: controlador procura o par fixado sob SOURCE na VPS; falta provar staging do HD pelo controlador antes de retirar. HML e operacional responderam HTTP 200.
