@@ -181,3 +181,7 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 
 - EMP03 isolada em READ_ONLY: 33.739 pares cliente/obra em pedidos e notas; 30.861 com um codigo positivo de empresa, 2.861 com dois, 13 com tres e quatro sem codigo positivo. A candidata com mestre ativo tem 332 notas e sete pedidos, com dois codigos distintos em cada fonte e na uniao. Zero eventos de ControleEntregasPedidos por numero dos pedidos candidatos. Uso comercial nao prova titularidade. Leitor parado, nenhuma gravacao.
 
+## CPA3: chave nativa e escopo fisico de Obras (2026-11-26)
+
+- Catalogo da copia EXETPS em READ_ONLY confirmou PK (CODIGOCLIENTE, ITEM) e indice unico separado em SEQUENCIA. Zero colunas explicitas de empresa/filial/grupo, FKs declaradas, triggers, dependencias SQL catalogadas ou predicados RLS nesta tabela. Isso comprova identidade relacional, nao regra de visibilidade no aplicativo. Leitor isolado parado; nenhuma escrita.
+

@@ -176,3 +176,7 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 
 - Recibo privado `obra-emp03.ZaaNbi/commercial-company-coverage-v2.private.txt`, SHA-256 `6301456499da41dbe863e3900f5d06391306cd584a631624478fd0a6b3a95f18`. Aguardar a prontidao da base ObraEvidence, nao apenas do servidor, se precisar reabrir. Buscar cadastro/regra nativa de titularidade ou de compartilhamento; nao atribuir pelo primeiro pedido, pela nota ou pelo nome da base.
 
+## CPA3: chave nativa e escopo fisico de Obras (2026-11-26)
+
+- Recibo privado `erp344-reader-20261125T165731Z/obra-native-scope-metadata.private.txt`, SHA-256 `9fcb08d0697ec51b9203c37e009b1dbbb1569f0e15c682e5cc122df73b89de2a`. Reavaliar os ajustes pela PK cliente/item; comparar SEQUENCIA separadamente, sem tomar ausencia de match triplo como falta da Obra ou usar a sequencia do evento como ID da Obra. A regra de Grupo deve ser comprovada no aplicativo ou em documentacao oficial.
+
