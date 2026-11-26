@@ -1,3 +1,7 @@
+## CPA3: cobertura de Produto e Empresa do historico de precos (2026-11-26)
+
+- Manifesto de 19.232 eventos: cruzamento por classe/material/tabela com evidencias privadas anteriores encontrou 35 eventos em 10 pares com candidato a Produto/unidade/empresa historica, 823 em 291 pares com candidato a Produto apenas e 18.374 em 3.168 pares sem candidato. Leitura restrita do catalogo da HML: produtos existe, sem SELECT para o papel consultado; sem tabela de precos ou historico no catalogo do schema. Nenhum apto operacional, nenhuma escrita.
+
 ## CPA3: ensaio em escala do historico de precos (2026-11-26)
 
 - Manifesto 1b2975a3 ensaiado em PostgreSQL descartavel sem rede/porta: 19.232 payloads conferidos, 20 checkpoints (19x1.000 + 232), falha simulada do segundo lote sem estado parcial, retomada e replay sem duplicatas. Reversao de 999 com recibos, uma edicao posterior e 18.232 eventos de outros lotes preservados; repeticao zero. RLS no destino e DELETE/edicao de payload recusados. Janela medida 13,718 s, nao estimativa de HML.

@@ -1,3 +1,7 @@
+## CPA3: cobertura de Produto e Empresa do historico de precos (2026-11-26)
+
+- Recibo `erp344-reader-20261125T165731Z/price-history-context-coverage.private.json` SHA-256 `b5ef918b0b48e093fcc15af8487ddd6c2fb6d14a72d431b5d4f35a47d79fe77d`. Priorizar os 35 eventos no clone restaurado para cruzar IDs originais, unidade e empresa historica. Nao ampliar grants na HML, nao inferir regra vigente de uso passado, nao repetir ensaio de staging. Validar destino canonico antes de qualquer gate.
+
 ## CPA3: ensaio em escala do historico de precos (2026-11-26)
 
 - Recibo privado `erp344-reader-20261125T165731Z/price-history-pg-rehearsal.private.json`, SHA-256 `c91b5725d48133301750a689fd6c07e186cd7ac656a999c0a10e4c58c36e43e5`. Prova de staging descartavel, nao contrato canonico nem ACL da fonte de ensaio. Ainda comprovar produto, unidade, escopo e destino do historico; nenhum preco vigente, deploy, escrita ou gate concedido.
