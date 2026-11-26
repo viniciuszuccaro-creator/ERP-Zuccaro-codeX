@@ -1,3 +1,9 @@
+## CPA3: grade oficial de Fornecedores em leitura (2026-11-26)
+
+- Visualizador existente com opt-in VITE_ERP_HTTP_FORNECEDOR_READ, desligado por padrao. Lista e detalhe oficiais por contexto autenticado, busca e paginacao por hasMore. Sem reutilizar total local, permissao de escrita ou formulario legado. Troca de contexto invalida detalhes e linhas do escopo anterior.
+- Chrome montado com dados sinteticos: busca por codigo, segunda pagina, detalhe, troca CPA/3Z e botoes de escrita indisponiveis. Cadastros continua sem consultas de registros antes do clique. Testes de contratos e historico preservados.
+- Nenhuma flag ativada, carga ou publicacao na HML. Proximo gate: CI do SHA, policy SELECT definitiva, procedencia do manifesto e autorizacao especifica antes de qualquer escrita.
+
 ## CPA3: cliente HTTP de leitura de Fornecedores (2026-11-26)
 
 - CI 45829007262 verde nos quatro jobs para 49887066. HML nao publicada.
