@@ -1,5 +1,7 @@
 ## CPA3: reversao respeitada na consulta historica (2026-11-26)
 
+- Executor canonico validou manifesto 813bb03d para as duas Empresas em container sem rede e somente leitura. Com identidade fisica HML simulada, quatro recusas (apply/reverse por Empresa) antes de autorização, escrita ou auditoria. Recibo privado 33d8a3ff. Nao substitui prova transacional no clone restaurado.
+
 - SQL candidato do historico (39950d55) ensaiado em PostgreSQL descartavel com dois casos sinteticos. Leitor sem escrita nem acesso ao snapshot bruto; papel de carga sem DELETE ou UPDATE de valores, somente arquivamento no escopo. RLS recusou INSERT cruzado; replay de arquivamento zero e outra Empresa preservada. Recibo privado f34d78c4. Sem grants ou escrita na HML.
 
 - Prova SQL adicional em PostgreSQL isolado com as 12.514 chaves do manifesto 813bb03d: dois eventos arquivados preservados e fora da paginacao, 12.359 + 153 visiveis nos contextos corretos, zero em empresa cruzada. Recibo privado 0af6302f. Nao e prova HTTP na HML; nenhuma escrita ou liberacao.
