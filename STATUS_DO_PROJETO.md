@@ -1,3 +1,7 @@
+## CPA3: gates tecnicos dos 789 Fornecedores conferidos (2026-11-26)
+
+- Pacote privado d92c451c: quatro arquivos conferidos em SHA256SUMS; backup de referencia c33c96f4 conferido, nao substitui backup fresco antes da escrita. GitHub Actions 45835051779: quatro jobs SUCCESS. HML em READ ONLY: no caminho exato Cadastros.fornecedor, zero perfis ativos de Grupo com visualizar/importar/criar/inativar, sem wildcard no backend. Nenhum grant, perfil, DDL, carga ou deploy aplicado.
+
 ## CPA3: segundo diferencial HD/VPS e gate de Fornecedores (2026-11-26)
 
 - Segundo diferencial HD/VPS: 13 arquivos, 20.000.320 bytes, iguais por tamanho e SHA-256 em seis conjuntos (campos autorizados, extracao SQL, quarentena materiais e unidades). Acumulado das duas conferencias: 26 arquivos, 39.185.775 bytes. Nenhuma retransmissao. Manifesto 4905483e intacto, 789 payloads, nao executavel. Leitura HML: 17.472 Clientes e tabela fornecedores ausente; 28 GiB livres na VPS.

@@ -1,3 +1,7 @@
+## CPA3: gates tecnicos dos 789 Fornecedores conferidos (2026-11-26)
+
+- Separar a decisao de escopo compartilhado dos 789 sem empresa proprietaria da autorizacao do manifesto/delta. Contrato do backend: visualizar para consulta; importar+criar no Grupo para aplicacao; inativar no Grupo para reversao. Usar perfil e janela minimos apenas se autorizados, sem wildcard. Pacote revisado e CI conferidos; revalidar destino, backup/restore externo e folga no gate de escrita.
+
 ## CPA3: segundo diferencial HD/VPS e gate de Fornecedores (2026-11-26)
 
 - Nao repetir os seis conjuntos LEGADO-ALLOWED-*, MATERIAIS-FORA-REVENDA e UNIDADES-*. Proxima decisao de Fornecedores: confirmar 789 como cadastro compartilhado pelo Grupo CPA para empresas autorizadas, sem presumir empresa proprietaria. Depois fechar papel, policies/flag, backup atualizado e pedir autorizacao do manifesto/delta exatos; nenhum gate implicito. Continuar inventario diferencial apenas para insumos ainda necessarios.
