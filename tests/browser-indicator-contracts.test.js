@@ -5,6 +5,7 @@ import crypto from 'node:crypto';
 import path from 'node:path';
 import ts from 'typescript';
 import {readBoundaryRemainder} from './helpers/readBoundaryRemainder.js';
+import {restoreDashboardCadastroCounts} from './helpers/restoreDashboardCadastroCounts.js';
 
 const files = {
   cache: ['src/components/lib/useIndexedDBCache.jsx', '26d395ddbdc117fcb9d79311412d66b1388a1f41638ba111306eba045824fb0c'],
@@ -51,6 +52,7 @@ for (const [key, [,hash]] of Object.entries(files)) test(`${key}: only enumerate
     text = replaceExact(text, "                  if (!ctx) return;\n", '');
   }
   if (key === 'dashboard') {
+    text = restoreDashboardCadastroCounts(text);
     let count = 0;
     text = text.replace(/Number\((otd|aproveitamentoBarra|taxaInadimplencia)\)(?= (?:>=|<) \d)/g, (_, value) => { count++; return value; });
     assert.equal(count, 12);

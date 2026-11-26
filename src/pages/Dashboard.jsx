@@ -75,6 +75,7 @@ const WidgetFechamentoPedidos = React.lazy(() => import("@/components/comercial/
 import ResizableRow from "@/components/dashboard/ResizableRow";
 import { ResizablePanelGroup as PanelGroup, ResizablePanel as Panel, ResizableHandle as PanelResizeHandle } from "@/components/ui/resizable";
 import useDashboardDerivedData from "@/components/dashboard/hooks/useDashboardDerivedData";
+import { buildContextFilter } from "@/components/lib/cadastroCountFilter";
 import {
   assertDashboardContext,
   buildDashboardQueryKey,
@@ -92,7 +93,7 @@ const reportDashboardFailure = (operation, error, context = {}) => {
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { empresaAtual, estaNoGrupo, grupoAtual, filterInContext, getFiltroContexto, alternarContexto, createInContext } = useContextoVisual();
+  const { empresaAtual, estaNoGrupo, grupoAtual, empresasDoGrupo, filterInContext, getFiltroContexto, alternarContexto, createInContext } = useContextoVisual();
   const { hasPermission, user } = usePermissions();
   const canSeeFinanceiro = hasPermission('Financeiro', null, 'ver');
   const canSeeCRM = hasPermission('CRM', null, 'ver');
@@ -293,20 +294,23 @@ export default function Dashboard() {
     initialData: []
   });
 
-  const { data: totalProdutos = 0 } = useQuery({
+  const { data: totalProdutos, isPending: produtosCountPending } = useQuery({
     enabled: Boolean(hasContextoAtivo && canSeeEstoque),
-    queryKey: ['produtos-count-dash', ...contextQueryKey],
+    queryKey: ['produtos-count-dash', ...contextQueryKey, ...(estaNoGrupo
+      ? (empresasDoGrupo || []).map(e => e.id).filter(Boolean).sort()
+      : [])],
     queryFn: async () => {
       try {
-        const filtro = getFiltroContexto('empresa_id');
+        const filtro = buildContextFilter('Produto', estaNoGrupo ? null : empresaId, groupId, empresasDoGrupo);
         const response = await base44.functions.invoke('countEntities', {
           entityName: 'Produto',
           filter: filtro
         });
-        return resolveDashboardCount({ countValue: response.data?.count, list: produtos }).total;
+        const count = resolveDashboardCount({ countValue: response.data?.count });
+        return count.fonte === 'count' ? count.total : null;
       } catch (error) {
-        reportDashboardFailure('Falha ao contar produtos; usando lista carregada', error, { scopeType, groupId, empresaId });
-        return resolveDashboardCount({ list: produtos }).total;
+        reportDashboardFailure('Falha ao contar produtos', error, { scopeType, groupId, empresaId });
+        throw error;
       }
     },
     staleTime: 120000,
@@ -329,20 +333,23 @@ export default function Dashboard() {
     initialData: []
   });
 
-  const { data: totalClientes = 0 } = useQuery({
+  const { data: totalClientes, isPending: clientesCountPending } = useQuery({
     enabled: Boolean(hasContextoAtivo && canSeeCRM),
-    queryKey: ['clientes-count', ...contextQueryKey],
+    queryKey: ['clientes-count', ...contextQueryKey, ...(estaNoGrupo
+      ? (empresasDoGrupo || []).map(e => e.id).filter(Boolean).sort()
+      : [])],
     queryFn: async () => {
       try {
-        const filtro = getFiltroContexto('empresa_id', true);
+        const filtro = buildContextFilter('Cliente', estaNoGrupo ? null : empresaId, groupId, empresasDoGrupo);
         const response = await base44.functions.invoke('countEntities', {
           entityName: 'Cliente',
           filter: filtro
         });
-        return resolveDashboardCount({ countValue: response.data?.count, list: clientes }).total;
+        const count = resolveDashboardCount({ countValue: response.data?.count });
+        return count.fonte === 'count' ? count.total : null;
       } catch (error) {
-        reportDashboardFailure('Falha ao contar clientes; usando lista carregada', error, { scopeType, groupId, empresaId });
-        return resolveDashboardCount({ list: clientes }).total;
+        reportDashboardFailure('Falha ao contar clientes', error, { scopeType, groupId, empresaId });
+        throw error;
       }
     },
     staleTime: 120000,
@@ -428,7 +435,6 @@ export default function Dashboard() {
     fluxoCaixa,
     produtosBaixoEstoque,
     colaboradoresAtivos,
-    clientesAtivos,
     taxaConversao,
     entregasPendentes,
     otd,
@@ -712,8 +718,9 @@ export default function Dashboard() {
 
   const kpiCards = [
     {
-      title: "Clientes Ativos",
-      value: clientesAtivos,
+      title: "Clientes Cadastrados",
+      value: !canSeeCRM ? 'Sem acesso' : !hasContextoAtivo ? 'Indisponível'
+        : clientesCountPending ? 'Carregando' : totalClientes ?? 'Indisponível',
       icon: Users,
       color: "text-blue-600",
       bgColor: "bg-blue-50",
@@ -721,7 +728,8 @@ export default function Dashboard() {
     },
     {
       title: "Produtos Cadastrados",
-      value: totalProdutos,
+      value: !canSeeEstoque ? 'Sem acesso' : !hasContextoAtivo ? 'Indisponível'
+        : produtosCountPending ? 'Carregando' : totalProdutos ?? 'Indisponível',
       icon: Package,
       color: "text-indigo-600",
       bgColor: "bg-indigo-50",

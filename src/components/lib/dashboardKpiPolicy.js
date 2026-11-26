@@ -81,7 +81,8 @@ export const isCappedListUnreliable = (list = [], softLimit = DASHBOARD_LIST_SOF
 
 /** @param {{ countValue?: unknown, list?: any[], softLimit?: number }} [input] */
 export const resolveDashboardCount = ({ countValue, list = [], softLimit = DASHBOARD_LIST_SOFT_LIMIT } = {}) => {
-  const counted = Number(countValue);
+  const counted = typeof countValue === 'number' || (typeof countValue === 'string' && countValue.trim())
+    ? Number(countValue) : NaN;
   if (Number.isFinite(counted) && counted >= 0) {
     return { total: counted, fonte: 'count', confiavel: true };
   }

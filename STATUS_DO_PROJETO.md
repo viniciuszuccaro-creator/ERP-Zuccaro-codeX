@@ -389,3 +389,7 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 
 - Correcao da cota isolada em checkout de `8714588b`: Chrome nao-root iniciou com sandbox no perfil AppArmor existente, sem mudar a politica do host. Suite Linux 3.051/3.051; audit, lint, typecheck, build e diff check passaram. Dashboard fora do lote. HML permanece `a305a143`; nao houve publicacao.
 
+## CPA3: contagens oficiais no Dashboard
+
+- Dashboard na rota existente: cabecalho compacto e Clientes/Produtos Cadastrados usam o filtro canonico de Cadastros, cache por contexto e empresas do Grupo, sem total inferido da pagina. Zero confirmado, carregamento, indisponibilidade e falta de acesso sao estados distintos. Nao e total de ativos nem aceite em HML. Audit, lint, typecheck e build passaram; suite protegida 3.050/3.051 antes da correcao exclusiva de teste. Os 35 testes focados passaram depois que as duas verificacoes passaram a reaproveitar o mesmo conjunto exato de trechos permitidos, sem trocar o hash historico.
+

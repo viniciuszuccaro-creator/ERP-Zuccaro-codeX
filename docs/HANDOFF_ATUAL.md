@@ -365,3 +365,7 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 
 - Runner privado remoto `/var/tmp/erp-chrome-private.0xUBFx`: Chrome com sandbox e usuario sem privilegios, log `full.log` com 3.051/3.051. Este pacote precisa de CI exata e build canonico fora da VPS compartilhada; `package-hml-runtime.mjs` bloqueia esse host. Imagem oficial Ubuntu verificada no D:, sem iniciar WSL nem mudar configuracao global de swap. Sem deploy.
 
+## CPA3: Dashboard com totais de Clientes e Produtos
+
+- Lote separado de Cadastros: reaproveita contagem oficial, filtro por contexto, rota, atalhos e protecao existente. Depois da CI exata, testar comparacao com Cadastros em Grupo/CPA/3Z e acesso negado. Indicadores de operacoes e pacote completo ficam pendentes. Nenhum deploy; HML a305a143 e pacote de sessao c2dcf435 continuam independentes.
+

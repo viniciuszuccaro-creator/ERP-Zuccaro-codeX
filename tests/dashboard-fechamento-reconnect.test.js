@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import ts from 'typescript';
 import { readBoundaryRemainder } from './helpers/readBoundaryRemainder.js';
+import { restoreDashboardCadastroCounts } from './helpers/restoreDashboardCadastroCounts.js';
 
 const dashboard = readFileSync('src/pages/Dashboard.jsx', 'utf8');
 const page = readFileSync('src/pages/DashboardFechamentoPedidos.jsx', 'utf8');
@@ -55,6 +56,7 @@ test('widget: pendência/erro distintos de zero (KPI fail-closed)', () => {
 
 test('Dashboard: peels autorizados preservam hash pin do restante', () => {
   let text = readBoundaryRemainder('src/pages/Dashboard.jsx', dashboard.replace(/\r\n/g, '\n'));
+  text = restoreDashboardCadastroCounts(text);
   let count = 0;
   text = text.replace(/Number\((otd|aproveitamentoBarra|taxaInadimplencia)\)(?= (?:>=|<) \d)/g, (_, value) => {
     count++;

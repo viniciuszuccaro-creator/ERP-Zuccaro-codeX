@@ -70,6 +70,11 @@ test('lista no soft limit nao e confiavel e count tem prioridade', () => {
   assert.equal(resolveDashboardCount({ countValue: 12000, list: full }).total, 12000);
   assert.equal(resolveDashboardCount({ countValue: 12000, list: full }).fonte, 'count');
   assert.equal(resolveDashboardCount({ list: full }).confiavel, false);
+  for (const countValue of [null, '', ' ', false]) {
+    assert.equal(resolveDashboardCount({ countValue, list: full }).fonte, 'lista');
+    assert.equal(resolveDashboardCount({ countValue, list: full }).confiavel, false);
+  }
+  assert.equal(resolveDashboardCount({ countValue: 0, list: full }).fonte, 'count');
 });
 
 test('kpis derivados e vendas mensais usam pedidos reais', () => {
