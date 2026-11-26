@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
+import ts from 'typescript';
+import { buildContextFilter } from '../src/components/lib/cadastroCountFilter.js';
+import { runHttpPilotAwareCountEntities } from '../src/api/httpPilotCountBridge.js';
 
 import {
   assertDashboardContext,
@@ -15,6 +18,54 @@ import {
   resolveMetaOperacional,
   DASHBOARD_LIST_SOFT_LIMIT,
 } from '../src/components/lib/dashboardKpiPolicy.js';
+
+test('Dashboard consulta os totais oficiais de Clientes e Produtos somente no contexto permitido', async () => {
+  const source = await readFile(new URL('../src/pages/Dashboard.jsx', import.meta.url), 'utf8');
+  const tree = ts.createSourceFile('Dashboard.jsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.JSX);
+  const queries = [];
+  const visit = node => {
+    if (ts.isVariableDeclaration(node) && ts.isObjectBindingPattern(node.name)
+        && node.name.elements.some(e => ['totalClientes', 'totalProdutos'].includes(e.name.getText(tree)))) {
+      queries.push(node.initializer.arguments[0].getText(tree));
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(tree);
+  assert.equal(queries.length, 2);
+  const empresasDoGrupo = [{ id: '3z' }, { id: 'cpa' }];
+  const expectedTotals = { Cliente: 17472, Produto: 273 };
+  for (const empresaId of [null, 'cpa', '3z']) {
+    const seen = [];
+    const groupId = 'grupo-cpa';
+    const invoke = (method, payload) => {
+      assert.equal(method, 'countEntities');
+      return runHttpPilotAwareCountEntities(payload, {
+        pilotSet: new Set(Object.keys(expectedTotals)),
+        httpEntities: Object.fromEntries(Object.entries(expectedTotals).map(([entity, total]) => [entity, {
+          filter: () => assert.fail('A contagem nao deve ler paginas'),
+          count: async filter => { seen.push([entity, filter]); return total; },
+        }])),
+        countLocal: () => assert.fail('Uma contagem HTTP nao pode cair no cache local'),
+      });
+    };
+    for (const allowed of [false, true]) {
+      const dependencies = {
+        hasContextoAtivo: true, canSeeCRM: allowed, canSeeEstoque: allowed, estaNoGrupo: empresaId === null,
+        groupId, empresaId, empresasDoGrupo, contextQueryKey: [groupId, empresaId],
+        buildContextFilter, resolveDashboardCount, base44: { functions: { invoke } },
+      };
+      for (const query of queries) {
+        const config = new Function(...Object.keys(dependencies), `return (${query});`)(...Object.values(dependencies));
+        assert.equal(config.enabled, allowed);
+        const entity = config.queryKey[0] === 'clientes-count' ? 'Cliente' : 'Produto';
+        if (config.enabled) assert.equal(await config.queryFn(), expectedTotals[entity]);
+        if (empresaId === null) assert.deepEqual(config.queryKey.slice(-2), ['3z', 'cpa']);
+      }
+      assert.equal(seen.length, allowed ? 2 : 0);
+    }
+    for (const [entity, filter] of seen) assert.deepEqual(filter, buildContextFilter(entity, empresaId, groupId, empresasDoGrupo));
+  }
+});
 
 test('dashboard exige contexto de grupo/empresa', () => {
   assert.throws(() => assertDashboardContext({ groupId: '', empresaId: 'e1' }), /Grupo/);

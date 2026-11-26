@@ -393,3 +393,7 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 
 - Dashboard na rota existente: cabecalho compacto e Clientes/Produtos Cadastrados usam o filtro canonico de Cadastros, cache por contexto e empresas do Grupo, sem total inferido da pagina. Zero confirmado, carregamento, indisponibilidade e falta de acesso sao estados distintos. Nao e total de ativos nem aceite em HML. Audit, lint, typecheck e build passaram; suite protegida 3.050/3.051 antes da correcao exclusiva de teste. Os 35 testes focados passaram depois que as duas verificacoes passaram a reaproveitar o mesmo conjunto exato de trechos permitidos, sem trocar o hash historico.
 
+## CPA3: prova de contexto das contagens do Dashboard
+
+- Teste de integracao extrai as duas consultas reais do Dashboard e usa o bridge canonico HTTP com fonte sintetica. Grupo, CPA e 3Z enviam o filtro de Cadastros; visao Grupo inclui a lista de empresas no cache; sem acesso nao consulta. Contagem HTTP nao usa pagina nem fallback local. 17 testes focados, lint direcionado e diff check aprovados. Sem alteracao de runtime ou deploy; aceite com login real pendente.
+
