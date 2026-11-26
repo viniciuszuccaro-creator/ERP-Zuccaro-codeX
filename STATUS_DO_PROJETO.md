@@ -369,3 +369,9 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 
 - EXETPS em READ_ONLY: tres ajustes de cabecalho, nenhum com data DD/MM/AAAA para confirmar vigencia; parametros de tabela vazios; 48.866 ajustes de itens identificados. EMP03 isolada: nenhuma linha com chave fiscal numerica de 44 digitos e data de emissao no intervalo testado; nenhuma nota com CODIGOTABELAPRECOS positivo. Nenhuma confirmacao nativa de data ou empresa; zero escrita.
 
+## CPA3: Cadastros Gerais publicado na HML (2026-11-26)
+
+- API e web `a470accb92a7e70d51f20c461f663c3012d006f6` r2 publicadas juntas em `https://hml-erp.cpaferroeaco.com.br/cadastros`. Meta publica, HTML byte a byte, readiness e tela de login conferidos. Financeiro/historico desligados; sem migration, grants, carga nem operacional. Aceite autenticado CPA/3Z pendente de sessao.
+- Backup fresco `hml-20261126T174922Z-3f31aceb` (47.790.080 bytes), 26 tabelas, restauracao independente sem rede com 17.472 clientes e ACK externo por SHA-256 `2fd5fe00dd6597d22ecd0dc3c1c977376483514cde31abef5503bdab8d62b606`. API/web `a305a143` preservadas paradas para retorno.
+- Dashboard: cabecalho existente compacto e responsivo, com filtro de periodo bloqueado sem permissao, em WIP separado na VPS. 18 testes focados remotos passaram; nao empacotado nem publicado.
+

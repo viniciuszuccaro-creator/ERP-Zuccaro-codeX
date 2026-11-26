@@ -347,3 +347,8 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 
 - Recibos privados `price-native-date-evidence.private.txt` (64887cca, pacote EXETPS) e `price-commercial-date-evidence.private.txt` (bd99cb7a, obra-emp03.ZaaNbi). Nao repetir esses comparativos. Buscar tela/relatorio do legado com datas de cabecalho e regra atual por empresa. Avaliar 48.866 ajustes de itens como historico separado, sem presumir vigente.
 
+## CPA3: aceite autenticado de Cadastros r2 (2026-11-26)
+
+- HML serve `a470accb` r2. Na mesma aba apos login com a conta existente: CPA e 3Z, menu Cadastros sem entidade aberta, inspecionar requisicoes antes do clique, abrir Clientes e Produtos, buscar codigo/nome, paginar e reabrir. Nao salvar. Se falhar a publicacao, parar runtime novo e reativar os dois containers preservados `-rollback-a305a143-r2`, conferir meta, HTML, readiness e login. Nao restaurar o banco para rollback de runtime.
+- Provas privadas na janela `cadastros-r2.nP2EvD`; backup fresco tambem no HD externo com ACK. Dashboard segue no checkout remoto `dashboard-integracao.7url9e`, separado da HML servida.
+
