@@ -228,3 +228,7 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 
 - Recibo privado `erp344-reader-20261118T170353Z/catalog-native-r2/price-validity-clarion-candidate.private.json`, SHA-256 `2c4731a2bd6543478af54209a9452ffd2dfeb1471a785efb52ae3121f3efdd55`. Confirmar DATAINICIAL/DATAFINAL em tela/export nativo antes de converter; verificar tabela por Empresa e o mapa de Produto/unidade. Zero/nulo de promocao permanece sem vigencia. Sobreposicao entre tabelas nao prova colisao na chave do destino.
 
+## CPA3: fontes nativas independentes de vigencia de Precos (2026-11-26)
+
+- Recibos privados `price-native-date-evidence.private.txt` (64887cca, pacote EXETPS) e `price-commercial-date-evidence.private.txt` (bd99cb7a, obra-emp03.ZaaNbi). Nao repetir esses comparativos. Buscar tela/relatorio do legado com datas de cabecalho e regra atual por empresa. Avaliar 48.866 ajustes de itens como historico separado, sem presumir vigente.
+

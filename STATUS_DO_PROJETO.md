@@ -233,3 +233,7 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 
 - Exports de Precos verificados pelos recibos: seis cabecalhos, 5.162 itens, zero chaves (tabela,material) duplicadas e zero cabecalhos ausentes. Conversao candidata Clarion (dias desde 1800-12-28): 2024-08-26 a 2030-12-01, zero intervalos invalidos. 1.027 materiais com sobreposicao entre tabelas distintas; nao colapsar tabelas. 4.464 precos positivos; promocao nula em 4.502 e zero em 660, sem vigencia presumida. Nenhum preco aprovado ou gravado.
 
+## CPA3: fontes nativas independentes de vigencia de Precos (2026-11-26)
+
+- EXETPS em READ_ONLY: tres ajustes de cabecalho, nenhum com data DD/MM/AAAA para confirmar vigencia; parametros de tabela vazios; 48.866 ajustes de itens identificados. EMP03 isolada: nenhuma linha com chave fiscal numerica de 44 digitos e data de emissao no intervalo testado; nenhuma nota com CODIGOTABELAPRECOS positivo. Nenhuma confirmacao nativa de data ou empresa; zero escrita.
+
