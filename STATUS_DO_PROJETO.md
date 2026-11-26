@@ -18,6 +18,8 @@
 
 ## CPA3: pacote de revisao do historico de baixas (2026-11-26)
 
+- Executor de ensaio revalida cluster, OIDs, schema/search_path e papel efetivo/login a cada transacao antes de autorizar, bloquear ou gravar. Consulta verificada no PostgreSQL 16 descartavel, com papel restrito; teste de divergencia preservou o primeiro checkpoint e impediu o segundo lote. Linux: 3.050/3.050 com Chrome sob conta comum, audit:baseline, lint, typecheck e build aprovados. As seis falhas de interface como root nao ocorreram com o sandbox ativo. Pendente ensaio desta revisao no backup restaurado; sem alteracao na HML.
+
 - Identidade fisica da HML conferida em transacao somente leitura pelo papel restrito: banco, schema, OIDs, identificador do cluster e search_path. Recibo privado SHA-256 `d752d80541123c0fa54fdb0708d2ff9f2d4a38252d6d05db78d44337c2057427`. Nenhuma escrita no banco; executor ainda restrito ao clone.
 
 - Pacote privado de revisao do historico 813bb03d: oito referencias conferidas, incluindo backup/ACK, ACL, executor no clone e auditoria restaurada. Delta proposto: uma tabela com FK existente, RLS e acesso restrito por Empresa, sem DELETE ou alteracao de payload. Pacote nao executavel, SHA ba29c9c8. CI exata e executor HML revisado continuam pendentes.

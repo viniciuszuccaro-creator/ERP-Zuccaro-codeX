@@ -1,5 +1,7 @@
 ## CPA3: pacote de revisao do historico de baixas (2026-11-26)
 
+- O executor do clone agora exige pin independente e verifica a identidade antes de cada lote. Proxima prova: rodar esta revisao no backup restaurado com a ACL efetiva, confirmando a leitura de `pg_control_system()` pelo papel restrito; nao aplicar grant na HML. Suite Linux: 3.050/3.050 usando conta comum, Chrome com sandbox ativo.
+
 - Prova de destino em leitura: `supplier-provenance-emp03/supplier-history-target-pin.private.json`, SHA-256 `d752d80541123c0fa54fdb0708d2ff9f2d4a38252d6d05db78d44337c2057427`. A candidata deve falhar antes de qualquer escrita se a identidade divergir, revalidando no inicio de cada transacao. O recibo nao substitui CI, revisao, backup restaurado ou autorizacao de escrita.
 
 - `supplier-provenance-emp03/supplier-history-review-packet.private.json` SHA-256 `ba29c9c8f63138d5a64de20008d9fbe5f9fe3f887e630f1fd36b2d00ab6d653e`. Usar as oito provas fixadas, sem repetir o ensaio. Separar DDL/ACL, carga historica e ativacao HTTP; manter o executor atual restrito ao clone. Antes de deliberar escrita: CI, revisao do executor com identidade fisica pinada, backup fresco restaurado e ACK. Excluir os 107 pendentes.

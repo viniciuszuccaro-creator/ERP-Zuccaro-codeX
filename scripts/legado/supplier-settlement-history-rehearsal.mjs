@@ -6,7 +6,7 @@ const digest = /^[a-f0-9]{64}$/;
 const historyClass = 'BAIXA_HISTORICA_SEM_COMPROVANTE';
 const entity = 'LegacySupplierSettlementHistory';
 
-export function bindSupplierSettlementRehearsal({ db, audit, authorize, ctx, bytes, expectedSha }) {
+export function bindSupplierSettlementRehearsal({ db, audit, authorize, ctx, bytes, expectedSha, targetPin }) {
   if (sha(bytes) !== expectedSha || !db.withTenantContext || typeof authorize !== 'function'
       || !uuid.test(ctx.actorId) || !uuid.test(ctx.groupId) || !uuid.test(ctx.empresaId)) {
     throw new Error('HISTORY_SCOPE_OR_HASH');
@@ -26,6 +26,12 @@ export function bindSupplierSettlementRehearsal({ db, audit, authorize, ctx, byt
   }
   const rows = m.rows.filter(r => r.empresaId === scope.empresaId);
   if (!rows.length) throw new Error('HISTORY_COMPANY_NOT_PRESENT');
+  const pin = { ...targetPin };
+  const physicalKeys = ['cluster_id', 'database_oid', 'schema_oid'];
+  if (!physicalKeys.every(key => typeof pin[key] === 'string' && /^[1-9]\d*$/.test(pin[key]))
+      || typeof pin.role !== 'string' || !pin.role) {
+    throw new Error('HISTORY_REHEARSAL_PIN_REQUIRED');
+  }
 
   async function transact(mode, block) {
     const requestId = 'supplier-history:' + sha(JSON.stringify([expectedSha, scope.empresaId, mode,
@@ -33,8 +39,16 @@ export function bindSupplierSettlementRehearsal({ db, audit, authorize, ctx, byt
     const context = { ...scope, requestId };
     return db.withTenantContext(context, () => db.withTransaction(async q => {
       const { rows: [target] } = await q.query(
-        "SELECT current_database() AS db,current_schema() AS schema,NOT (rolsuper OR rolbypassrls) AS restricted FROM pg_roles WHERE rolname=current_user");
-      if (target?.db !== 'erp_history_rehearsal' || target.schema !== m.destination.schema || !target.restricted) {
+        `SELECT current_database() AS db, current_schema() AS schema,
+          NOT (rolsuper OR rolbypassrls) AS restricted, current_user AS role, session_user AS login,
+          current_schemas(false) AS schemas, d.oid::text AS database_oid, n.oid::text AS schema_oid,
+          (pg_catalog.pg_control_system()).system_identifier::text AS cluster_id
+        FROM pg_catalog.pg_roles, pg_catalog.pg_database d, pg_catalog.pg_namespace n
+        WHERE rolname = current_user AND d.datname = current_database() AND n.nspname = current_schema()`);
+      if (target?.db !== 'erp_history_rehearsal' || target.schema !== m.destination.schema || !target.restricted
+          || target.role !== pin.role || target.login !== pin.role
+          || target.schemas?.length !== 2 || target.schemas[0] !== m.destination.schema || target.schemas[1] !== 'pg_catalog'
+          || physicalKeys.some(key => target[key] !== pin[key])) {
         throw new Error('HISTORY_REHEARSAL_DESTINATION_REQUIRED');
       }
       await authorize(context, mode, q);
