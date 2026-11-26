@@ -1,5 +1,7 @@
 ## CPA3: pacote de revisao do historico de baixas (2026-11-26)
 
+- Prova de destino em leitura: `supplier-provenance-emp03/supplier-history-target-pin.private.json`, SHA-256 `d752d80541123c0fa54fdb0708d2ff9f2d4a38252d6d05db78d44337c2057427`. A candidata deve falhar antes de qualquer escrita se a identidade divergir, revalidando no inicio de cada transacao. O recibo nao substitui CI, revisao, backup restaurado ou autorizacao de escrita.
+
 - `supplier-provenance-emp03/supplier-history-review-packet.private.json` SHA-256 `ba29c9c8f63138d5a64de20008d9fbe5f9fe3f887e630f1fd36b2d00ab6d653e`. Usar as oito provas fixadas, sem repetir o ensaio. Separar DDL/ACL, carga historica e ativacao HTTP; manter o executor atual restrito ao clone. Antes de deliberar escrita: CI, revisao do executor com identidade fisica pinada, backup fresco restaurado e ACK. Excluir os 107 pendentes.
 
 ## CPA3: prontidao do historico de baixas de Fornecedores (2026-11-26)
