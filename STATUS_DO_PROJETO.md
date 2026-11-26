@@ -1,3 +1,7 @@
+## CPA3: manifesto candidato de historico de precos (2026-11-26)
+
+- Historico de precos: cruzamento com material inteiro validado sem colisoes reproduziu 48.472/394 do leitor. Tipo numerico: 42.523 de 44.261 transicoes encadeadas e ultimo valor igual a PRECOTABELA em 4.504/4.563 pares vinculados. Manifesto candidato 1b2975a3: 19.232 eventos de 3.469 pares; fora 28.731 por cadeia, 492 por valor final, 394 sem item e 17 na cadeia com tipo/formato nao explicado. Nenhuma escrita.
+
 ## CPA3: historico de precos extraido na VPS privada (2026-11-26)
 
 - EXETPS isolada READ_ONLY: export privado de 48.866 ajustes, 12.992.904 bytes, SHA ff82826a. PK nativa (CODIGOTABELA,CODIGOMATERIAL,SEQUENCIA), 51 valores de sequencia e dois tipos. 48.472 eventos em 4.563 pares com item atual; 394 em 41 pares sem item atual. Todos os cabecalhos encontrados. Sem carga ou uso como preco vigente.

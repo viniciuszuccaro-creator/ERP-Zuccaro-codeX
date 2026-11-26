@@ -1,3 +1,7 @@
+## CPA3: manifesto candidato de historico de precos (2026-11-26)
+
+- Reusar `erp344-reader-20261125T165731Z/price-history-candidate.private.ndjson`, SHA-256 `1b2975a3f4e6745995eb2a5484934ea657dafa4f07b5d0b1f46c2abdd554e5f6`. Testar em clone com checkpoints e reversao apenas como historico; confirmar semantica nativa, escopo e destino canonico. Nao ativar preco nem apagar os eventos excluidos; fonte integral continua preservada.
+
 ## CPA3: historico de precos extraido na VPS privada (2026-11-26)
 
 - Reusar `erp344-reader-20261125T165731Z/price-adjustment-export.private.ndjson`, SHA-256 `ff82826a94ab3c16b039a30dc392a8c952cd19d577f1b36ae7cd992d4e86ea9c`. Conferir cadeia e semantica dos dois tipos, conciliar historico por chave composta e manter os 394 em revisao. O pareamento do item no legado nao comprova Produto/empresa na HML. Nao repetir extracao.
