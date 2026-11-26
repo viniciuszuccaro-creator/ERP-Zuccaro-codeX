@@ -150,3 +150,8 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 
 - Pular a copia EMP05 ja aferida: as tres fontes candidatas estavam vazias. Validar o pacote privado `supplier-provenance-emp03/emp03.tar.gz`, capacidade e integridade; restaurar apenas em leitor isolado e medir as tres tabelas antes de exportar chaves.
 
+## CPA3: retomar os pares comerciais de Obras da EMP03 (2026-11-26)
+
+- Reusar `keys.private.psv` e `comparison.private.json` no diretorio privado `obra-emp03.ZaaNbi` sob a area de recuperacao. Nao reabrir EMP03 apenas para repetir estas contagens.
+- Cruzar os pares unicos com o indice existente de clientes destino e a chave mestre completa. Provar a identidade comercial da empresa por identificador nativo e verificar uso cruzado em outras EMP. Manter separados uso em nota/pedido, titularidade da obra e aptidao de entrega. Nao autorizar escrita por correspondencia numerica.
+

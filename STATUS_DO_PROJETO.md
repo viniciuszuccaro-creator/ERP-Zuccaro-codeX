@@ -153,3 +153,10 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 - `PropostaComercial`, `PedidoVenda` e `NotaFiscalSaidas`: zero linhas nessa copia. Recibo privado `obra-emp05.jDrb6O/coverage.private.txt`, SHA-256 `aefacced5b4ffddc3b3bbbfafdf6774e0a931e57281a89fe3cdf7858ae2e942f`.
 - Nenhuma chave comercial exportada, nenhum vinculo novo nem escrita na HML ou no operacional. Proximo recorte: EMP03, sem repetir EMP05.
 
+## CPA3: cruzamento comercial de Obras na EMP03 (2026-11-26)
+
+- EMP03 anexada em copia isolada, sem rede ou portas, limitada a 3 GiB e 0,65 vCPU. Consulta em READ_ONLY; leitor encerrado sem OOM. Folga observada: 36 GiB antes e 28 GiB apos. Par e arquivo de origem com hashes privados; hash do arquivo reconferido apos a leitura.
+- Propostas: 0 linhas. Pedidos: 250 linhas, 242 com cliente e OBRA positivos. Notas de saida: 231.601 linhas, 226.059 com cliente e OBRA positivos. CODIGOOBRA nao forneceu candidatos positivos com cliente nas duas tabelas.
+- Cruzamento por cliente e OBRA contra cliente e ITEM: 33.070 pares unicos e 654 ausentes nas notas; 118 unicos e 2 ausentes nos pedidos. Os conjuntos podem se sobrepor e nao devem ser somados. A correspondencia nao comprova titularidade nem habilita entrega.
+- Extrato minimo: 33.844 linhas, 525.690 bytes, SHA-256 `75987cb3422c7ce7181d7cbdb870353809f88c4b190efa6ed899e4b33b7308e2`. Recibo comparativo privado: SHA-256 `f9cde2f3a581b3a5fee27f32dfe4d9c785402337298bab20a7242096ceb48c54`. Nenhuma gravacao na HML ou no operacional.
+
