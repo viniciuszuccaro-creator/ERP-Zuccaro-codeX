@@ -1,3 +1,7 @@
+## CPA3: oito ajustes de Precos e migration 013 no clone (2026-11-26)
+
+- Pacote historico `erp344-reader-20261125T165731Z/price-history-8-candidate.private.ndjson` SHA-256 `0e1f390e5a5b04f6c64e2cd08ae240971f97cb3920b6fd0d96a1e408d3e91f72`. Recibo 013 em `price013-rehearsal.BbcS3m/proof.private.txt` SHA db663141. Nao usar tabelas operacionais nem auditoria original como destino. Verificar contratos genericos de historico antes do delta minimo; ACL/escopo, uso da empresa historica e gate continuam separados.
+
 ## CPA3: vinculos de Produtos e unidades no clone restaurado (2026-11-26)
 
 - Recibo privado `price-history-context.vlR416/context.private.json`, SHA-256 `f8043780817067c0516ceb8c9a47210c3b53e95cd0654024aa894ae529459273`. Avaliar oito candidatos historicos pelo contrato definitivo; para os 27, buscar unidade historica e fator de conversao comprovado. Usar preflight dos 360 com SHA fixado, nao CSV antigo sem IDs da selecao. Nao usar empresa do Grupo como autorizacao, nem ativar preco.

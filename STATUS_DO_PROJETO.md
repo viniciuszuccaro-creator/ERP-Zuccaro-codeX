@@ -1,3 +1,7 @@
+## CPA3: oito ajustes de Precos e migration 013 no clone (2026-11-26)
+
+- Oito eventos de dois pares isolados em pacote privado 0e1f390e, sem autorizacao de escrita. Migration 013 (blob be30f0fa) em clone c33c96f4: tres tabelas operacionais com RLS forcada, zero policies, zero registros e nenhum destino historico de precos. Rollback removeu as tres tabelas e preservou 17.472 Clientes e 273 Produtos. Nenhuma escrita na HML.
+
 ## CPA3: vinculos de Produtos e unidades no clone restaurado (2026-11-26)
 
 - Clone restaurado c33c96f4, somente leitura: 17.472 clientes e 273 Produtos. Preflight a9b6c44e fixado no manifesto dos 273: os 35 eventos/10 pares encontram Produto unico por codigo literal e procedencia Base44. Empresa historica pertence ao Grupo nos 35, mas nao e empresa proprietaria do Produto em nenhum. Unidade principal coincide em oito eventos/dois pares; outros 27 sem equivalencia comprovada. Nenhuma autorizacao comercial ou escrita.
