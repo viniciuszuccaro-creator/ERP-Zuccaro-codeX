@@ -204,3 +204,7 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 
 - Recibo privado `obra-adjustment-history-pg-staging.private.json`, SHA-256 `c7e2a2d3f482aeb68c5e83869e63bd4e203b80abbb4bed83f81c655ac9a82136`. Staging descartavel valida mecanismo SQL, nao o importador canonico, a reversao de lotes confirmados, nem ACL da fonte (insumo exclusivo do ensaio). `staging-persistence.mjs` atual e especifico de Cliente. Proximo: avaliar contrato canonico de historico/ledger com escopo comprovado, sem usar auditoria como destino de eventos antigos.
 
+## CPA3: reversao pos-commit do historico de Obras (2026-11-26)
+
+- Recibo privado `obra-adjustment-history-pg-reversal.private.json`, SHA-256 `89bf0e22af7116a6bb3459fed10530c7bcc6fa0db43cdfa975fca4233b9a0c66`. `legacy_client_review` e `legacy_supplier_settlement_history` sao especificos de outros dominios; reusar o padrao, nao as tabelas. Prova SQL descartavel, nao contrato canonico. Falta comprovar escopo de Obras e validar destino/minimo delta em clone restaurado antes de qualquer gate.
+

@@ -209,3 +209,7 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 
 - Manifesto 2a9c9d8f ensaiado em PostgreSQL descartavel sem rede ou volume compartilhado. Quatro checkpoints (500/500/500/35); segundo lote revertido antes do commit e retomado, zero duplicatas no replay, 1.535 payloads conferidos por igualdade JSONB. Role sem BYPASSRLS teve leitura cruzada vazia, insert cruzado e update negados no destino de ensaio. 2,988 s na janela medida, sem estimar HML. Nenhuma escrita HML/operacional.
 
+## CPA3: reversao pos-commit do historico de Obras (2026-11-26)
+
+- Manifesto 2a9c9d8f: ensaio PostgreSQL descartavel de reversao pos-commit por escopo/lote e igualdade com o estado gravado. Arquivou 499/500 com 499 recibos na mesma transacao, preservou uma edicao posterior, 1.035 eventos do outro lote e uma sentinela de outro escopo. Rollback nao deixou estado parcial; repeticao zero; DELETE e UPDATE de conteudo negados. Nenhuma escrita na HML ou operacional.
+
