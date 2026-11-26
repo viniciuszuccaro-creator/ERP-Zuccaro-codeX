@@ -1,3 +1,9 @@
+## CPA3: ajustes de Obras e CI do checkpoint de Fornecedores (2026-11-26)
+
+- Confronto privado dos exports conferidos: 35.309 Obras e 3.096 ajustes. Por Cliente/Item, 1.536 pares unicos, dos quais 1.328 em obras com cliente na revisao e 208 sem esse vinculo; 1.560 sem par. Nenhuma correspondencia pela chave completa com SEQUENCIA. Datas/horas brutas nao comprovam semantica do evento nem empresa. Zero apto para escrita. Recibo privado 24cd697f, sem reextracao.
+- CI 45835051779 do ccccd248 verde nos quatro jobs. Fornecedores d92c451c/4905483e ainda aguarda aceite do escopo Grupo sem Empresa de origem e autorizacao especifica de gravacao.
+- Proximo para Obras: provar o significado de ITEMLOCALENTREGA/SEQUENCIA e a Empresa responsavel no leitor nativo; reutilizar as 1.328 candidatas para o recorte inicial. Sem SQL de escrita na HML, carga ou alteracao operacional.
+
 ## CPA3: carga e reversao integral com checkpoint original (2026-11-26)
 
 - Do backup pos-Marcas c33c96f4, nova base descartavel e delta privado conferido. Papel restrito e runtime com checkpoint transacional: primeiro commit interrompido, retomada com um reuso e 788 insercoes em 40,1 s, 789 IDs distintos e 789 checkpoints auditados.
