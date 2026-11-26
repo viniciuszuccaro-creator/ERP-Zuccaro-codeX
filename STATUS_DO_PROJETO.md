@@ -189,3 +189,7 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 
 - No catalogo SQL da EXETPS, a PK de ClientesObrasHistoricoAjustes e SEQUENCIA; ha tambem indice unico em (CODIGOCLIENTE, ITEMLOCALENTREGA, SEQUENCIA), sem FK declarada. Pelo par cliente/item, 1.536 eventos encontram 1.214 Obras; 1.560 eventos de 1.029 pares nao encontram o item, embora todos tenham cliente presente no mestre de Obras. Nao forcar vinculo por cliente ou pela sequencia da Obra. Nenhuma escrita.
 
+## CPA3: snapshots e continuidade dos ajustes vinculados (2026-11-26)
+
+- Os pares EXETPS 22881160 e 8f786607 diferem por SHA-256, mas os exports verificados de Obras e ajustes sao identicos entre as duas fontes. Nenhum dos 1.029 pares ausentes foi recuperado. No recorte vinculado (1.536 eventos), as 113 transicoes consecutivas do mesmo tipo coincidem ao remover apenas espacos finais. Foram observados oito tipos; semantica, escopo e autorizacao continuam pendentes.
+

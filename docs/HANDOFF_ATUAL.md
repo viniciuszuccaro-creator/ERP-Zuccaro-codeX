@@ -184,3 +184,7 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 
 - Recibos privados `obra-adjustment-native-key.private.txt` (3731b35a) e `obra-adjustment-pk-coverage.private.json` (a8e724b8) no pacote `erp344-reader-20261125T165731Z`. Priorizar os 1.536 vinculados para validar ordem e tipos; procurar os 1.029 pares ausentes em snapshots anteriores. Preservar a sequencia nativa do evento, distinta da sequencia da Obra. Nao aplicar sem prova de escopo e gate.
 
+## CPA3: snapshots e continuidade dos ajustes vinculados (2026-11-26)
+
+- Recibo privado `erp344-reader-20261125T165731Z/obra-adjustment-historical-coverage.private.json`, SHA-256 `060825f0fce33c6cdb164b9788ec2636cfc3910ab8d3f822d2ae8f94531e6d40`. Nao repetir a extracao dos dois pares EXETPS ja contrastados. Buscar snapshot de cobertura diferente ou export de itens historicos para os 1.029 pares; para os vinculados, buscar dicionario oficial dos oito tipos antes do ensaio.
+
