@@ -1,3 +1,7 @@
+## CPA3: historico de precos extraido na VPS privada (2026-11-26)
+
+- EXETPS isolada READ_ONLY: export privado de 48.866 ajustes, 12.992.904 bytes, SHA ff82826a. PK nativa (CODIGOTABELA,CODIGOMATERIAL,SEQUENCIA), 51 valores de sequencia e dois tipos. 48.472 eventos em 4.563 pares com item atual; 394 em 41 pares sem item atual. Todos os cabecalhos encontrados. Sem carga ou uso como preco vigente.
+
 ## CPA3: primeira conferencia diferencial HD e VPS (2026-11-26)
 
 - Recorte diferencial HD/VPS: 13 arquivos, 19.185.455 bytes, iguais por tamanho e SHA-256. Inclui exports de Clientes/Fornecedores/Produtos, extracao SQL inicial, classes e dependencias de materiais com manifestos. Zero transferencia nesse recorte; nao equivale a inventario integral. VPS com 28 GiB livres na afericao. Cadastros: 28 testes focados de contagens e reabertura passaram; sem prova nova de navegador, carga ou deploy.

@@ -1,3 +1,7 @@
+## CPA3: historico de precos extraido na VPS privada (2026-11-26)
+
+- Reusar `erp344-reader-20261125T165731Z/price-adjustment-export.private.ndjson`, SHA-256 `ff82826a94ab3c16b039a30dc392a8c952cd19d577f1b36ae7cd992d4e86ea9c`. Conferir cadeia e semantica dos dois tipos, conciliar historico por chave composta e manter os 394 em revisao. O pareamento do item no legado nao comprova Produto/empresa na HML. Nao repetir extracao.
+
 ## CPA3: primeira conferencia diferencial HD e VPS (2026-11-26)
 
 - Pular os quatro conjuntos ja conciliados: 03_EXPORT_STAGING e os diretorios LEGADO-SQL-EXTRACT-20261009T145158Z, MATERIAIS-CLASSES-20261009T160500Z e MATERIAIS-DEPENDENCIAS-20261009T155000Z sob 03_STAGING. Ampliar o diferencial para os artefatos necessarios ainda nao cobertos. Prosseguir com gate de Fornecedores e extrato historico de Precos; validar Cadastros sob demanda em navegador, sem confundir os testes focados com a HML.
