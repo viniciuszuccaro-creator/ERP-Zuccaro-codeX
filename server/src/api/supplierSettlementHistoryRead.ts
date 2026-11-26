@@ -38,7 +38,7 @@ export function mountSupplierSettlementHistoryRead(app: Express, db: DbClient, r
           `SELECT empresa_id, source_report, source_sequence_hex, supplier_legacy_code, fiscal_note_number,
                   legacy_settlement_marker, original_title_amount::text
            FROM legacy_supplier_settlement_history
-           WHERE empresa_id=$1
+           WHERE empresa_id=$1 AND NOT archived
            ORDER BY source_report,source_sequence_hex,source_archive_sha256
            LIMIT $2 OFFSET $3`, [ctx.empresaId, limit + 1, offset])).rows;
       });

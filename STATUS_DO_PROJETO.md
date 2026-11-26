@@ -1,3 +1,7 @@
+## CPA3: reversao respeitada na consulta historica (2026-11-26)
+
+- A rota de baixas historicas agora exclui eventos arquivados antes da paginacao, preservando RBAC e filtro de Empresa. Teste HTTP com PGlite e dados sinteticos verifica duas paginas, excluindo evento arquivado e evento de outra Empresa. Tres testes focados, typecheck e build do backend passaram; lint da base em worktree isolado retornou zero erros e dois avisos fora do lote. Sem publicar, alterar HML ou confirmar pagamento.
+
 ## CPA3: prontidao do historico de baixas de Fornecedores (2026-11-26)
 
 - Recorte financeiro 813bb03d revalidado byte a byte por fonte EMP03 e por igualdade de eventos com o subconjunto de 45fb2bb6. 12.514 baixas sem comprovante (12.360 + 154 por Empresa), chaves nativas unicas; 107 pendentes fora do lote. HML restrita: relacao historica ausente e zero perfis ativos com visualizar explicito no caminho Financeiro.historico_baixas_fornecedores. Nenhum pagamento, saldo ou escrita.
