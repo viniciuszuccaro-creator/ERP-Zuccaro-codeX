@@ -208,3 +208,7 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 
 - Recibo privado `obra-adjustment-history-pg-reversal.private.json`, SHA-256 `89bf0e22af7116a6bb3459fed10530c7bcc6fa0db43cdfa975fca4233b9a0c66`. `legacy_client_review` e `legacy_supplier_settlement_history` sao especificos de outros dominios; reusar o padrao, nao as tabelas. Prova SQL descartavel, nao contrato canonico. Falta comprovar escopo de Obras e validar destino/minimo delta em clone restaurado antes de qualquer gate.
 
+## CPA3: migration canonica de Obras em backup restaurado (2026-11-26)
+
+- Recibos privados em obra012-rehearsal.gT9epo (baseline 9f2647d1, migration 16639b6f, rollback 00214e5c). Para repetir, usar volume descartavel em disco; tmpfs de 640 MiB falhou em audit_logs. Usar somente roles NOLOGIN derivadas dos nomes do backup quando restaurar sem ACLs. Proximo: ensaiar ACL minima e vinculos ClienteEmpresa/ClienteLocal no clone; definir e validar destino historico sem usar auditoria como fonte.
+

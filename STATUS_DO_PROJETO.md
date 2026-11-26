@@ -213,3 +213,7 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 
 - Manifesto 2a9c9d8f: ensaio PostgreSQL descartavel de reversao pos-commit por escopo/lote e igualdade com o estado gravado. Arquivou 499/500 com 499 recibos na mesma transacao, preservou uma edicao posterior, 1.035 eventos do outro lote e uma sentinela de outro escopo. Rollback nao deixou estado parcial; repeticao zero; DELETE e UPDATE de conteudo negados. Nenhuma escrita na HML ou operacional.
 
+## CPA3: migration canonica de Obras em backup restaurado (2026-11-26)
+
+- HML em leitura restrita: obras, obra_empresas e obra_locais ausentes. Backup pos-Marcas c33c96f4 restaurado em clone isolado (17.472 clientes; 412.802.071 bytes no banco), sem reaplicar ACLs e com roles de referencia NOLOGIN. Migration canonica 012 (blob 38f685ab) criou as tres tabelas com RLS forcada. Rollback removeu o delta e conservou a contagem. Nenhuma escrita na HML, nenhum ensaio de ACL efetiva ou carga historica nesta rodada.
+
