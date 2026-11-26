@@ -1,3 +1,7 @@
+## CPA3: contrato de leitura candidato dos oito ajustes de Precos (2026-11-26)
+
+- Pacote 0e1f390e ensaiado em prototipo PostgreSQL descartavel de historico: 8/8 payloads conciliados, uma empresa no recorte, leitura zero sem policy/contexto ou em outra Empresa/Grupo. Leitor sem UPDATE; chave duplicada e FK de escopo incorreto recusadas. Sem destino generico confirmado no codigo; nao usar fila de clientes, baixas ou tabelas operacionais como destino. Nenhuma escrita HML.
+
 ## CPA3: oito ajustes de Precos e migration 013 no clone (2026-11-26)
 
 - Oito eventos de dois pares isolados em pacote privado 0e1f390e, sem autorizacao de escrita. Migration 013 (blob be30f0fa) em clone c33c96f4: tres tabelas operacionais com RLS forcada, zero policies, zero registros e nenhum destino historico de precos. Rollback removeu as tres tabelas e preservou 17.472 Clientes e 273 Produtos. Nenhuma escrita na HML.

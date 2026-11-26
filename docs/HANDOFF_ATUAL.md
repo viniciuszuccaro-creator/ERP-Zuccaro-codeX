@@ -1,3 +1,7 @@
+## CPA3: contrato de leitura candidato dos oito ajustes de Precos (2026-11-26)
+
+- Recibo privado `erp344-reader-20261125T165731Z/price-history-8-read-contract.private.json` SHA-256 `adaccaf56c8be8ef238f8b43bb362a00d3a4cce07e5e7114704c803bc385a1e9`. Prototipo com registros de referencia isolados, nao ACL da API nem consolidacao do Grupo. Para promover, definir origem/escopo e testar ACL efetiva em clone restaurado; sem ativar tabela ou preco. Avancar frente independente de Cadastros se o gate de historico nao estiver resolvido.
+
 ## CPA3: oito ajustes de Precos e migration 013 no clone (2026-11-26)
 
 - Pacote historico `erp344-reader-20261125T165731Z/price-history-8-candidate.private.ndjson` SHA-256 `0e1f390e5a5b04f6c64e2cd08ae240971f97cb3920b6fd0d96a1e408d3e91f72`. Recibo 013 em `price013-rehearsal.BbcS3m/proof.private.txt` SHA db663141. Nao usar tabelas operacionais nem auditoria original como destino. Verificar contratos genericos de historico antes do delta minimo; ACL/escopo, uso da empresa historica e gate continuam separados.
