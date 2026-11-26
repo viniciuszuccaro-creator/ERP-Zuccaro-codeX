@@ -1,5 +1,7 @@
 ## CPA3: reversao respeitada na consulta historica (2026-11-26)
 
+- Preflight HML com papel restrito em READ ONLY: ja existe chave unica valida em empresas(id,group_id), suficiente para FK do historico sem novo indice. A tabela historica segue ausente; INSERT de auditoria existe com RLS ativa, sem ensaio de escrita na policy efetiva. Recibo privado c86aba11. CI de e11919bc ainda sem execucao retornada pelo GitHub.
+
 - Teste HTTP sintetico em PGlite usa middleware Supabase com provedor simulado, PostgresRbacGuard e RLS forcada com papel sem BYPASS. Token invalido 401, curinga sem acao explicita e outra Empresa 403; duas paginas validas excluem arquivado e outra Empresa. Tres testes focados e typecheck do teste passaram. Nao e login real ou validacao na HML.
 
 - Executor canonico no clone restaurado c33c96f4, duas Empresas, papel restrito e repositorio oficial de auditoria: 12.514 baixas em 14 transacoes, interrupcao apos 1.000 e retomada com 11.514 insercoes; replay zero. Reversao arquivou 12.514, replay zero e 28 auditorias transacionais. Recibo privado ab6dc299; 7,828 s no ensaio, nao estimativa da HML. RBAC HTTP nao testado; sem escrita viva.
