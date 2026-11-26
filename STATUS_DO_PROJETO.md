@@ -1,5 +1,7 @@
 ## CPA3: reversao respeitada na consulta historica (2026-11-26)
 
+- Prova SQL adicional em PostgreSQL isolado com as 12.514 chaves do manifesto 813bb03d: dois eventos arquivados preservados e fora da paginacao, 12.359 + 153 visiveis nos contextos corretos, zero em empresa cruzada. Recibo privado 0af6302f. Nao e prova HTTP na HML; nenhuma escrita ou liberacao.
+
 - A rota de baixas historicas agora exclui eventos arquivados antes da paginacao, preservando RBAC e filtro de Empresa. Teste HTTP com PGlite e dados sinteticos verifica duas paginas, excluindo evento arquivado e evento de outra Empresa. Tres testes focados, typecheck e build do backend passaram; lint da base em worktree isolado retornou zero erros e dois avisos fora do lote. Sem publicar, alterar HML ou confirmar pagamento.
 
 ## CPA3: prontidao do historico de baixas de Fornecedores (2026-11-26)
