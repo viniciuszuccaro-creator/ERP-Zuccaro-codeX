@@ -1,3 +1,7 @@
+## CPA3: primeira conferencia diferencial HD e VPS (2026-11-26)
+
+- Recorte diferencial HD/VPS: 13 arquivos, 19.185.455 bytes, iguais por tamanho e SHA-256. Inclui exports de Clientes/Fornecedores/Produtos, extracao SQL inicial, classes e dependencias de materiais com manifestos. Zero transferencia nesse recorte; nao equivale a inventario integral. VPS com 28 GiB livres na afericao. Cadastros: 28 testes focados de contagens e reabertura passaram; sem prova nova de navegador, carga ou deploy.
+
 ## CPA3: retomada integrada e primeira versao geral (2026-11-26)
 
 - Checkpoint remoto a9af58f4 confirmado. HML API configurada em a305a143; imagem web sem rotulo de revisao, par exato a conferir antes da promocao. Leitura restrita: 17.472 clientes (15.972 ativos), 16.087 locais (zero ativos). Obras e Fornecedores ausentes; sem tabelas fisicas de pedidos/orcamentos/contas_receber/plano_contas sob esses nomes no schema conferido. Nao confundir ensaio em clone com funcionalidade servida. VPS: 28 GiB livres; arquivo do HD visivel no D:. Nenhuma transferencia, carga ou deploy nesta auditoria.

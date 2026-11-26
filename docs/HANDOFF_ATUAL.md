@@ -1,3 +1,7 @@
+## CPA3: primeira conferencia diferencial HD e VPS (2026-11-26)
+
+- Pular os quatro conjuntos ja conciliados: 03_EXPORT_STAGING e os diretorios LEGADO-SQL-EXTRACT-20261009T145158Z, MATERIAIS-CLASSES-20261009T160500Z e MATERIAIS-DEPENDENCIAS-20261009T155000Z sob 03_STAGING. Ampliar o diferencial para os artefatos necessarios ainda nao cobertos. Prosseguir com gate de Fornecedores e extrato historico de Precos; validar Cadastros sob demanda em navegador, sem confundir os testes focados com a HML.
+
 ## CPA3: retomada integrada e primeira versao geral (2026-11-26)
 
 - Executar a secao de 26/11 em PLANO_GO_LIVE.md. Agora: inventario diferencial da primeira copia do HD e indices privados da VPS; transferir somente faltantes verificados. Em paralelo, reproduzir Cadastros na candidata e na HML sem listagem antes do clique; aproveitar os testes existentes. Obras permanece sem vinculo comprovado; preparar historico de Precos e fechar gate dos Fornecedores sem reaplicar lotes ja conciliados.
