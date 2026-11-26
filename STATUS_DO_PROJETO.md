@@ -380,3 +380,8 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 - Sessao real abriu Cadastros sem janela de entidade; expandir Pessoas nao abriu lista, mas Abrir de Clientes ficou desabilitado e os seletores de CPA e 3Z dispararam alerta. Nao foi possivel medir trafego de listagem, busca ou paginacao autenticada. Retorno previsto de API/web para `a305a143` efetuado e confirmado por meta, HTML e readiness. Sessao continuou autenticada no Grupo; troca 3Z tambem alertou no retorno. Causa ainda nao comprovada; sem mudar perfil, banco ou operacional.
 - Dashboard em WIP remoto: contagem ausente, vazia ou booleana nao e mais aceita como zero oficial; zero numerico continua valido. 18 testes focados passaram. Sem pacote ou deploy desse WIP.
 
+## CPA3: cota do navegador e candidata de Cadastros
+
+- API e web em `a305a143` confirmadas novamente. O alerta autenticado identifica `QuotaExceededError` em `erp_runtime_scope`. WIP usa token existente como fallback sem limpar dados, conserva a sessao em falha e nao muda o RBAC. 38 testes focados passaram, incluindo contexto nos headers HTTP e recusa de Empresa nao autorizada. Audit, lint, typecheck e build passaram no checkout remoto; suite completa nao verde no executor VPS. Sem commit de codigo, candidata ou deploy.
+- Dashboard em andamento separado: indicador de Produtos deixa de usar amostra como total e distingue sem acesso, carregando, indisponivel e zero oficial. Ainda sem aceite de navegador ou pacote.
+

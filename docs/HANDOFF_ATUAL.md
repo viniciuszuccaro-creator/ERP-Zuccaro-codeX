@@ -357,3 +357,7 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 - A HML voltou a `a305a143` apos aceite negativo; nao republicar a470accb r2 antes de explicar o bloqueio tambem reproduzido na versao anterior. Revisar resposta de validacao de empresa na sessao real, sem expor token nem ampliar permissao. Depois repetir CPA/3Z, Clientes/Produtos e prova de rede. O r2 esta parado e preservado; banco e backup nao foram restaurados sobre a HML.
 - Dashboard separado em `dashboard-integracao.7url9e`: cabecalho e validacao da contagem em WIP; 18 testes focados remotos passaram. Proximo recorte: contagem oficial e estado indisponivel na interface.
 
+## CPA3: retomar validacao da correcao de cota
+
+- Correcoes de sessao e Dashboard devem permanecer em lotes separados. `dashboard-integracao.7url9e` guarda o WIP remoto e logs privados; Chrome da VPS depende de bibliotecas privadas e recusa iniciar como root com sandbox. WSL existente esta no C: (nao usar para esta rodada). Revalidar em executor privado com Chrome protegido e dependencias do servidor, fechar suite, CI e candidata completa; nova publicacao exige autorizacao associada ao pacote exato.
+
