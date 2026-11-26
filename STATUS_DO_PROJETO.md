@@ -1,3 +1,8 @@
+## CPA3: entrega geral de Cadastros em HML (2026-11-26)
+
+- Preflight somente leitura: `/cadastros` responde HTTP 200; meta da API e HTML conferido contra recibo mantem `a305a143`. Candidata completa `a470accb` r2, CI 45680437810 SUCCESS, tar SHA-256 `06d13aabfdf4b013af7145c4ded892a7a67b027a66d2d053b26f73d87705a627`. Backup de referencia `c33c96f4` restaurado no WSL, 17.472 clientes e copia externa conferida. VPS com 28 GiB livres. Sem autorizacao especifica de troca, deploy nao executado; renovar backup/ACK antes da janela.
+- Diferencial HD/VPS: oito arquivos (84.925 bytes) de dependencias de classes, pendencias da primeira revisao, qualificacao de duplicatas e campos prioritarios ja coincidem por SHA-256. Nenhuma retransmissao. Base44 ERP Integra acessivel por conector: cinco schemas consultados presentes (Fornecedor, Produto, GrupoProduto, Empresa e SetorAtividade); ClienteEmpresa nao retornado. Schema nao comprova registros nem vinculos; nenhum export novo ou escrita.
+
 ## CPA3: reversao respeitada na consulta historica (2026-11-26)
 
 - Policy de auditoria restaurada do backup c33c96f4: com papel nominal da aplicacao reproduzido NOLOGIN/NOBYPASSRLS e INSERT ja observado na HML, a RLS ficou ativa e aceitou quatro sondas (create/inactivate nas duas Empresas), sem policy nova. Rollback deixou zero eventos da sonda. Recibo privado bd631ae3; nao prova RBAC HTTP vivo nem autoriza escrita.

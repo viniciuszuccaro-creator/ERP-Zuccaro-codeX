@@ -1,3 +1,9 @@
+## CPA3: gate de publicacao de Cadastros Gerais (2026-11-26)
+
+- Decisao unica para `a470accb` r2: publicar API e web juntas somente na HML, Financeiro e historico desligados, sem DDL, grants, cargas ou operacional. Antes da troca, backup fresco restaurado, SHA da copia externa e reconferencia do retorno `a305a143`. Se falhar, restaurar as duas imagens/configuracao anteriores e conferir meta, assets, health e login, sem restaurar o banco para um rollback de runtime.
+- Aceite autenticado apos troca: abrir Cadastros Gerais sem entidade e sem consultas de registros; medir abertura, busca literal por codigo/nome, duas paginas e reabertura em Clientes e Produtos; repetir ao alternar CPA/3Z, sem salvar. Nao marcar aceite usando HTTP 200, teste sintetico ou versao anterior.
+- Pular os quatro conjuntos do diferencial de 84.925 bytes ja conferidos. Base44: consultar dados do app por meio de export autorizado (schema nao e export); nenhum vinculo ClienteEmpresa inferido. Fornecedores 789 continua com gate proprio (aceite compartilhado e autorizacao); nao misturar com o deploy de Cadastros.
+
 ## CPA3: pacote de revisao do historico de baixas (2026-11-26)
 
 - Ensaio integral da revisao com cast `text[]` concluido no clone `c33c96f4`. Prova privada local: `integral-proof.log` na area do clone WSL. Nao repetir sem alteracao material. Checks Linux completos aprovados (3.050/3.050). A decisao HML ainda exige CI do SHA exato e revisao do executor especifico, backup fresco restaurado e ACK; ensaio nao altera RBAC HTTP nem constitui autorizacao.
