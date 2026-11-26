@@ -1,3 +1,7 @@
+## CPA3: backup agendado e copias externas conferidas (2026-11-26)
+
+- Agendador HML 26/11 03:30 BRT: journal BACKUP_RESTORE_VERIFIED, 26 tabelas, 47.779.840 bytes. SHA 1370f7e6 coincide na VPS e HD. Backup posterior restaurado 09:13 BRT c33c96f4 (47.790.080 bytes) tambem conferido nos dois lados. A copia externa foi verificada separadamente, nao pelo servico. 28 GiB livres. Nenhum deploy, novo backup ou escrita nesta verificacao.
+
 ## CPA3: escopo candidato de publicacao sem mudanca de banco (2026-11-26)
 
 - Candidata a470accb r2: bootstrap empacotado exige flag explicita para PedidoFinanceiro e nao conecta a opcao de historico de baixas. Configuracao atual lida sem segredos: ambas desativadas. Escopo candidato sem DDL/grants/carga: API/web juntos para Cadastros sob demanda; financeiro e historico desligados. Nao e aceite autenticado nem autorizacao de publicacao.

@@ -1,3 +1,7 @@
+## CPA3: backup agendado e copias externas conferidas (2026-11-26)
+
+- Backups conferidos no HD em ARQUIVO_HML_VPS_2026-11-26. Ultimo agendado ab581e69 encerrou com sucesso; historico de falha nao descreve a execucao atual. O log do agendador marca externalVerified=false; nao confundir com a conferencia SHA feita no HD. Antes de qualquer publicacao, ainda renovar a protecao conforme gate e confirmar autorizacao especifica.
+
 ## CPA3: escopo candidato de publicacao sem mudanca de banco (2026-11-26)
 
 - Para gate HML de Cadastros: candidata a470accb r2 (06d13aab), retorno a305a143 com imagens pinadas; backup fresco restaurado e copia externa conferida. Manter identidade fisica, Auth e RBAC; nao ligar financeiro/historico, carregar dados ou executar migrations. Aceitar somente se API/web no SHA, login/contexto CPA/3Z, nenhuma listagem antes do clique, pagina seguinte e reabertura somente leitura funcionarem; reverter ambos se falhar. Fornecedores fica fora do pacote.
