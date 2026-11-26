@@ -1,3 +1,7 @@
+## CPA3: diferencial dos pacotes de Auditoria e EMP01/03 (2026-11-26)
+
+- Quarto diferencial HD/VPS: cinco arquivos (1983142833 bytes), incluindo Auditoria, EMP01, EMP03 e os dois pacotes de titulos, iguais por tamanho/SHA-256. O indice SHA do par MDF/LDF EMP03 no HD coincide com o recibo da extracao na VPS. Zero retransmissao, leitura SQL nova, carga ou deploy.
+
 ## CPA3: confirmacoes externas dos backups registradas (2026-11-26)
 
 - Confirmados individualmente os tres ACKs de 26/11 pelo comando canonico, apos SHA-256 dos arquivos e manifestos no HD/VPS e restoreVerified. Retencao configurada keep=7; inventario antes/depois com sete arquivos, agora 7/7 ACKs consistentes. Zero retransmissao ou exclusao; nao executados sync, prune, backup novo ou deploy.

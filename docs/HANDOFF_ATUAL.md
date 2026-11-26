@@ -1,3 +1,7 @@
+## CPA3: diferencial dos pacotes de Auditoria e EMP01/03 (2026-11-26)
+
+- Reusar `obra-auditoria-20261126`, `supplier-provenance-emp01` e `supplier-provenance-emp03` na area privada da VPS. Recortes EMP03 de 12.514 baixas historicas e 12.621 titulos estao identicos no HD/VPS. Nao gerar saldo/pagamento, nao repetir transporte e manter gate do historico financeiro separado da publicacao de Cadastros.
+
 ## CPA3: confirmacoes externas dos backups registradas (2026-11-26)
 
 - Backups 063032Z-ab581e69, 113126Z-1b3a3219 e 121355Z-0c2bcc8d com ACK registrado e arquivos preservados no HD e VPS. Essa verificacao fecha a confirmacao externa desses tres, nao o gate de backup fresco para publicar. Nao repetir ACK ou sync sem novo artefato; manter a retencao configurada.
