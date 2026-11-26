@@ -1,3 +1,8 @@
+## CPA3: Dashboard Base44 e fila de entregas (2026-11-26)
+
+- Checkout remoto isolado do ERP `ce45d710` e referencia ERP Integra `b0586b8`, sem reutilizar ou sobrescrever WIP remoto de Fornecedores. Testes focados do Dashboard e do escopo Comercial: 18/18. Inventariados Header, faixa de KPI, alertas, resumo e hooks. A referencia tambem usa amostras limitadas; nao copiar essas amostras como totais.
+- Primeiro recorte do Dashboard na rota existente: adaptar composicao e reaproveitar filtros/atalhos; Clientes e Produtos usam o contrato de contagem de Cadastros com escopo e permissoes. Indicadores operacionais exigem fonte agregada por Empresa e periodo; ausencia ou proibicao nao e zero. Excluir Clientes de novos exports Base44 e preservar os 273 Produtos conciliados. Sem deploy, carga ou alteracao do Dashboard servido.
+
 ## CPA3: entrega geral de Cadastros em HML (2026-11-26)
 
 - Preflight somente leitura: `/cadastros` responde HTTP 200; meta da API e HTML conferido contra recibo mantem `a305a143`. Candidata completa `a470accb` r2, CI 45680437810 SUCCESS, tar SHA-256 `06d13aabfdf4b013af7145c4ded892a7a67b027a66d2d053b26f73d87705a627`. Backup de referencia `c33c96f4` restaurado no WSL, 17.472 clientes e copia externa conferida. VPS com 28 GiB livres. Sem autorizacao especifica de troca, deploy nao executado; renovar backup/ACK antes da janela.

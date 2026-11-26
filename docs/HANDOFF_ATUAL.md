@@ -1,3 +1,8 @@
+## CPA3: retomada da adaptacao do Dashboard (2026-11-26)
+
+- Workspace remoto privado `dashboard-integracao.7url9e`: comparar `reference/src/pages/Dashboard.jsx` e seus hooks com `erp/src/pages/Dashboard.jsx`. Manter mesma rota/menu, contexto, permissoes e recursos existentes. Primeiro verificar paridade de Clientes/Produtos com o total canonico de Cadastros; nunca usar tamanho de pagina como total. Depois validar pedidos, alertas e titulos com periodos identicos aos relatorios, duas empresas mesmo Grupo e um contexto externo. Nao copiar fontes dependentes do Base44 diretamente para runtime.
+- Gate de Cadastros permanece separado. A publicacao do Dashboard exige pacote completo posterior e aceite proprio. Base44: excluir Clientes do export, paginar cada entidade e conciliar com os 273 Produtos ja gravados. Fornecedores e historico continuam em aprovacoes separadas.
+
 ## CPA3: gate de publicacao de Cadastros Gerais (2026-11-26)
 
 - Decisao unica para `a470accb` r2: publicar API e web juntas somente na HML, Financeiro e historico desligados, sem DDL, grants, cargas ou operacional. Antes da troca, backup fresco restaurado, SHA da copia externa e reconferencia do retorno `a305a143`. Se falhar, restaurar as duas imagens/configuracao anteriores e conferir meta, assets, health e login, sem restaurar o banco para um rollback de runtime.
