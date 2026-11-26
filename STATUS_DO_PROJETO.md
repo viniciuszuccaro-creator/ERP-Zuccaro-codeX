@@ -177,3 +177,7 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 
 - Consulta restrita e READ ONLY na HML confirmou um mestre ativo para a Obra candidata, sem empresa no cadastro e sem locais visiveis (ativos ou inativos). Na origem, CEP em formato de oito digitos, nenhum ajuste pela chave cliente/item no recorte e presenca em nota e pedido da EMP03. Numero, pais e titularidade seguem nao comprovados; nenhuma escrita.
 
+## CPA3: uso comercial de Obras por empresa na EMP03 (2026-11-26)
+
+- EMP03 isolada em READ_ONLY: 33.739 pares cliente/obra em pedidos e notas; 30.861 com um codigo positivo de empresa, 2.861 com dois, 13 com tres e quatro sem codigo positivo. A candidata com mestre ativo tem 332 notas e sete pedidos, com dois codigos distintos em cada fonte e na uniao. Zero eventos de ControleEntregasPedidos por numero dos pedidos candidatos. Uso comercial nao prova titularidade. Leitor parado, nenhuma gravacao.
+
