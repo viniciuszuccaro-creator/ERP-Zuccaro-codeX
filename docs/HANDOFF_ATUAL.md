@@ -1,3 +1,7 @@
+## CPA3: unidade e fator nativo dos materiais de Precos (2026-11-26)
+
+- Recibo privado `erp344-reader-20261125T165731Z/price-history-material-factor.private.txt`, SHA-256 `f5d8d7fdcf8b2d1310b271ba6f44a039187b5f2df296ade0f1628a22b2b0ff01`. Nao repetir o cadastro nem usar fator 1/peso cadastral. Se houver documento comercial com o mesmo material e quantidades nas duas unidades, validar regra, precisao e coerencia por empresa. Manter os oito candidatos literais separados.
+
 ## CPA3: terceiro diferencial e conversao de unidades (2026-11-26)
 
 - Recibo privado `erp344-reader-20261125T165731Z/price-history-unit-conversion-coverage.private.json`, SHA-256 `3fd6cc7733f11cfb0f366b85de9789162a8d262be9dd8b08807406cbe058c426`. Para os 27, exigir fator nativo especifico do produto/material e unidade comercial, nao assumir fator 1. Pular os seis conjuntos LEGADO-CLASS/FIELD/FIRST/MATERIAL/PRIORITY conferidos. Manter gate de 789 Fornecedores separado.

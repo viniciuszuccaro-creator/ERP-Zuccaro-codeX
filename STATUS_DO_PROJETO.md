@@ -1,3 +1,7 @@
+## CPA3: unidade e fator nativo dos materiais de Precos (2026-11-26)
+
+- EXETPS isolada READ_ONLY: oito pares pendentes com cadastro nativo exato e unidade de origem igual ao historico. Zero fatores positivos em CadastroMateriaisConversoes e zero siglas de conversao iguais ao destino. Dois pares tem peso bruto/liquido, nenhum peso de barra/metro positivo; peso cadastral nao prova base do preco. Os 27 eventos seguem sem conversao, nenhuma escrita.
+
 ## CPA3: terceiro diferencial e conversao de unidades (2026-11-26)
 
 - Terceiro diferencial HD/VPS: 12 arquivos, 149555 bytes, iguais por tamanho e SHA-256 nos seis conjuntos de dependencias/revisao/duplicidade. Acumulado 38 arquivos/39335330 bytes, zero retransmissao. HML em READ ONLY: 14 unidades ativas visiveis; nos 27 eventos pendentes os oito pares usam grandezas distintas frente ao Produto Base44, sem conversao generica. Os oito literais anteriores permanecem candidatos. Nenhuma escrita.
