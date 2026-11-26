@@ -1,3 +1,9 @@
+## CPA3: reversao em escala de Fornecedores (2026-11-26)
+
+- Clone descartavel, papel SQL restrito e servico canonico: 789 identidades conciliadas com 4905483e. Dos 788 ativos no inicio, 787 inativados em 18,3 s com 787 auditorias; um conflito de revisao preservou a edicao posterior. Um ja inativo ficou intocado. Repeticao recusada, codigo/identidade preservados, sequencia 1066, 17.472 clientes e seis Marcas intactos. Recibo privado 64331e5a; copia de teste descartada e leitor desligado.
+- Para a carga real, capturar fingerprint e revisao da imagem confirmada por registro, inclusive retomada comprovada, antes de permitir reversao. Nao gerar o fingerprint a partir de leitura tardia de registro alterado. CI 45833981406 do f7a8391a em andamento na conferencia.
+- Sem aceite do escopo compartilhado, sem importacao, ACL ou deploy na HML e sem mudanca operacional.
+
 ## CPA3: RBAC ensaiado em PostgreSQL e correcoes da CI da grade (2026-11-26)
 
 - Clone isolado: consulta, janela temporaria de importacao e reversao executadas em transacao. Replay manteve tres auditorias; CAS recusou mudanca concorrente. Reversao preservou visualizar. Rollback restaurou perfil e removeu as auditorias do ensaio. Recibo privado 79e2a53b. Nenhum SQL na HML.
