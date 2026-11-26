@@ -375,3 +375,8 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 - Backup fresco `hml-20261126T174922Z-3f31aceb` (47.790.080 bytes), 26 tabelas, restauracao independente sem rede com 17.472 clientes e ACK externo por SHA-256 `2fd5fe00dd6597d22ecd0dc3c1c977376483514cde31abef5503bdab8d62b606`. API/web `a305a143` preservadas paradas para retorno.
 - Dashboard: cabecalho existente compacto e responsivo, com filtro de periodo bloqueado sem permissao, em WIP separado na VPS. 18 testes focados remotos passaram; nao empacotado nem publicado.
 
+## CPA3: aceite de Cadastros r2 bloqueado e retorno verificado
+
+- Sessao real abriu Cadastros sem janela de entidade; expandir Pessoas nao abriu lista, mas Abrir de Clientes ficou desabilitado e os seletores de CPA e 3Z dispararam alerta. Nao foi possivel medir trafego de listagem, busca ou paginacao autenticada. Retorno previsto de API/web para `a305a143` efetuado e confirmado por meta, HTML e readiness. Sessao continuou autenticada no Grupo; troca 3Z tambem alertou no retorno. Causa ainda nao comprovada; sem mudar perfil, banco ou operacional.
+- Dashboard em WIP remoto: contagem ausente, vazia ou booleana nao e mais aceita como zero oficial; zero numerico continua valido. 18 testes focados passaram. Sem pacote ou deploy desse WIP.
+

@@ -352,3 +352,8 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 - HML serve `a470accb` r2. Na mesma aba apos login com a conta existente: CPA e 3Z, menu Cadastros sem entidade aberta, inspecionar requisicoes antes do clique, abrir Clientes e Produtos, buscar codigo/nome, paginar e reabrir. Nao salvar. Se falhar a publicacao, parar runtime novo e reativar os dois containers preservados `-rollback-a305a143-r2`, conferir meta, HTML, readiness e login. Nao restaurar o banco para rollback de runtime.
 - Provas privadas na janela `cadastros-r2.nP2EvD`; backup fresco tambem no HD externo com ACK. Dashboard segue no checkout remoto `dashboard-integracao.7url9e`, separado da HML servida.
 
+## CPA3: retorno a305a143 e bloqueio de contexto
+
+- A HML voltou a `a305a143` apos aceite negativo; nao republicar a470accb r2 antes de explicar o bloqueio tambem reproduzido na versao anterior. Revisar resposta de validacao de empresa na sessao real, sem expor token nem ampliar permissao. Depois repetir CPA/3Z, Clientes/Produtos e prova de rede. O r2 esta parado e preservado; banco e backup nao foram restaurados sobre a HML.
+- Dashboard separado em `dashboard-integracao.7url9e`: cabecalho e validacao da contagem em WIP; 18 testes focados remotos passaram. Proximo recorte: contagem oficial e estado indisponivel na interface.
+
