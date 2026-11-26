@@ -220,3 +220,7 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 
 - Recibo privado `erp344-reader-20261125T165731Z/cliente-empresa-native-coverage.private.txt`, SHA-256 `cbbefcb66f163d0e1590899a79e9ea9fe8aa3df3ef4c99ce453a828aa99e2c95`. Nao inferir ClienteEmpresa por CODIGOGRUPO nem parametros de credito. Procurar export especifico de vinculos ou regra nativa de acesso; propostas, notas, cheques e conta corrente demonstram contexto de operacao e nao substituem o cadastro. Reusar ClienteEmpresaOperations quando houver fonte e gate.
 
+## CPA3: cobertura Base44 de vinculos ClienteEmpresa (2026-11-26)
+
+- Recibo privado `obra-emp03.ZaaNbi/base44-client-link-coverage.private.json`, SHA-256 `e616c376db51abcf81c6cca343d6d92e5f0205210ecefef86cc680af992a637c`. Pacotes Base44 conferidos nao contem export ClienteEmpresa. Nao usar campos divergentes nem extrapolar a visibilidade de um registro. Para destravar, falta export nativo ou regra oficial de ClienteEmpresa e de Obra; manter a fila e evitar consultas ja encerradas.
+

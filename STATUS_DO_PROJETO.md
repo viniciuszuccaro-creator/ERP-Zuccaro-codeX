@@ -225,3 +225,7 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 
 - EXETPS isolada em READ_ONLY: 22.895 clientes, 1.181 com CODIGOGRUPO positivo e todos conciliados com GrupoClientes (23 grupos de clientes, nao empresas). PlanoMensalidadeClientes vazio; DivisaoCreditoClientes tem uma linha sem codigo de empresa positivo e nao tem chave de cliente. Nenhuma das fontes comprova ClienteEmpresa. Nenhuma escrita.
 
+## CPA3: cobertura Base44 de vinculos ClienteEmpresa (2026-11-26)
+
+- Referencia Base44 b0586b8c e schema do ERP Integra confirmam Cliente.empresa_id, empresa_dona_id e empresas_compartilhadas_ids, sem entidade ClienteEmpresa/Obra retornada. Consulta autorizada dos campos minimos: um cliente visivel, campos de titularidade divergentes, dois IDs compartilhados e sem coincidencia numerica com a Obra candidata. Nao prova vinculo TID. Nenhuma alteracao Base44/HML.
+
