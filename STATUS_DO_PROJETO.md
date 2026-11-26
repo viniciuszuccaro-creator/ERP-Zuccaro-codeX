@@ -1,3 +1,7 @@
+## CPA3: versao servida e candidata integrada verificadas (2026-11-26)
+
+- HML servida a305a143 confirmada na API e no HTML + dois assets de entrada byte a byte com pacote privado. Candidata a470accb r2 (tar 06d13aab), CI 45680437810 com quatro jobs SUCCESS, inclui 8b3ae461 e nao tem diff posterior nos dois arquivos de abertura sob demanda. Imagens correntes registradas para reversao. Nenhum deploy.
+
 ## CPA3: evidencia transacional de unidade dos materiais (2026-11-26)
 
 - EMP03 isolada READ_ONLY, recorte dos materiais com unidade divergente: 14 linhas de compra (quatro materiais), zero com conversao habilitada e duas quantidades positivas; zero linhas em itens de venda. Notas: 387 linhas no cruzamento com cabecalho (cinco materiais), 115 com quantidade/peso positivos, 371 na unidade de origem e zero na unidade de destino ou com quantidade de conferencia positiva. Um codigo de empresa no cruzamento. Nenhuma conversao comprovada.
