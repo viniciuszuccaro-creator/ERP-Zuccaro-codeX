@@ -1061,6 +1061,16 @@ SeparacaoConferencia: {
 
   return {
     entities,
+    fornecedores: {
+      /** @param {{search?: string, limit?: number, offset?: number, signal?: AbortSignal}} [options] */
+      list({ search, limit, offset, signal } = {}) {
+        return readFornecedor('/api/v1/fornecedores', { query: { search, limit, offset }, signal });
+      },
+      /** @param {string} id @param {{signal?: AbortSignal}} [options] */
+      get(id, { signal } = {}) {
+        return readFornecedor('/api/v1/fornecedores/' + encodeURIComponent(id), { signal });
+      },
+    },
     bankStatements: createBankStatementApi({ getScope, request }),
     financialMovements: createFinancialMovementApi({ getScope, request }),
     /** @param {{purpose: string, prompt: string, response_json_schema?: unknown, group_id: string, empresa_id?: string | null, signal?: AbortSignal}} input */
@@ -1154,6 +1164,29 @@ SeparacaoConferencia: {
     },
   };
 
+  /** @param {string} path @param {Parameters<typeof request>[1]} options */
+  async function readFornecedor(path, options) {
+    const scope = Object.freeze({ ...(getScope() || {}) });
+    const fail = (status, code) => createHttpError(status, { error: { code } }, undefined);
+    if (!scope.token?.trim() || !scope.groupId || !scope.actorId) throw fail(401, 'AUTH_REQUIRED');
+    const assertCurrent = () => {
+      const current = getScope() || {};
+      if (options?.signal?.aborted || current.token !== scope.token || current.actorId !== scope.actorId ||
+          current.groupId !== scope.groupId || (current.empresaId || null) !== (scope.empresaId || null)) {
+        throw fail(409, 'CONTEXT_CHANGED');
+      }
+    };
+    assertCurrent();
+    try {
+      const result = await request(path, options, scope);
+      assertCurrent();
+      return result;
+    } catch (error) {
+      assertCurrent();
+      throw error;
+    }
+  }
+
   // Storage selects a context, never authorizes it; the backend verifies Bearer/RBAC.
   /** @param {{groupId:string,empresaId:string,actorId:string}} expected
    * @param {(scope:Readonly<ReturnType<typeof getScope>>)=>Promise<unknown>} operation
@@ -1198,3 +1231,4 @@ export const bankStatementApi = createHttpApiClient({ getScope: () => readErpHtt
 export const financialMovementApi = createHttpApiClient({ getScope: () => readErpHttpSession() || {} }).financialMovements;
 
 export const clienteConferenciaApi = createHttpApiClient({ getScope: () => readErpHttpSession() || {} }).clientes;
+export const fornecedorReadApi = createHttpApiClient({ getScope: () => readErpHttpSession() || {} }).fornecedores;

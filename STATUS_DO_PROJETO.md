@@ -1,3 +1,9 @@
+## CPA3: cliente HTTP de leitura de Fornecedores (2026-11-26)
+
+- CI 45829007262 verde nos quatro jobs para 49887066. HML nao publicada.
+- Cliente reutiliza o transporte HTTP canonico para listar e consultar Fornecedor, sem operacoes de escrita ou fallback local. Envia Bearer e mantem o contexto de inicio; resposta obsoleta e descartada. Comparacao historica reconhece apenas os tres trechos novos, sem substituir hashes de referencia.
+- 57 testes HTTP e de contratos historicos passaram no Linux. Proximo: ligar a grade existente em modo somente leitura e testar pagina, detalhe e troca de contexto no navegador antes do gate de HML. Manifesto 4905483e nao aplicado.
+
 ## CPA3: consulta HTTP compartilhada de Fornecedores (2026-11-26)
 
 - Validacao final por etapas: Linux privado com npm ci, auditoria, lint, typecheck e build de web/API. Raiz: 3.031 passaram; dez falhas de historico passaram apos recuperar refs e cinco de navegador passaram no Chrome do Windows com perfil no HD. Servidor: 601 resultados sem falhas antes do limite do executor; recorte sobreposto final com 68 aprovados, tres pulados e zero falhas. Sem execucao unica verde neste executor; sem pular testes ou desativar sandbox.

@@ -55,6 +55,18 @@ const entries = {
     "baseline": "2d01bd57ba79ce0a0bbdfbcc527429fecc930c4b78450b51d67534239f9a62eb",
     "hunks": [
       {
+        "before": "",
+        "after": "    fornecedores: {\n      /** @param {{search?: string, limit?: number, offset?: number, signal?: AbortSignal}} [options] */\n      list({ search, limit, offset, signal } = {}) {\n        return readFornecedor('/api/v1/fornecedores', { query: { search, limit, offset }, signal });\n      },\n      /** @param {string} id @param {{signal?: AbortSignal}} [options] */\n      get(id, { signal } = {}) {\n        return readFornecedor('/api/v1/fornecedores/' + encodeURIComponent(id), { signal });\n      },\n    },\n"
+      },
+      {
+        "before": "",
+        "after": "  /** @param {string} path @param {Parameters<typeof request>[1]} options */\n  async function readFornecedor(path, options) {\n    const scope = Object.freeze({ ...(getScope() || {}) });\n    const fail = (status, code) => createHttpError(status, { error: { code } }, undefined);\n    if (!scope.token?.trim() || !scope.groupId || !scope.actorId) throw fail(401, 'AUTH_REQUIRED');\n    const assertCurrent = () => {\n      const current = getScope() || {};\n      if (options?.signal?.aborted || current.token !== scope.token || current.actorId !== scope.actorId ||\n          current.groupId !== scope.groupId || (current.empresaId || null) !== (scope.empresaId || null)) {\n        throw fail(409, 'CONTEXT_CHANGED');\n      }\n    };\n    assertCurrent();\n    try {\n      const result = await request(path, options, scope);\n      assertCurrent();\n      return result;\n    } catch (error) {\n      assertCurrent();\n      throw error;\n    }\n  }\n\n"
+      },
+      {
+        "before": "",
+        "after": "export const fornecedorReadApi = createHttpApiClient({ getScope: () => readErpHttpSession() || {} }).fornecedores;\n"
+      },
+      {
         "before": "import { MAX_BANK_STATEMENT_BYTES } from './bankStatementContract.js';\nimport { createClienteLocalBatchHttpApi } from './clienteLocalBatchHttp.js';\n\n/**\n",
         "after": "import { MAX_BANK_STATEMENT_BYTES } from './bankStatementContract.js';\nimport { createClienteLocalBatchHttpApi } from './clienteLocalBatchHttp.js';\nimport { createOrganizacionalHttp } from './organizacionalHttp.js';\n\n/**\n"
       },
