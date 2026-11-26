@@ -168,3 +168,7 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 
 - Recibo privado `obra-emp03.ZaaNbi/live-review-states.private.json`, SHA-256 `6b3be5f3c186eba0fc65769808dcd7a8088b8ada29b4dbd4b90df8d1a2f57764`. Reusar a chave privada da candidata para procurar numero e pais em fonte nativa e provar titularidade ou regra de Grupo. Manter as 6.033 em revisao e as 210 historicas fora da carga operacional; nao repetir a consulta nem promover clientes da fila.
 
+## CPA3: verificacao de local da Obra candidata (2026-11-26)
+
+- Recibo privado `obra-emp03.ZaaNbi/candidate-location-check.private.json` SHA-256 `ed5135f76e8a7958e94f618d19bef956d2c63616223fda84f0f1ba42ad0485ac`. Buscar comprovante nativo de entrega ou regra oficial de escopo. O mapa Base44 conferido liga empresas Base44/HML e nao prova o escopo da Obra TID. Nao promover pelo texto do logradouro ou pelo uso comercial.
+

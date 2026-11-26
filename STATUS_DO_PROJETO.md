@@ -173,3 +173,7 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 
 - Leitura restrita da HML: das 6.244 Obras fora da fila arquivada, 6.033 apontam para 4.188 clientes em revisao; 210 para 36 clientes apenas historicos; uma para mestre ativo. A candidata tem logradouro, cidade, bairro, UF, CEP e referencia presentes, sem validacao de formato, numero, pais ou empresa. Nenhuma escrita ou ativacao.
 
+## CPA3: verificacao de local da Obra candidata (2026-11-26)
+
+- Consulta restrita e READ ONLY na HML confirmou um mestre ativo para a Obra candidata, sem empresa no cadastro e sem locais visiveis (ativos ou inativos). Na origem, CEP em formato de oito digitos, nenhum ajuste pela chave cliente/item no recorte e presenca em nota e pedido da EMP03. Numero, pais e titularidade seguem nao comprovados; nenhuma escrita.
+
