@@ -1,3 +1,7 @@
+## CPA3: confirmacoes externas dos backups registradas (2026-11-26)
+
+- Confirmados individualmente os tres ACKs de 26/11 pelo comando canonico, apos SHA-256 dos arquivos e manifestos no HD/VPS e restoreVerified. Retencao configurada keep=7; inventario antes/depois com sete arquivos, agora 7/7 ACKs consistentes. Zero retransmissao ou exclusao; nao executados sync, prune, backup novo ou deploy.
+
 ## CPA3: reconciliacao de copias externas e retencao (2026-11-26)
 
 - Retencao HML em leitura: sete backups gerenciados, quatro com recibo externo e tres sem recibo. Os tres de 26/11 ja tem arquivos no HD conferidos por SHA-256, inclusive o intermediario f1712435 e seu manifesto. O sincronizador confirma cada copia apos verificacao e tambem pode remover copias locais antigas. Nenhum ACK, sync, prune ou deploy executado nesta rodada.

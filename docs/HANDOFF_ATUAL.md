@@ -1,3 +1,7 @@
+## CPA3: confirmacoes externas dos backups registradas (2026-11-26)
+
+- Backups 063032Z-ab581e69, 113126Z-1b3a3219 e 121355Z-0c2bcc8d com ACK registrado e arquivos preservados no HD e VPS. Essa verificacao fecha a confirmacao externa desses tres, nao o gate de backup fresco para publicar. Nao repetir ACK ou sync sem novo artefato; manter a retencao configurada.
+
 ## CPA3: reconciliacao de copias externas e retencao (2026-11-26)
 
 - Para os tres backups de 26/11, preferir ACK individual pelo mecanismo canonico depois de revalidar copia/identidade e efeito de retencao; nao rodar sync completo para mero ACK. O prune da VPS so considera copias fora da janela com ACK valido. Nao remover backups, volumes ou reversoes nesta etapa; gate de publicacao HML separado.
