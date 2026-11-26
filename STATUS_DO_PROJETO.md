@@ -135,3 +135,9 @@ Candidata a470accb r2, CI 45680437810: API do pacote exato conectou ao clone rem
 
 Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes por caminho, tamanho e SHA; zero reenvios. EMP01-03: 164 fornecedores distintos, 139 no manifesto e 25 em quarentena. EMP01/03 tem 3.300 chaves de titulo sobrepostas sem igualdade nos campos comparados; nao fundir bases. Sem carga ou escrita local interna.
 
+## CPA3: catalogo nativo e continuidade dos ajustes de Obras (2026-11-26)
+
+- O catalogo arquivado confirma 10 colunas de ajustes em Auditoria, EMP01, EMP03, EMP05 e EXETPS, sem campo explicito de empresa/filial. O catalogo mestre de Obras da EXETPS tem 59 colunas, tambem sem esse campo. Nome de base nao prova propriedade da obra.
+- Nos 8 tipos observados, 0 de 431 transicoes adjacentes do mesmo tipo coincidem literalmente; 238 coincidem ao remover apenas espacos finais. As 193 restantes nao foram conciliadas por essa normalizacao. Nao inferir tipo, ordem comercial ou empresa desses resultados.
+- Recibo privado `obra-adjustment-native-catalog-20261126.private.json`, SHA-256 `c88f90d218f19bbcc5071822ac7159c1dada83c47e03fe15a9601885688449ce`. Nenhuma gravacao de Obras, ajustes ou mudanca na HML/operacional.
+
