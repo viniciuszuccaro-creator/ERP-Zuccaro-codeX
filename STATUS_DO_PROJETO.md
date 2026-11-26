@@ -205,3 +205,7 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 
 - Manifesto privado 2a9c9d8f: 1.535 eventos candidatos em 1.214 Obras, 1.432.860 bytes. Preserva representacao original, chave da Obra e identidade do evento. Exclui 1.560 sem Obra e um de regiao ambigua. Teste offline: 500 iniciais + 1.035 retomados, repeticao zero e conflito recusado. Nao e ensaio PostgreSQL, prova de escopo ou autorizacao de escrita.
 
+## CPA3: ensaio PostgreSQL do historico de Obras (2026-11-26)
+
+- Manifesto 2a9c9d8f ensaiado em PostgreSQL descartavel sem rede ou volume compartilhado. Quatro checkpoints (500/500/500/35); segundo lote revertido antes do commit e retomado, zero duplicatas no replay, 1.535 payloads conferidos por igualdade JSONB. Role sem BYPASSRLS teve leitura cruzada vazia, insert cruzado e update negados no destino de ensaio. 2,988 s na janela medida, sem estimar HML. Nenhuma escrita HML/operacional.
+

@@ -200,3 +200,7 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 
 - Reusar `obra-adjustment-history-rehearsal.private.ndjson` (2a9c9d8f) e recibos privados no pacote `erp344-reader-20261125T165731Z`; recibo de replay offline 4a5d3feb. A migration 012 contem Obras, vinculos de empresa e locais, sem destino especifico para este historico no recorte conferido. Verificar staging canonico antes de propor delta minimo. Ensaiar somente em clone, sem reescrever cadastro ou forjar auditoria operacional.
 
+## CPA3: ensaio PostgreSQL do historico de Obras (2026-11-26)
+
+- Recibo privado `obra-adjustment-history-pg-staging.private.json`, SHA-256 `c7e2a2d3f482aeb68c5e83869e63bd4e203b80abbb4bed83f81c655ac9a82136`. Staging descartavel valida mecanismo SQL, nao o importador canonico, a reversao de lotes confirmados, nem ACL da fonte (insumo exclusivo do ensaio). `staging-persistence.mjs` atual e especifico de Cliente. Proximo: avaliar contrato canonico de historico/ledger com escopo comprovado, sem usar auditoria como destino de eventos antigos.
+
