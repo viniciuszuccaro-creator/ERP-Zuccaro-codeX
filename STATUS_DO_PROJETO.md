@@ -229,3 +229,7 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 
 - Referencia Base44 b0586b8c e schema do ERP Integra confirmam Cliente.empresa_id, empresa_dona_id e empresas_compartilhadas_ids, sem entidade ClienteEmpresa/Obra retornada. Consulta autorizada dos campos minimos: um cliente visivel, campos de titularidade divergentes, dois IDs compartilhados e sem coincidencia numerica com a Obra candidata. Nao prova vinculo TID. Nenhuma alteracao Base44/HML.
 
+## CPA3: vigencia candidata e chaves dos precos do legado (2026-11-26)
+
+- Exports de Precos verificados pelos recibos: seis cabecalhos, 5.162 itens, zero chaves (tabela,material) duplicadas e zero cabecalhos ausentes. Conversao candidata Clarion (dias desde 1800-12-28): 2024-08-26 a 2030-12-01, zero intervalos invalidos. 1.027 materiais com sobreposicao entre tabelas distintas; nao colapsar tabelas. 4.464 precos positivos; promocao nula em 4.502 e zero em 660, sem vigencia presumida. Nenhum preco aprovado ou gravado.
+

@@ -224,3 +224,7 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 
 - Recibo privado `obra-emp03.ZaaNbi/base44-client-link-coverage.private.json`, SHA-256 `e616c376db51abcf81c6cca343d6d92e5f0205210ecefef86cc680af992a637c`. Pacotes Base44 conferidos nao contem export ClienteEmpresa. Nao usar campos divergentes nem extrapolar a visibilidade de um registro. Para destravar, falta export nativo ou regra oficial de ClienteEmpresa e de Obra; manter a fila e evitar consultas ja encerradas.
 
+## CPA3: vigencia candidata e chaves dos precos do legado (2026-11-26)
+
+- Recibo privado `erp344-reader-20261118T170353Z/catalog-native-r2/price-validity-clarion-candidate.private.json`, SHA-256 `2c4731a2bd6543478af54209a9452ffd2dfeb1471a785efb52ae3121f3efdd55`. Confirmar DATAINICIAL/DATAFINAL em tela/export nativo antes de converter; verificar tabela por Empresa e o mapa de Produto/unidade. Zero/nulo de promocao permanece sem vigencia. Sobreposicao entre tabelas nao prova colisao na chave do destino.
+
