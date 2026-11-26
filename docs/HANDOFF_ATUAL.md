@@ -1,3 +1,7 @@
+## CPA3: pacote de revisao do historico de baixas (2026-11-26)
+
+- `supplier-provenance-emp03/supplier-history-review-packet.private.json` SHA-256 `ba29c9c8f63138d5a64de20008d9fbe5f9fe3f887e630f1fd36b2d00ab6d653e`. Usar as oito provas fixadas, sem repetir o ensaio. Separar DDL/ACL, carga historica e ativacao HTTP; manter o executor atual restrito ao clone. Antes de deliberar escrita: CI, revisao do executor com identidade fisica pinada, backup fresco restaurado e ACK. Excluir os 107 pendentes.
+
 ## CPA3: prontidao do historico de baixas de Fornecedores (2026-11-26)
 
 - Recibo privado `supplier-provenance-emp03/supplier-history-readiness.private.json`, SHA-256 `8ddedc96f553bdbfb9a32f4d07816c828713749ff5f6039f33927420230e89f9`. Nao repetir conciliacao. Para gate futuro, separar tabela/policies/grants, autorizacao da rota e carga do historico. Manter 107 fora, sem baixa ou saldo; nao incluir na publicacao limitada de Cadastros.
