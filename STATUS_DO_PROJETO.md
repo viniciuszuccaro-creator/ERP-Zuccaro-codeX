@@ -1,3 +1,7 @@
+## CPA3: reconciliacao de copias externas e retencao (2026-11-26)
+
+- Retencao HML em leitura: sete backups gerenciados, quatro com recibo externo e tres sem recibo. Os tres de 26/11 ja tem arquivos no HD conferidos por SHA-256, inclusive o intermediario f1712435 e seu manifesto. O sincronizador confirma cada copia apos verificacao e tambem pode remover copias locais antigas. Nenhum ACK, sync, prune ou deploy executado nesta rodada.
+
 ## CPA3: integridade integral da candidata e do retorno (2026-11-26)
 
 - Integridade por tamanho e SHA-256: a470accb r2, 2.239 arquivos de runtime e 39 pins adicionais, sem membro inesperado; retorno a305a143, 2.222 arquivos. Recibo privado 5ea4d67d. Nenhuma publicacao ou escrita. A integridade nao substitui backup fresco, teste apos troca ou autorizacao.

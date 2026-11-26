@@ -1,3 +1,7 @@
+## CPA3: reconciliacao de copias externas e retencao (2026-11-26)
+
+- Para os tres backups de 26/11, preferir ACK individual pelo mecanismo canonico depois de revalidar copia/identidade e efeito de retencao; nao rodar sync completo para mero ACK. O prune da VPS so considera copias fora da janela com ACK valido. Nao remover backups, volumes ou reversoes nesta etapa; gate de publicacao HML separado.
+
 ## CPA3: integridade integral da candidata e do retorno (2026-11-26)
 
 - Reusar `runtime-promotion-full-integrity-20261126.private.json`, SHA-256 `5ea4d67de84c133bb892975d4903ec84287865b007ac6946ece886f8fc892e73`. Nao repetir a conferencia sem mudanca de artefato. Proxima acao HML sob gate: renovar backup/restore/copia externa, publicar API/web juntas e validar navegador com acesso autenticado; reverter ambas se falhar.
