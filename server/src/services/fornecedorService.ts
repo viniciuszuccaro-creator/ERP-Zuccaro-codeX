@@ -58,7 +58,9 @@ export class FornecedorService {
       }
       const created = await this.repo.create(ctx.groupId, uuid.parse(ctx.actorId), data, q);
       await this.audit.append({ groupId: ctx.groupId, empresaId: null, actorId: ctx.actorId,
-        entity: 'Fornecedor', entityId: created.id, action: 'create', afterData: snapshot(created), requestId: ctx.requestId }, q);
+        entity: 'Fornecedor', entityId: created.id, action: 'create',
+        afterData: { ...snapshot(created), import_postimage_sha256: fingerprintFornecedor(created) },
+        requestId: ctx.requestId }, q);
       await this.authorize(ctx, 'importar', q); await this.authorize(ctx, 'criar', q);
       return { registro: created, reutilizado: false };
     });
@@ -92,6 +94,11 @@ export class FornecedorService {
       if (!before || before.source_system !== source || before.migration_batch !== batch
         || before.revision !== expectedRevision || !before.ativo || fingerprintFornecedor(before) !== expectedFingerprint) {
         throw new AppError(409, 'FORNECEDOR_REVISION_CONFLICT', 'Supplier reversal requires matching batch and revision');
+      }
+      const checkpoint = await this.repo.importCheckpoint(ctx.groupId, id, q);
+      if (checkpoint?.import_postimage_sha256 !== expectedFingerprint || checkpoint.revision !== expectedRevision
+        || checkpoint.source_system !== source || checkpoint.migration_batch !== batch) {
+        throw new AppError(409, 'FORNECEDOR_REVISION_CONFLICT', 'Original supplier import checkpoint required');
       }
       const after = await this.repo.deactivate(ctx.groupId, uuid.parse(ctx.actorId), id, expectedRevision, q);
       await this.audit.append({ groupId: ctx.groupId, empresaId: null, actorId: ctx.actorId,

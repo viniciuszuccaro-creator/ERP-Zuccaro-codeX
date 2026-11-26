@@ -27,6 +27,14 @@ export class PostgresFornecedorRepository {
     return (await q.query('SELECT id FROM fornecedores WHERE group_id=$1 AND (cpf_cnpj=$2 OR codigo=$3) LIMIT 1',
       [groupId, data.cpf_cnpj, data.codigo])).rows.length > 0;
   }
+  async importCheckpoint(groupId: string, id: string, q: DbQueryExecutor) {
+    const { rows } = await q.query<{ after_data: {
+      import_postimage_sha256?: string; revision?: number; source_system?: string; migration_batch?: string;
+    } | null }>(`SELECT after_data FROM audit_logs
+      WHERE group_id=$1 AND empresa_id IS NULL AND entity='Fornecedor' AND entity_id=$2 AND action='create'
+      LIMIT 2`, [groupId, id]);
+    return rows.length === 1 ? rows[0].after_data : null;
+  }
   async create(groupId: string, actor: string, data: FornecedorImport, q: DbQueryExecutor): Promise<Fornecedor> {
     const codigo = await reserveEntityCodigo({ db: q, groupId, entityName: 'fornecedor',
       table: 'fornecedores', incomingCodigo: data.codigo });

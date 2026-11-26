@@ -37,6 +37,9 @@ test('Fornecedor HTTP uses canonical persistence/replay/reversal in synthetic PG
       WITH CHECK(group_id=NULLIF(current_setting('app.group_id',true),'')::uuid);
       CREATE POLICY supplier_http_audit ON audit_logs FOR INSERT TO ${ROLE}
       WITH CHECK(group_id=NULLIF(current_setting('app.group_id',true),'')::uuid AND empresa_id IS NULL);
+      CREATE POLICY supplier_http_checkpoint ON audit_logs FOR SELECT TO ${ROLE}
+      USING(group_id=NULLIF(current_setting('app.group_id',true),'')::uuid
+        AND empresa_id IS NULL AND entity='Fornecedor' AND action='create');
       SELECT set_config('app.group_id','${ID.groupA}',false),set_config('app.empresa_id','',false)`);
     await f.admin.query('UPDATE profiles SET auth_user_id=$1,permissoes=$2::jsonb WHERE id=$3',
       [userId, JSON.stringify({ Cadastros: { fornecedor: ['visualizar', 'importar', 'criar', 'inativar'] } }), ID.runtimeActorA]);

@@ -1,3 +1,9 @@
+## CPA3: checkpoint transacional da reversao de Fornecedores (2026-11-26)
+
+- Criacao grava SHA-256 da imagem retornada e revisao na auditoria da mesma transacao; nao inclui campos brutos adicionais. Reversao exige um unico evento create do mesmo Grupo/ID, lote, origem, revisao e SHA. Um hash novo calculado depois de edicao nao autoriza inativacao, mesmo se a revisao nao mudou. Sem checkpoint, recusa; nao retropreencher auditoria.
+- 21 testes focados, typecheck e build do servidor aprovados. PostgreSQL isolado com papel restrito e dados sinteticos: dois checkpoints, edicao posterior preservada, reversao original auditada uma vez, replay recusado. Recibo privado 667c296c. A HML ja possui as ACL de leitura de auditoria necessarias; nenhuma alteracao aplicada.
+- Proximo gate: aceite explicito dos 789 compartilhados, manifesto final e autorizacao especifica de carga. Nenhum deploy, carga, mudanca de perfil ou alteracao operacional.
+
 ## CPA3: reversao em escala de Fornecedores (2026-11-26)
 
 - Clone descartavel, papel SQL restrito e servico canonico: 789 identidades conciliadas com 4905483e. Dos 788 ativos no inicio, 787 inativados em 18,3 s com 787 auditorias; um conflito de revisao preservou a edicao posterior. Um ja inativo ficou intocado. Repeticao recusada, codigo/identidade preservados, sequencia 1066, 17.472 clientes e seis Marcas intactos. Recibo privado 64331e5a; copia de teste descartada e leitor desligado.

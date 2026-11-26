@@ -20,6 +20,9 @@ test('Fornecedor master: PostgreSQL engine synthetic fixture, not operational pr
       WITH CHECK(group_id=NULLIF(current_setting('app.group_id',true),'')::uuid);
       CREATE POLICY supplier_fixture_audit ON audit_logs FOR INSERT TO ${ROLE}
       WITH CHECK(group_id=NULLIF(current_setting('app.group_id',true),'')::uuid AND empresa_id IS NULL);
+      CREATE POLICY supplier_fixture_checkpoint ON audit_logs FOR SELECT TO ${ROLE}
+      USING(group_id=NULLIF(current_setting('app.group_id',true),'')::uuid
+        AND empresa_id IS NULL AND entity='Fornecedor' AND action='create');
       SELECT set_config('app.group_id','${ID.groupA}',false),set_config('app.empresa_id','',false)`);
     await f.admin.query('UPDATE profiles SET permissoes=$1::jsonb WHERE id=$2',
       [JSON.stringify({ Cadastros: { fornecedor: ['visualizar', 'criar', 'importar', 'inativar'] } }), ID.runtimeActorA]);
@@ -41,6 +44,14 @@ test('Fornecedor master: PostgreSQL engine synthetic fixture, not operational pr
       await assert.rejects(service.importar({ ...ctx, empresaId: ID.empresaA }, payload), { code: 'FORNECEDOR_GROUP_SCOPE_REQUIRED' });
     });
     const created = await service.importar(ctx, payload);
+    await t.test('creation records a scoped postimage checkpoint without exposing raw supplier fields', async () => {
+      const checkpoint = await repo.importCheckpoint(ID.groupA, created.registro.id, f.data);
+      assert.equal(checkpoint?.import_postimage_sha256, fingerprintFornecedor(created.registro));
+      assert.equal(checkpoint?.revision, created.registro.revision);
+      assert.equal(checkpoint?.migration_batch, payload.migration_batch);
+      assert.doesNotMatch(JSON.stringify(checkpoint), /SYNTHETIC STREET/);
+      assert.equal(await repo.importCheckpoint(ID.groupB, created.registro.id, f.data), null);
+    });
     await t.test('literal codes, provenance, address, replay and conflict', async () => {
       assert.equal(created.reutilizado, false); assert.equal(created.registro.codigo, '000077');
       assert.equal(created.registro.endereco, payload.endereco);
@@ -65,6 +76,10 @@ test('Fornecedor master: PostgreSQL engine synthetic fixture, not operational pr
       await assert.rejects(service.softDelete(ctx, r.id, 99, r.source_system, r.migration_batch, fp), { code: 'FORNECEDOR_REVISION_CONFLICT' });
       await f.admin.query('UPDATE fornecedores SET endereco=$1 WHERE id=$2', ['EXTERNAL SYNTHETIC EDIT', r.id]);
       await assert.rejects(service.softDelete(ctx, r.id, r.revision, r.source_system, r.migration_batch, fp), { code: 'FORNECEDOR_REVISION_CONFLICT' });
+      const edited = await repo.byId(ID.groupA, r.id, f.admin, false);
+      assert.ok(edited);
+      await assert.rejects(service.softDelete(ctx, edited.id, edited.revision, edited.source_system,
+        edited.migration_batch, fingerprintFornecedor(edited)), { code: 'FORNECEDOR_REVISION_CONFLICT' });
       await f.admin.query('UPDATE fornecedores SET endereco=$1 WHERE id=$2', [payload.endereco, r.id]);
     });
     await t.test('reversal preserves identity/history; replay cannot reactivate', async () => {
