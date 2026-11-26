@@ -201,3 +201,7 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 
 - Dos dois tipos restantes, um reproduz CIDADE + separador + CODIGOUF em 17/17 ultimos eventos vinculados. O outro tem uma amostra: codigo coincide com ClientesObras.CODIGOREGIAOENTREGA e codigo/rotulo coincidem tanto em ClienteRegiaoEntrega quanto em ClienteRegiao. Isso sustenta candidato a regiao, sem distinguir o cadastro sem prova adicional. Leitor isolado e somente leitura; nenhuma carga.
 
+## CPA3: manifesto candidato do historico de Obras (2026-11-26)
+
+- Manifesto privado 2a9c9d8f: 1.535 eventos candidatos em 1.214 Obras, 1.432.860 bytes. Preserva representacao original, chave da Obra e identidade do evento. Exclui 1.560 sem Obra e um de regiao ambigua. Teste offline: 500 iniciais + 1.035 retomados, repeticao zero e conflito recusado. Nao e ensaio PostgreSQL, prova de escopo ou autorizacao de escrita.
+

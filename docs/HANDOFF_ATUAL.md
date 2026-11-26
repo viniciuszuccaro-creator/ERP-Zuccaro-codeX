@@ -196,3 +196,7 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 
 - Recibos privados `obra-adjustment-city-uf.private.json` (fbee459b) e `obra-adjustment-region-candidate.private.txt` (a170d804) no pacote `erp344-reader-20261125T165731Z`. Sete tipos tem correspondencia forte de campo; o oitavo possui evidencia unica e duplicidade de cadastro. Nao converter regiao automaticamente. Manter semantica oficial, escopo de Grupo/Empresa e gate de escrita separados.
 
+## CPA3: manifesto candidato do historico de Obras (2026-11-26)
+
+- Reusar `obra-adjustment-history-rehearsal.private.ndjson` (2a9c9d8f) e recibos privados no pacote `erp344-reader-20261125T165731Z`; recibo de replay offline 4a5d3feb. A migration 012 contem Obras, vinculos de empresa e locais, sem destino especifico para este historico no recorte conferido. Verificar staging canonico antes de propor delta minimo. Ensaiar somente em clone, sem reescrever cadastro ou forjar auditoria operacional.
+
