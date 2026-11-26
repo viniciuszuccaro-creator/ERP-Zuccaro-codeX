@@ -1,5 +1,7 @@
 ## CPA3: reversao respeitada na consulta historica (2026-11-26)
 
+- Executor canonico no clone restaurado c33c96f4, duas Empresas, papel restrito e repositorio oficial de auditoria: 12.514 baixas em 14 transacoes, interrupcao apos 1.000 e retomada com 11.514 insercoes; replay zero. Reversao arquivou 12.514, replay zero e 28 auditorias transacionais. Recibo privado ab6dc299; 7,828 s no ensaio, nao estimativa da HML. RBAC HTTP nao testado; sem escrita viva.
+
 - Executor canonico validou manifesto 813bb03d para as duas Empresas em container sem rede e somente leitura. Com identidade fisica HML simulada, quatro recusas (apply/reverse por Empresa) antes de autorização, escrita ou auditoria. Recibo privado 33d8a3ff. Nao substitui prova transacional no clone restaurado.
 
 - SQL candidato do historico (39950d55) ensaiado em PostgreSQL descartavel com dois casos sinteticos. Leitor sem escrita nem acesso ao snapshot bruto; papel de carga sem DELETE ou UPDATE de valores, somente arquivamento no escopo. RLS recusou INSERT cruzado; replay de arquivamento zero e outra Empresa preservada. Recibo privado f34d78c4. Sem grants ou escrita na HML.
