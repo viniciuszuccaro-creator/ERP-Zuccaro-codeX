@@ -1,3 +1,9 @@
+## CPA3: RBAC ensaiado em PostgreSQL e correcoes da CI da grade (2026-11-26)
+
+- Clone isolado: consulta, janela temporaria de importacao e reversao executadas em transacao. Replay manteve tres auditorias; CAS recusou mudanca concorrente. Reversao preservou visualizar. Rollback restaurou perfil e removeu as auditorias do ensaio. Recibo privado 79e2a53b. Nenhum SQL na HML.
+- CI 45831695821 e 45832062505: frontend falhou em dois contratos historicos do V24. Chave legada preservada e modo Fornecedor usa sufixo de sessao. Gate legado mantido; supressao das escritas fica nos checkers do modo leitura. Os dois testes passaram em reexecucao, assim como Chrome montado e 80 testes focados Linux.
+- O aceite do escopo compartilhado dos 789 ainda nao foi dado. Sem ativar flag, publicar na HML ou importar dados.
+
 ## CPA3: RBAC separado para Fornecedores (2026-11-26)
 
 - Preflight somente leitura confirmou o perfil titular ja pinado na configuracao privada da HML: um perfil ativo de Grupo, vinculo Auth exato, duas Empresas ativas e nenhuma acao Fornecedor. Nenhum perfil foi modificado.

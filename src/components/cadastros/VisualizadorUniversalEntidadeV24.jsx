@@ -317,11 +317,17 @@ export default function VisualizadorUniversalEntidadeV24({
     ENTITY === "Cliente" && isLocalOnlyMode;
   const clienteFonteLocal = clienteHttpSemPiloto || clienteFonteLocalOnly;
   const clientePilotoHttpOff = clienteHttpSemPiloto;
-  const permCheckers = { hasPermission, canCreate, canEdit, canDelete, isLoading: permissionsLoading };
+  const permCheckers = {
+    hasPermission,
+    canCreate: fornecedorHttp ? null : canCreate,
+    canEdit: fornecedorHttp ? null : canEdit,
+    canDelete: fornecedorHttp ? null : canDelete,
+    isLoading: permissionsLoading,
+  };
   const canViewCadastro = hasCadastroEntityPermission(ENTITY, "visualizar", permCheckers);
-  const canCreateCadastro = !fornecedorHttp && hasCadastroEntityPermission(ENTITY, "criar", permCheckers);
-  const canEditCadastro = !fornecedorHttp && hasCadastroEntityPermission(ENTITY, "editar", permCheckers);
-  const canDeleteCadastro = !fornecedorHttp && hasCadastroEntityPermission(ENTITY, "excluir", permCheckers);
+  const canCreateCadastro = hasCadastroEntityPermission(ENTITY, "criar", permCheckers);
+  const canEditCadastro = hasCadastroEntityPermission(ENTITY, "editar", permCheckers);
+  const canDeleteCadastro = hasCadastroEntityPermission(ENTITY, "excluir", permCheckers);
   const [supplierEpoch, setSupplierEpoch] = useState(0);
   const [supplierDetail, setSupplierDetail] = useState(null);
   const supplierSession = fornecedorHttp ? readErpHttpSession() : null;
@@ -563,7 +569,10 @@ export default function VisualizadorUniversalEntidadeV24({
   const backendSortDir   = sortDir;
 
   const queryKey = useMemo(
-    function() { return ["viz-v33", ENTITY, sortField, sortDir, page, pageSize, debouncedSearch, empresaId, groupId, ...(fornecedorHttp ? [supplierScope] : [])]; },
+    function() {
+      const legacyKey = ["viz-v33", ENTITY, sortField, sortDir, page, pageSize, debouncedSearch, empresaId, groupId];
+      return fornecedorHttp ? [...legacyKey, supplierScope] : legacyKey;
+    },
     [ENTITY, sortField, sortDir, page, pageSize, debouncedSearch, empresaId, groupId, fornecedorHttp, supplierScope]
   );
   const visibleScope = JSON.stringify([ENTITY, groupId, empresaId, debouncedSearch, fornecedorHttp ? supplierScope : null]);
