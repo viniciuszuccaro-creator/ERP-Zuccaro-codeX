@@ -193,3 +193,7 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 
 - Os pares EXETPS 22881160 e 8f786607 diferem por SHA-256, mas os exports verificados de Obras e ajustes sao identicos entre as duas fontes. Nenhum dos 1.029 pares ausentes foi recuperado. No recorte vinculado (1.536 eventos), as 113 transicoes consecutivas do mesmo tipo coincidem ao remover apenas espacos finais. Foram observados oito tipos; semantica, escopo e autorizacao continuam pendentes.
 
+## CPA3: campos candidatos dos ajustes de Obras (2026-11-26)
+
+- Ultimo evento por Obra/tipo em 1.423 combinacoes vinculadas: texto coincide apos remover espacos finais com ENDERECO (861/861), REFERENCIA (341/341), BAIRRO (96/96), SITUACAO (90/90) e CONTATO (2/2). Duas linhas tinham outro campo tambem coincidente. CEPCLIENTE coincide por digitos (15/15). Dois tipos sem correspondencia (17 e 1). Sao hipoteses, nao dicionario oficial; nenhum numero, pais ou empresa provados.
+

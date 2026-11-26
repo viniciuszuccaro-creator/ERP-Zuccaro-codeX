@@ -188,3 +188,7 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 
 - Recibo privado `erp344-reader-20261125T165731Z/obra-adjustment-historical-coverage.private.json`, SHA-256 `060825f0fce33c6cdb164b9788ec2636cfc3910ab8d3f822d2ae8f94531e6d40`. Nao repetir a extracao dos dois pares EXETPS ja contrastados. Buscar snapshot de cobertura diferente ou export de itens historicos para os 1.029 pares; para os vinculados, buscar dicionario oficial dos oito tipos antes do ensaio.
 
+## CPA3: campos candidatos dos ajustes de Obras (2026-11-26)
+
+- Recibos privados no pacote `erp344-reader-20261125T165731Z`: `obra-adjustment-field-hypotheses.private.json` (157c1147) e `obra-adjustment-field-numeric-check.private.json` (f432d54d). Confirmar os seis tipos candidatos com amostra nativa ou regra oficial e isolar os dois sem mapa. Preservar a representacao original e nao aplicar historico como mudanca cadastral. Nenhuma escrita.
+
