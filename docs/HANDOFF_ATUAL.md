@@ -1,3 +1,7 @@
+## CPA3: prontidao do historico de baixas de Fornecedores (2026-11-26)
+
+- Recibo privado `supplier-provenance-emp03/supplier-history-readiness.private.json`, SHA-256 `8ddedc96f553bdbfb9a32f4d07816c828713749ff5f6039f33927420230e89f9`. Nao repetir conciliacao. Para gate futuro, separar tabela/policies/grants, autorizacao da rota e carga do historico. Manter 107 fora, sem baixa ou saldo; nao incluir na publicacao limitada de Cadastros.
+
 ## CPA3: diferencial dos pacotes de Auditoria e EMP01/03 (2026-11-26)
 
 - Reusar `obra-auditoria-20261126`, `supplier-provenance-emp01` e `supplier-provenance-emp03` na area privada da VPS. Recortes EMP03 de 12.514 baixas historicas e 12.621 titulos estao identicos no HD/VPS. Nao gerar saldo/pagamento, nao repetir transporte e manter gate do historico financeiro separado da publicacao de Cadastros.

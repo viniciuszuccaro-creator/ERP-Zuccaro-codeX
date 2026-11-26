@@ -1,3 +1,7 @@
+## CPA3: prontidao do historico de baixas de Fornecedores (2026-11-26)
+
+- Recorte financeiro 813bb03d revalidado byte a byte por fonte EMP03 e por igualdade de eventos com o subconjunto de 45fb2bb6. 12.514 baixas sem comprovante (12.360 + 154 por Empresa), chaves nativas unicas; 107 pendentes fora do lote. HML restrita: relacao historica ausente e zero perfis ativos com visualizar explicito no caminho Financeiro.historico_baixas_fornecedores. Nenhum pagamento, saldo ou escrita.
+
 ## CPA3: diferencial dos pacotes de Auditoria e EMP01/03 (2026-11-26)
 
 - Quarto diferencial HD/VPS: cinco arquivos (1983142833 bytes), incluindo Auditoria, EMP01, EMP03 e os dois pacotes de titulos, iguais por tamanho/SHA-256. O indice SHA do par MDF/LDF EMP03 no HD coincide com o recibo da extracao na VPS. Zero retransmissao, leitura SQL nova, carga ou deploy.
