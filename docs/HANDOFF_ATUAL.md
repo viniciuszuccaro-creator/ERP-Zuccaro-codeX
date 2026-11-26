@@ -1,3 +1,9 @@
+## CPA3: pacote de revisao para 789 Fornecedores (2026-11-26)
+
+- Pacote privado de revisao d92c451c: manifesto 4905483e ainda nao executavel. Schema Linux 6680471c equivale ao 40490a3b do manifesto em CRLF; import policy 8435fab3 e leitura ef09aea4. Policies separadas ensaiadas com o papel restrito: 789 no Grupo, CPA e 3Z, zero fora do Grupo, zero UPDATE na Empresa. DELETE e UPDATE de codigo negados. Rollback conferido.
+- HML em leitura: 17.472 clientes, seis Marcas, tabela Fornecedores ausente. O papel existente ja tem ACL para auditoria e sequencia, mas nenhum perfil ativo de Grupo tem acoes de Fornecedor. Nao alterar perfis sem gate. Backup pos-Marcas c33c96f4 restaurado e SHA conferido no HD; revalidar antes de qualquer escrita.
+- Origem EXETPS no escopo de Grupo, sem Empresa de origem por linha. Preservar 271 historicos e 25 casos do recorte EMP01-03 fora da carga. Proximo: confirmar aceite desse escopo e perfil nominativo, finalizar manifesto executavel e revalidar backup/destino. Nenhuma carga, deploy ou mudanca operacional.
+
 ## CPA3: policy candidata de consulta de Fornecedores (2026-11-26)
 
 - SQL candidato separado das migrations: fornecedor_company_read.sql. Exige schema pinado e RLS forcada, concede apenas policy SELECT ao papel indicado, sem grants. No clone, Grupo, CPA e 3Z leram 789; empresa desconhecida e outro Grupo leram zero. Contexto Empresa nao atualizou nem bloqueou linhas. ACL intacta; rollback removeu a policy.
