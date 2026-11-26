@@ -1,3 +1,7 @@
+## CPA3: terceiro diferencial e conversao de unidades (2026-11-26)
+
+- Terceiro diferencial HD/VPS: 12 arquivos, 149555 bytes, iguais por tamanho e SHA-256 nos seis conjuntos de dependencias/revisao/duplicidade. Acumulado 38 arquivos/39335330 bytes, zero retransmissao. HML em READ ONLY: 14 unidades ativas visiveis; nos 27 eventos pendentes os oito pares usam grandezas distintas frente ao Produto Base44, sem conversao generica. Os oito literais anteriores permanecem candidatos. Nenhuma escrita.
+
 ## CPA3: gates tecnicos dos 789 Fornecedores conferidos (2026-11-26)
 
 - Pacote privado d92c451c: quatro arquivos conferidos em SHA256SUMS; backup de referencia c33c96f4 conferido, nao substitui backup fresco antes da escrita. GitHub Actions 45835051779: quatro jobs SUCCESS. HML em READ ONLY: no caminho exato Cadastros.fornecedor, zero perfis ativos de Grupo com visualizar/importar/criar/inativar, sem wildcard no backend. Nenhum grant, perfil, DDL, carga ou deploy aplicado.

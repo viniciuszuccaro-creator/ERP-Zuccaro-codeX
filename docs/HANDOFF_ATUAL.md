@@ -1,3 +1,7 @@
+## CPA3: terceiro diferencial e conversao de unidades (2026-11-26)
+
+- Recibo privado `erp344-reader-20261125T165731Z/price-history-unit-conversion-coverage.private.json`, SHA-256 `3fd6cc7733f11cfb0f366b85de9789162a8d262be9dd8b08807406cbe058c426`. Para os 27, exigir fator nativo especifico do produto/material e unidade comercial, nao assumir fator 1. Pular os seis conjuntos LEGADO-CLASS/FIELD/FIRST/MATERIAL/PRIORITY conferidos. Manter gate de 789 Fornecedores separado.
+
 ## CPA3: gates tecnicos dos 789 Fornecedores conferidos (2026-11-26)
 
 - Separar a decisao de escopo compartilhado dos 789 sem empresa proprietaria da autorizacao do manifesto/delta. Contrato do backend: visualizar para consulta; importar+criar no Grupo para aplicacao; inativar no Grupo para reversao. Usar perfil e janela minimos apenas se autorizados, sem wildcard. Pacote revisado e CI conferidos; revalidar destino, backup/restore externo e folga no gate de escrita.
