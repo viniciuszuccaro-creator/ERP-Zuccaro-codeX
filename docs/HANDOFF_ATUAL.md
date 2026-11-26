@@ -192,3 +192,7 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 
 - Recibos privados no pacote `erp344-reader-20261125T165731Z`: `obra-adjustment-field-hypotheses.private.json` (157c1147) e `obra-adjustment-field-numeric-check.private.json` (f432d54d). Confirmar os seis tipos candidatos com amostra nativa ou regra oficial e isolar os dois sem mapa. Preservar a representacao original e nao aplicar historico como mudanca cadastral. Nenhuma escrita.
 
+## CPA3: ajustes compostos de cidade/UF e regiao (2026-11-26)
+
+- Recibos privados `obra-adjustment-city-uf.private.json` (fbee459b) e `obra-adjustment-region-candidate.private.txt` (a170d804) no pacote `erp344-reader-20261125T165731Z`. Sete tipos tem correspondencia forte de campo; o oitavo possui evidencia unica e duplicidade de cadastro. Nao converter regiao automaticamente. Manter semantica oficial, escopo de Grupo/Empresa e gate de escrita separados.
+

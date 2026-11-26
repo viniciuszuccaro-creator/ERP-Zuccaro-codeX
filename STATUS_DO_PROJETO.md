@@ -197,3 +197,7 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 
 - Ultimo evento por Obra/tipo em 1.423 combinacoes vinculadas: texto coincide apos remover espacos finais com ENDERECO (861/861), REFERENCIA (341/341), BAIRRO (96/96), SITUACAO (90/90) e CONTATO (2/2). Duas linhas tinham outro campo tambem coincidente. CEPCLIENTE coincide por digitos (15/15). Dois tipos sem correspondencia (17 e 1). Sao hipoteses, nao dicionario oficial; nenhum numero, pais ou empresa provados.
 
+## CPA3: ajustes compostos de cidade/UF e regiao (2026-11-26)
+
+- Dos dois tipos restantes, um reproduz CIDADE + separador + CODIGOUF em 17/17 ultimos eventos vinculados. O outro tem uma amostra: codigo coincide com ClientesObras.CODIGOREGIAOENTREGA e codigo/rotulo coincidem tanto em ClienteRegiaoEntrega quanto em ClienteRegiao. Isso sustenta candidato a regiao, sem distinguir o cadastro sem prova adicional. Leitor isolado e somente leitura; nenhuma carga.
+
