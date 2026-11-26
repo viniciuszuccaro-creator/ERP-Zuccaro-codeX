@@ -1,5 +1,7 @@
 ## CPA3: reversao respeitada na consulta historica (2026-11-26)
 
+- Teste HTTP sintetico em PGlite usa middleware Supabase com provedor simulado, PostgresRbacGuard e RLS forcada com papel sem BYPASS. Token invalido 401, curinga sem acao explicita e outra Empresa 403; duas paginas validas excluem arquivado e outra Empresa. Tres testes focados e typecheck do teste passaram. Nao e login real ou validacao na HML.
+
 - Executor canonico no clone restaurado c33c96f4, duas Empresas, papel restrito e repositorio oficial de auditoria: 12.514 baixas em 14 transacoes, interrupcao apos 1.000 e retomada com 11.514 insercoes; replay zero. Reversao arquivou 12.514, replay zero e 28 auditorias transacionais. Recibo privado ab6dc299; 7,828 s no ensaio, nao estimativa da HML. RBAC HTTP nao testado; sem escrita viva.
 
 - Executor canonico validou manifesto 813bb03d para as duas Empresas em container sem rede e somente leitura. Com identidade fisica HML simulada, quatro recusas (apply/reverse por Empresa) antes de autorização, escrita ou auditoria. Recibo privado 33d8a3ff. Nao substitui prova transacional no clone restaurado.
