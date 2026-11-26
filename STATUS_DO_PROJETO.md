@@ -1,5 +1,7 @@
 ## CPA3: reversao respeitada na consulta historica (2026-11-26)
 
+- Policy de auditoria restaurada do backup c33c96f4: com papel nominal da aplicacao reproduzido NOLOGIN/NOBYPASSRLS e INSERT ja observado na HML, a RLS ficou ativa e aceitou quatro sondas (create/inactivate nas duas Empresas), sem policy nova. Rollback deixou zero eventos da sonda. Recibo privado bd631ae3; nao prova RBAC HTTP vivo nem autoriza escrita.
+
 - Preflight HML com papel restrito em READ ONLY: ja existe chave unica valida em empresas(id,group_id), suficiente para FK do historico sem novo indice. A tabela historica segue ausente; INSERT de auditoria existe com RLS ativa, sem ensaio de escrita na policy efetiva. Recibo privado c86aba11. CI de e11919bc ainda sem execucao retornada pelo GitHub.
 
 - Teste HTTP sintetico em PGlite usa middleware Supabase com provedor simulado, PostgresRbacGuard e RLS forcada com papel sem BYPASS. Token invalido 401, curinga sem acao explicita e outra Empresa 403; duas paginas validas excluem arquivado e outra Empresa. Tres testes focados e typecheck do teste passaram. Nao e login real ou validacao na HML.
