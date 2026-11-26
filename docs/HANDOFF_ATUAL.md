@@ -1,5 +1,7 @@
 ## CPA3: pacote de revisao do historico de baixas (2026-11-26)
 
+- Prova da consulta de identidade de `c469a045` concluida no backup externo `c33c96f4` restaurado: ambos os logins restritos leram a identidade fisica com as ACLs do dump. Ainda falta executar o fluxo integral dessa revisao no clone e conferir CI remota; nao repetir a carga na HML.
+
 - O executor do clone agora exige pin independente e verifica a identidade antes de cada lote. Proxima prova: rodar esta revisao no backup restaurado com a ACL efetiva, confirmando a leitura de `pg_control_system()` pelo papel restrito; nao aplicar grant na HML. Suite Linux: 3.050/3.050 usando conta comum, Chrome com sandbox ativo.
 
 - Prova de destino em leitura: `supplier-provenance-emp03/supplier-history-target-pin.private.json`, SHA-256 `d752d80541123c0fa54fdb0708d2ff9f2d4a38252d6d05db78d44337c2057427`. A candidata deve falhar antes de qualquer escrita se a identidade divergir, revalidando no inicio de cada transacao. O recibo nao substitui CI, revisao, backup restaurado ou autorizacao de escrita.

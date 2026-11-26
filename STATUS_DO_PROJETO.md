@@ -18,6 +18,8 @@
 
 ## CPA3: pacote de revisao do historico de baixas (2026-11-26)
 
+- Recorte PostgreSQL de `c469a045`: backup externo `c33c96f4` revalidado por SHA-256 e restaurado no WSL sem rede, com ACLs do dump, 17.472 clientes e roles locais sem credenciais do servidor. Consulta exata da trava passou em transacao somente leitura com os dois logins restritos, inclusive `pg_control_system()`, sem grant novo. Instancia encerrada; manifesto nao reaplicado e HML intacta.
+
 - Executor de ensaio revalida cluster, OIDs, schema/search_path e papel efetivo/login a cada transacao antes de autorizar, bloquear ou gravar. Consulta verificada no PostgreSQL 16 descartavel, com papel restrito; teste de divergencia preservou o primeiro checkpoint e impediu o segundo lote. Linux: 3.050/3.050 com Chrome sob conta comum, audit:baseline, lint, typecheck e build aprovados. As seis falhas de interface como root nao ocorreram com o sandbox ativo. Pendente ensaio desta revisao no backup restaurado; sem alteracao na HML.
 
 - Identidade fisica da HML conferida em transacao somente leitura pelo papel restrito: banco, schema, OIDs, identificador do cluster e search_path. Recibo privado SHA-256 `d752d80541123c0fa54fdb0708d2ff9f2d4a38252d6d05db78d44337c2057427`. Nenhuma escrita no banco; executor ainda restrito ao clone.
