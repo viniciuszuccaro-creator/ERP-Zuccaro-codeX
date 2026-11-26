@@ -141,3 +141,9 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 - Nos 8 tipos observados, 0 de 431 transicoes adjacentes do mesmo tipo coincidem literalmente; 238 coincidem ao remover apenas espacos finais. As 193 restantes nao foram conciliadas por essa normalizacao. Nao inferir tipo, ordem comercial ou empresa desses resultados.
 - Recibo privado `obra-adjustment-native-catalog-20261126.private.json`, SHA-256 `c88f90d218f19bbcc5071822ac7159c1dada83c47e03fe15a9601885688449ce`. Nenhuma gravacao de Obras, ajustes ou mudanca na HML/operacional.
 
+## CPA3: fontes comerciais candidatas para vincular Obras (2026-11-26)
+
+- O catalogo das EMP01–EMP05 identifica `PropostaComercial` com cliente, pedido e item de obra, e `PedidoVenda` / `NotaFiscalSaidas` com cliente, pedido e dois campos candidatos de obra. Na EMP05, `PropostaComercial.EMPRESA` e char. O mestre EXETPS usa cliente, item e sequencia; nao foi demonstrada equivalencia entre esses campos.
+- A busca nominal no acervo privado nao encontrou exports CSV/NDJSON das tabelas comerciais consultadas. O pacote de Auditoria contem MDF/LDF, nao exports. As tabelas de corte/dobra no catalogo das EMP ligam por numero de pedido, nao diretamente por cliente e obra.
+- Nenhum vinculo novo foi comprovado e nenhuma carga foi gravada. Vinculo de uma venda com determinada empresa nao prova, por si so, a titularidade da obra.
+

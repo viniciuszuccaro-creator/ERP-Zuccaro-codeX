@@ -141,3 +141,8 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 - Buscar export nativo ou dicionario de `TIPOALTERACAO` e vinculo oficial de Obra com Empresa ou Grupo. So depois revalidar as chaves candidatas e ensaiar o conjunto apto em clone. Nao usar nome da base, ordem da lista ou proximidade textual como prova.
 - Usar o recibo privado do STATUS; nao repetir o leitor malsucedido ou publicar dados de origem.
 
+## CPA3: prova por proposta, pedido e nota (2026-11-26)
+
+- No leitor isolado, priorizar as colunas de chave de `PropostaComercial` (empresa, cliente, item de obra, pedido), `PedidoVenda` e `NotaFiscalSaidas` (cliente, pedido, obra e codigo de obra). Examinar tipos, nulidade, cardinalidade e chaves nativas antes de exportar; mapear o identificador de empresa por fonte oficial, nao pelo nome da base.
+- Cruzar separadamente cada campo candidato com a chave mestre de Obras, sem coercao que descarte precisao. Isolar ambiguidades, itens sem sequencia comprovada e obras usadas por mais de uma empresa. Uso comercial e propriedade do cadastro sao provas distintas.
+
