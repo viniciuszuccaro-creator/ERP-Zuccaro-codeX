@@ -1,3 +1,7 @@
+## CPA3: retomada integrada e primeira versao geral (2026-11-26)
+
+- Executar a secao de 26/11 em PLANO_GO_LIVE.md. Agora: inventario diferencial da primeira copia do HD e indices privados da VPS; transferir somente faltantes verificados. Em paralelo, reproduzir Cadastros na candidata e na HML sem listagem antes do clique; aproveitar os testes existentes. Obras permanece sem vinculo comprovado; preparar historico de Precos e fechar gate dos Fornecedores sem reaplicar lotes ja conciliados.
+
 ## CPA3: ordem candidata dos ajustes de Obras (2026-11-26)
 
 - Exports verificados: 3.096 eventos em 2.243 pares Cliente/Item. Nos 501 pares com mais de um evento (1.354 eventos), data/hora brutas e sequencia crescente concordaram, sem empates. No recorte com obra unica, sao 228 pares com eventos multiplos, tambem em concordancia.

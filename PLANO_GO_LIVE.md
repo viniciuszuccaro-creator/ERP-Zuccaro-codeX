@@ -6,7 +6,94 @@ Este documento transforma a evolução do ERP Zuccaro em uma sequência objetiva
 
 O objetivo imediato não é “terminar tudo que um ERP pode ter”. O objetivo é liberar o núcleo operacional com segurança, migrar os dados do ERP antigo de forma controlada e depois evoluir as funções avançadas sem interromper a empresa.
 
-## Prioridade vigente: entrada em uso (proprietario, 2026-10-26)
+## Execucao prioritaria: legado, primeira versao e evolucao (2026-11-26)
+
+Este roteiro atualiza a ordem de trabalho, sem dispensar os Gates abaixo.
+Codex responde por execucao e integracao. Cursor, quando disponivel, pode
+trabalhar no visual em checkout separado; nao e dependencia da entrega.
+Cada lote aprovado termina com verificacao, STATUS, HANDOFF, commit e push
+na branch de trabalho, sem merge ou deploy implicito. Nao usar o C: para
+artefatos, nem reabrir Codespace como requisito desta rodada.
+
+1. **Inventario diferencial HD para VPS agora.** Identificar o volume pela
+   pasta de backup, ler os inventarios e cruzar por caminho, tamanho e
+   SHA-256. Priorizar exports, manifestos e recibos necessarios para o
+   proximo lote; transferir apenas ausentes ou versoes distintas comprovadas.
+   Nao retransmitir os pares ja verificados. Preservar originais no HD e
+   backups/volumes/reversoes na VPS. Medir folga para copia, restore, WAL
+   e carga, incluindo a reserva tecnica; parar uma transferencia se perder
+   margem, nao remover arquivos para abrir espaco sem prova e escopo.
+   Aceite: recibo privado com arquivos novos, reutilizados, SHA e menor folga.
+2. **Migrar em ondas grandes e retomaveis.** Inventariar por dominio,
+   entidade e empresa; separar mestre, historico e operacao corrente. Manter
+   os 17.472 mestres, a fila de revisao e contatos conciliados. Priorizar o
+   pacote de 789 Fornecedores se os gates de escopo/acesso e escrita passarem;
+   em paralelo preparar o historico dos 48.866 ajustes de Precos por
+   tabela/material e procurar prova nativa de vigencia e empresa. Obras:
+   aproveitar os recibos, nao promover candidatos de cliente, pais, numero,
+   empresa ou escopo de Grupo sem prova. Progredir com os dominios aptos
+   quando outro estiver bloqueado. Aceite: manifesto do saldo apto integral,
+   grupos internos medidos em clone, backup restauravel e copia externa,
+   checkpoints transacionais, replay sem duplicatas, conciliacao por chave,
+   controle de conflito e reversao que conserve edicoes posteriores. Executar
+   todo o manifesto autorizado sem pedir aprovacao a cada transacao.
+3. **Cadastros Gerais rapido e sob demanda.** Medir na candidata e na HML
+   servida, antes de editar. Entrar na tela abre somente os seis blocos;
+   expandir bloco nao abre entidade nem dispara listagem. Buscar registros
+   so no clique explicito, com pagina, ordenacao e busca no servidor.
+   Contagem e erro separados da listagem; nao usar pagina parcial como
+   total. Reutilizar Cadastros, gerenciador de janelas e hooks atuais.
+   Aceite: prova de navegador com zero chamadas de listagem antes do clique,
+   paginacao real de Clientes, tempos frio/quente p50/p95 e troca A/B sem
+   resposta tardia, cache cruzado ou retorno automatico a entidade antiga.
+4. **Cadastros como fonte unica e codigos sequenciais.** Inventariar cada
+   entidade dos seis blocos, consumidores, chaves, telas e lacunas. Usar
+   referencias por ID aos mestres em pedidos, estoque, compras, financeiro,
+   expedicao e relatorios. Preservar IDs e codigo original literal, inclusive
+   zeros iniciais. Em colisao, preservar codigo legado e auditar o mapeamento
+   do codigo interno reservado. Novos registros usam a sequencia canonica
+   transacional por escopo e entidade; validar maximo, concorrencia, replay
+   e colisao, sem count+1 nem renumeracao. Aceite: busca, salvar, reabrir e
+   consumir o mesmo mestre em duas empresas autorizadas, sem duplicar.
+5. **Escopo e controle de acesso em todos os caminhos.** Mestres do Grupo
+   ficam consultaveis pelas empresas autorizadas conforme regra da entidade;
+   cadastros criados na empresa aparecem no Grupo com procedencia. Dados
+   operacionais permanecem na empresa proprietaria: Grupo consolida apenas
+   empresas autorizadas, Empresa A nao le ou altera operacoes da B. Manter
+   acao, campo sensivel, export e integracao sob RBAC/RLS e auditoria. Aceite:
+   matriz Grupo/CPA/3Z/outro Grupo, duplo clique, troca de contexto, URL/ID
+   adulterado e mesma protecao em API, relatorio, export e job.
+6. **Recuperar Base44 sem duplicar.** Fixar a revisao de erp-integra-novo
+   e exportar entidades autorizadas em area privada, separando schema de
+   registros reais. Reutilizar mapa de IDs originais e empresa, validar
+   historico e conflitos e conciliar cada entidade dos seis blocos. Inventariar
+   modulos, configuracoes e indicadores do dashboard; incorporar melhorias ao
+   modulo equivalente, preservar IDs, rotas e consumidores. Criar somente
+   modulo sem equivalente viavel. Aceite: mapa origem/destino/pendencias,
+   total reconciliado, paridade funcional e nenhum segredo/sucesso simulado.
+7. **Homologar o primeiro fluxo completo.** No clone e depois na HML aprovada:
+   cliente, orcamento, alcada, pedido, estoque/expedicao, retirada ou entrega,
+   faturamento, titulo, baixa parcial, quitacao e reabertura com saldo zero.
+   Testar CPA e 3Z, conta e centro da propria empresa e recebimento idempotente,
+   sem emissao/cobranca real. O ensaio HTTP anterior nao substitui o navegador.
+   Fechar Auth/RBAC/auditoria, backup agendado e restauracao antes do primeiro
+   uso. Passar aos demais modulos por dependencia: compras, producao, fiscal,
+   logistica e integracoes; nao bloquear primeiro uso por acabamento visual.
+8. **Uma versao geral por liberacao.** GitHub guarda codigo/CI/manifesto de
+   release, nao dados. HD externo e VPS privada guardam dados e recibos.
+   VPS de teste recebe API/web do mesmo SHA e deltas revisados; validar
+   autenticacao, smoke, rollback e previas sem seed. Promover para VPS final
+   somente apos aceite, autorizacao, backup e verificacao de destino; publicar
+   numero de versao geral, tag/SHA e identificadores dos artefatos. Promover
+   o mesmo pacote, sem remontar modulos individualmente; cada atualizacao
+   posterior passa novamente por HML. Nao alterar o ERP operacional nesta
+   auditoria ou tratar ensaio como aval de producao.
+
+Quando um gate bloquear escrita, registrar evidencia, acao exata e responsavel,
+e executar o proximo item independente autorizado. Nao ficar repetindo leitura
+que ja tem recibo; nao prometer execucao em segundo plano sem agendamento.
+
+## Prioridade anterior: entrada em uso (proprietario, 2026-10-26)
 
 Esta decisao reprioriza ESTE plano, sem criar outro programa nem substituir
 AGENTS.md/Regra-Mae. O objetivo imediato e uma versao estavel na VPS existente

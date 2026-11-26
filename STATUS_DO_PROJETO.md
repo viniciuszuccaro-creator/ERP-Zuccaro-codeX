@@ -1,3 +1,7 @@
+## CPA3: retomada integrada e primeira versao geral (2026-11-26)
+
+- Checkpoint remoto a9af58f4 confirmado. HML API configurada em a305a143; imagem web sem rotulo de revisao, par exato a conferir antes da promocao. Leitura restrita: 17.472 clientes (15.972 ativos), 16.087 locais (zero ativos). Obras e Fornecedores ausentes; sem tabelas fisicas de pedidos/orcamentos/contas_receber/plano_contas sob esses nomes no schema conferido. Nao confundir ensaio em clone com funcionalidade servida. VPS: 28 GiB livres; arquivo do HD visivel no D:. Nenhuma transferencia, carga ou deploy nesta auditoria.
+
 ## CPA3: ordem candidata dos ajustes de Obras (2026-11-26)
 
 - Exports verificados: 3.096 eventos em 2.243 pares Cliente/Item. Nos 501 pares com mais de um evento (1.354 eventos), data/hora brutas e sequencia crescente concordaram, sem empates. No recorte com obra unica, sao 228 pares com eventos multiplos, tambem em concordancia.
