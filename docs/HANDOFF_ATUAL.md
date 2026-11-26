@@ -1,3 +1,7 @@
+## CPA3: integridade integral da candidata e do retorno (2026-11-26)
+
+- Reusar `runtime-promotion-full-integrity-20261126.private.json`, SHA-256 `5ea4d67de84c133bb892975d4903ec84287865b007ac6946ece886f8fc892e73`. Nao repetir a conferencia sem mudanca de artefato. Proxima acao HML sob gate: renovar backup/restore/copia externa, publicar API/web juntas e validar navegador com acesso autenticado; reverter ambas se falhar.
+
 ## CPA3: backup agendado e copias externas conferidas (2026-11-26)
 
 - Backups conferidos no HD em ARQUIVO_HML_VPS_2026-11-26. Ultimo agendado ab581e69 encerrou com sucesso; historico de falha nao descreve a execucao atual. O log do agendador marca externalVerified=false; nao confundir com a conferencia SHA feita no HD. Antes de qualquer publicacao, ainda renovar a protecao conforme gate e confirmar autorizacao especifica.

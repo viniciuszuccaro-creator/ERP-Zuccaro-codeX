@@ -1,3 +1,7 @@
+## CPA3: integridade integral da candidata e do retorno (2026-11-26)
+
+- Integridade por tamanho e SHA-256: a470accb r2, 2.239 arquivos de runtime e 39 pins adicionais, sem membro inesperado; retorno a305a143, 2.222 arquivos. Recibo privado 5ea4d67d. Nenhuma publicacao ou escrita. A integridade nao substitui backup fresco, teste apos troca ou autorizacao.
+
 ## CPA3: backup agendado e copias externas conferidas (2026-11-26)
 
 - Agendador HML 26/11 03:30 BRT: journal BACKUP_RESTORE_VERIFIED, 26 tabelas, 47.779.840 bytes. SHA 1370f7e6 coincide na VPS e HD. Backup posterior restaurado 09:13 BRT c33c96f4 (47.790.080 bytes) tambem conferido nos dois lados. A copia externa foi verificada separadamente, nao pelo servico. 28 GiB livres. Nenhum deploy, novo backup ou escrita nesta verificacao.
