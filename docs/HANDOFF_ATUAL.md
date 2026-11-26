@@ -1,3 +1,7 @@
+## CPA3: segundo diferencial HD/VPS e gate de Fornecedores (2026-11-26)
+
+- Nao repetir os seis conjuntos LEGADO-ALLOWED-*, MATERIAIS-FORA-REVENDA e UNIDADES-*. Proxima decisao de Fornecedores: confirmar 789 como cadastro compartilhado pelo Grupo CPA para empresas autorizadas, sem presumir empresa proprietaria. Depois fechar papel, policies/flag, backup atualizado e pedir autorizacao do manifesto/delta exatos; nenhum gate implicito. Continuar inventario diferencial apenas para insumos ainda necessarios.
+
 ## CPA3: Cadastros sob demanda em Chrome isolado (2026-11-26)
 
 - Reusar `tests/cadastros-abertura-mounted.test.js` com `CADASTROS_COMPARE_BASE=a305a143`. A prova sintetica e positiva para carregamento sob demanda; falta capturar navegador autenticado, paginacao e tempos reais. Nao pedir dados de login no chat nem repetir comparativo sem mudanca do SHA. Manter autorizacoes de atualizacao HML separadas.
