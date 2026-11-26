@@ -147,3 +147,9 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 - A busca nominal no acervo privado nao encontrou exports CSV/NDJSON das tabelas comerciais consultadas. O pacote de Auditoria contem MDF/LDF, nao exports. As tabelas de corte/dobra no catalogo das EMP ligam por numero de pedido, nao diretamente por cliente e obra.
 - Nenhum vinculo novo foi comprovado e nenhuma carga foi gravada. Vinculo de uma venda com determinada empresa nao prova, por si so, a titularidade da obra.
 
+## CPA3: leitura isolada das fontes de Obras na EMP05 (2026-11-26)
+
+- Par EMP05 conferido em duas copias privadas; anexo efetuado somente em terceira copia, no leitor sem rede/portas, limitado a 3 GiB e 0,65 vCPU. O erro 3415 cessou ao permitir escrita do motor somente nos dois arquivos descartaveis. As consultas rodaram com a base em READ_ONLY e o leitor foi parado.
+- `PropostaComercial`, `PedidoVenda` e `NotaFiscalSaidas`: zero linhas nessa copia. Recibo privado `obra-emp05.jDrb6O/coverage.private.txt`, SHA-256 `aefacced5b4ffddc3b3bbbfafdf6774e0a931e57281a89fe3cdf7858ae2e942f`.
+- Nenhuma chave comercial exportada, nenhum vinculo novo nem escrita na HML ou no operacional. Proximo recorte: EMP03, sem repetir EMP05.
+

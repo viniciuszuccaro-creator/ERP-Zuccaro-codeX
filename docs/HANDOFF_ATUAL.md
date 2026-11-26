@@ -146,3 +146,7 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 - No leitor isolado, priorizar as colunas de chave de `PropostaComercial` (empresa, cliente, item de obra, pedido), `PedidoVenda` e `NotaFiscalSaidas` (cliente, pedido, obra e codigo de obra). Examinar tipos, nulidade, cardinalidade e chaves nativas antes de exportar; mapear o identificador de empresa por fonte oficial, nao pelo nome da base.
 - Cruzar separadamente cada campo candidato com a chave mestre de Obras, sem coercao que descarte precisao. Isolar ambiguidades, itens sem sequencia comprovada e obras usadas por mais de uma empresa. Uso comercial e propriedade do cadastro sao provas distintas.
 
+## CPA3: retomar as chaves comerciais na EMP03 (2026-11-26)
+
+- Pular a copia EMP05 ja aferida: as tres fontes candidatas estavam vazias. Validar o pacote privado `supplier-provenance-emp03/emp03.tar.gz`, capacidade e integridade; restaurar apenas em leitor isolado e medir as tres tabelas antes de exportar chaves.
+
