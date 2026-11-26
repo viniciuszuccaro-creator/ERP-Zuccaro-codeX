@@ -1,3 +1,9 @@
+## CPA3: carga e reversao integral com checkpoint original (2026-11-26)
+
+- Do backup pos-Marcas c33c96f4, nova base descartavel e delta privado conferido. Papel restrito e runtime com checkpoint transacional: primeiro commit interrompido, retomada com um reuso e 788 insercoes em 40,1 s, 789 IDs distintos e 789 checkpoints auditados.
+- Reversao via SHA e revisao do create original: 789 inativacoes e 789 auditorias em 18,2 s, 17.472 clientes e seis Marcas preservados. Recibo privado 070e367d, base descartada e container desligado. Nenhum dado na HML alterado.
+- CI 45833981406 do f7a8391a verde; CI 45835051779 do checkpoint ccccd248 em andamento na conferencia. Manifesto 4905483e permanece revisao: falta aceite explicito de 789 compartilhados sem Empresa de origem e autorizacao especifica de escrita.
+
 ## CPA3: checkpoint transacional da reversao de Fornecedores (2026-11-26)
 
 - Criacao grava SHA-256 da imagem retornada e revisao na auditoria da mesma transacao; nao inclui campos brutos adicionais. Reversao exige um unico evento create do mesmo Grupo/ID, lote, origem, revisao e SHA. Um hash novo calculado depois de edicao nao autoriza inativacao, mesmo se a revisao nao mudou. Sem checkpoint, recusa; nao retropreencher auditoria.
