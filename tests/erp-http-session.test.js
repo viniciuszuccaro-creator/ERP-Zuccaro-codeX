@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises';
 import vm from 'node:vm';
 import ts from 'typescript';
 import * as realErpHttpSession from '../src/api/erpHttpSession.js';
+import { createHttpApiClient } from '../src/api/httpApiClient.js';
 import {
   buildHttpDevAdminUser,
   buildHttpSessionUser,
@@ -30,6 +31,35 @@ const GROUP = '33333333-3333-4333-8333-333333333333';
 const EMPRESA_A = '44444444-4444-4444-8444-444444444444';
 const EMPRESA_B = '55555555-5555-4555-8555-555555555555';
 const ACTOR = '22222222-2222-4222-8222-222222222222';
+
+test('troca de empresa com cota cheia reusa o token e envia o novo contexto HTTP', async () => {
+  const storage = memoryStorage({ unrelated: 'keep' });
+  const token = 'synthetic-token';
+  persistErpHttpSession({ accessToken: token, groupId: GROUP, actorId: ACTOR, empresas: [{ id: EMPRESA_A }], storage });
+  const setItem = storage.setItem;
+  storage.setItem = (key, value) => {
+    if (key === 'erp_runtime_scope' && 'token' in JSON.parse(value)) {
+      throw new DOMException('quota', 'QuotaExceededError');
+    }
+    setItem(key, value);
+  };
+  switchErpHttpSessionEmpresa({ empresaId: EMPRESA_A, storage });
+  assert.equal(readErpHttpSession(storage).empresaId, EMPRESA_A);
+  assert.equal(readErpHttpSession(storage).token, token);
+  assert.equal(storage.getItem('unrelated'), 'keep');
+  assert.throws(() => switchErpHttpSessionEmpresa({ empresaId: EMPRESA_B, storage }), /autorizada/);
+  const requests = [];
+  const client = createHttpApiClient({ baseUrl: '', getScope: () => readErpHttpSession(storage) || {},
+    fetchImpl: async (_, init) => {
+      requests.push(init.headers);
+      return new Response(JSON.stringify({ data: [] }), { headers: { 'Content-Type': 'application/json' } });
+    } });
+  await client.entities.Cliente.list('-created_date', 20);
+  assert.equal(requests.length, 1);
+  assert.equal(requests[0]['X-Group-Id'], GROUP);
+  assert.equal(requests[0]['X-Empresa-Id'], EMPRESA_A);
+  assert.equal(requests[0].Authorization, `Bearer ${token}`);
+});
 
 async function loadRealHook(file, dependencies, globals = {}) {
   const source = (await readFile(new URL(file, import.meta.url), 'utf8')).replaceAll('import.meta.env', '({ VITE_ERP_BACKEND: "http" })');

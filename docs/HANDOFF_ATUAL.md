@@ -361,3 +361,7 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 
 - Correcoes de sessao e Dashboard devem permanecer em lotes separados. `dashboard-integracao.7url9e` guarda o WIP remoto e logs privados; Chrome da VPS depende de bibliotecas privadas e recusa iniciar como root com sandbox. WSL existente esta no C: (nao usar para esta rodada). Revalidar em executor privado com Chrome protegido e dependencias do servidor, fechar suite, CI e candidata completa; nova publicacao exige autorizacao associada ao pacote exato.
 
+## CPA3: sessao validada com Chrome protegido
+
+- Runner privado remoto `/var/tmp/erp-chrome-private.0xUBFx`: Chrome com sandbox e usuario sem privilegios, log `full.log` com 3.051/3.051. Este pacote precisa de CI exata e build canonico fora da VPS compartilhada; `package-hml-runtime.mjs` bloqueia esse host. Imagem oficial Ubuntu verificada no D:, sem iniciar WSL nem mudar configuracao global de swap. Sem deploy.
+

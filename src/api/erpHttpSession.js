@@ -100,9 +100,9 @@ export function persistErpHttpSession(input) {
     expiresAt = new Date(Date.now() + Math.floor(input.expiresIn) * 1000).toISOString();
   }
 
-  storage.setItem(TOKEN_KEY, token);
-  storage.setItem(SCOPE_KEY, JSON.stringify({
-    token,
+  const previousToken = storage.getItem(TOKEN_KEY);
+  if (previousToken !== token) storage.setItem(TOKEN_KEY, token);
+  const scope = {
     groupId,
     empresaId: empresaId || null,
     actorId,
@@ -114,7 +114,20 @@ export function persistErpHttpSession(input) {
     profileEmpresaId: input.profileEmpresaId || null,
     scopeType: input.scopeType || (empresaId ? 'empresa' : 'grupo'),
     expiresAt,
-  }));
+  };
+  try {
+    try {
+      storage.setItem(SCOPE_KEY, JSON.stringify({ token, ...scope }));
+    } catch (error) {
+      if (error?.name !== 'QuotaExceededError') throw error;
+      // The reader can use TOKEN_KEY; do not evict unrelated browser data.
+      storage.setItem(SCOPE_KEY, JSON.stringify(scope));
+    }
+  } catch (error) {
+    if (previousToken === null) storage.removeItem(TOKEN_KEY);
+    else if (previousToken !== token) storage.setItem(TOKEN_KEY, previousToken);
+    throw error;
+  }
 }
 
 export function clearErpHttpSession(storage = null) {

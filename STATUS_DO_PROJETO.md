@@ -385,3 +385,7 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 - API e web em `a305a143` confirmadas novamente. O alerta autenticado identifica `QuotaExceededError` em `erp_runtime_scope`. WIP usa token existente como fallback sem limpar dados, conserva a sessao em falha e nao muda o RBAC. 38 testes focados passaram, incluindo contexto nos headers HTTP e recusa de Empresa nao autorizada. Audit, lint, typecheck e build passaram no checkout remoto; suite completa nao verde no executor VPS. Sem commit de codigo, candidata ou deploy.
 - Dashboard em andamento separado: indicador de Produtos deixa de usar amostra como total e distingue sem acesso, carregando, indisponivel e zero oficial. Ainda sem aceite de navegador ou pacote.
 
+## CPA3: validacao completa da correcao de sessao
+
+- Correcao da cota isolada em checkout de `8714588b`: Chrome nao-root iniciou com sandbox no perfil AppArmor existente, sem mudar a politica do host. Suite Linux 3.051/3.051; audit, lint, typecheck, build e diff check passaram. Dashboard fora do lote. HML permanece `a305a143`; nao houve publicacao.
+
