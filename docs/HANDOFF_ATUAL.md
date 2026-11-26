@@ -1,5 +1,7 @@
 ## CPA3: pacote de revisao do historico de baixas (2026-11-26)
 
+- Ensaio integral da revisao com cast `text[]` concluido no clone `c33c96f4`. Prova privada local: `integral-proof.log` na area do clone WSL. Nao repetir sem alteracao material. Checks Linux completos aprovados (3.050/3.050). A decisao HML ainda exige CI do SHA exato e revisao do executor especifico, backup fresco restaurado e ACK; ensaio nao altera RBAC HTTP nem constitui autorizacao.
+
 - Prova da consulta de identidade de `c469a045` concluida no backup externo `c33c96f4` restaurado: ambos os logins restritos leram a identidade fisica com as ACLs do dump. Ainda falta executar o fluxo integral dessa revisao no clone e conferir CI remota; nao repetir a carga na HML.
 
 - O executor do clone agora exige pin independente e verifica a identidade antes de cada lote. Proxima prova: rodar esta revisao no backup restaurado com a ACL efetiva, confirmando a leitura de `pg_control_system()` pelo papel restrito; nao aplicar grant na HML. Suite Linux: 3.050/3.050 usando conta comum, Chrome com sandbox ativo.

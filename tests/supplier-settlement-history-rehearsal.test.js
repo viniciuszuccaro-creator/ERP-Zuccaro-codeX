@@ -20,11 +20,14 @@ function fixture(options = {}) {
   const targetPin = { cluster_id: '12345', database_oid: '123', schema_oid: '456', role: 'history_runner' };
   let probes = 0;
   const q = { query: async text => {
-    if (text.includes('current_database()')) return { rows: [{
+    if (text.includes('current_database()')) {
+      assert.match(text, /current_schemas\(false\)::text\[\] AS schemas/);
+      return { rows: [{
       db: options.database ?? 'erp_history_rehearsal', schema: 'history_test', restricted: true,
       ...targetPin, login: targetPin.role, schemas: ['history_test', 'pg_catalog'],
       ...(++probes === 2 && options.drift ? options.drift : {}),
-    }] };
+      }] };
+    }
     if (text.includes('INSERT INTO')) { calls.push('insert'); return { rowCount: options.replay ? 0 : 1 }; }
     if (text.includes('FILTER')) return { rows: [{ n: options.conflict ? 0 : 1, archived: 0 }] };
     return {};

@@ -41,7 +41,7 @@ export function bindSupplierSettlementRehearsal({ db, audit, authorize, ctx, byt
       const { rows: [target] } = await q.query(
         `SELECT current_database() AS db, current_schema() AS schema,
           NOT (rolsuper OR rolbypassrls) AS restricted, current_user AS role, session_user AS login,
-          current_schemas(false) AS schemas, d.oid::text AS database_oid, n.oid::text AS schema_oid,
+          current_schemas(false)::text[] AS schemas, d.oid::text AS database_oid, n.oid::text AS schema_oid,
           (pg_catalog.pg_control_system()).system_identifier::text AS cluster_id
         FROM pg_catalog.pg_roles, pg_catalog.pg_database d, pg_catalog.pg_namespace n
         WHERE rolname = current_user AND d.datname = current_database() AND n.nspname = current_schema()`);

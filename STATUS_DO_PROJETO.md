@@ -18,6 +18,8 @@
 
 ## CPA3: pacote de revisao do historico de baixas (2026-11-26)
 
+- Ensaio integral no clone WSL: conversao de `name[]` para `text[]` tornou o search_path legivel pelo driver pg sem relaxar a trava. Manifesto `813bb03d`: 12.514 inseridos e arquivados pela reversao, duas Empresas, 28 auditorias, retomada apos commit, replay zero e pin adulterado recusado. Ensaio usou papel/ator da policy restaurada e ACL candidata apenas no clone. Linux: 3.050/3.050, audit:baseline, lint, typecheck e build aprovados. Sem escrita na HML.
+
 - Recorte PostgreSQL de `c469a045`: backup externo `c33c96f4` revalidado por SHA-256 e restaurado no WSL sem rede, com ACLs do dump, 17.472 clientes e roles locais sem credenciais do servidor. Consulta exata da trava passou em transacao somente leitura com os dois logins restritos, inclusive `pg_control_system()`, sem grant novo. Instancia encerrada; manifesto nao reaplicado e HML intacta.
 
 - Executor de ensaio revalida cluster, OIDs, schema/search_path e papel efetivo/login a cada transacao antes de autorizar, bloquear ou gravar. Consulta verificada no PostgreSQL 16 descartavel, com papel restrito; teste de divergencia preservou o primeiro checkpoint e impediu o segundo lote. Linux: 3.050/3.050 com Chrome sob conta comum, audit:baseline, lint, typecheck e build aprovados. As seis falhas de interface como root nao ocorreram com o sandbox ativo. Pendente ensaio desta revisao no backup restaurado; sem alteracao na HML.
