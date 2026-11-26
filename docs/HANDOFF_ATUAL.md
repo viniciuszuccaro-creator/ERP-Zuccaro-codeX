@@ -1,3 +1,9 @@
+## CPA3: policy candidata de consulta de Fornecedores (2026-11-26)
+
+- SQL candidato separado das migrations: fornecedor_company_read.sql. Exige schema pinado e RLS forcada, concede apenas policy SELECT ao papel indicado, sem grants. No clone, Grupo, CPA e 3Z leram 789; empresa desconhecida e outro Grupo leram zero. Contexto Empresa nao atualizou nem bloqueou linhas. ACL intacta; rollback removeu a policy.
+- Manifesto 4905483e: 789 ativos com procedencia EXETPS.dbo.Fornecedores; 790 linhas no staging de um Grupo, nenhuma com Empresa de origem registrada. Nao inferir Empresa por coincidencia de codigo. HML revalidada em leitura: 6 Marcas, 17.472 clientes, tabela fornecedores ainda ausente.
+- Proximo: fechar revisao de procedencia e pacote de carga antes de autorizacao HML. Sem aplicar schema, alterar ACL, importar ou publicar.
+
 ## CPA3: grade oficial de Fornecedores em leitura (2026-11-26)
 
 - Visualizador existente com opt-in VITE_ERP_HTTP_FORNECEDOR_READ, desligado por padrao. Lista e detalhe oficiais por contexto autenticado, busca e paginacao por hasMore. Sem reutilizar total local, permissao de escrita ou formulario legado. Troca de contexto invalida detalhes e linhas do escopo anterior.
