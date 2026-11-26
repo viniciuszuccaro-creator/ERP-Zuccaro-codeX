@@ -217,3 +217,7 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 
 - HML em leitura restrita: obras, obra_empresas e obra_locais ausentes. Backup pos-Marcas c33c96f4 restaurado em clone isolado (17.472 clientes; 412.802.071 bytes no banco), sem reaplicar ACLs e com roles de referencia NOLOGIN. Migration canonica 012 (blob 38f685ab) criou as tres tabelas com RLS forcada. Rollback removeu o delta e conservou a contagem. Nenhuma escrita na HML, nenhum ensaio de ACL efetiva ou carga historica nesta rodada.
 
+## CPA3: ACL e integridade dos vinculos canonicos de Obras (2026-11-26)
+
+- Clone restaurado c33c96f4 com papel da aplicacao reproduzido NOLOGIN/NOBYPASSRLS. A 012 nao concede acesso por padrao. ACL candidata apenas no clone: sem ClienteEmpresa, vinculo recusado; local de outro cliente recusado. Com ClienteEmpresa sintetico, Obra e vinculos visiveis no Grupo, local vinculado inativo; outro Grupo viu 0/0/0. Rollback removeu o delta, mantendo 17.472 clientes. Na HML em leitura restrita: zero ClienteEmpresa e 16.087 ClienteLocal visiveis, nenhum ativo. Nenhuma escrita HML.
+

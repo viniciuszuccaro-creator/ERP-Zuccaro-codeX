@@ -212,3 +212,7 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 
 - Recibos privados em obra012-rehearsal.gT9epo (baseline 9f2647d1, migration 16639b6f, rollback 00214e5c). Para repetir, usar volume descartavel em disco; tmpfs de 640 MiB falhou em audit_logs. Usar somente roles NOLOGIN derivadas dos nomes do backup quando restaurar sem ACLs. Proximo: ensaiar ACL minima e vinculos ClienteEmpresa/ClienteLocal no clone; definir e validar destino historico sem usar auditoria como fonte.
 
+## CPA3: ACL e integridade dos vinculos canonicos de Obras (2026-11-26)
+
+- Recibo privado `obra012-acl.D2Fz1h/acl.private.txt`, SHA-256 `a1f108211a93eb0aca5159ad63cfb7b825a2f19471e63076372dfdd707798a74`. Papel generico nao herda RLS de clientes; usar identidade nominal da aplicacao NOLOGIN no clone. Policies do ensaio cobrem Grupo, nao validam empresa/perfil/app completos. Buscar fonte oficial para ClienteEmpresa e escopo de Obras antes de incluir vinculos reais ou historico. Nao fabricar vinculos/ativar locais.
+
