@@ -6,6 +6,11 @@ import { requireTenantScope } from '../middleware/requestContext.js';
 import type { FornecedorService } from '../services/fornecedorService.js';
 
 const idSchema = z.string().uuid();
+const listSchema = z.object({
+  search: z.string().trim().max(100).default(''),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+  offset: z.coerce.number().int().min(0).max(100000).default(0),
+});
 const reversalSchema = z.object({
   expectedRevision: z.number().int().positive().safe(),
   source: z.string().trim().min(1).max(80),
@@ -28,6 +33,11 @@ export function mountFornecedorRoutes(router: Router, service: FornecedorService
   router.post('/api/v1/fornecedores/importar', requireTenantScope, run(async (s, req, res) => {
     const result = await s.importar(context(req), req.body);
     res.status(result.reutilizado ? 200 : 201).json({ data: result });
+  }));
+  router.get('/api/v1/fornecedores', requireTenantScope, run(async (s, req, res) => {
+    const filters = listSchema.safeParse(req.query);
+    if (!filters.success) throw new AppError(422, 'VALIDATION_ERROR', 'Invalid supplier filters');
+    res.json({ data: await s.list(context(req), filters.data) });
   }));
   router.get('/api/v1/fornecedores/:id', requireTenantScope, run(async (s, req, res) => {
     const id = idSchema.safeParse(req.params.id);

@@ -75,6 +75,27 @@ test('Fornecedor HTTP uses canonical persistence/replay/reversal in synthetic PG
       assert.equal(await count(), 1);
       assert.equal((await f.admin.query<{ n: number }>("SELECT count(*)::int AS n FROM audit_logs WHERE entity='Fornecedor'")).rows[0].n, 3);
     });
+    await t.test('authorized companies see the same group supplier without acquiring write access', async () => {
+      const id = (await f.admin.query<{ id: string }>('SELECT id FROM fornecedores')).rows[0].id;
+      for (const empresaId of [ID.empresaA, ID.empresaA2]) {
+        const scope = { 'x-empresa-id': empresaId };
+        const list = await request('?search=000078&limit=1', 'GET', undefined, scope);
+        assert.equal(list.status, 200);
+        const { items, hasMore } = (await list.json()).data;
+        assert.deepEqual(items.map((r: { id: string }) => r.id), [id]);
+        assert.equal(hasMore, false);
+        assert.equal((await request('/' + id, 'GET', undefined, scope)).status, 200);
+        assert.equal((await request('/importar', 'POST', payload, scope)).status, 403);
+      }
+      const byName = await request('?search=synthetic%20http&limit=1');
+      assert.equal(byName.status, 200);
+      assert.deepEqual((await byName.json()).data.items.map((r: { id: string }) => r.id), [id]);
+      const next = await request('?search=000078&offset=1');
+      assert.deepEqual((await next.json()).data, { items: [], hasMore: false });
+      assert.equal((await request('', 'GET', undefined, { 'x-group-id': ID.groupB })).status, 403);
+      assert.equal((await request('?limit=101')).status, 422);
+      assert.equal(await count(), 1);
+    });
     await t.test('HTTP replay denies create permission revoked during audit and rolls back', async () => {
       const before = {
         supplier: (await f.admin.query('SELECT * FROM fornecedores ORDER BY id')).rows,

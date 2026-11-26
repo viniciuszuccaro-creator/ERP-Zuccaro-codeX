@@ -6,13 +6,21 @@ import { fornecedorRowSchema, type FornecedorImport, type Fornecedor } from './f
 export class PostgresFornecedorRepository {
   constructor(readonly db: DbClient) {}
 
+  async list(groupId: string, search: string, limit: number, offset: number, q: DbQueryExecutor) {
+    const result = await q.query<Pick<Fornecedor, 'id' | 'codigo' | 'nome' | 'razao_social' | 'nome_fantasia' | 'status' | 'ativo'>>(
+      `SELECT id,codigo,nome,razao_social,nome_fantasia,status,ativo FROM fornecedores
+       WHERE group_id=$1 AND ($2='' OR strpos(lower(concat_ws(' ',codigo,nome,razao_social,nome_fantasia)),lower($2))>0)
+       ORDER BY codigo,id LIMIT $3 OFFSET $4`, [groupId, search, limit + 1, offset]);
+    return { items: result.rows.slice(0, limit), hasMore: result.rows.length > limit };
+  }
+
   async byIdentity(groupId: string, source: string, legacy: string, q: DbQueryExecutor) {
     const r = await q.query('SELECT * FROM fornecedores WHERE group_id=$1 AND source_system=$2 AND codigo_legado=$3 FOR UPDATE',
       [groupId, source, legacy]);
     return r.rows[0] ? this.decode(r.rows[0]) : null;
   }
-  async byId(groupId: string, id: string, q: DbQueryExecutor) {
-    const r = await q.query('SELECT * FROM fornecedores WHERE group_id=$1 AND id=$2 FOR UPDATE', [groupId, id]);
+  async byId(groupId: string, id: string, q: DbQueryExecutor, lock = true) {
+    const r = await q.query('SELECT * FROM fornecedores WHERE group_id=$1 AND id=$2' + (lock ? ' FOR UPDATE' : ''), [groupId, id]);
     return r.rows[0] ? this.decode(r.rows[0]) : null;
   }
   async conflict(groupId: string, data: FornecedorImport, q: DbQueryExecutor) {

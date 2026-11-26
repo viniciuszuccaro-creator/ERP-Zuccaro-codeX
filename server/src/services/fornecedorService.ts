@@ -21,7 +21,8 @@ export class FornecedorService {
     private readonly audit: AuditRepository, private readonly rbac: RbacGuard) {}
 
   private async authorize(ctx: RequestContext, action: RbacAction, q?: DbQueryExecutor) {
-    if (!uuid.safeParse(ctx.groupId).success || !uuid.safeParse(ctx.actorId).success || ctx.empresaId) {
+    if (!uuid.safeParse(ctx.groupId).success || !uuid.safeParse(ctx.actorId).success ||
+        (ctx.empresaId != null && (action !== 'visualizar' || !uuid.safeParse(ctx.empresaId).success))) {
       throw new AppError(403, 'FORNECEDOR_GROUP_SCOPE_REQUIRED', 'Group master context required');
     }
     await this.rbac.assertAllowed(ctx, 'Cadastros', 'fornecedor', action, { allowGlobalWildcard: false, executor: q });
@@ -62,12 +63,20 @@ export class FornecedorService {
       return { registro: created, reutilizado: false };
     });
   }
+  async list(ctx: RequestContext, filters: { search: string; limit: number; offset: number }) {
+    ctx = Object.freeze({ ...ctx });
+    return this.repo.db.withTransaction(async q => {
+      await this.authorize(ctx, 'visualizar', q);
+      return this.repo.list(ctx.groupId, filters.search, filters.limit, filters.offset, q);
+    });
+  }
+
   async get(ctx: RequestContext, id: string) {
     ctx = Object.freeze({ ...ctx });
     await this.authorize(ctx, 'visualizar'); uuid.parse(id);
     return this.repo.db.withTransaction(async q => {
       await this.authorize(ctx, 'visualizar', q);
-      const r = await this.repo.byId(ctx.groupId, id, q);
+      const r = await this.repo.byId(ctx.groupId, id, q, false);
       if (!r) throw new AppError(404, 'NOT_FOUND', 'Supplier not found');
       await this.authorize(ctx, 'visualizar', q); return r;
     });
