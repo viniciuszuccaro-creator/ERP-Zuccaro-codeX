@@ -1,3 +1,9 @@
+## CPA3: ordem candidata dos ajustes de Obras (2026-11-26)
+
+- Exports verificados: 3.096 eventos em 2.243 pares Cliente/Item. Nos 501 pares com mais de um evento (1.354 eventos), data/hora brutas e sequencia crescente concordaram, sem empates. No recorte com obra unica, sao 228 pares com eventos multiplos, tambem em concordancia.
+- As 431 transicoes consecutivas do mesmo tipo nao encadearam literalmente conteudo atual/anterior (113 no recorte de obra unica). Isso nao prova erro nem semantica de campo; nao interpretar como cadeia confiavel ou usar SEQUENCIA como chave de obra. Recibo privado 6a552b1e.
+- Proximo: conferir como o ERP legado define tipo/conteudo e vincula a Empresa no leitor nativo. Zero ajustes aptos; sem reextracao, ativacao, carga ou alteracao na HML/operacional.
+
 ## CPA3: ajustes de Obras e CI do checkpoint de Fornecedores (2026-11-26)
 
 - Confronto privado dos exports conferidos: 35.309 Obras e 3.096 ajustes. Por Cliente/Item, 1.536 pares unicos, dos quais 1.328 em obras com cliente na revisao e 208 sem esse vinculo; 1.560 sem par. Nenhuma correspondencia pela chave completa com SEQUENCIA. Datas/horas brutas nao comprovam semantica do evento nem empresa. Zero apto para escrita. Recibo privado 24cd697f, sem reextracao.
