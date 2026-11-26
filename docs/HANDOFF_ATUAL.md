@@ -155,3 +155,8 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 - Reusar `keys.private.psv` e `comparison.private.json` no diretorio privado `obra-emp03.ZaaNbi` sob a area de recuperacao. Nao reabrir EMP03 apenas para repetir estas contagens.
 - Cruzar os pares unicos com o indice existente de clientes destino e a chave mestre completa. Provar a identidade comercial da empresa por identificador nativo e verificar uso cruzado em outras EMP. Manter separados uso em nota/pedido, titularidade da obra e aptidao de entrega. Nao autorizar escrita por correspondencia numerica.
 
+## CPA3: retomar a conciliacao das Obras da EMP03 (2026-11-26)
+
+- Reusar `review-crosscheck.private.json` em `obra-emp03.ZaaNbi`, SHA-256 `1bcb0f56cda6124982a26adb78379fb99b442428e6075605d624d44223c905b9`. Nao repetir a extracao da EMP03.
+- Conferir as 6.244 chaves ausentes contra um indice atual por cliente e chave nativa; nao presumir cliente ausente nem reaplicar entregas existentes. Provar empresa por identificador oficial e distinguir titularidade de uso comercial antes do ensaio.
+

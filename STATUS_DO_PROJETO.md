@@ -160,3 +160,8 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 - Cruzamento por cliente e OBRA contra cliente e ITEM: 33.070 pares unicos e 654 ausentes nas notas; 118 unicos e 2 ausentes nos pedidos. Os conjuntos podem se sobrepor e nao devem ser somados. A correspondencia nao comprova titularidade nem habilita entrega.
 - Extrato minimo: 33.844 linhas, 525.690 bytes, SHA-256 `75987cb3422c7ce7181d7cbdb870353809f88c4b190efa6ed899e4b33b7308e2`. Recibo comparativo privado: SHA-256 `f9cde2f3a581b3a5fee27f32dfe4d9c785402337298bab20a7242096ceb48c54`. Nenhuma gravacao na HML ou no operacional.
 
+## CPA3: conciliacao arquivada das Obras da EMP03 (2026-11-26)
+
+- Uniao de notas e pedidos: 33.083 pares unicos no mestre, 105 presentes em ambas as fontes e 656 sem par no mestre. Comparacao por chave completa com a fila privada arquivada: 26.839 encontrados e 6.244 sem entrada. Dos encontrados, 24.600 apontavam para cliente ativo e 2.239 para nao ativo; sao contagens de obras, nao de clientes.
+- Na fila, 26.728 locais seguem em revisao e 111 entregas existentes exigem conciliacao. Nenhuma consulta viva a HML, prova de empresa proprietaria, ativacao ou gravacao.
+
