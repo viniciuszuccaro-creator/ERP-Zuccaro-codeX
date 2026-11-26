@@ -1,3 +1,7 @@
+## CPA3: ensaio em escala do historico de precos (2026-11-26)
+
+- Recibo privado `erp344-reader-20261125T165731Z/price-history-pg-rehearsal.private.json`, SHA-256 `c91b5725d48133301750a689fd6c07e186cd7ac656a999c0a10e4c58c36e43e5`. Prova de staging descartavel, nao contrato canonico nem ACL da fonte de ensaio. Ainda comprovar produto, unidade, escopo e destino do historico; nenhum preco vigente, deploy, escrita ou gate concedido.
+
 ## CPA3: manifesto candidato de historico de precos (2026-11-26)
 
 - Reusar `erp344-reader-20261125T165731Z/price-history-candidate.private.ndjson`, SHA-256 `1b2975a3f4e6745995eb2a5484934ea657dafa4f07b5d0b1f46c2abdd554e5f6`. Testar em clone com checkpoints e reversao apenas como historico; confirmar semantica nativa, escopo e destino canonico. Nao ativar preco nem apagar os eventos excluidos; fonte integral continua preservada.

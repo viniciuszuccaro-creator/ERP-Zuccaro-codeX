@@ -1,3 +1,7 @@
+## CPA3: ensaio em escala do historico de precos (2026-11-26)
+
+- Manifesto 1b2975a3 ensaiado em PostgreSQL descartavel sem rede/porta: 19.232 payloads conferidos, 20 checkpoints (19x1.000 + 232), falha simulada do segundo lote sem estado parcial, retomada e replay sem duplicatas. Reversao de 999 com recibos, uma edicao posterior e 18.232 eventos de outros lotes preservados; repeticao zero. RLS no destino e DELETE/edicao de payload recusados. Janela medida 13,718 s, nao estimativa de HML.
+
 ## CPA3: manifesto candidato de historico de precos (2026-11-26)
 
 - Historico de precos: cruzamento com material inteiro validado sem colisoes reproduziu 48.472/394 do leitor. Tipo numerico: 42.523 de 44.261 transicoes encadeadas e ultimo valor igual a PRECOTABELA em 4.504/4.563 pares vinculados. Manifesto candidato 1b2975a3: 19.232 eventos de 3.469 pares; fora 28.731 por cadeia, 492 por valor final, 394 sem item e 17 na cadeia com tipo/formato nao explicado. Nenhuma escrita.
