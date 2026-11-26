@@ -1,3 +1,9 @@
+## CPA3: RBAC separado para Fornecedores (2026-11-26)
+
+- Preflight somente leitura confirmou o perfil titular ja pinado na configuracao privada da HML: um perfil ativo de Grupo, vinculo Auth exato, duas Empresas ativas e nenhuma acao Fornecedor. Nenhum perfil foi modificado.
+- Preparador canonico de perfil produz planos distintos: visualizar; ou criar/importar/inativar temporariamente para carga e reversao. Exige aprovacao especifica, identidade fisica e CAS, audita e reverte apenas o delta correspondente, preservando autorizacoes anteriores. Seis testes focados aprovados. Nenhuma execucao SQL.
+- Pacote d92c451c ainda em revisao. Falta aceite explicito do escopo compartilhado sem Empresa por linha e autorizacoes especificas antes de liberar a leitura HML ou gravar o manifesto.
+
 ## CPA3: pacote de revisao para 789 Fornecedores (2026-11-26)
 
 - Pacote privado de revisao d92c451c: manifesto 4905483e ainda nao executavel. Schema Linux 6680471c equivale ao 40490a3b do manifesto em CRLF; import policy 8435fab3 e leitura ef09aea4. Policies separadas ensaiadas com o papel restrito: 789 no Grupo, CPA e 3Z, zero fora do Grupo, zero UPDATE na Empresa. DELETE e UPDATE de codigo negados. Rollback conferido.

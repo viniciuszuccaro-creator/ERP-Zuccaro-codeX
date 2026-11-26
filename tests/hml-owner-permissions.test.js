@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { prepareHmlOwnerPermissions, prepareHmlOrganizacionalFiscalSchema, prepareHmlA1Permissions } from '../scripts/vps/hml-owner-permissions.mjs';
+import { prepareHmlOwnerPermissions, prepareHmlOrganizacionalFiscalSchema, prepareHmlA1Permissions,
+  prepareHmlFornecedorPermissions } from '../scripts/vps/hml-owner-permissions.mjs';
 
 const expected = { database: 'hml_fixture', schema: 'hml_fixture', schemaOid: '1234', clusterIdentifier: '987654',
   profileId: '11111111-1111-4111-8111-111111111111', authUserId: '22222222-2222-4222-8222-222222222222',
@@ -10,6 +11,25 @@ const before = { id: expected.profileId, auth_user_id: expected.authUserId, grou
   empresa_id: null, role: 'user', ativo: true, permissoes: { Cadastros: { cliente_local: ['visualizar'] } } };
 const input = () => ({ before: structuredClone(before), expected: { ...expected },
   requestId: 'HML-owner-grant-fixture0001', approvalRef: 'OWNER_AUTHORIZED_HML_FULL_FIXTURE_20261116' });
+
+test('Fornecedor read and temporary import require distinct approvals and reverse only their own actions', () => {
+  const readInput = { ...input(), access: 'read', approvalRef: 'OWNER_AUTHORIZED_HML_FORNECEDOR_READ_FIXTURE_001' };
+  const read = prepareHmlFornecedorPermissions(readInput);
+  assert.deepEqual(read.nextPermissions.Cadastros, { ...before.permissoes.Cadastros, fornecedor: ['visualizar'] });
+  const temporary = { ...input(), access: 'import', before: { ...before, permissoes: read.nextPermissions },
+    approvalRef: 'OWNER_AUTHORIZED_HML_FORNECEDOR_IMPORT_FIXTURE_001', requestId: 'HML-owner-grant-import-fixture' };
+  const load = prepareHmlFornecedorPermissions(temporary);
+  assert.deepEqual(load.nextPermissions.Cadastros.fornecedor, ['visualizar', 'criar', 'importar', 'inativar']);
+  assert.equal(load.changesRole, false);
+  assert.equal(load.changesSqlGrants, false);
+  assert.match(load.sql, /HML_PROFILE_CAS_CONFLICT/);
+  const reverse = { ...temporary, before: { ...before, permissoes: load.nextPermissions }, direction: 'reverse',
+    restorePermissions: read.nextPermissions, requestId: 'HML-owner-reverse-import-fixture', originalRequestId: load.requestId };
+  assert.deepEqual(prepareHmlFornecedorPermissions(reverse).nextPermissions, read.nextPermissions);
+  assert.throws(() => prepareHmlFornecedorPermissions({ ...reverse, restorePermissions: {} }));
+  assert.throws(() => prepareHmlFornecedorPermissions({ ...temporary, approvalRef: readInput.approvalRef }));
+  assert.throws(() => prepareHmlFornecedorPermissions({ ...readInput, before: { ...before, empresa_id: expected.groupId } }));
+});
 
 test('fiscal capability plan is HML-only, nullable, three columns and no population or new policy', () => {
   const target = { ...expected, role: 'hml_app_fixture' };

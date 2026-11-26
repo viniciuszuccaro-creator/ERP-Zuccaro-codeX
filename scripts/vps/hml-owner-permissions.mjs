@@ -139,6 +139,35 @@ export function prepareHmlA1Permissions(input) {
     'OWNER_AUTHORIZED_HML_A1_READ_UPLOAD_ONLY', 'HML_A1_PERMISSION_PLAN_NOT_EXECUTED');
 }
 
+/** Separate the permanent read decision from temporary import/reversal access. */
+export function prepareHmlFornecedorPermissions(input) {
+  assert.ok(input.access === 'read' || input.access === 'import', 'FORNECEDOR_ACCESS_REQUIRED');
+  const read = input.access === 'read';
+  const actions = read ? ['visualizar'] : ['criar', 'importar', 'inativar'];
+  const addActions = tree => {
+    validateTree(tree);
+    const next = structuredClone(tree);
+    next.Cadastros ??= {};
+    assert.ok(!Array.isArray(next.Cadastros), 'CADASTROS_PERMISSION_SHAPE_REQUIRED');
+    const leaf = next.Cadastros.fornecedor ?? [];
+    const existing = Array.isArray(leaf) ? leaf : (leaf._acoes ?? []);
+    assert.ok(Array.isArray(existing), 'FORNECEDOR_PERMISSION_SHAPE_REQUIRED');
+    const updated = [...new Set([...existing, ...actions])];
+    next.Cadastros.fornecedor = Array.isArray(leaf) ? updated : { ...leaf, _acoes: updated };
+    return next;
+  };
+  const next = input.direction === 'reverse' ? input.restorePermissions : addActions(input.before?.permissoes);
+  if (input.direction === 'reverse') {
+    assert.deepEqual(addActions(next), input.before?.permissoes, 'FORNECEDOR_REVERSAL_SCOPE_MISMATCH');
+  }
+  const approval = read
+    ? /^OWNER_AUTHORIZED_HML_FORNECEDOR_READ_[A-Z0-9_-]{8,100}$/
+    : /^OWNER_AUTHORIZED_HML_FORNECEDOR_IMPORT_[A-Z0-9_-]{8,100}$/;
+  return preparePermissionDelta(input, next, approval,
+    read ? 'FORNECEDOR_READ_ONLY' : 'FORNECEDOR_TEMP_IMPORT_AND_REVERSAL',
+    'HML_FORNECEDOR_PERMISSION_PLAN_NOT_EXECUTED');
+}
+
 function preparePermissionDelta({ before, expected, requestId, approvalRef,
   direction = 'grant', restorePermissions, originalRequestId }, desired, approvalPattern, reason, kind) {
   assert.ok(expected && /^hml[a-z0-9_]+$/.test(expected.database)
