@@ -1,3 +1,7 @@
+## CPA3: escopo candidato de publicacao sem mudanca de banco (2026-11-26)
+
+- Candidata a470accb r2: bootstrap empacotado exige flag explicita para PedidoFinanceiro e nao conecta a opcao de historico de baixas. Configuracao atual lida sem segredos: ambas desativadas. Escopo candidato sem DDL/grants/carga: API/web juntos para Cadastros sob demanda; financeiro e historico desligados. Nao e aceite autenticado nem autorizacao de publicacao.
+
 ## CPA3: versao servida e candidata integrada verificadas (2026-11-26)
 
 - HML servida a305a143 confirmada na API e no HTML + dois assets de entrada byte a byte com pacote privado. Candidata a470accb r2 (tar 06d13aab), CI 45680437810 com quatro jobs SUCCESS, inclui 8b3ae461 e nao tem diff posterior nos dois arquivos de abertura sob demanda. Imagens correntes registradas para reversao. Nenhum deploy.
