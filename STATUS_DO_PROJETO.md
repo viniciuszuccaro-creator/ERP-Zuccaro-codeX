@@ -169,3 +169,7 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 
 - Consulta READ ONLY na HML pelo papel efetivo restrito, sem superusuario nem BYPASSRLS, filtrada pelo Grupo. Entre as 6.244 Obras fora da fila arquivada, uma conciliou com cliente mestre ativo; as outras 6.243 referenciam 4.224 codigos, todos presentes em legacy_client_review por chave nativa. Presenca na fila nao distingue revisao de historico nem autoriza uso como mestre. Nenhuma escrita ou ativacao.
 
+## CPA3: estados dos clientes e completude da Obra candidata (2026-11-26)
+
+- Leitura restrita da HML: das 6.244 Obras fora da fila arquivada, 6.033 apontam para 4.188 clientes em revisao; 210 para 36 clientes apenas historicos; uma para mestre ativo. A candidata tem logradouro, cidade, bairro, UF, CEP e referencia presentes, sem validacao de formato, numero, pais ou empresa. Nenhuma escrita ou ativacao.
+

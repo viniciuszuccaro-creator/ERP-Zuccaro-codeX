@@ -164,3 +164,7 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 
 - Reusar os recibos privados live-client-coverage e live-review-coverage em obra-emp03.ZaaNbi (SHA-256 do ultimo: 137602f3ce2ea00ff1becc2ab5036ed66e94d6d9cd0c73a726161c1b6617c8aa). Priorizar a validacao da empresa e dos campos de entrega da obra com mestre ativo. Nas 6.243 restantes, classificar revisao versus historico e manter o gate de cadastro mestre. Nao reextrair EMP03.
 
+## CPA3: estados dos clientes e completude da Obra candidata (2026-11-26)
+
+- Recibo privado `obra-emp03.ZaaNbi/live-review-states.private.json`, SHA-256 `6b3be5f3c186eba0fc65769808dcd7a8088b8ada29b4dbd4b90df8d1a2f57764`. Reusar a chave privada da candidata para procurar numero e pais em fonte nativa e provar titularidade ou regra de Grupo. Manter as 6.033 em revisao e as 210 historicas fora da carga operacional; nao repetir a consulta nem promover clientes da fila.
+
