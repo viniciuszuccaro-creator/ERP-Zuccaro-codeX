@@ -1,3 +1,7 @@
+## CPA3: Cadastros sob demanda em Chrome isolado (2026-11-26)
+
+- Chrome local com tela React montada e transporte sintetico: referencia a305a143 efetuou uma contagem antes do clique; candidata efetuou zero contagens e zero listagens ao carregar ou expandir categoria, e abriu uma janela com uma lista e uma contagem ao clicar em Clientes. Cinco testes focados e dois cenarios comparativos passaram. Chrome da HML parou no login, sem medicao autenticada. Sem alteracao de runtime ou deploy.
+
 ## CPA3: contrato de leitura candidato dos oito ajustes de Precos (2026-11-26)
 
 - Pacote 0e1f390e ensaiado em prototipo PostgreSQL descartavel de historico: 8/8 payloads conciliados, uma empresa no recorte, leitura zero sem policy/contexto ou em outra Empresa/Grupo. Leitor sem UPDATE; chave duplicada e FK de escopo incorreto recusadas. Sem destino generico confirmado no codigo; nao usar fila de clientes, baixas ou tabelas operacionais como destino. Nenhuma escrita HML.

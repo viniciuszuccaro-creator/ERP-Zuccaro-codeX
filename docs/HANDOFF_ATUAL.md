@@ -1,3 +1,7 @@
+## CPA3: Cadastros sob demanda em Chrome isolado (2026-11-26)
+
+- Reusar `tests/cadastros-abertura-mounted.test.js` com `CADASTROS_COMPARE_BASE=a305a143`. A prova sintetica e positiva para carregamento sob demanda; falta capturar navegador autenticado, paginacao e tempos reais. Nao pedir dados de login no chat nem repetir comparativo sem mudanca do SHA. Manter autorizacoes de atualizacao HML separadas.
+
 ## CPA3: contrato de leitura candidato dos oito ajustes de Precos (2026-11-26)
 
 - Recibo privado `erp344-reader-20261125T165731Z/price-history-8-read-contract.private.json` SHA-256 `adaccaf56c8be8ef238f8b43bb362a00d3a4cce07e5e7114704c803bc385a1e9`. Prototipo com registros de referencia isolados, nao ACL da API nem consolidacao do Grupo. Para promover, definir origem/escopo e testar ACL efetiva em clone restaurado; sem ativar tabela ou preco. Avancar frente independente de Cadastros se o gate de historico nao estiver resolvido.
