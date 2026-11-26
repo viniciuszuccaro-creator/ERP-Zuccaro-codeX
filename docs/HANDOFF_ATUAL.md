@@ -1,3 +1,7 @@
+## CPA3: evidencia transacional de unidade dos materiais (2026-11-26)
+
+- Recibo privado `obra-emp03.ZaaNbi/price-material-transactional-unit-evidence.private.txt` SHA-256 `2ada5c33f352eaffd1adc625d1ad9350bc4b3b65e770fc72d1473dd2916df2de`. Nao usar peso ou contagem de nota como fator: a unidade comercial de destino nao aparece nesse recorte. Manter 27 eventos sem conversao ate fonte especifica e priorizar outro dominio autorizado. Nenhuma escrita.
+
 ## CPA3: unidade e fator nativo dos materiais de Precos (2026-11-26)
 
 - Recibo privado `erp344-reader-20261125T165731Z/price-history-material-factor.private.txt`, SHA-256 `f5d8d7fdcf8b2d1310b271ba6f44a039187b5f2df296ade0f1628a22b2b0ff01`. Nao repetir o cadastro nem usar fator 1/peso cadastral. Se houver documento comercial com o mesmo material e quantidades nas duas unidades, validar regra, precisao e coerencia por empresa. Manter os oito candidatos literais separados.

@@ -1,3 +1,7 @@
+## CPA3: evidencia transacional de unidade dos materiais (2026-11-26)
+
+- EMP03 isolada READ_ONLY, recorte dos materiais com unidade divergente: 14 linhas de compra (quatro materiais), zero com conversao habilitada e duas quantidades positivas; zero linhas em itens de venda. Notas: 387 linhas no cruzamento com cabecalho (cinco materiais), 115 com quantidade/peso positivos, 371 na unidade de origem e zero na unidade de destino ou com quantidade de conferencia positiva. Um codigo de empresa no cruzamento. Nenhuma conversao comprovada.
+
 ## CPA3: unidade e fator nativo dos materiais de Precos (2026-11-26)
 
 - EXETPS isolada READ_ONLY: oito pares pendentes com cadastro nativo exato e unidade de origem igual ao historico. Zero fatores positivos em CadastroMateriaisConversoes e zero siglas de conversao iguais ao destino. Dois pares tem peso bruto/liquido, nenhum peso de barra/metro positivo; peso cadastral nao prova base do preco. Os 27 eventos seguem sem conversao, nenhuma escrita.
