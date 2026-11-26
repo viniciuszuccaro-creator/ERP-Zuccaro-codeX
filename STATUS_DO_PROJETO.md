@@ -185,3 +185,7 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 
 - Catalogo da copia EXETPS em READ_ONLY confirmou PK (CODIGOCLIENTE, ITEM) e indice unico separado em SEQUENCIA. Zero colunas explicitas de empresa/filial/grupo, FKs declaradas, triggers, dependencias SQL catalogadas ou predicados RLS nesta tabela. Isso comprova identidade relacional, nao regra de visibilidade no aplicativo. Leitor isolado parado; nenhuma escrita.
 
+## CPA3: chave do ajuste e cobertura por cliente e item (2026-11-26)
+
+- No catalogo SQL da EXETPS, a PK de ClientesObrasHistoricoAjustes e SEQUENCIA; ha tambem indice unico em (CODIGOCLIENTE, ITEMLOCALENTREGA, SEQUENCIA), sem FK declarada. Pelo par cliente/item, 1.536 eventos encontram 1.214 Obras; 1.560 eventos de 1.029 pares nao encontram o item, embora todos tenham cliente presente no mestre de Obras. Nao forcar vinculo por cliente ou pela sequencia da Obra. Nenhuma escrita.
+

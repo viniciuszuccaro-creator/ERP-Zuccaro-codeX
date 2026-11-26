@@ -180,3 +180,7 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 
 - Recibo privado `erp344-reader-20261125T165731Z/obra-native-scope-metadata.private.txt`, SHA-256 `9fcb08d0697ec51b9203c37e009b1dbbb1569f0e15c682e5cc122df73b89de2a`. Reavaliar os ajustes pela PK cliente/item; comparar SEQUENCIA separadamente, sem tomar ausencia de match triplo como falta da Obra ou usar a sequencia do evento como ID da Obra. A regra de Grupo deve ser comprovada no aplicativo ou em documentacao oficial.
 
+## CPA3: chave do ajuste e cobertura por cliente e item (2026-11-26)
+
+- Recibos privados `obra-adjustment-native-key.private.txt` (3731b35a) e `obra-adjustment-pk-coverage.private.json` (a8e724b8) no pacote `erp344-reader-20261125T165731Z`. Priorizar os 1.536 vinculados para validar ordem e tipos; procurar os 1.029 pares ausentes em snapshots anteriores. Preservar a sequencia nativa do evento, distinta da sequencia da Obra. Nao aplicar sem prova de escopo e gate.
+
