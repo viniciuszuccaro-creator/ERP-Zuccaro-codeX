@@ -160,3 +160,7 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 - Reusar `review-crosscheck.private.json` em `obra-emp03.ZaaNbi`, SHA-256 `1bcb0f56cda6124982a26adb78379fb99b442428e6075605d624d44223c905b9`. Nao repetir a extracao da EMP03.
 - Conferir as 6.244 chaves ausentes contra um indice atual por cliente e chave nativa; nao presumir cliente ausente nem reaplicar entregas existentes. Provar empresa por identificador oficial e distinguir titularidade de uso comercial antes do ensaio.
 
+## CPA3: cobertura viva de clientes das Obras da EMP03 (2026-11-26)
+
+- Reusar os recibos privados live-client-coverage e live-review-coverage em obra-emp03.ZaaNbi (SHA-256 do ultimo: 137602f3ce2ea00ff1becc2ab5036ed66e94d6d9cd0c73a726161c1b6617c8aa). Priorizar a validacao da empresa e dos campos de entrega da obra com mestre ativo. Nas 6.243 restantes, classificar revisao versus historico e manter o gate de cadastro mestre. Nao reextrair EMP03.
+

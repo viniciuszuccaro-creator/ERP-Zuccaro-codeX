@@ -165,3 +165,7 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 - Uniao de notas e pedidos: 33.083 pares unicos no mestre, 105 presentes em ambas as fontes e 656 sem par no mestre. Comparacao por chave completa com a fila privada arquivada: 26.839 encontrados e 6.244 sem entrada. Dos encontrados, 24.600 apontavam para cliente ativo e 2.239 para nao ativo; sao contagens de obras, nao de clientes.
 - Na fila, 26.728 locais seguem em revisao e 111 entregas existentes exigem conciliacao. Nenhuma consulta viva a HML, prova de empresa proprietaria, ativacao ou gravacao.
 
+## CPA3: cobertura viva de clientes das Obras da EMP03 (2026-11-26)
+
+- Consulta READ ONLY na HML pelo papel efetivo restrito, sem superusuario nem BYPASSRLS, filtrada pelo Grupo. Entre as 6.244 Obras fora da fila arquivada, uma conciliou com cliente mestre ativo; as outras 6.243 referenciam 4.224 codigos, todos presentes em legacy_client_review por chave nativa. Presenca na fila nao distingue revisao de historico nem autoriza uso como mestre. Nenhuma escrita ou ativacao.
+
