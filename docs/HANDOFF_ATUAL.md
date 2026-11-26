@@ -1,3 +1,7 @@
+## CPA3: vinculos de Produtos e unidades no clone restaurado (2026-11-26)
+
+- Recibo privado `price-history-context.vlR416/context.private.json`, SHA-256 `f8043780817067c0516ceb8c9a47210c3b53e95cd0654024aa894ae529459273`. Avaliar oito candidatos historicos pelo contrato definitivo; para os 27, buscar unidade historica e fator de conversao comprovado. Usar preflight dos 360 com SHA fixado, nao CSV antigo sem IDs da selecao. Nao usar empresa do Grupo como autorizacao, nem ativar preco.
+
 ## CPA3: cobertura de Produto e Empresa do historico de precos (2026-11-26)
 
 - Recibo `erp344-reader-20261125T165731Z/price-history-context-coverage.private.json` SHA-256 `b5ef918b0b48e093fcc15af8487ddd6c2fb6d14a72d431b5d4f35a47d79fe77d`. Priorizar os 35 eventos no clone restaurado para cruzar IDs originais, unidade e empresa historica. Nao ampliar grants na HML, nao inferir regra vigente de uso passado, nao repetir ensaio de staging. Validar destino canonico antes de qualquer gate.

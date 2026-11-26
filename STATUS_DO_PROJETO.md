@@ -1,3 +1,7 @@
+## CPA3: vinculos de Produtos e unidades no clone restaurado (2026-11-26)
+
+- Clone restaurado c33c96f4, somente leitura: 17.472 clientes e 273 Produtos. Preflight a9b6c44e fixado no manifesto dos 273: os 35 eventos/10 pares encontram Produto unico por codigo literal e procedencia Base44. Empresa historica pertence ao Grupo nos 35, mas nao e empresa proprietaria do Produto em nenhum. Unidade principal coincide em oito eventos/dois pares; outros 27 sem equivalencia comprovada. Nenhuma autorizacao comercial ou escrita.
+
 ## CPA3: cobertura de Produto e Empresa do historico de precos (2026-11-26)
 
 - Manifesto de 19.232 eventos: cruzamento por classe/material/tabela com evidencias privadas anteriores encontrou 35 eventos em 10 pares com candidato a Produto/unidade/empresa historica, 823 em 291 pares com candidato a Produto apenas e 18.374 em 3.168 pares sem candidato. Leitura restrita do catalogo da HML: produtos existe, sem SELECT para o papel consultado; sem tabela de precos ou historico no catalogo do schema. Nenhum apto operacional, nenhuma escrita.
