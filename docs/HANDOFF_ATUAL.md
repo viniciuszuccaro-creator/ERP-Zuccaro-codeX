@@ -216,3 +216,7 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 
 - Recibo privado `obra012-acl.D2Fz1h/acl.private.txt`, SHA-256 `a1f108211a93eb0aca5159ad63cfb7b825a2f19471e63076372dfdd707798a74`. Papel generico nao herda RLS de clientes; usar identidade nominal da aplicacao NOLOGIN no clone. Policies do ensaio cobrem Grupo, nao validam empresa/perfil/app completos. Buscar fonte oficial para ClienteEmpresa e escopo de Obras antes de incluir vinculos reais ou historico. Nao fabricar vinculos/ativar locais.
 
+## CPA3: fontes nativas de ClienteEmpresa (2026-11-26)
+
+- Recibo privado `erp344-reader-20261125T165731Z/cliente-empresa-native-coverage.private.txt`, SHA-256 `cbbefcb66f163d0e1590899a79e9ea9fe8aa3df3ef4c99ce453a828aa99e2c95`. Nao inferir ClienteEmpresa por CODIGOGRUPO nem parametros de credito. Procurar export especifico de vinculos ou regra nativa de acesso; propostas, notas, cheques e conta corrente demonstram contexto de operacao e nao substituem o cadastro. Reusar ClienteEmpresaOperations quando houver fonte e gate.
+

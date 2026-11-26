@@ -221,3 +221,7 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 
 - Clone restaurado c33c96f4 com papel da aplicacao reproduzido NOLOGIN/NOBYPASSRLS. A 012 nao concede acesso por padrao. ACL candidata apenas no clone: sem ClienteEmpresa, vinculo recusado; local de outro cliente recusado. Com ClienteEmpresa sintetico, Obra e vinculos visiveis no Grupo, local vinculado inativo; outro Grupo viu 0/0/0. Rollback removeu o delta, mantendo 17.472 clientes. Na HML em leitura restrita: zero ClienteEmpresa e 16.087 ClienteLocal visiveis, nenhum ativo. Nenhuma escrita HML.
 
+## CPA3: fontes nativas de ClienteEmpresa (2026-11-26)
+
+- EXETPS isolada em READ_ONLY: 22.895 clientes, 1.181 com CODIGOGRUPO positivo e todos conciliados com GrupoClientes (23 grupos de clientes, nao empresas). PlanoMensalidadeClientes vazio; DivisaoCreditoClientes tem uma linha sem codigo de empresa positivo e nao tem chave de cliente. Nenhuma das fontes comprova ClienteEmpresa. Nenhuma escrita.
+
