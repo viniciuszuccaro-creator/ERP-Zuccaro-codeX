@@ -420,3 +420,7 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 - Export direto: 91 GruposProduto, 11 Setores, duas Empresas e 14 Unidades, IDs unicos e contagem inicial/final igual. Arquivo privado 16.427 bytes, SHA `885ddab0975ee7844821b81fa503c3afa41e0bb2ab5d5d3091e0e7ca06ff2b38`. Dos 221 Produtos, todos com Empresa mapeada no mesmo Grupo e unidade literal ativa; zero IDs de GrupoProduto e de Setor encontrados no export atual. Faltam 55 IDs distintos de GrupoProduto e nove de Setor. Nenhum apto para carga. Recibo `755b445e`.
 - Cruzamento por 273 Produtos ja gravados, preservando ID, codigo literal e Empresa: 92 referencias de Setor com candidato unico, 129 sem candidato; zero candidatos de GrupoProduto. 87 dos 221 constavam no preflight anterior. Candidato observado nao comprova vinculo nativo, nem reativa cadastros. Recibo `0bbb6c21`; sem escrita.
 
+## CPA3: cobertura dos IDs historicos de Setor (2026-11-27)
+
+- Lixeira Base44 consultada somente por ID: zero dos 55 GruposProduto e dos nove Setores ausentes retornaram. No acervo, o CSV recuperado de GrupoProduto (91 linhas) nao coincide com os IDs procurados. O mapa historico dos 11 Setores localiza a referencia nativa nos 221 Produtos; 151 conferem Grupo e Empresa na origem, 70 permanecem sem essa conciliacao. Nenhum Produto passa os dois vinculos; sem escrita. Recibo privado `bdccb739dda4949f7475dc8af58be32f326dc53f8e96f0b9fb056142529d2a11`.
+

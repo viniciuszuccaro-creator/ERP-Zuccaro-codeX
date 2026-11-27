@@ -389,3 +389,7 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 
 - Nao repetir a exportacao dos 871 ou das quatro entidades referenciadas. Provas privadas em `base44-export-20261127`: `product-references.private.json`, `produto-221-reference-gates.private.json`, `produto-221-crosswalk-coverage.private.json`. Proximo: recuperar export historico/mapa oficial dos 55 IDs de GrupoProduto e nove de Setor ausentes; validar os 92 candidatos de Setor e os 87 Produtos do preflight anterior sem inferir por nome/codigo. Nenhum dos 221 apto a carga nesta prova.
 
+## CPA3: nao repetir busca de Setores e Grupos na lixeira (2026-11-27)
+
+- `base44-export-20261127/produto-221-historical-ids.private.json` fixa os 151 Produtos com Setor historico, Grupo e Empresa coincidentes na origem. Manter outros 70 em revisao de escopo. Proximo: buscar outro snapshot nativo para os 55 IDs GrupoProduto; o CSV de recuperacao e a lixeira ja foram conferidos. Validar estado e ACL no clone apos o vinculo de Grupo; nenhuma escrita autorizada por esta prova.
+
