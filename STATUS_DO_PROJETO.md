@@ -402,3 +402,7 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 - HML `a305a143`: API e HTML conferidos; 26 GiB livres. Backup agendado `hml-20261127T063010Z-5a0c4d7b`, restauracao comprovada no recibo, 47.790.080 bytes, copiado diretamente ao HD externo e confirmado por SHA-256 `48235eb23284d00b1175cfc0e7c2033947dd2abde3b9f134cb9f454d481e6475`; ACK canonico registrado. Sem prune, deploy ou operacional.
 - Branch exclusiva `codex/cadastros-hml-c2dcf435`: CI 45882138846 SUCCESS para `c2dcf435`; VM no D: ainda nao iniciada, nenhum pacote gerado.
 
+## CPA3: prova sintetica do consolidado de precos (2026-11-27)
+
+- PostgreSQL embutido descartavel: oito verificacoes com RLS forcada e papel somente leitura. Grupo consolida empresas permitidas sem duplicar; CPA e 3Z veem seus eventos; outra Empresa, outro Grupo e contextos incompletos nao leem; UPDATE negado. Eventos arquivados excluidos e decimal preservado. Dados inteiramente sinteticos: nao equivale a ACL da API, permissao de acesso real ou aplicacao dos oito eventos legados. Sem escrita na HML.
+

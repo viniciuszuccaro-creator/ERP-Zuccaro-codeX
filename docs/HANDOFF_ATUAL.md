@@ -373,3 +373,7 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 
 - Empacotar `c2dcf435` na branch `codex/cadastros-hml-c2dcf435` em executor privado; CI 45882138846 verde. VM do D: aguarda inicio autorizado. Backup agendado `hml-20261127T063010Z-5a0c4d7b` ja tem copia externa e ACK; nao repetir transferencia. Revalidar estado e backup antes da janela de deploy. HML continua `a305a143`.
 
+## CPA3: proximo gate de historico de precos (2026-11-27)
+
+- Reusar prova sintetica de consolidacao por lista autorizada. Na candidata, a lista precisa vir da autorizacao no servidor por requisicao, nunca do navegador; repetir o contrato com ACL efetiva no clone e reconciliar os oito eventos legados separadamente. Precos vigentes e HML intocados.
+
