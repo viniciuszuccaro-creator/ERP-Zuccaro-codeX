@@ -1,5 +1,8 @@
 ## Estado atual e próxima ação (2026-11-27)
 
+- **Bloqueio atual de Cadastros:** a VM privada está desligada, com disco de trabalho preservado. Chrome protegido em TCG não renderizou nem página mínima em 75 s; a execução já negativa teve log arquivado antes do desligamento. A sonda q35/WHPX sem disco iniciou Linux em menos de 2 s, mas o executor bloqueou por política a partida com o disco de trabalho. Retomar por um executor autorizado e capaz, sem abrir o WSL instalado em C: nem alterar o sandbox.
+- **Dashboard:** 16 testes focados passaram, incluindo ticket médio sem cancelamentos ou pedidos fora do período. Os pedidos ainda vêm de listagem limitada sem prova de completude; falta agregação oficial e comparação com o relatório. WIP separado, sem publicação.
+
 - **Em serviço:** HML API/web em `a305a143`. Candidata de Cadastros em WIP; nenhum SELECT/policy novo aplicado. A suíte corrigida na VM Linux registrou timeout no teste de abertura no Chrome protegido; cinco comparações históricas passaram em teste focado. Não publicar sem checks completos e CI do SHA exato.
 - **Próxima ação:** terminar a coleta da suíte atual, resolver o gate de navegador sem desativar o sandbox e validar o SHA de código. Em seguida, revalidar o backup restaurável, a cópia externa e o retorno; aplicar somente a leitura de Produtos já autorizada e publicar API/web juntas na HML.
 - **Publicação automática:** diretriz canônica no `PLANO_GO_LIVE.md` desde `59ecc16d`. Ainda não implantada nem comprovada. Após Cadastros, integrar ao CI existente e provar uma execução em HML. VPS final somente após aceite; cargas e acessos seguem gates separados.

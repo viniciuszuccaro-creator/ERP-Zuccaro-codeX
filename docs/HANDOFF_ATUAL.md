@@ -1,5 +1,7 @@
 ## Retomada imediata (2026-11-27)
 
+- **Retomada do executor:** VM privada desligada; WIP e log `cadastros-corrigida-tcg.log` preservados no disco de trabalho do D:. A sonda q35/WHPX com IRQ chip de kernel desligado iniciou Linux sem disco; a partida com o disco de trabalho foi bloqueada pelo executor. Usar um canal autorizado para iniciar a VM acelerada ou outro Linux privado com Chrome protegido. Não repetir a suíte em TCG como evidência de aceite.
+
 - **Versão servida:** `a305a143` na HML. Retomar a suíte Linux corrigida `erp-cadastros-corrigida` na VM privada do D:. O teste de abertura no Chrome protegido voltou a exceder o prazo; não usar os resultados parciais como gate. Manter WIP de Dashboard separado.
 - **Próxima ação:** concluir os checks e a CI do SHA de Cadastros; verificar backup/restauração, cópia externa e retorno. Reutilizar a aprovação do SELECT/policy de Produtos e a autorização de API/web juntas na HML, sem Financeiro/histórico ou mudanças no operacional. Validar com login e registrar link, versão e roteiro.
 - **Depois de Cadastros:** implementar e comprovar a publicação automática pelo CI na branch de entrega, conforme `PLANO_GO_LIVE.md` (`59ecc16d`). Não confundir decisão registrada com execução comprovada. VPS final só com aceite do proprietário; cargas e acessos não são parte do deploy automático.
