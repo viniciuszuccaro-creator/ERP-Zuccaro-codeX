@@ -1,5 +1,15 @@
 # AGENTS.md — ERP ZUCCARO
 
+## Comece aqui: Codex e Cursor
+
+Sincronize o repositório canônico e consulte a seção vigente
+[Publicação automática na VPS de teste](PLANO_GO_LIVE.md#publicação-automática-na-vps-de-teste--decisão-do-proprietário-em-27112026)
+na branch de integração `codex/casa-fechamento-hml-20261114`. Leia o topo de
+[`STATUS_DO_PROJETO.md`](STATUS_DO_PROJETO.md) e
+[`docs/HANDOFF_ATUAL.md`](docs/HANDOFF_ATUAL.md) para retomar do último estado
+comprovado. Codex conduz integração e publicação; Cursor trabalha na interface
+em sua branch, para integração.
+
 ## 0. FINALIDADE, ESCOPO E PRIORIDADE
 
 Este arquivo contém as regras permanentes e obrigatórias para Codex, Cursor, agentes de IA, automações e desenvolvedores que alterem este repositório. Seu escopo é todo o repositório, salvo instrução mais específica em `AGENTS.md` localizado em subdiretório.
@@ -160,7 +170,13 @@ um clone sincronizado desse repositório. Antes de editar, confirmar repositóri
 branch, HEAD e `git status`, e ler `docs/OPERACAO_DEV_VPS.md` e
 `docs/HANDOFF_ATUAL.md`.
 
-VPS DEV é acessada somente em tarefa explicitamente autorizada. Divergência
+Na VPS de teste (HML), a publicação automática de API e web juntas está
+autorizada na branch de entrega quando os checks aplicáveis do SHA exato e
+as verificações de destino, backup e retorno passarem, conforme o plano
+vigente. Isso não autoriza publicação implícita fora da HML. A promoção
+à VPS final exige aceite do proprietário e usa o mesmo pacote e hashes.
+Cargas, migrações e alterações de acesso exigem suas autorizações específicas.
+Outros acessos à VPS DEV continuam sujeitos à autorização explícita. Divergência
 entre GitHub, workspace, VPS ou handoff exige parar e diagnosticar; não resetar,
 forçar push, reaplicar migration ou recriar container silenciosamente. Nunca
 registrar segredos nos documentos.

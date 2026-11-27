@@ -1,3 +1,9 @@
+## Estado atual e próxima ação (2026-11-27)
+
+- **Em serviço:** HML API/web em `a305a143`. Candidata de Cadastros em WIP; nenhum SELECT/policy novo aplicado. A suíte corrigida na VM Linux registrou timeout no teste de abertura no Chrome protegido; cinco comparações históricas passaram em teste focado. Não publicar sem checks completos e CI do SHA exato.
+- **Próxima ação:** terminar a coleta da suíte atual, resolver o gate de navegador sem desativar o sandbox e validar o SHA de código. Em seguida, revalidar o backup restaurável, a cópia externa e o retorno; aplicar somente a leitura de Produtos já autorizada e publicar API/web juntas na HML.
+- **Publicação automática:** diretriz canônica no `PLANO_GO_LIVE.md` desde `59ecc16d`. Ainda não implantada nem comprovada. Após Cadastros, integrar ao CI existente e provar uma execução em HML. VPS final somente após aceite; cargas e acessos seguem gates separados.
+
 ## CPA3: candidata de Cadastros pronta para decisao (2026-11-27)
 
 - Validacao da candidata apos 13e33979: Chrome 158 instalado na VM privada do D: com sandbox padrao. Tres provas de navegador da VM canceladas por timeout; prova focada no Chrome Windows passou, inclusive resposta CPA tardia descartada apos trocar para 3Z. Na suite integrada, quatro comparacoes historicas tambem falharam pelo delta de Catalogo. Projecao exata corrigida no WIP, preservando as verificacoes ancestrais; 79 testes focados passaram. Ainda falta reexecutar a suite no snapshot corrigido e confirmar CI do SHA de codigo. Sem SELECT, publicacao ou carga.
