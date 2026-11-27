@@ -85,6 +85,11 @@ const markers = {
 };
 
 export function produtoCatalogoRemainder(file, source) {
+  if (file === 'tests/perfil-pedido-contract-reconciliation.test.js' && source.includes('produtoHttp: false')) {
+    const binding = "ENTITY: 'PerfilAcesso', produtoHttp: false, hasCadastroEntityPermission";
+    assert.equal(source.split(binding).length, 2);
+    return source.replace(binding, "ENTITY: 'PerfilAcesso', hasCadastroEntityPermission");
+  }
   if (!markers[file] || !source.includes(markers[file])) return source;
   let result = source.replace(/\r\n/g, '\n');
   for (const { before, after } of hunks[file]) {
