@@ -1,5 +1,7 @@
 ## CPA3: candidata de Cadastros pronta para decisao (2026-11-27)
 
+- Proprietario aprovou o delta ensaiado de leitura de Produtos somente na HML: SELECT e uma policy para o papel da API, restritos ao Grupo e Empresas autorizadas, sem escrita. Aplicar somente apos CI do SHA exato, revalidacao de destino, backup restauravel com copia externa e retorno. Nenhuma aplicacao registrada nesta aprovacao.
+
 - Produtos: catalogo HML confirmado em leitura com o principal da API: RLS forcada, zero policies, sem SELECT e sem BYPASSRLS. Backup restaurado: 273 ativos do Grupo. Ensaio HTTP isolado com Auth sintetico e papel restrito: 273 no Grupo e nas duas Empresas, duas paginas distintas e busca por codigo, empresa incompatível negada. Delta SELECT/policy aplicado e revertido no clone, sem alterar HML. Codigo de Cadastros ainda em validacao, sem publicacao.
 
 - Aceite posterior: troca CPA/3Z, busca e paginacao de Clientes passaram na interface autenticada. A captura de rede encontrou GET de Clientes com limite 500 na abertura sem entidade. Reversao conjunta executada; HML voltou a `a305a143`, conferida pela API, HTML e readiness. Bloqueada republicacao de `c2dcf435` ate corrigir o disparador global e provar a rota completa.

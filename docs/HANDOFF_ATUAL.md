@@ -1,5 +1,7 @@
 ## CPA3: gate de publicacao de Cadastros (2026-11-27)
 
+- Aprovacao do proprietario registrada para o delta SELECT/policy de Produtos ja ensaiado, exclusivamente na HML e sem escrita. Reutilizar a aprovacao do mesmo escopo; identificar papel e schema efetivos, conferir os SQLs de aplicacao e retorno e aguardar CI do SHA exato e backup restauravel com copia externa antes de aplicar. API/web juntas; sem cargas, Financeiro/historico ou alteracao operacional.
+
 - Proxima candidata inclui consulta sob demanda no layout e modo de leitura `catalogo=true` na grade de Produtos, sem ativacao operacional. Passaram teste montado, cliente HTTP, PostgreSQL sintetico e prova HTTP no backup restaurado para Grupo/CPA/3Z. O acesso de Produtos exige gate separado: SELECT e uma policy na tabela do schema HML, sem escrita ou fallback public. Aplicacao e reversao ensaiadas no clone; nenhuma permissao atual foi alterada. Checks finais e CI do SHA exato continuam pendentes.
 
 - Aceite autenticado de `c2dcf435`: Grupo CPA -> CPA -> 3Z -> Grupo CPA passou na interface; Clientes paginou e buscou por codigo e nome. Produtos exibiu zero no Grupo. Em recarga limpa sem entidade aberta, CDP registrou GET `/api/v1/clientes` com `limit=500`, antes de qualquer clique. Aceite negativo: API e web voltaram a `a305a143`, com meta, HTML, readiness e rota de login verificados. Nao republicar este SHA. Rastrear disparador no layout e adicionar regressao montando a rota completa. Sem escrita de dados ou operacional.
