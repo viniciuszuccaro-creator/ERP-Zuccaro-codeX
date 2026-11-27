@@ -1,5 +1,8 @@
 ## Retomada imediata (2026-11-27)
 
+- **Ações Rápidas passou no clone:** menu Novo → Novo Cliente abriu Dados Gerais, sem salvar. Clientes habilitou depois da hidratação, mas a lista retornou HTTP 500 `INTERNAL_ERROR`; PostgreSQL do clone registrou `42501` na tabela `clientes`. Retorno de permissões temporárias e parada do banco isolado confirmados.
+- **Próxima ação:** reconciliar somente no clone a ACL atual da HML antes de retestar Clientes e medir cache. Em transação somente leitura, a HML `a305a143` confirmou SELECT em clientes, grupos_produto, marcas, setores_atividade e unidades_medida, com RLS forçada; Produtos permanece sem SELECT após rollback. Comparar também políticas e acesso de escopo, sem ampliar o papel da HML. Nenhum deploy ou escrita na HML.
+
 - **Produtos passou no navegador do clone** com login sintético e web do SHA `1c804a15` ([build Ubuntu](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/46045236632)). Grupo → CPA → 3Z → Grupo; duas páginas e 273 registros na CPA e 3Z. A troca mostrou contexto pendente, voltou à página 1 e teve HTTP 200 nas duas páginas da 3Z. Na 3Z, busca por código e descrição (~0,8 s) e reabertura passaram. Captura até a abertura da rota: zero chamadas de listagem de Clientes/Produtos. O ensaio foi encerrado com reversão das permissões temporárias e parada do banco isolado.
 - **Próxima ação:** completar aceite de Clientes e Ações Rápidas, medir caches e distinguir negativas de tabelas auxiliares (`42501` no clone restrito) da consulta de Produtos. Não ampliar grants. Fazer integração e conferir CI do SHA final antes de revalidar backup, retorno e publicação autorizada. HML continua em `a305a143`; não houve merge nem deploy da branch de validação.
 
