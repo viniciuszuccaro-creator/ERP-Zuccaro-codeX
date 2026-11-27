@@ -1210,6 +1210,13 @@ export default function VisualizadorUniversalEntidadeV24({
         </div>
       );
     }
+    if (canonicalRead && !supplierMatches) {
+      return (
+        <div className="flex items-center justify-center h-40 text-sm text-amber-800" role="status" data-fonte-estado="aguardando-contexto">
+          Aguarde a confirmação do contexto para consultar {produtoHttp ? "produtos" : "fornecedores"}.
+        </div>
+      );
+    }
     if (isError && items.length === 0 && !isFetching) {
       return (
         <div className="flex flex-col items-center justify-center h-40 text-red-500 gap-2" data-fonte-estado="erro-api">
@@ -1574,9 +1581,6 @@ export default function VisualizadorUniversalEntidadeV24({
           </button>
         </div>
       )}
-      {canonicalRead && !supplierMatches && (
-        <p role="alert" className="text-sm text-amber-800">Aguarde a confirmação do contexto para consultar {produtoHttp ? "produtos" : "fornecedores"}.</p>
-      )}
       {produtoHttp && isError && (
         <p role="alert" className="text-sm text-amber-800">{listError && 'status' in listError && listError.status === 403 ? "Acesso negado à consulta de Produtos." : "Consulta de Produtos indisponível."}</p>
       )}
@@ -1584,7 +1588,7 @@ export default function VisualizadorUniversalEntidadeV24({
       <div className="flex items-center justify-between text-xs text-slate-500 shrink-0 flex-wrap gap-1">
         <span>
           Pág. {page} · {items.length} exibidos ·{" "}
-          {produtoTotal !== undefined ? produtoTotal + " total" : countsUnavailable
+          {canonicalRead && !supplierMatches ? "aguardando contexto" : produtoTotal !== undefined ? produtoTotal + " total" : countsUnavailable
             ? "total indisponível"
             : !countKnown
               ? "total …"

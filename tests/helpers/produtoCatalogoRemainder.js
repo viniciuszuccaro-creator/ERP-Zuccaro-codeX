@@ -92,6 +92,14 @@ export function produtoCatalogoRemainder(file, source) {
   }
   if (!markers[file] || !source.includes(markers[file])) return source;
   let result = source.replace(/\r\n/g, '\n');
+  if (file.endsWith('/VisualizadorUniversalEntidadeV24.jsx')) {
+    const pending = "    if (canonicalRead && !supplierMatches) {\n      return (\n        <div className=\"flex items-center justify-center h-40 text-sm text-amber-800\" role=\"status\" data-fonte-estado=\"aguardando-contexto\">\n          Aguarde a confirmação do contexto para consultar {produtoHttp ? \"produtos\" : \"fornecedores\"}.\n        </div>\n      );\n    }\n";
+    const error = '      {produtoHttp && isError && (';
+    const total = "          {produtoTotal !== undefined ?";
+    const pendingTotal = '          {canonicalRead && !supplierMatches ? "aguardando contexto" : produtoTotal !== undefined ?';
+    for (const part of [pending, error, pendingTotal]) assert.equal(result.split(part).length, 2);
+    result = result.replace(pending, '').replace(error, "      {canonicalRead && !supplierMatches && (\n        <p role=\"alert\" className=\"text-sm text-amber-800\">Aguarde a confirmação do contexto para consultar {produtoHttp ? \"produtos\" : \"fornecedores\"}.</p>\n      )}\n" + error).replace(pendingTotal, total);
+  }
   for (const { before, after } of hunks[file]) {
     assert.equal(result.split(after).length, 2, `Exact Produto catalog hunk: ${file}`);
     result = result.replace(after, () => before);
