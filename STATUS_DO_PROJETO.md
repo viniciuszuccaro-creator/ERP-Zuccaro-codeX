@@ -445,3 +445,7 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 
 - PostgreSQL embutido descartavel, export e preflight fixados por SHA: 21/21 contas conciliadas por ID, escopo, pai, dois codigos e estado; nove analiticas ativas. Replay zero; FK recusou pai inexistente e restricao recusou Empresa artificial. Somente tabela de revisao, sem restauracao integral ou plano operacional. Recibo `645e1eb2f3b279de25f36d5ddc71ec55d62e7f6fe8bef4843927dce7d81a2fc5`. Sem alteracao na HML.
 
+## CPA3: cobertura contabil dos titulos Base44 (2026-11-27)
+
+- Consulta dirigida pelo Grupo e Empresa dos Centros CC011/CC001: 2 e 4 titulos visiveis, respectivamente; zero vinculo preenchido com Pedido, Centro de Custo ou Plano de Contas. Campos existem em ContaReceber, mas esse recorte nao comprova uso comercial nem substitui o rateio nativo. Recibo privado `8b03688fd1e7720266942db101b0e1ded3ef9ded4b7cb5b02a5e89be36e65347`. Sem carga ou alteracao.
+

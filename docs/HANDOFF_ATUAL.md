@@ -413,3 +413,7 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 
 - `base44-export-20261127/plano-21-tree-rehearsal.private.json` confirma arvore fechada, reexecucao idempotente e bloqueios no staging. Nao repetir como se validasse o financeiro real: a API de Pedido exige plano da Empresa responsavel. Proximo: confirmar documento/rateio nativo e parametrizacao por Empresa antes de ensaiar a venda real; CC011 permanece fora.
 
+## CPA3: prova pendente para centro da venda da CPA (2026-11-27)
+
+- Nao repetir os seis titulos visiveis do Base44: `base44-export-20261127/receivables-center-and-plan-coverage.private.json` confirma ausencia dos tres vinculos no recorte. Falta leitura nativa de pedido/nota e rateio na EMP05 pelo leitor isolado; CC011 segue fora da parametrizacao.
+
