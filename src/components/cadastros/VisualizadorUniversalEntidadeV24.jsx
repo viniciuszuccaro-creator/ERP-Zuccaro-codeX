@@ -1578,7 +1578,7 @@ export default function VisualizadorUniversalEntidadeV24({
         <p role="alert" className="text-sm text-amber-800">Aguarde a confirmação do contexto para consultar {produtoHttp ? "produtos" : "fornecedores"}.</p>
       )}
       {produtoHttp && isError && (
-        <p role="alert" className="text-sm text-amber-800">{listError?.status === 403 ? "Acesso negado à consulta de Produtos." : "Consulta de Produtos indisponível."}</p>
+        <p role="alert" className="text-sm text-amber-800">{listError && 'status' in listError && listError.status === 403 ? "Acesso negado à consulta de Produtos." : "Consulta de Produtos indisponível."}</p>
       )}
       {/* Paginação */}
       <div className="flex items-center justify-between text-xs text-slate-500 shrink-0 flex-wrap gap-1">
