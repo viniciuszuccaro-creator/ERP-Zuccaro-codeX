@@ -1,3 +1,8 @@
+## CPA3: candidata de Cadastros pronta para decisao (2026-11-27)
+
+- API/web `c2dcf43536e12e1abbad1db379056d00af49944c`, CI 45882138846 verde. Tar de 20.336.640 bytes, SHA-256 `bb6c26a6884547f3ab5d31d192b3bd6424aca542c9260f249d947d7ce9e723cf`, 2.239 arquivos conferidos contra o manifesto; copia no HD externo verificada.
+- Backup de referencia conferido no HD e restaurado em PostgreSQL isolado, com 26 tabelas. Ensaio API/web sem banco: `a305a143 -> c2dcf435 -> a305a143` passou. HML permanece em `a305a143`. Publicacao e aceite autenticado pendentes; sem DDL, grants, cargas ou operacional.
+
 ## CPA3: Dashboard Base44 e fila de entregas (2026-11-26)
 
 - Checkout remoto isolado do ERP `ce45d710` e referencia ERP Integra `b0586b8`, sem reutilizar ou sobrescrever WIP remoto de Fornecedores. Testes focados do Dashboard e do escopo Comercial: 18/18. Inventariados Header, faixa de KPI, alertas, resumo e hooks. A referencia tambem usa amostras limitadas; nao copiar essas amostras como totais.

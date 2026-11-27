@@ -1,3 +1,8 @@
+## CPA3: gate de publicacao de Cadastros (2026-11-27)
+
+- Nao repetir build ou restore do mesmo artefato. Tar `runtime-cadastros-c2dcf435.tar` verificado no HD externo; SHA registrado no STATUS. Ensaio de retorno sem banco passou. Aguardar autorizacao especifica de API/web na HML; revalidar backup e versao servida antes da janela. Manter Financeiro/historico desligados, sem escrita de dados, DDL ou grants.
+- Aceite apos autorizacao: login, Grupo CPA/CPA/3Z, nenhuma listagem antes do clique, busca e paginacao em Clientes/Produtos. Se falhar, retornar API e web juntas para `a305a143`. Nao tocar no operacional.
+
 ## CPA3: retomada da adaptacao do Dashboard (2026-11-26)
 
 - Workspace remoto privado `dashboard-integracao.7url9e`: comparar `reference/src/pages/Dashboard.jsx` e seus hooks com `erp/src/pages/Dashboard.jsx`. Manter mesma rota/menu, contexto, permissoes e recursos existentes. Primeiro verificar paridade de Clientes/Produtos com o total canonico de Cadastros; nunca usar tamanho de pagina como total. Depois validar pedidos, alertas e titulos com periodos identicos aos relatorios, duas empresas mesmo Grupo e um contexto externo. Nao copiar fontes dependentes do Base44 diretamente para runtime.
