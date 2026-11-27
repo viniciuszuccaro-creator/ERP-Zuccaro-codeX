@@ -1,5 +1,7 @@
 ## Estado atual e próxima ação (2026-11-27)
 
+- **Candidata integrada, somente CI:** total filtrado de Clientes e espera de contexto de Produtos/Clientes consolidados na grade existente. 81 testes locais focados passaram, incluindo Chrome protegido, abertura sob demanda, Ações Rápidas, paginação, zero, erro e troca de empresa. Próximo passo: CI do SHA integrado, build Ubuntu e aceite no clone restaurado. HML segue em `a305a143`, sem merge ou deploy.
+
 - **Total filtrado de Clientes corrigido em candidata de validação:** a grade HTTP usa total e hasMore da própria página; a contagem geral e os consumidores de array foram preservados. Requisição cancelável e vinculada à sessão/empresa; zero e falha aparecem separados. 80 testes focados passaram, incluindo Chrome protegido. Aguardar CI Ubuntu e revalidar com base restaurada antes de integrar. Sem deploy; HML mantém `a305a143`.
 
 - **Causa do total de Clientes identificada:** `GET /api/v1/clientes` devolve a página, mas `httpApiClient.filter` e a ponte `entityListSorted` preservam só o array. O rodapé usa a contagem geral de `useEntityCounts`. Próximo lote: levar total filtrado e hasMore da mesma resposta à grade HTTP de Clientes, mantendo a contagem geral separada e o contrato de array dos demais consumidores. Testar busca, zero, erro e troca de contexto. Sem alteração de acesso, escrita ou deploy.

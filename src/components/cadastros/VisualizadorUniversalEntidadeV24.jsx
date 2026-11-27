@@ -1236,7 +1236,10 @@ export default function VisualizadorUniversalEntidadeV24({
         </div>
       );
     }
-    if (clienteHttpPage && (!supplierMatches || status === 'pending')) {
+    if (scopedPageRead && !supplierMatches) {
+      return <p role="status" className="p-4" data-fonte-estado="aguardando-contexto">Aguarde a confirmação do contexto.</p>;
+    }
+    if (clienteHttpPage && status === 'pending') {
       return <p role="status" className="p-4">Aguardando a consulta de Clientes.</p>;
     }
     if (items.length === 0 && !isFetching) {
@@ -1589,9 +1592,6 @@ export default function VisualizadorUniversalEntidadeV24({
           </button>
         </div>
       )}
-      {canonicalRead && !supplierMatches && (
-        <p role="alert" className="text-sm text-amber-800">Aguarde a confirmação do contexto para consultar {produtoHttp ? "produtos" : "fornecedores"}.</p>
-      )}
       {produtoHttp && isError && (
         <p role="alert" className="text-sm text-amber-800">{listError && 'status' in listError && listError.status === 403 ? "Acesso negado à consulta de Produtos." : "Consulta de Produtos indisponível."}</p>
       )}
@@ -1599,7 +1599,7 @@ export default function VisualizadorUniversalEntidadeV24({
       <div className="flex items-center justify-between text-xs text-slate-500 shrink-0 flex-wrap gap-1">
         <span>
           Pág. {page} · {items.length} exibidos ·{" "}
-          {clienteHttpPage
+          {scopedPageRead && !supplierMatches ? "aguardando contexto" : clienteHttpPage
             ? clientePageTotal !== undefined ? clientePageTotal + " total" : isError ? "total indisponível" : "total …"
             : produtoTotal !== undefined ? produtoTotal + " total" : countsUnavailable
             ? "total indisponível"

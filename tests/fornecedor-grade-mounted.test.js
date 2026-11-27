@@ -20,6 +20,7 @@ test(`grade de ${entity} usa leitura HTTP paginada no contexto atual`, { timeout
       export const getHttpProdutoApi=()=>({
         listCatalogPage:async ({offset,search,signal})=>{
           const company=window.company||'Grupo';
+          if(window.pendingCompanyContext)throw Error('REQUEST_BEFORE_CONTEXT');
           if(company==='CPA'&&window.holdCpa) {
             window.cpaSignal=signal;
             await new Promise(resolve=>{window.releaseCpa=resolve;});
@@ -43,7 +44,7 @@ test(`grade de ${entity} usa leitura HTTP paginada no contexto atual`, { timeout
     useWindow: `export const useWindow=()=>({openWindow:()=>{throw Error('LEGACY_FORM');}});`,
     useClienteCadastroNavigation: `export default()=>({});`,
     erpHttpSession: `export const HTTP_CONTEXT_CHANGED='fixture-context';
-      export const readErpHttpSession=()=>({groupId:'group',empresaId:window.company,actorId:'actor',token:'synthetic'});`,
+      export const readErpHttpSession=()=>({groupId:'group',empresaId:window.pendingCompanyContext?'CPA':window.company,actorId:'actor',token:'synthetic'});`,
     httpApiClient: `export const fornecedorReadApi={
       list:async ({offset,search})=>({items:[{id:'f',codigo:'001',nome:window.company+'-page-'+offset+(search||''),status:'Ativo'}],hasMore:offset===0}),
       get:async()=>({codigo:'001',razao_social:'Detalhe oficial'})};`,
@@ -95,7 +96,14 @@ test(`grade de ${entity} usa leitura HTTP paginada no contexto atual`, { timeout
         root.querySelector('[aria-label="Visualizar fornecedor"]').click();
         await wait(()=>document.body.textContent.includes('Detalhe oficial'));
       }
+      window.pendingCompanyContext=${produto};
       window.company='3Z';window.dispatchEvent(new Event('fixture-context'));
+      if (${produto}) {
+        await wait(()=>root.querySelector('[data-fonte-estado="aguardando-contexto"]'));
+        if(root.querySelector('[data-fonte-estado="lista-vazia"]') || root.textContent.includes('Grupo-page-0'))throw Error('PENDING_CONTEXT_DISPLAY');
+        window.pendingCompanyContext=false;
+        window.dispatchEvent(new Event('fixture-context'));
+      }
       await wait(()=>root.textContent.includes('3Z-page-0')&&!document.body.textContent.includes('Detalhe oficial'));
       if(root.textContent.includes('CPA-page-'))throw Error('STALE_COMPANY');
       const search=root.querySelector('input[placeholder*="Buscar"]');

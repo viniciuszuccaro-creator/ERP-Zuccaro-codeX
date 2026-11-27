@@ -144,11 +144,15 @@ const clientePageHunks = {
     },
     {
       "before": "      );\n    }\n    if (items.length === 0 && !isFetching) {\n      let emptyMsg = debouncedSearch\n",
-      "after": "      );\n    }\n    if (clienteHttpPage && (!supplierMatches || status === 'pending')) {\n      return <p role=\"status\" className=\"p-4\">Aguardando a consulta de Clientes.</p>;\n    }\n    if (items.length === 0 && !isFetching) {\n      let emptyMsg = debouncedSearch\n"
+      "after": "      );\n    }\n    if (scopedPageRead && !supplierMatches) {\n      return <p role=\"status\" className=\"p-4\" data-fonte-estado=\"aguardando-contexto\">Aguarde a confirmação do contexto.</p>;\n    }\n    if (clienteHttpPage && status === 'pending') {\n      return <p role=\"status\" className=\"p-4\">Aguardando a consulta de Clientes.</p>;\n    }\n    if (items.length === 0 && !isFetching) {\n      let emptyMsg = debouncedSearch\n"
+    },
+    {
+      "before": "        </div>\n      )}\n      {canonicalRead && !supplierMatches && (\n        <p role=\"alert\" className=\"text-sm text-amber-800\">Aguarde a confirmação do contexto para consultar {produtoHttp ? \"produtos\" : \"fornecedores\"}.</p>\n      )}\n      {produtoHttp && isError && (\n        <p role=\"alert\" className=\"text-sm text-amber-800\">{listError && 'status' in listError && listError.status === 403 ? \"Acesso negado à consulta de Produtos.\" : \"Consulta de Produtos indisponível.\"}</p>\n",
+      "after": "        </div>\n      )}\n      {produtoHttp && isError && (\n        <p role=\"alert\" className=\"text-sm text-amber-800\">{listError && 'status' in listError && listError.status === 403 ? \"Acesso negado à consulta de Produtos.\" : \"Consulta de Produtos indisponível.\"}</p>\n"
     },
     {
       "before": "        <span>\n          Pág. {page} · {items.length} exibidos ·{\" \"}\n          {produtoTotal !== undefined ? produtoTotal + \" total\" : countsUnavailable\n            ? \"total indisponível\"\n            : !countKnown\n",
-      "after": "        <span>\n          Pág. {page} · {items.length} exibidos ·{\" \"}\n          {clienteHttpPage\n            ? clientePageTotal !== undefined ? clientePageTotal + \" total\" : isError ? \"total indisponível\" : \"total …\"\n            : produtoTotal !== undefined ? produtoTotal + \" total\" : countsUnavailable\n            ? \"total indisponível\"\n            : !countKnown\n"
+      "after": "        <span>\n          Pág. {page} · {items.length} exibidos ·{\" \"}\n          {scopedPageRead && !supplierMatches ? \"aguardando contexto\" : clienteHttpPage\n            ? clientePageTotal !== undefined ? clientePageTotal + \" total\" : isError ? \"total indisponível\" : \"total …\"\n            : produtoTotal !== undefined ? produtoTotal + \" total\" : countsUnavailable\n            ? \"total indisponível\"\n            : !countKnown\n"
     },
     {
       "before": "            type=\"button\"\n            onClick={function() { setPage(function(p) { return p + 1; }); }}\n            disabled={(canonicalRead ? !rawItems?.hasMore : items.length < pageSize) || isFetching}\n            className=\"h-7 px-2 border border-slate-200 rounded-sm bg-white hover:bg-slate-50 disabled:opacity-40\"\n            data-action={`Cadastros.${ENTITY}.proxima-pagina`}\n",
