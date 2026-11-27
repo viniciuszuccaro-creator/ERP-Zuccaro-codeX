@@ -1,5 +1,7 @@
 ## CPA3: candidata de Cadastros pronta para decisao (2026-11-27)
 
+- Aceite posterior: troca CPA/3Z, busca e paginacao de Clientes passaram na interface autenticada. A captura de rede encontrou GET de Clientes com limite 500 na abertura sem entidade. Reversao conjunta executada; HML voltou a `a305a143`, conferida pela API, HTML e readiness. Bloqueada republicacao de `c2dcf435` ate corrigir o disparador global e provar a rota completa.
+
 - Publicada na VPS de teste sob a autorizacao registrada. API e web servem `c2dcf43536e12e1abbad1db379056d00af49944c`; readiness e rota de login HTTP 200, sessao anonima 401. Primeira tentativa voltou automaticamente a `a305a143` por falha de inicializacao do Nginx; segunda passou com as mesmas capacidades do Nginx anterior. Retorno preservado. Aceite autenticado CPA/3Z pendente. Sem DDL, grants, cargas ou operacional.
 
 - API/web `c2dcf43536e12e1abbad1db379056d00af49944c`, CI 45882138846 verde. Tar de 20.336.640 bytes, SHA-256 `bb6c26a6884547f3ab5d31d192b3bd6424aca542c9260f249d947d7ce9e723cf`, 2.239 arquivos conferidos contra o manifesto; copia no HD externo verificada.
