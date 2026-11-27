@@ -1,6 +1,6 @@
 ## CPA3: gate de publicacao de Cadastros (2026-11-27)
 
-- Nao repetir build ou restore do mesmo artefato. Tar `runtime-cadastros-c2dcf435.tar` verificado no HD externo; SHA registrado no STATUS. Ensaio de retorno sem banco passou. Aguardar autorizacao especifica de API/web na HML; revalidar backup e versao servida antes da janela. Manter Financeiro/historico desligados, sem escrita de dados, DDL ou grants.
+- Autorizacao explicita do proprietario em 2026-11-27: publicar API e web juntas do SHA `c2dcf43536e12e1abbad1db379056d00af49944c` somente na VPS de teste. Reaproveitar nas retomadas do mesmo pacote, destino e escopo. Tar `runtime-cadastros-c2dcf435.tar` verificado no HD externo; SHA registrado no STATUS. Ensaio de retorno sem banco passou. Revalidar backup, versao servida e retorno antes da troca. Manter Financeiro/historico desligados, sem escrita de dados, DDL ou grants.
 - Aceite apos autorizacao: login, Grupo CPA/CPA/3Z, nenhuma listagem antes do clique, busca e paginacao em Clientes/Produtos. Se falhar, retornar API e web juntas para `a305a143`. Nao tocar no operacional.
 
 ## CPA3: retomada da adaptacao do Dashboard (2026-11-26)
