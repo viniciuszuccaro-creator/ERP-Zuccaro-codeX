@@ -184,6 +184,31 @@ test('Cliente page returns the filtered total and next-page flag in one scoped r
   await assert.rejects(read, /CLIENTE_PAGE_INVALID/);
   assert.equal(calls, 3);
 });
+
+test('Cliente page facade passes a native AbortSignal directly to HTTP', async () => {
+  const { readFileSync } = await import('node:fs');
+  const { runLocalEntityReadFunction } = await import('../src/api/localEntityReadApi.js');
+  const source = readFileSync(new URL('../src/api/base44Client.js', import.meta.url), 'utf8');
+  const declaration = source.match(/export (async function listHttpClientePage\([\s\S]*?\n\})/);
+  assert.ok(declaration);
+  const controller = new AbortController();
+  let request;
+  const client = createHttpApiClient({
+    baseUrl: 'https://erp.synthetic.test',
+    fetchImpl: async (url, init) => {
+      request = new Request(url, init);
+      return Response.json({ data: [], meta: { total: 0, hasMore: false } });
+    },
+  });
+  const list = new Function('isHttpClienteListMode', 'httpHybridClient', 'runLocalEntityReadFunction',
+    declaration[1] + ';return listHttpClientePage;')(true, client, runLocalEntityReadFunction);
+  assert.deepEqual(await list({ sortField: 'codigo', sortDirection: 'desc', search: ' teste ', limit: 20, skip: 20 },
+    controller.signal), { data: [], meta: { total: 0, hasMore: false } });
+  assert.equal(new URL(request.url).searchParams.get('search'), 'teste');
+  assert.equal(new URL(request.url).searchParams.get('order_dir'), 'desc');
+  controller.abort();
+  assert.equal(request.signal.aborted, true);
+});
 import {
   HTTP_PILOT_ENTITIES,
   resolveErpApiBaseUrl,

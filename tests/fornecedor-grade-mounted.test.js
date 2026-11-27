@@ -30,14 +30,15 @@ test(`grade de ${entity} usa leitura HTTP paginada no contexto atual`, { timeout
             meta:{total:search?1:21,hasMore:offset===0&&!search}};
         }
       });
-      export const base44={entities:{},functions:{invoke:async (name,payload)=>{
-        if(!${cliente}||name!=='entityListSorted'||!payload.includePageMeta||!payload.signal)throw Error('LEGACY_LIST');
+      export const base44={entities:{},functions:{invoke:async()=>{throw Error('LEGACY_LIST');}}};
+      export async function listHttpClientePage(payload,signal){
+        if(!${cliente}||!(signal instanceof AbortSignal))throw Error('MISSING_NATIVE_ABORT_SIGNAL');
         const company=window.company||'Grupo';
         const search=payload.search;
         if(search==='falha')throw Error('HTTP_FAILED');
         return {data: search==='zero' ? [] : [{id:'c',codigo:'001',nome:company+'-page-'+payload.skip+(search||'')}],
           meta:{total:search==='zero'?0:search?1:21,hasMore:payload.skip===0&&!search}};
-      }}};`,
+      }`,
     useContextoVisual: `export const useContextoVisual=()=>({empresaAtual:{id:window.company},grupoAtual:{id:'group'},empresasDoGrupo:[]});`,
     usePermissions: `export default()=>({hasPermission:()=>true,hasPermissionKey:()=>true,canView:()=>true,canCreate:()=>true,canEdit:()=>true,canDelete:()=>true});`,
     useEntityCounts: `export default names=>{if(names.length&&!${cliente})throw Error('LEGACY_COUNTS');return{counts:${cliente}?{Cliente:15972}:{}};};`,

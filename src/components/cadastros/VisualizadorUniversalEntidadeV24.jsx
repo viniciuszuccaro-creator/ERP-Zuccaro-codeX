@@ -17,6 +17,7 @@ import {
   isHttpBackendMode,
   isHttpProdutoEnabled,
   getHttpProdutoApi,
+  listHttpClientePage,
   isHttpClienteListMode,
   isLocalOnlyMode,
 } from "@/api/base44Client";
@@ -614,7 +615,7 @@ export default function VisualizadorUniversalEntidadeV24({
         return result;
       }
       if (clienteHttpPage) assertSupplierScope();
-      const res = await base44.functions.invoke("entityListSorted", {
+      const request = {
         entityName: ENTITY,
         filter: readFilter,
         group_id: groupId,
@@ -624,8 +625,10 @@ export default function VisualizadorUniversalEntidadeV24({
         sortDirection: backendSortDir,
         limit: pageSize,
         skip: skip,
-        ...(clienteHttpPage ? { includePageMeta: true, signal } : {}),
-      });
+      };
+      const res = clienteHttpPage
+        ? await listHttpClientePage(request, signal)
+        : await base44.functions.invoke("entityListSorted", request);
       if (clienteHttpPage) {
         assertSupplierScope();
         if (signal?.aborted) throw new DOMException('Consulta cancelada', 'AbortError');

@@ -87,8 +87,8 @@ const markers = {
 const clientePageHunks = {
   "src/api/base44Client.js": [
     {
-      "before": "              filter.search = String(payload.search).trim();\n            }\n            return runLocalEntityReadFunction(name, { ...payload, filter }, {\n              expandFilter: (_entity, nextFilter) => nextFilter || {},\n              listEntity: async (entity, nextFilter, order, limit, skip) => {\n                const rows = await http.entities[entity].filter(nextFilter, order, limit, skip);\n                return Array.isArray(rows) ? rows : [];\n              },\n            });\n          }\n        }\n",
-      "after": "              filter.search = String(payload.search).trim();\n            }\n            const clientePage = name === 'entityListSorted' && entityName === 'Cliente' && payload.includePageMeta === true;\n            let meta;\n            const result = await runLocalEntityReadFunction(name, { ...payload, filter }, {\n              expandFilter: (_entity, nextFilter) => nextFilter || {},\n              listEntity: async (entity, nextFilter, order, limit, skip) => {\n                if (clientePage) {\n                  const page = await http.entities.Cliente.filterPage(nextFilter, order, limit, skip, payload.signal);\n                  meta = page.meta;\n                  return page.data;\n                }\n                const rows = await http.entities[entity].filter(nextFilter, order, limit, skip);\n                return Array.isArray(rows) ? rows : [];\n              },\n            });\n            return clientePage ? { ...result, meta } : result;\n          }\n        }\n"
+      "before": "}\n\n/**\n * Contrato publico unico para os clientes remoto, local e http.\n",
+      "after": "}\n\nexport async function listHttpClientePage(payload, signal) {\n  if (!isHttpClienteListMode || !httpHybridClient) throw new Error('Cliente HTTP indisponivel');\n  const filter = { ...payload.filter };\n  if (typeof payload.search === 'string' && payload.search.trim()) filter.search = payload.search.trim();\n  let meta;\n  const result = await runLocalEntityReadFunction('entityListSorted', { ...payload, entityName: 'Cliente', filter }, {\n    expandFilter: (_entity, nextFilter) => nextFilter,\n    listEntity: async (_entity, nextFilter, order, limit, skip) => {\n      const page = await httpHybridClient.entities.Cliente.filterPage(nextFilter, order, limit, skip, signal);\n      meta = page.meta;\n      return page.data;\n    },\n  });\n  return { ...result, meta };\n}\n\n/**\n * Contrato publico unico para os clientes remoto, local e http.\n"
     }
   ],
   "src/api/httpApiClient.js": [
@@ -107,9 +107,17 @@ const clientePageHunks = {
     {
       "before": "          return Array.isArray(rows) ? rows.map(hydrateClienteHttpRowForUi) : rows;\n        },\n        async create(data) {\n          return hydrateClienteHttpRowForUi(\n",
       "after": "          return Array.isArray(rows) ? rows.map(hydrateClienteHttpRowForUi) : rows;\n        },\n        async filterPage(query, orderBy, limit, skip, signal) {\n          const page = await base.filterPage(query, orderBy, limit, skip, signal);\n          if (!Array.isArray(page?.data) || !Number.isSafeInteger(page.meta?.total) ||\n              page.meta.total < page.data.length || typeof page.meta.hasMore !== 'boolean') {\n            throw new Error('CLIENTE_PAGE_INVALID');\n          }\n          return { data: page.data.map(hydrateClienteHttpRowForUi), meta: page.meta };\n        },\n        async create(data) {\n          return hydrateClienteHttpRowForUi(\n"
+    },
+    {
+      "before": "    },\n  };\n  /** @type {Record<string, ReturnType<typeof createCrudEntity>>} */\n  const entities = {};\n  for (const name of ['GrupoEmpresarial', 'Empresa']) entities[name] = createOrganizacionalHttp(name, request, getScope);\n",
+      "after": "    },\n  };\n  /** @type {Record<string, Omit<ReturnType<typeof createCrudEntity>, 'filterPage'>> & { Cliente?: typeof entityRoutes.Cliente }} */\n  const entities = {};\n  for (const name of ['GrupoEmpresarial', 'Empresa']) entities[name] = createOrganizacionalHttp(name, request, getScope);\n"
     }
   ],
   "src/components/cadastros/VisualizadorUniversalEntidadeV24.jsx": [
+    {
+      "before": "  isHttpProdutoEnabled,\n  getHttpProdutoApi,\n  isHttpClienteListMode,\n  isLocalOnlyMode,\n",
+      "after": "  isHttpProdutoEnabled,\n  getHttpProdutoApi,\n  listHttpClientePage,\n  isHttpClienteListMode,\n  isLocalOnlyMode,\n"
+    },
     {
       "before": "  const clienteHttpSemPiloto =\n    ENTITY === \"Cliente\" && isHttpBackendMode && !isHttpClienteListMode;\n  /** Modo local puro: store local explícito (≠ HML). */\n  const clienteFonteLocalOnly =\n",
       "after": "  const clienteHttpSemPiloto =\n    ENTITY === \"Cliente\" && isHttpBackendMode && !isHttpClienteListMode;\n  const clienteHttpPage = ENTITY === \"Cliente\" && isHttpClienteListMode;\n  /** Modo local puro: store local explícito (≠ HML). */\n  const clienteFonteLocalOnly =\n"
@@ -127,12 +135,12 @@ const clientePageHunks = {
       "after": "    function() {\n      const legacyKey = [\"viz-v33\", ENTITY, sortField, sortDir, page, pageSize, debouncedSearch, empresaId, groupId];\n      return scopedPageRead ? [...legacyKey, supplierScope] : legacyKey;\n    },\n    [ENTITY, sortField, sortDir, page, pageSize, debouncedSearch, empresaId, groupId, scopedPageRead, supplierScope]\n  );\n  const visibleScope = JSON.stringify([ENTITY, groupId, empresaId, debouncedSearch, scopedPageRead ? supplierScope : null]);\n  // Limpa cache no render ao trocar tenant/busca — evita um frame com linhas do contexto anterior.\n  if (lastGoodScope.current !== visibleScope) {\n"
     },
     {
-      "before": "        return result;\n      }\n      const res = await base44.functions.invoke(\"entityListSorted\", {\n        entityName: ENTITY,\n",
-      "after": "        return result;\n      }\n      if (clienteHttpPage) assertSupplierScope();\n      const res = await base44.functions.invoke(\"entityListSorted\", {\n        entityName: ENTITY,\n"
+      "before": "        return result;\n      }\n      const res = await base44.functions.invoke(\"entityListSorted\", {\n        entityName: ENTITY,\n        filter: readFilter,\n",
+      "after": "        return result;\n      }\n      if (clienteHttpPage) assertSupplierScope();\n      const request = {\n        entityName: ENTITY,\n        filter: readFilter,\n"
     },
     {
       "before": "        limit: pageSize,\n        skip: skip,\n      });\n      return Array.isArray(res && res.data) ? res.data : [];\n    },\n",
-      "after": "        limit: pageSize,\n        skip: skip,\n        ...(clienteHttpPage ? { includePageMeta: true, signal } : {}),\n      });\n      if (clienteHttpPage) {\n        assertSupplierScope();\n        if (signal?.aborted) throw new DOMException('Consulta cancelada', 'AbortError');\n        if (!Array.isArray(res?.data) || !Number.isSafeInteger(res.meta?.total) ||\n            res.meta.total < res.data.length || typeof res.meta.hasMore !== 'boolean') throw new Error('CLIENTE_PAGE_INVALID');\n        return { items: res.data, total: res.meta.total, hasMore: res.meta.hasMore };\n      }\n      return Array.isArray(res && res.data) ? res.data : [];\n    },\n"
+      "after": "        limit: pageSize,\n        skip: skip,\n      };\n      const res = clienteHttpPage\n        ? await listHttpClientePage(request, signal)\n        : await base44.functions.invoke(\"entityListSorted\", request);\n      if (clienteHttpPage) {\n        assertSupplierScope();\n        if (signal?.aborted) throw new DOMException('Consulta cancelada', 'AbortError');\n        if (!Array.isArray(res?.data) || !Number.isSafeInteger(res.meta?.total) ||\n            res.meta.total < res.data.length || typeof res.meta.hasMore !== 'boolean') throw new Error('CLIENTE_PAGE_INVALID');\n        return { items: res.data, total: res.meta.total, hasMore: res.meta.hasMore };\n      }\n      return Array.isArray(res && res.data) ? res.data : [];\n    },\n"
     },
     {
       "before": "    refetchOnMount: 'always',\n    placeholderData: function(prev, previousQuery) {\n      if (canonicalRead) return undefined;\n      return getScopedCadastroPlaceholder(prev, previousQuery?.queryKey, queryKey);\n    },\n    // HTTP + Cliente sem piloto: não consultar store local (evita lista vazia como “sucesso”).\n    enabled: !!ENTITY && contextoValido && canViewCadastro && !clienteHttpSemPiloto && (!canonicalRead || supplierMatches),\n  });\n  const produtoTotal = produtoHttp && supplierMatches && canViewCadastro && !isError ? rawItems?.total : undefined;\n\n  // items: estabilidade total — nunca desaparece durante sort/paginação/exclusão\n  const items = useMemo(function() {\n    if (canonicalRead) return supplierMatches && canViewCadastro && Array.isArray(rawItems?.items) ? rawItems.items : [];\n    const arr = Array.isArray(rawItems) ? rawItems : [];\n    if (arr.length > 0) {\n",
@@ -162,17 +170,12 @@ const clientePageHunks = {
 };
 
 export function produtoCatalogoRemainder(file, source) {
-  const pageMarker = { 'src/api/base44Client.js': 'payload.includePageMeta === true',
+  const pageMarker = { 'src/api/base44Client.js': 'export async function listHttpClientePage',
     'src/api/httpApiClient.js': 'CLIENTE_PAGE_INVALID',
     'src/components/cadastros/VisualizadorUniversalEntidadeV24.jsx': 'const clienteHttpPage' };
   if (pageMarker[file] && source.includes(pageMarker[file])) {
     const crlf = source.includes('\r\n');
     let projected = source.replace(/\r\n/g, '\n');
-    if (file === 'src/api/httpApiClient.js' && projected.includes("Omit<ReturnType<typeof createCrudEntity>, 'filterPage'>")) {
-      const typeHunk = {"before":"    },\n  };\n  /** @type {Record<string, ReturnType<typeof createCrudEntity>>} */\n  const entities = {};\n  for (const name of ['GrupoEmpresarial', 'Empresa']) entities[name] = createOrganizacionalHttp(name, request, getScope);\n","after":"    },\n  };\n  /** @type {Record<string, Omit<ReturnType<typeof createCrudEntity>, 'filterPage'>> & { Cliente?: typeof entityRoutes.Cliente }} */\n  const entities = {};\n  for (const name of ['GrupoEmpresarial', 'Empresa']) entities[name] = createOrganizacionalHttp(name, request, getScope);\n"};
-      assert.equal(projected.split(typeHunk.after).length, 2, 'Exact Cliente page type hunk');
-      projected = projected.replace(typeHunk.after, () => typeHunk.before);
-    }
     for (const { before, after } of clientePageHunks[file]) {
       assert.equal(projected.split(after).length, 2, `Exact Cliente page hunk: ${file}`);
       projected = projected.replace(after, () => before);

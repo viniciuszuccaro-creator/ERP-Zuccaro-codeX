@@ -222,21 +222,13 @@ function createHttpHybridClient() {
             if (payload.search != null && String(payload.search).trim()) {
               filter.search = String(payload.search).trim();
             }
-            const clientePage = name === 'entityListSorted' && entityName === 'Cliente' && payload.includePageMeta === true;
-            let meta;
-            const result = await runLocalEntityReadFunction(name, { ...payload, filter }, {
+            return runLocalEntityReadFunction(name, { ...payload, filter }, {
               expandFilter: (_entity, nextFilter) => nextFilter || {},
               listEntity: async (entity, nextFilter, order, limit, skip) => {
-                if (clientePage) {
-                  const page = await http.entities.Cliente.filterPage(nextFilter, order, limit, skip, payload.signal);
-                  meta = page.meta;
-                  return page.data;
-                }
                 const rows = await http.entities[entity].filter(nextFilter, order, limit, skip);
                 return Array.isArray(rows) ? rows : [];
               },
             });
-            return clientePage ? { ...result, meta } : result;
           }
         }
         if (name === 'countEntities') {
@@ -318,6 +310,22 @@ export function getHttpProdutoApi() {
     throw new Error('Produto HTTP indisponivel');
   }
   return httpHybridClient.preparedEntities.Produto;
+}
+
+export async function listHttpClientePage(payload, signal) {
+  if (!isHttpClienteListMode || !httpHybridClient) throw new Error('Cliente HTTP indisponivel');
+  const filter = { ...payload.filter };
+  if (typeof payload.search === 'string' && payload.search.trim()) filter.search = payload.search.trim();
+  let meta;
+  const result = await runLocalEntityReadFunction('entityListSorted', { ...payload, entityName: 'Cliente', filter }, {
+    expandFilter: (_entity, nextFilter) => nextFilter,
+    listEntity: async (_entity, nextFilter, order, limit, skip) => {
+      const page = await httpHybridClient.entities.Cliente.filterPage(nextFilter, order, limit, skip, signal);
+      meta = page.meta;
+      return page.data;
+    },
+  });
+  return { ...result, meta };
 }
 
 /**

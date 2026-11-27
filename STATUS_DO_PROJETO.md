@@ -1,5 +1,7 @@
 ## Estado atual e próxima ação (2026-11-27)
 
+- **Causa do bloqueio no Chrome isolada:** no SHA `b9043336`, o wrapper do Layout sanitizava o `AbortSignal` passado como dado e o navegador rejeitava o fetch antes do GET. A correção usa a fachada de leitura HTTP dedicada, sem passar pelo wrapper genérico e sem alterar RBAC, filtros, cancelamento ou demais consumidores. Testes focados (incluindo Chrome e transporte com sinal nativo) passaram. Aguardar CI e repetir o aceite autenticado no clone. Sem deploy; HML mantém `a305a143`.
+
 - **Typecheck de Cadastros:** a suíte do frontend passou em `571a1db0`, mas o typecheck apontou TS2741 porque `filterPage` ficou obrigatório para outras entidades. O contrato revisado declara a página somente em Cliente, sem mudança de runtime; 66 testes focados passaram. Revalidar no Ubuntu pelo novo SHA antes de empacotar ou testar o clone. HML mantida em `a305a143`.
 
 - **Correção do gate de Cadastros:** a CI de Clientes identificou três verificações históricas da fachada que não descontavam o novo trecho exato de paginação. O guarda comum agora usa o recorte já auditado, sem mudar hashes ou tolerar edições fora dele. Os 27 testes afetados passaram localmente. Aguardar a CI da revisão corrigida e gerar a web desse SHA, não da candidata anterior. HML permanece em `a305a143`.
