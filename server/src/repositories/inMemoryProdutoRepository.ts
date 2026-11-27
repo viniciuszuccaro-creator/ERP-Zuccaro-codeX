@@ -21,6 +21,7 @@ export type ProdutoListFilter = Scope & ListOptions & {
   codigo?: string;
   codigoBarras?: string;
   forOperation?: boolean;
+  forCatalog?: boolean;
 };
 
 export type ProdutoReadOptions = {
@@ -229,7 +230,8 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
   private matches(filter: ProdutoListFilter, r: Produto): boolean {
     if (r.group_id !== filter.groupId) return false;
     if(filter.forOperation&&(!this.empresaLinksEnabled||!filter.empresaId))return false;
-    if (filter.empresaId && r.empresa_id !== filter.empresaId) {
+    if (filter.empresaId && r.empresa_id !== filter.empresaId &&
+        !(filter.forCatalog && !filter.forOperation && r.empresa_id === null)) {
       const link=this.empresaLinks.get(`${filter.groupId}:${filter.empresaId}:${r.id}`);
       if(!filter.forOperation||r.empresa_id!==null||!r.ativo||!link?.ativo||!link.habilitado_operacao)return false;
     }

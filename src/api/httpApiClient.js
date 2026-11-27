@@ -522,6 +522,10 @@ SeparacaoConferencia: {
       });
       return {
         ...base,
+        /** @param {{search?:string,limit:number,offset:number,signal?:AbortSignal}} page */
+        listCatalogPage({ search, limit, offset, signal }) {
+          return request('/api/v1/produtos', { query: { catalogo: true, search, limit, offset }, signal, unwrap: false });
+        },
         variantes: relationRoutes('variantes'),
         empresaOperacao: {
           /** @param {string} produtoId @param {{signal?:AbortSignal}} [options] */

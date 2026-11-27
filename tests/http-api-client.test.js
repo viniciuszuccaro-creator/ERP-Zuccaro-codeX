@@ -351,6 +351,30 @@ test('Produto route exists in preparedEntities but not in pilot entities', async
   assert.match(urls[0], /\/api\/v1\/produtos\/p1/);
 });
 
+test('Catalogo preparado consulta pagina e total sem ativar o piloto global de Produto', async () => {
+  const calls = [];
+  let empresaId = null;
+  const page = { data: [{ id: 'p1' }], meta: { total: 273, hasMore: true } };
+  const client = createHttpApiClient({
+    baseUrl: 'https://erp.invalid',
+    getScope: () => ({ groupId: 'g1', empresaId, actorId: 'u1' }),
+    fetchImpl: async (url, init) => {
+      calls.push({ url: new URL(url), ...init });
+      return new Response(JSON.stringify(page), { headers: { 'content-type': 'application/json' } });
+    },
+  });
+  assert.equal(client.entities.Produto, undefined);
+  const api = client.preparedEntities.Produto;
+  assert.deepEqual(await api.listCatalogPage({ search: '001', offset: 20, limit: 20 }), page);
+  empresaId = 'e1';
+  assert.deepEqual(await api.listCatalogPage({ search: 'barra', offset: 0, limit: 20 }), page);
+  assert.equal(calls[0].url.pathname, '/api/v1/produtos');
+  assert.deepEqual(Object.fromEntries(calls[0].url.searchParams), { catalogo: 'true', search: '001', limit: '20', offset: '20' });
+  assert.equal(calls[0].headers['X-Group-Id'], 'g1');
+  assert.equal(calls[0].headers['X-Empresa-Id'], undefined);
+  assert.equal(calls[1].headers['X-Empresa-Id'], 'e1');
+});
+
 test('Produto preparado lista somente metadados DAM no BFF sem ativar piloto', async () => {
   const calls = [];
   const controller = new AbortController();

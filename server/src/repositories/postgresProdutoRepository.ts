@@ -177,7 +177,8 @@ export class PostgresProdutoRepository implements ProdutoRepository {
             SELECT 1 FROM produto_empresas pe JOIN empresas e ON e.id=pe.empresa_id AND e.group_id=pe.group_id
             WHERE pe.produto_id=produtos.id AND pe.group_id=produtos.group_id AND pe.empresa_id=$${companyParameter}
               AND pe.ativo AND pe.habilitado_operacao AND e.status='Ativa')))`
-        : `empresa_id = $${companyParameter}`);
+        : filter.forCatalog ? `(empresa_id = $${companyParameter} OR empresa_id IS NULL)`
+          : `empresa_id = $${companyParameter}`);
     }
     // Default operacional: ativo=true (fail-safe). Combinado com group_id (tenant).
     const ativoFilter = filter.forOperation?true:typeof filter.ativo === 'boolean' ? filter.ativo : true;

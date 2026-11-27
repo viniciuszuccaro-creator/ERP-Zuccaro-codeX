@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
+import { produtoCatalogoRemainder } from './produtoCatalogoRemainder.js';
 
 // Exact authorized organizational delta; all historical assertion hashes stay unchanged.
 // Only historical comparisons use this projection; current behavior has separate tests.
@@ -747,6 +748,7 @@ const entries = {
 };
 
 export function organizacionalRemainder(file, source) {
+ source=produtoCatalogoRemainder(file,source);
  const entry=entries[file]; if(!entry) return source;
  let result=source.replace(/\r\n/g,'\n');
  if(file==='tests/legado-importador-consolidacao.test.js') {

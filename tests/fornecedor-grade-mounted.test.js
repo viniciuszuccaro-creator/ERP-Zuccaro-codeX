@@ -8,12 +8,26 @@ import { join } from 'node:path';
 import test from 'node:test';
 import { build } from 'esbuild';
 
-test('grade de fornecedores usa leitura HTTP paginada sem habilitar escrita legada', { timeout: 30000 }, async () => {
+for (const entity of ['Fornecedor', 'Produto']) {
+test(`grade de ${entity} usa leitura HTTP paginada sem habilitar escrita legada`, { timeout: 30000 }, async () => {
+  const produto = entity === 'Produto';
   const binary = process.env.CHROME_BIN || (process.platform === 'win32'
     ? 'C:/Program Files/Google/Chrome/Application/chrome.exe' : '/usr/bin/google-chrome');
   assert.ok(existsSync(binary), 'Chrome existente necessário');
   const modules = {
-    base44Client: `export const isHttpBackendMode=true,isHttpClienteListMode=false,isLocalOnlyMode=false,erpBackendMode='http';
+    base44Client: `export const isHttpBackendMode=true,isHttpProdutoEnabled=${produto},isHttpClienteListMode=false,isLocalOnlyMode=false,erpBackendMode='http';
+      export const getHttpProdutoApi=()=>({
+        listCatalogPage:async ({offset,search,signal})=>{
+          const company=window.company||'Grupo';
+          if(company==='CPA'&&window.holdCpa) {
+            window.cpaSignal=signal;
+            await new Promise(resolve=>{window.releaseCpa=resolve;});
+            return {data:[{id:'late',codigo:'002',descricao:'CPA-LATE-RESPONSE'}],meta:{total:1,hasMore:false}};
+          }
+          return {data:[{id:'p',codigo:'001',descricao:company+'-page-'+offset+(search||'')}],
+            meta:{total:search?1:21,hasMore:offset===0&&!search}};
+        }
+      });
       export const base44={entities:{},functions:{invoke:async()=>{throw Error('LEGACY_LIST');}}};`,
     useContextoVisual: `export const useContextoVisual=()=>({empresaAtual:{id:window.company},grupoAtual:{id:'group'},empresasDoGrupo:[]});`,
     usePermissions: `export default()=>({hasPermission:()=>true,hasPermissionKey:()=>true,canView:()=>true,canCreate:()=>true,canEdit:()=>true,canDelete:()=>true});`,
@@ -33,19 +47,25 @@ test('grade de fornecedores usa leitura HTTP paginada sem habilitar escrita lega
     import {QueryClient,QueryClientProvider} from '@tanstack/react-query';
     import Grid from './src/components/cadastros/VisualizadorUniversalEntidadeV24.jsx';
     window.company='CPA';
-    const root=document.getElementById('root'), next=()=>root.querySelector('[data-action="Cadastros.Fornecedor.proxima-pagina"]');
+    const root=document.getElementById('root'), next=()=>root.querySelector('[data-action="Cadastros.${entity}.proxima-pagina"]');
     const wait=async condition=>{for(let n=0;n<200;n++){if(condition())return;await new Promise(r=>setTimeout(r,20));}throw Error('EXPECTED_UI_STATE');};
     const report=result=>fetch('/result',{method:'POST',body:JSON.stringify(result)});
     window.addEventListener('error',e=>report({error:e.message}));
-    createRoot(root).render(<QueryClientProvider client={new QueryClient()}><Grid nomeEntidade="Fornecedor"/></QueryClientProvider>);
+    createRoot(root).render(<QueryClientProvider client={new QueryClient()}><Grid nomeEntidade="${entity}"/></QueryClientProvider>);
     (async()=>{
       await wait(()=>root.textContent.includes('CPA-page-0'));
-      const writes=root.querySelectorAll('[data-action="Cadastros.Fornecedor.criar"],[data-action="Cadastros.Fornecedor.editar"],[data-action="Cadastros.Fornecedor.excluir"]');
+      const writes=root.querySelectorAll('[data-action="Cadastros.${entity}.criar"],[data-action="Cadastros.${entity}.editar"],[data-action="Cadastros.${entity}.excluir"]');
       if([...writes].some(button=>!button.disabled))throw Error('LEGACY_WRITE_ENABLED');
       next().click();
       await wait(()=>root.textContent.includes('CPA-page-20')&&next().disabled);
-      root.querySelector('[aria-label="Visualizar fornecedor"]').click();
-      await wait(()=>document.body.textContent.includes('Detalhe oficial'));
+      if (${produto}) {
+        if (!root.textContent.includes('21 total')) throw Error('TOTAL_NOT_FROM_API');
+        window.company=null;window.dispatchEvent(new Event('fixture-context'));
+        await wait(()=>root.textContent.includes('Grupo-page-0'));
+      } else {
+        root.querySelector('[aria-label="Visualizar fornecedor"]').click();
+        await wait(()=>document.body.textContent.includes('Detalhe oficial'));
+      }
       window.company='3Z';window.dispatchEvent(new Event('fixture-context'));
       await wait(()=>root.textContent.includes('3Z-page-0')&&!document.body.textContent.includes('Detalhe oficial'));
       if(root.textContent.includes('CPA-page-'))throw Error('STALE_COMPANY');
@@ -53,6 +73,20 @@ test('grade de fornecedores usa leitura HTTP paginada sem habilitar escrita lega
       Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(search,'001');
       search.dispatchEvent(new Event('input',{bubbles:true}));
       await wait(()=>root.textContent.includes('3Z-page-0001'));
+      if (${produto}) {
+        window.holdCpa=true;
+        window.company='CPA';window.dispatchEvent(new Event('fixture-context'));
+        await wait(()=>window.releaseCpa);
+        window.company='3Z';window.dispatchEvent(new Event('fixture-context'));
+        await wait(()=>window.cpaSignal?.aborted&&root.textContent.includes('3Z-page-0'));
+        let leaked=false;
+        const observer=new MutationObserver(()=>{leaked||=root.textContent.includes('CPA-LATE-RESPONSE');});
+        observer.observe(root,{childList:true,subtree:true,characterData:true});
+        window.releaseCpa();
+        await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+        observer.disconnect();
+        if(leaked||!root.textContent.includes('3Z-page-0'))throw Error('LATE_COMPANY_RESPONSE');
+      }
       await report({ok:true});
     })().catch(e=>report({error:e.message}));
   ` }, bundle: true, write: false, format: 'iife', platform: 'browser',
@@ -95,3 +129,4 @@ test('grade de fornecedores usa leitura HTTP paginada sem habilitar escrita lega
     await rm(profile, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
   }
 });
+}

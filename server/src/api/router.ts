@@ -225,6 +225,12 @@ function mountProdutoRoutes(router: Router, service: ProdutoService) {
   router.get('/api/v1/produtos', requireTenantScope, async (req, res, next) => {
     try {
       const forOperation=parseProdutoOperation(req.query.operacao);
+      const catalogo = req.query.catalogo;
+      if (catalogo !== undefined && catalogo !== 'true' && catalogo !== 'false')
+        throw new AppError(422, 'VALIDATION_ERROR', 'catalogo must be true or false');
+      const forCatalog = catalogo === 'true';
+      if (forCatalog && forOperation)
+        throw new AppError(422, 'VALIDATION_ERROR', 'catalogo and operacao are mutually exclusive');
       if(forOperation)res.setHeader('Cache-Control','no-store');
       const ativoParam = req.query.ativo;
       const ativo = ativoParam == null
@@ -232,6 +238,7 @@ function mountProdutoRoutes(router: Router, service: ProdutoService) {
         : ['1', 'true', 'yes'].includes(String(ativoParam).toLowerCase());
       const page = await service.list(ctxFromReq(req), {
         forOperation,
+        forCatalog,
         ativo,
         search: req.query.search ? String(req.query.search) : undefined,
         codigo: req.query.codigo ? String(req.query.codigo) : undefined,
