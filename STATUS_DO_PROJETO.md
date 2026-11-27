@@ -428,3 +428,7 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 
 - Dois exports somente leitura do mesmo app Base44 recuperados no acervo privado: 138/221 Produtos encontram o ID historico de GrupoProduto no mesmo Grupo de origem e os 221 encontram Setor. Entre os 138, 87 tambem conferem Empresa e Grupo no mapa de Setor, e 43 tem ambas as referencias ativas na evidencia consultada. Nenhum dos IDs historicos GrupoProduto e ID original do pacote de Grupos conciliado: 138 codigos literais unicos sao apenas candidatos a crosswalk. Nao usar codigo sozinho para liberar carga. Recibos privados `c45c7e9f` e `0861e09f`. Sem escrita.
 
+## CPA3: recorte de 43 Produtos bloqueado por Grupo inativo (2026-11-27)
+
+- Os 43 candidatos possuem codigo literal unico, nome/natureza exatos e Empresa/Grupo coerentes no cruzamento historico. Os cinco GruposProduto candidatos correspondentes estao inativos tanto no pacote conciliado como no export atual (43/43 Produtos). Zero apto sob o contrato ativo; manter os 51 Grupos inativos preservados. Recibo privado `9c18bfcc0dcc46028db1adf83f4586a2a444ea75eb90c505db5b26ca8f0b0f01`. Nao houve carga, reclassificacao ou reativacao.
+

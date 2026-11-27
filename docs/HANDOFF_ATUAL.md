@@ -397,3 +397,7 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 
 - `base44-export-20261127/produto-221-native-may-snapshots.private.json` e `produto-221-native-may-target-coverage.private.json`: priorizar os 43 com Grupo e Setor historicos ativos e escopo Setor comprovado. Validar em clone o mapa ID historico -> ID conciliado de Grupo com Grupo/Empresa, estado e procedencia; codigo literal unico sozinho nao aprova identidade. 83 dos 221 ainda sem ID Grupo historico no acervo consultado. Nao repetir export nem gravar na HML.
 
+## CPA3: recorte de 43 Produtos em revisao (2026-11-27)
+
+- `base44-export-20261127/produto-43-group-comparison.private.json`: os cinco GruposProduto do destino candidato estao inativos na origem atual e no pacote aplicado. Nao repetir o ensaio do mesmo recorte ou propor ativacao automatica; exigir fonte de uma classificacao ativa correta ou regra explicita para preservacao historica separada. Prosseguir por recortes independentes.
+
