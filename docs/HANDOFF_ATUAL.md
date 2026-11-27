@@ -415,5 +415,5 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 
 ## CPA3: prova pendente para centro da venda da CPA (2026-11-27)
 
-- Nao repetir os seis titulos visiveis do Base44: `base44-export-20261127/receivables-center-and-plan-coverage.private.json` confirma ausencia dos tres vinculos no recorte. Falta leitura nativa de pedido/nota e rateio na EMP05 pelo leitor isolado; CC011 segue fora da parametrizacao.
+- Nao repetir os seis titulos visiveis do Base44: `base44-export-20261127/receivables-center-and-plan-coverage.private.json` confirma ausencia dos tres vinculos no recorte. A copia isolada EMP05 tambem retornou zero linhas nas duas tabelas de rateio. Nao repetir nesse snapshot nem o ensaio tecnico da CPA ja registrado. Buscar export ou parametrizacao nativa que vincule a venda ao centro e a Empresa por ID. CC011 segue fora.
 

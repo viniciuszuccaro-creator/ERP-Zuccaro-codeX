@@ -447,5 +447,7 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 
 ## CPA3: cobertura contabil dos titulos Base44 (2026-11-27)
 
+- A consulta ao catalogo SQL da copia isolada EMP05, em modo somente leitura, encontrou zero linhas em `CentroCustosPedidos` e `NotaFiscalSaidasRateioCentroCusto`. Leitor desligado e estado `exited` conferido. Resultado restrito a esse snapshot; nao comprova o uso de CC011. Sem escrita na HML ou no operacional.
+
 - Consulta dirigida pelo Grupo e Empresa dos Centros CC011/CC001: 2 e 4 titulos visiveis, respectivamente; zero vinculo preenchido com Pedido, Centro de Custo ou Plano de Contas. Campos existem em ContaReceber, mas esse recorte nao comprova uso comercial nem substitui o rateio nativo. Recibo privado `8b03688fd1e7720266942db101b0e1ded3ef9ded4b7cb5b02a5e89be36e65347`. Sem carga ou alteracao.
 
