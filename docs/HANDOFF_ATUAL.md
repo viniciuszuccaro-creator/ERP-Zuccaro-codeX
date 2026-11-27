@@ -1,5 +1,7 @@
 ## Retomada imediata (2026-11-27)
 
+- **Triagem posterior (somente leitura):** logs do proxy preservado de `3f06be54` registram seis `200` em Produtos, um `499` na segunda página (cliente encerrou a requisição) e nenhum `403` ou `5xx` nessa rota. Houve 218 respostas `200` de sessão. Os logs não identificam a empresa de cada resposta; não comprovam erro de ACL nem aceite da 3Z. Próximo teste no clone: correlacionar troca de contexto, revalidação de sessão, requisição e renderização até estabilizar, sem ampliar acesso. HML mantida em `a305a143`.
+
 - **Em serviço: `a305a143`.** O aceite autenticado de `3f06be54` mostrou Produtos com 273 registros e duas páginas na CPA e no Grupo CPA. Na 3Z, o contexto mudou, mas a contagem e a grade ficaram indisponíveis mesmo após reabrir. Retorno conjunto de API/web e verificação da ACL anterior concluídos. Backup fresco `hml-20261127T171525Z-4eb7dd48` restaurado e cópia externa conferida. Sem cargas ou alteração operacional.
 - **Próxima ação:** reproduzir a falha na 3Z no clone, capturar status e código sanitizado da API e conferir contexto e leitura efetiva; não ampliar permissões. Antes da próxima troca, completar a captura de rede desde a abertura da rota e o aceite de busca e paginação em Clientes e Produtos. Deploy automático ainda sem prova de entrega.
 
