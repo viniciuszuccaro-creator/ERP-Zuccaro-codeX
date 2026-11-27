@@ -1,5 +1,7 @@
 ## Retomada imediata (2026-11-27)
 
+- **Nova troca:** `3f06be54` serve API e web; somente SELECT/policy de Produtos no schema da HML. Backup fresco `398b3d0b` restaurado e copiado ao HD com ACK. No Chrome anonimo do proprietario, recarregar Cadastros e validar buscas, paginacao e contexto; a sessao anterior em janela anonima abriu, mas ainda nao e aceite deste SHA. Manter retorno conjunto de API/web e ACL; sem carga ou operacional.
+
 - **Retorno confirmado:** `a305a143` serve API/web. Backup `d94729e5` restaurado (26 tabelas), cópia externa e ACK verificados. Tar `3f06be54` conferido no D: e na área privada da HML, 2.239 arquivos. Primeira troca falhou no entrypoint padrão do Nginx; a segunda serviu o SHA, mas o Chrome bloqueou o login por cota de armazenamento. Retorno dos dois containers e reversão da leitura Produtos confirmados. Não repetir deploy sem preparar o teste de login e revalidar o backup; não limpar o perfil atual sem autorização. Sem carga ou operacional.
 
 - **Acompanhar agora:** [CI 46029813435](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/46029813435) do `d8d3c38fff0d4bf78607e23d812cb36b19867336`. Corrigido o binding do fixture de PerfilAcesso, mantendo permissões e verificações de auditoria; 108 testes focados verdes. Não integrar ou publicar com CI parcial. HML segue `a305a143`; manter o WIP de Dashboard e Fornecedores separado.
