@@ -1064,7 +1064,7 @@ SeparacaoConferencia: {
       });
     },
   };
-  /** @type {Record<string, ReturnType<typeof createCrudEntity>>} */
+  /** @type {Record<string, Omit<ReturnType<typeof createCrudEntity>, 'filterPage'>> & { Cliente?: typeof entityRoutes.Cliente }} */
   const entities = {};
   for (const name of ['GrupoEmpresarial', 'Empresa']) entities[name] = createOrganizacionalHttp(name, request, getScope);
   for (const name of ["Entrega","Romaneio","SeparacaoConferencia"]) entities[name]=entityRoutes[name];

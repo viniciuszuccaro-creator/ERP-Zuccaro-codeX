@@ -1,5 +1,7 @@
 ## Retomada imediata (2026-11-27)
 
+- **Typecheck de Cadastros:** a suíte do frontend passou em `571a1db0`, mas o typecheck apontou TS2741 porque `filterPage` ficou obrigatório para outras entidades. O contrato revisado declara a página somente em Cliente, sem mudança de runtime; 66 testes focados passaram. Revalidar no Ubuntu pelo novo SHA antes de empacotar ou testar o clone. HML mantida em `a305a143`.
+
 - **Correção do gate de Cadastros:** a CI de Clientes identificou três verificações históricas da fachada que não descontavam o novo trecho exato de paginação. O guarda comum agora usa o recorte já auditado, sem mudar hashes ou tolerar edições fora dele. Os 27 testes afetados passaram localmente. Aguardar a CI da revisão corrigida e gerar a web desse SHA, não da candidata anterior. HML permanece em `a305a143`.
 
 - **Candidata integrada, somente CI:** total filtrado de Clientes e espera de contexto de Produtos/Clientes consolidados na grade existente. 81 testes locais focados passaram, incluindo Chrome protegido, abertura sob demanda, Ações Rápidas, paginação, zero, erro e troca de empresa. Próximo passo: CI do SHA integrado, build Ubuntu e aceite no clone restaurado. HML segue em `a305a143`, sem merge ou deploy.

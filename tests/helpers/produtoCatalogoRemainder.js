@@ -168,6 +168,11 @@ export function produtoCatalogoRemainder(file, source) {
   if (pageMarker[file] && source.includes(pageMarker[file])) {
     const crlf = source.includes('\r\n');
     let projected = source.replace(/\r\n/g, '\n');
+    if (file === 'src/api/httpApiClient.js' && projected.includes("Omit<ReturnType<typeof createCrudEntity>, 'filterPage'>")) {
+      const typeHunk = {"before":"    },\n  };\n  /** @type {Record<string, ReturnType<typeof createCrudEntity>>} */\n  const entities = {};\n  for (const name of ['GrupoEmpresarial', 'Empresa']) entities[name] = createOrganizacionalHttp(name, request, getScope);\n","after":"    },\n  };\n  /** @type {Record<string, Omit<ReturnType<typeof createCrudEntity>, 'filterPage'>> & { Cliente?: typeof entityRoutes.Cliente }} */\n  const entities = {};\n  for (const name of ['GrupoEmpresarial', 'Empresa']) entities[name] = createOrganizacionalHttp(name, request, getScope);\n"};
+      assert.equal(projected.split(typeHunk.after).length, 2, 'Exact Cliente page type hunk');
+      projected = projected.replace(typeHunk.after, () => typeHunk.before);
+    }
     for (const { before, after } of clientePageHunks[file]) {
       assert.equal(projected.split(after).length, 2, `Exact Cliente page hunk: ${file}`);
       projected = projected.replace(after, () => before);
