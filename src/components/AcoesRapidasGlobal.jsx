@@ -62,6 +62,7 @@ export function readAcoesRapidasActorAndSession(user) {
  * Ações Rápidas Globais — Cliente via filterInContext; cache multi-ator; novoPedido fail-closed.
  */
 export default function AcoesRapidasGlobal() {
+  const [menuOpen, setMenuOpen] = React.useState(false);
   const navigate = useNavigate();
   const { openWindow } = useWindow();
   const { empresaAtual, grupoAtual, estaNoGrupo, createInContext, filterInContext } = useContextoVisual();
@@ -72,6 +73,15 @@ export default function AcoesRapidasGlobal() {
   const contextoValido = Boolean(groupId || empresaId);
   const { actorId, sessionKey } = readAcoesRapidasActorAndSession(user);
   const scopeExpected = { actorId, sessionKey, groupId, empresaId };
+  const podeExecutarAcao = (qa) => {
+    if (loadingPerms || !user) return false;
+    try {
+      return hasPermission(qa.module || qa.modulo || '', null, qa.perm || 'criar');
+    } catch {
+      return false;
+    }
+  };
+  const podeNovoPedido = ModuleMap.quickActions.some((qa) => qa.key === 'novoPedido' && podeExecutarAcao(qa));
 
   const clientesQuery = useQuery({
     queryKey: buildAcoesRapidasClientesQueryKey({ groupId, empresaId, actorId, sessionKey }),
@@ -92,7 +102,7 @@ export default function AcoesRapidasGlobal() {
       }
       return Array.isArray(rows) ? rows : [];
     },
-    enabled: contextoValido && Boolean(actorId),
+    enabled: menuOpen && podeNovoPedido && contextoValido && Boolean(actorId),
   });
 
   const kpiState = resolveAcoesRapidasClientesKpiState({
@@ -232,15 +242,7 @@ export default function AcoesRapidasGlobal() {
   };
 
   const acoes = ModuleMap.quickActions
-    .filter((qa) => {
-      // Fail-closed: sem usuário/perms carregados não libera criação.
-      if (loadingPerms || !user) return false;
-      try {
-        return hasPermission(qa.module || qa.modulo || '', null, qa.perm || 'criar');
-      } catch {
-        return false;
-      }
-    })
+    .filter(podeExecutarAcao)
     .map((qa) => ({
       key: qa.key,
       label: qa.label,
@@ -251,7 +253,7 @@ export default function AcoesRapidasGlobal() {
     .filter((acao) => typeof acao.action === 'function');
 
   return (
-    <DropdownMenu>
+    <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
       <DropdownMenuTrigger asChild>
         <Button
           className="bg-blue-600 hover:bg-blue-700 shadow-md"
@@ -272,7 +274,7 @@ export default function AcoesRapidasGlobal() {
             </Badge>
           )}
         </DropdownMenuLabel>
-        {(kpiState === 'error' || kpiState === 'loading') && (
+        {podeNovoPedido && (kpiState === 'error' || kpiState === 'loading') && (
           <p className="px-2 py-1 text-xs text-slate-500">
             {kpiState === 'loading'
               ? 'Carregando clientes…'

@@ -559,6 +559,29 @@ test('API Produto pagination + tenant isolation + search no leak', async () => {
   assert.equal(listB.data.length, 1);
   assert.equal(listB.data[0].codigo, 'SYN-B-0');
 
+  await fetchOk(app, '/api/v1/produtos', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'x-group-id': GROUP_A },
+    body: JSON.stringify({ descricao: 'Mestre compartilhado', codigo: 'SYN-MESTRE' }),
+  });
+  const companyHeaders = { 'x-group-id': GROUP_A, 'x-empresa-id': EMPRESA_A };
+  const standard = await fetchOk(app, '/api/v1/produtos?search=SYN-MESTRE', { headers: companyHeaders });
+  assert.equal(standard.meta.total, 0);
+  const catalog = await fetchOk(app, '/api/v1/produtos?catalogo=true&search=SYN-MESTRE', { headers: companyHeaders });
+  assert.equal(catalog.meta.total, 1);
+  assert.equal(catalog.data[0].codigo, 'SYN-MESTRE');
+  const outside = await fetchOk(app, '/api/v1/produtos?catalogo=true&search=SYN-MESTRE', {
+    headers: { 'x-group-id': GROUP_B, 'x-empresa-id': EMPRESA_B },
+  });
+  assert.equal(outside.meta.total, 0);
+  assert.equal((await fetchStatus(app, '/api/v1/produtos?catalogo=true&operacao=true', { headers: companyHeaders })).statusCode, 422);
+  assert.equal((await fetchStatus(app, '/api/v1/produtos?catalogo=invalid', { headers: companyHeaders })).statusCode, 422);
+  const foreignCompany = await fetchStatus(app, '/api/v1/produtos?catalogo=true', {
+    headers: { 'x-group-id': GROUP_A, 'x-empresa-id': EMPRESA_B },
+  });
+  assert.equal(foreignCompany.statusCode, 409);
+  assert.equal(foreignCompany.body.error.code, 'TENANT_MISMATCH');
+
   const meta = await fetchOk(app, '/api/v1/meta');
   assert.ok(
     ['ERP-RUNTIME-03', 'ERP-RUNTIME-04', 'ERP-RUNTIME-05', 'ERP-RUNTIME-06A', 'ERP-RUNTIME-06B', 'ERP-RUNTIME-07B', 'ERP-RUNTIME-08B']

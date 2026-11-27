@@ -38,6 +38,23 @@ if(process.env.DATABASE_URL)test('R41 PostgreSQL real: Produto Grupoâ†’Empresaâ†
     await assert.rejects(app.orcamentoService.create(ctx,data),{code:'ORCAMENTO_PRODUTO_INVALIDO'});
     assert.equal((await app.produtoService.list(ctx,{forOperation:true})).data.some(p=>p.id===ID.produtoA),false);
     await assert.rejects(app.produtoService.get(ctx,ID.produtoA,{forOperation:true}),{code:'PRODUTO_NOT_FOUND'});
+    const server = app.app.listen(0, '127.0.0.1');
+    try {
+      if (!server.listening) await new Promise<void>(resolve => server.once('listening', resolve));
+      const address = server.address();
+      assert.ok(address && typeof address !== 'string');
+      const url = `http://127.0.0.1:${address.port}/api/v1/produtos`;
+      const headers = { 'x-group-id': ctx.groupId, 'x-empresa-id': ctx.empresaId, 'x-actor-id': ctx.actorId };
+      const catalog = await fetch(url + '?catalogo=true&limit=50', { headers });
+      assert.equal(catalog.status, 200);
+      const page = await catalog.json() as { data: Array<{ id: string }> };
+      assert.ok(page.data.some(p => p.id === ID.produtoA));
+      const incompatible = await fetch(url + '?catalogo=true&operacao=true', { headers });
+      assert.equal(incompatible.status, 422);
+    } finally {
+      server.closeAllConnections();
+      await new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve()));
+    }
     const links=await Promise.all(Array.from({length:6},()=>f.service.habilitarEmpresa(ctx,ID.produtoA,{ativo:true,habilitado_operacao:true,expected_version:0})));
     assert.equal(new Set(links.map(r=>r.id)).size,1);assert.ok(links.every(r=>r.version===1));
     const productCode=(await f.admin.query<{codigo:string}>('SELECT codigo FROM produtos WHERE id=$1',[ID.produtoA])).rows[0].codigo;

@@ -15,6 +15,8 @@ import {
   base44,
   erpBackendMode,
   isHttpBackendMode,
+  isHttpProdutoEnabled,
+  getHttpProdutoApi,
   isHttpClienteListMode,
   isLocalOnlyMode,
 } from "@/api/base44Client";
@@ -283,7 +285,9 @@ export default function VisualizadorUniversalEntidadeV24({
   const ENTITY   = nomeEntidade || entityName || "";
   const TITULO   = tituloDisplay || ENTITY;
   const fornecedorHttp = ENTITY === "Fornecedor" && isHttpBackendMode && import.meta.env.VITE_ERP_HTTP_FORNECEDOR_READ === 'true';
-  const FormComponent = fornecedorHttp ? null : (FormComponentProp || DEFAULT_FORM_COMPONENTS[ENTITY] || null);
+  const produtoHttp = ENTITY === "Produto" && isHttpProdutoEnabled;
+  const canonicalRead = fornecedorHttp || produtoHttp;
+  const FormComponent = canonicalRead ? null : (FormComponentProp || DEFAULT_FORM_COMPONENTS[ENTITY] || null);
   const _camposPrincipais = camposPrincipais || [];
   const _extraColors      = extraColors || {};
   const _pageSizeProp     = pageSizeProp || 20;
@@ -325,12 +329,12 @@ export default function VisualizadorUniversalEntidadeV24({
     isLoading: permissionsLoading,
   };
   const canViewCadastro = hasCadastroEntityPermission(ENTITY, "visualizar", permCheckers);
-  const canCreateCadastro = hasCadastroEntityPermission(ENTITY, "criar", permCheckers);
-  const canEditCadastro = hasCadastroEntityPermission(ENTITY, "editar", permCheckers);
-  const canDeleteCadastro = hasCadastroEntityPermission(ENTITY, "excluir", permCheckers);
+  const canCreateCadastro = !produtoHttp && hasCadastroEntityPermission(ENTITY, "criar", permCheckers);
+  const canEditCadastro = !produtoHttp && hasCadastroEntityPermission(ENTITY, "editar", permCheckers);
+  const canDeleteCadastro = !produtoHttp && hasCadastroEntityPermission(ENTITY, "excluir", permCheckers);
   const [supplierEpoch, setSupplierEpoch] = useState(0);
   const [supplierDetail, setSupplierDetail] = useState(null);
-  const supplierSession = fornecedorHttp ? readErpHttpSession() : null;
+  const supplierSession = canonicalRead ? readErpHttpSession() : null;
   const supplierMatches = Boolean(supplierSession?.actorId && supplierSession.groupId === groupId &&
     (supplierSession.empresaId || null) === empresaId);
   const supplierScope = JSON.stringify([supplierSession?.actorId, groupId, empresaId, supplierEpoch]);
@@ -341,11 +345,11 @@ export default function VisualizadorUniversalEntidadeV24({
         (current.empresaId || null) !== empresaId) throw new Error('CONTEXT_CHANGED');
   };
   useEffect(() => {
-    if (!fornecedorHttp) return;
+    if (!canonicalRead) return;
     const reset = () => { setSupplierEpoch(value => value + 1); setSupplierDetail(null); };
     window.addEventListener(HTTP_CONTEXT_CHANGED, reset);
     return () => window.removeEventListener(HTTP_CONTEXT_CHANGED, reset);
-  }, [fornecedorHttp]);
+  }, [canonicalRead]);
   const showSupplierDetail = fornecedorHttp && supplierMatches && canViewCadastro && supplierDetail?.scope === supplierScope;
   const supplierDetailQuery = useQuery({
     queryKey: ['fornecedor-http-detalhe', supplierScope, supplierDetail?.id],
@@ -479,8 +483,8 @@ export default function VisualizadorUniversalEntidadeV24({
   }, [search]);
 
   // Contagem — erro ≠ zero; loading ≠ 0: total desconhecido até number validado (Codex P1 a9948387).
-  const { counts, isLoading: countsLoading, countsUnavailable: legacyCountsUnavailable } = useEntityCounts(ENTITY && !fornecedorHttp ? [ENTITY] : []);
-  const countsUnavailable = fornecedorHttp || legacyCountsUnavailable;
+  const { counts, isLoading: countsLoading, countsUnavailable: legacyCountsUnavailable } = useEntityCounts(ENTITY && !canonicalRead ? [ENTITY] : []);
+  const countsUnavailable = canonicalRead || legacyCountsUnavailable;
   const rawEntityCount = counts && Object.prototype.hasOwnProperty.call(counts, ENTITY)
     ? counts[ENTITY]
     : undefined;
@@ -571,11 +575,11 @@ export default function VisualizadorUniversalEntidadeV24({
   const queryKey = useMemo(
     function() {
       const legacyKey = ["viz-v33", ENTITY, sortField, sortDir, page, pageSize, debouncedSearch, empresaId, groupId];
-      return fornecedorHttp ? [...legacyKey, supplierScope] : legacyKey;
+      return canonicalRead ? [...legacyKey, supplierScope] : legacyKey;
     },
-    [ENTITY, sortField, sortDir, page, pageSize, debouncedSearch, empresaId, groupId, fornecedorHttp, supplierScope]
+    [ENTITY, sortField, sortDir, page, pageSize, debouncedSearch, empresaId, groupId, canonicalRead, supplierScope]
   );
-  const visibleScope = JSON.stringify([ENTITY, groupId, empresaId, debouncedSearch, fornecedorHttp ? supplierScope : null]);
+  const visibleScope = JSON.stringify([ENTITY, groupId, empresaId, debouncedSearch, canonicalRead ? supplierScope : null]);
   // Limpa cache no render ao trocar tenant/busca — evita um frame com linhas do contexto anterior.
   if (lastGoodScope.current !== visibleScope) {
     lastGoodScope.current = visibleScope;
@@ -585,10 +589,22 @@ export default function VisualizadorUniversalEntidadeV24({
 
   // ── query principal ──────────────────────────────────────────────────────────
   // placeholderData garante que a lista NÃO desaparece durante sort/paginação/exclusão
-  const { data: rawItems, isFetching, isError, status } = useQuery({
+  const { data: rawItems, isFetching, isError, status, error: listError } = useQuery({
     queryKey: queryKey,
     queryFn: async function({ signal }) {
       if (!ENTITY) return [];
+      if (produtoHttp) {
+        assertSupplierScope();
+        const result = await getHttpProdutoApi().listCatalogPage({
+          search: debouncedSearch?.trim(), limit: pageSize, offset: skip, signal,
+        });
+        assertSupplierScope();
+        if (signal?.aborted) throw new DOMException('Consulta cancelada', 'AbortError');
+        const { data, meta } = result || {};
+        if (!Array.isArray(data) || !Number.isSafeInteger(meta?.total) || meta.total < 0 ||
+            typeof meta.hasMore !== 'boolean') throw new Error('PRODUTO_PAGE_INVALID');
+        return { items: data, total: meta.total, hasMore: meta.hasMore };
+      }
       if (fornecedorHttp) {
         assertSupplierScope();
         const result = await fornecedorReadApi.list({ search: debouncedSearch?.trim(), limit: pageSize, offset: skip, signal });
@@ -615,16 +631,17 @@ export default function VisualizadorUniversalEntidadeV24({
     refetchOnWindowFocus: false,
     refetchOnMount: 'always',
     placeholderData: function(prev, previousQuery) {
-      if (fornecedorHttp) return undefined;
+      if (canonicalRead) return undefined;
       return getScopedCadastroPlaceholder(prev, previousQuery?.queryKey, queryKey);
     },
     // HTTP + Cliente sem piloto: não consultar store local (evita lista vazia como “sucesso”).
-    enabled: !!ENTITY && contextoValido && canViewCadastro && !clienteHttpSemPiloto && (!fornecedorHttp || supplierMatches),
+    enabled: !!ENTITY && contextoValido && canViewCadastro && !clienteHttpSemPiloto && (!canonicalRead || supplierMatches),
   });
+  const produtoTotal = produtoHttp && supplierMatches && canViewCadastro && !isError ? rawItems?.total : undefined;
 
   // items: estabilidade total — nunca desaparece durante sort/paginação/exclusão
   const items = useMemo(function() {
-    if (fornecedorHttp) return supplierMatches && canViewCadastro && Array.isArray(rawItems?.items) ? rawItems.items : [];
+    if (canonicalRead) return supplierMatches && canViewCadastro && Array.isArray(rawItems?.items) ? rawItems.items : [];
     const arr = Array.isArray(rawItems) ? rawItems : [];
     if (arr.length > 0) {
       lastGoodData.current = arr;
@@ -646,7 +663,7 @@ export default function VisualizadorUniversalEntidadeV24({
     everLoadedRef.current = true;
     lastGoodData.current = [];
     return [];
-  }, [rawItems, isFetching, isError, status, fornecedorHttp, supplierMatches, canViewCadastro]);
+  }, [rawItems, isFetching, isError, status, canonicalRead, supplierMatches, canViewCadastro]);
 
   // Reset do cache quando muda de entidade, empresa, grupo ou busca
   // NÃO reseta ao mudar sort/page para manter estabilidade visual
@@ -1245,7 +1262,7 @@ export default function VisualizadorUniversalEntidadeV24({
                 <th
                   key={col.field}
                   className={"px-3 py-2.5 text-left font-semibold text-slate-600 whitespace-nowrap select-none" + (col.sortable !== false ? " cursor-pointer hover:bg-slate-100 transition-colors" : "")}
-                  onClick={function() { if (col.sortable !== false) handleSort(col.field); }}
+                  onClick={function() { if (!produtoHttp && col.sortable !== false) handleSort(col.field); }}
                 >
                   <div className="flex items-center gap-1">
                     <span>{col.label}</span>
@@ -1372,7 +1389,7 @@ export default function VisualizadorUniversalEntidadeV24({
             title={countsUnavailable ? "Contagem indisponível (erro de consulta — não é zero)" : undefined}
             data-counts-unavailable={countsUnavailable ? "true" : "false"}
           >
-            {countsUnavailable
+            {produtoTotal !== undefined ? produtoTotal.toLocaleString("pt-BR") : countsUnavailable
               ? <span aria-label="Contagem indisponível">—</span>
               : !countKnown
                 ? <span className="animate-pulse text-[10px]" data-counts-unknown-during-load="true" aria-label="Contagem carregando">···</span>
@@ -1412,7 +1429,7 @@ export default function VisualizadorUniversalEntidadeV24({
           {PAGE_SIZES.map(function(ps) { return <option key={ps} value={ps}>{ps}/pág</option>; })}
         </select>
 
-        {!fornecedorHttp && <select
+        {!canonicalRead && <select
           value={sortField + "|" + sortDir}
           onChange={function(e) { handleSortDropdown(e.target.value); }}
           className="border border-slate-200 rounded-sm h-9 px-2 text-sm text-slate-700 bg-white cursor-pointer shrink-0"
@@ -1557,14 +1574,17 @@ export default function VisualizadorUniversalEntidadeV24({
           </button>
         </div>
       )}
-      {fornecedorHttp && !supplierMatches && (
-        <p role="alert" className="text-sm text-amber-800">Aguarde a confirmação do contexto para consultar fornecedores.</p>
+      {canonicalRead && !supplierMatches && (
+        <p role="alert" className="text-sm text-amber-800">Aguarde a confirmação do contexto para consultar {produtoHttp ? "produtos" : "fornecedores"}.</p>
+      )}
+      {produtoHttp && isError && (
+        <p role="alert" className="text-sm text-amber-800">{listError && 'status' in listError && listError.status === 403 ? "Acesso negado à consulta de Produtos." : "Consulta de Produtos indisponível."}</p>
       )}
       {/* Paginação */}
       <div className="flex items-center justify-between text-xs text-slate-500 shrink-0 flex-wrap gap-1">
         <span>
           Pág. {page} · {items.length} exibidos ·{" "}
-          {countsUnavailable
+          {produtoTotal !== undefined ? produtoTotal + " total" : countsUnavailable
             ? "total indisponível"
             : !countKnown
               ? "total …"
@@ -1589,7 +1609,7 @@ export default function VisualizadorUniversalEntidadeV24({
           <button
             type="button"
             onClick={function() { setPage(function(p) { return p + 1; }); }}
-            disabled={(fornecedorHttp ? !rawItems?.hasMore : items.length < pageSize) || isFetching}
+            disabled={(canonicalRead ? !rawItems?.hasMore : items.length < pageSize) || isFetching}
             className="h-7 px-2 border border-slate-200 rounded-sm bg-white hover:bg-slate-50 disabled:opacity-40"
             data-action={`Cadastros.${ENTITY}.proxima-pagina`}
           >Próx. →</button>

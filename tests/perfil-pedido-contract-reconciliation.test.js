@@ -66,7 +66,7 @@ test('Profile buttons use the same owner, with create/edit distinguished instead
 test('Actual V24 gate, toolbar key and rejected mutation audit use the same profile owner', async () => {
   const ast = parse('src/components/cadastros/VisualizadorUniversalEntidadeV24.jsx'), vars = variables(ast);
   for (const [action, name] of [['visualizar', 'canViewCadastro'], ['criar', 'canCreateCadastro'], ['editar', 'canEditCadastro'], ['excluir', 'canDeleteCadastro']]) {
-    assert.equal(evaluate(vars.get(name).getText(ast), { ENTITY: 'PerfilAcesso', hasCadastroEntityPermission,
+    assert.equal(evaluate(vars.get(name).getText(ast), { ENTITY: 'PerfilAcesso', produtoHttp: false, hasCadastroEntityPermission,
       permCheckers: checkers('Sistema', 'Controle de Acesso', action) }), true);
   }
   const cadastroPerm = evaluate(vars.get('cadastroPerm').getText(ast), { ENTITY: 'PerfilAcesso', getCadastroEntityPermissionKey });

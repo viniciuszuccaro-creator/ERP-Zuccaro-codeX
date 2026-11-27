@@ -12,6 +12,9 @@ import {
 test('AcoesRapidasGlobal: filterInContext + actor/session na queryKey + STALE + fail-closed novoPedido', () => {
   const src = readFileSync('src/components/AcoesRapidasGlobal.jsx', 'utf8');
   assert.match(src, /filterInContext\(\s*'Cliente'/);
+  assert.match(src, /useState\(false\)/);
+  assert.match(src, /<DropdownMenu open=\{menuOpen\} onOpenChange=\{setMenuOpen\}>/);
+  assert.match(src, /enabled:\s*menuOpen && podeNovoPedido && contextoValido && Boolean\(actorId\)/);
   assert.match(src, /ACOES_RAPIDAS_STALE_SCOPE/);
   assert.match(src, /buildAcoesRapidasClientesQueryKey/);
   assert.match(src, /resolveClientesParaNovoPedido/);

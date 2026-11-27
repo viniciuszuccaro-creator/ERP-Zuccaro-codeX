@@ -67,6 +67,7 @@ const WORKFLOW_ACTION: Record<Produto['workflow_status'], RbacAction> = {
 
 export type ProdutoListOptions = {
   forOperation?: boolean;
+  forCatalog?: boolean;
   ativo?: boolean;
   search?: string;
   codigo?: string;
@@ -133,6 +134,7 @@ export class ProdutoService {
   async list(ctx: RequestContext, options: ProdutoListOptions = {}) {
     this.assertScope(ctx);
     await this.assertPermission(ctx, 'visualizar');
+    if (options.forCatalog && ctx.empresaId) await this.tenantGuard.assertEmpresaInGroup(ctx.groupId, ctx.empresaId);
     if(options.forOperation){
       if(!this.repo.empresaLinksEnabled)throw new AppError(503,'PRODUTO_EMPRESA_DISABLED','Explicit activation required');
       if(!ctx.empresaId)throw new AppError(400,'EMPRESA_ID_REQUIRED','Company context required');
@@ -158,6 +160,7 @@ export class ProdutoService {
       groupId: ctx.groupId,
       empresaId: ctx.empresaId,
       forOperation: options.forOperation,
+      forCatalog: options.forCatalog,
       ativo,
       search: options.search,
       codigo: options.codigo,

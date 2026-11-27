@@ -22,28 +22,31 @@ test(`Cadastros no Chrome: ${before ? 'referencia antes do ajuste' : 'menu e cat
     import React from 'react';
     import { createRoot } from 'react-dom/client';
     import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+    import { MemoryRouter } from 'react-router-dom';
+    import AcoesRapidasGlobal from './src/components/AcoesRapidasGlobal.jsx';
     import { WindowProvider, useWindowManager } from './src/components/lib/WindowManager.jsx';
     import WindowRenderer from './src/components/lib/WindowRenderer.jsx';
     import Cadastros from './src/pages/Cadastros.jsx';
-    window.probe = { counts: 0, lists: 0 };
+    window.probe = { counts: 0, lists: 0, quickLists: 0 };
     window.addEventListener('error', event=>fetch('/result',{method:'POST',body:JSON.stringify({error:event.message})}));
     const root=document.querySelector('#root');
     const started=performance.now();
     function ScopeProbe(){const state=useWindowManager();window.probe.windows=state.windows.length;return null;}
-    createRoot(root).render(<QueryClientProvider client={new QueryClient()}><WindowProvider><ScopeProbe/><Cadastros/><WindowRenderer/></WindowProvider></QueryClientProvider>);
+    createRoot(root).render(<QueryClientProvider client={new QueryClient()}><MemoryRouter><WindowProvider><ScopeProbe/><AcoesRapidasGlobal/><Cadastros/><WindowRenderer/></WindowProvider></MemoryRouter></QueryClientProvider>);
     const assert=(ok,label)=>{if(!ok)throw Error(label);};
     async function wait(predicate,label){
       for(let i=0;i<100;i++){if(predicate())return;await new Promise(r=>setTimeout(r,20));}
       throw Error(label);
     }
     async function run(){
-      await wait(()=>root.querySelector('[aria-expanded]'),'menu');
+      const category=()=>root.querySelector('button[aria-expanded]:not([data-action="acoes-rapidas-novo"])');
+      await wait(()=>category(),'menu');
       const menuMs=performance.now()-started;
       if (${before}) await wait(()=>window.probe.counts>0,'eager count in reference');
       else {
         assert(!root.querySelector('[aria-expanded="true"]'),'initial block open');
         assert(!window.probe.counts&&!window.probe.lists,'initial reads');
-        root.querySelector('[aria-expanded]').click();
+        category().click();
       }
       const clientButton=()=>root.querySelector('button[data-action="Cadastros.Cliente.abrir"]');
       await wait(()=>clientButton()&&!clientButton().disabled,'entity shortcut');
@@ -53,7 +56,14 @@ test(`Cadastros no Chrome: ${before ? 'referencia antes do ajuste' : 'menu e cat
       const clicked=performance.now();
       clientButton().closest('div[data-action="Cadastros.Cliente.abrir"]').click();
       await wait(()=>window.probe.lists===1&&window.probe.counts>0,'read after click');
-      return {menuMs,pageProbeMs:performance.now()-clicked,countsBeforeClick,...window.probe};
+      assert(!window.probe.quickLists,'global quick actions read while closed');
+      const pageProbeMs=performance.now()-clicked;
+      const quick=root.querySelector('[data-action="acoes-rapidas-novo"]');
+      quick.focus();
+      quick.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowDown',bubbles:true,cancelable:true}));
+      await wait(()=>quick.getAttribute('aria-expanded')==='true'&&window.probe.quickLists===1,'quick menu read on demand');
+      assert(document.querySelector('[data-action="novoPedido"]'),'quick order unavailable');
+      return {menuMs,pageProbeMs,countsBeforeClick,...window.probe};
     }
     run().then(result=>fetch('/result',{method:'POST',body:JSON.stringify(result)}))
       .catch(error=>fetch('/result',{method:'POST',body:JSON.stringify({error:String(error),...window.probe})}));
@@ -65,9 +75,9 @@ test(`Cadastros no Chrome: ${before ? 'referencia antes do ajuste' : 'menu e cat
       return { contents: execFileSync('git',['show',baseline+':'+target],{encoding:'utf8'}), loader:'jsx' };
     });
     const modules = {
-      api: `export const base44={functions:{invoke:async(_n,p)=>{window.probe.counts++;return{data:Object.fromEntries(p.entities.map(x=>[x.entityName,0]))};}},entities:{}};`,
-      context: `export const useContextoVisual=()=>({empresaAtual:{id:'e',group_id:'g'},grupoAtual:{id:'g'},empresasDoGrupo:[],createInContext:async()=>{}});`,
-      permissions: `export default()=>({isAdmin:()=>true,hasPermission:()=>true,hasPermissionKey:()=>true});`,
+      api: `export const isHttpBackendMode=false;export const base44={functions:{invoke:async(_n,p)=>{window.probe.counts++;return{data:Object.fromEntries(p.entities.map(x=>[x.entityName,0]))};}},entities:{}};`,
+      context: `export const useContextoVisual=()=>({empresaAtual:{id:'e',group_id:'g'},grupoAtual:{id:'g'},empresasDoGrupo:[],createInContext:async()=>{},filterInContext:async()=>{window.probe.quickLists++;return[];}});`,
+      permissions: `export default()=>({user:{id:'synthetic'},isAdmin:()=>true,hasPermission:()=>true,hasPermissionKey:()=>true});`,
       user: `export const useUser=()=>({user:{id:'synthetic'}});`,
       session: `export const readErpHttpSession=()=>({actorId:'synthetic'});`,
       http: `export const central360SessionKey=()=>null;`,
@@ -82,7 +92,7 @@ test(`Cadastros no Chrome: ${before ? 'referencia antes do ajuste' : 'menu e cat
       ExternalAppsHub:'empty',
     })[path.split('/').pop().split('.')[0]] }));
     b.onResolve({ filter: /(?:Form(?:Completo)?|Tab|Modal|CadastroClienteCompleto|CadastroFornecedorCompleto|ProdutoFormV22_Completo|VisualizadorProdutos)(?:\.jsx)?$/ }, ({ path }) =>
-      path.includes('cadastros/') || path.includes('/rh/') ? {namespace:'synthetic',path:'empty'} : undefined);
+      path.includes('cadastros/') || path.includes('/rh/') || /\/(PedidoFormCompleto|ContaReceberForm|ContaPagarForm|OportunidadeForm|EventoForm)$/.test(path) ? {namespace:'synthetic',path:'empty'} : undefined);
     b.onLoad({ filter: /.*/, namespace: 'synthetic' }, ({ path }) =>
       ({ contents: modules[path], loader: 'jsx', resolveDir: process.cwd() }));
   } }] });
@@ -107,6 +117,7 @@ test(`Cadastros no Chrome: ${before ? 'referencia antes do ajuste' : 'menu e cat
     assert.equal(result.error,undefined,JSON.stringify(result));
     assert.equal(result.lists,1);
     assert.ok(result.counts>0);
+    assert.equal(result.quickLists,1);
     assert.equal(result.countsBeforeClick>0,before);
     t.diagnostic(JSON.stringify(result));
   }finally{
