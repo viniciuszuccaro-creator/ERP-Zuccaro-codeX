@@ -397,3 +397,8 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 
 - Teste de integracao extrai as duas consultas reais do Dashboard e usa o bridge canonico HTTP com fonte sintetica. Grupo, CPA e 3Z enviam o filtro de Cadastros; visao Grupo inclui a lista de empresas no cache; sem acesso nao consulta. Contagem HTTP nao usa pagina nem fallback local. 17 testes focados, lint direcionado e diff check aprovados. Sem alteracao de runtime ou deploy; aceite com login real pendente.
 
+## CPA3: backup externo de 27/11 e branch de Cadastros
+
+- HML `a305a143`: API e HTML conferidos; 26 GiB livres. Backup agendado `hml-20261127T063010Z-5a0c4d7b`, restauracao comprovada no recibo, 47.790.080 bytes, copiado diretamente ao HD externo e confirmado por SHA-256 `48235eb23284d00b1175cfc0e7c2033947dd2abde3b9f134cb9f454d481e6475`; ACK canonico registrado. Sem prune, deploy ou operacional.
+- Branch exclusiva `codex/cadastros-hml-c2dcf435`: CI 45882138846 SUCCESS para `c2dcf435`; VM no D: ainda nao iniciada, nenhum pacote gerado.
+

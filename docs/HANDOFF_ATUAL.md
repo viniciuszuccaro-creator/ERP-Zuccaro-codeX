@@ -369,3 +369,7 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 
 - Lote separado de Cadastros: reaproveita contagem oficial, filtro por contexto, rota, atalhos e protecao existente. Depois da CI exata, testar comparacao com Cadastros em Grupo/CPA/3Z e acesso negado. Indicadores de operacoes e pacote completo ficam pendentes. Nenhum deploy; HML a305a143 e pacote de sessao c2dcf435 continuam independentes.
 
+## CPA3: proxima publicacao de Cadastros (2026-11-27)
+
+- Empacotar `c2dcf435` na branch `codex/cadastros-hml-c2dcf435` em executor privado; CI 45882138846 verde. VM do D: aguarda inicio autorizado. Backup agendado `hml-20261127T063010Z-5a0c4d7b` ja tem copia externa e ACK; nao repetir transferencia. Revalidar estado e backup antes da janela de deploy. HML continua `a305a143`.
+
