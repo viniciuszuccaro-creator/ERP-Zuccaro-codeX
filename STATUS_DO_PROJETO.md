@@ -437,3 +437,7 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 - 14 Centros exportados em duas paginas; os 13 do manifesto `57d3cbbb` correspondem ao export anterior por ID, codigo literal, Empresa, estado e pai (13/13 em cada). O 14o ja estava na origem e segue sem Empresa/pai. Recibo `d6c5b3cd`; nao reaplicar nem inventar vinculo.
 - Consulta dirigida confirmou uma conta `3.1.01` analitica e ativa, sem Empresa proprietaria no Base44. CC001 e CC011 tem Empresa, mas nao tem conta padrao e nao vinculam a conta por esse campo. Nao comprova uso na venda da CPA; CC011 permanece fora. Recibo privado `6dc16eeb`. Sem alteracao na HML/operacional.
 
+## CPA3: Plano de Contas Base44 conferido (2026-11-27)
+
+- 26 contas visiveis em duas paginas, mesmas 26 identidades do export anterior e 21/21 do preflight. Codigos contabeis e sequenciais internos preservados separadamente, 26/26; escopo, estado/tipo e pai tambem 26/26. 12 analiticas ativas, nenhuma conta com Empresa proprietaria, quatro pais distintos ausentes da origem visivel/lixeira/snapshots de maio e zero ciclo encontrado. Nao criar pais nem vincular conta por Empresa. Recibo privado v2 `ae00ae41bdb5bc9dd9419fa6e5ff19a9dfae9b8bcf2bd553ea97435d588b6e16`; sem carga.
+

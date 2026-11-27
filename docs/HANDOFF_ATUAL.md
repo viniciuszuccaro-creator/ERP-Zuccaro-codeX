@@ -405,3 +405,7 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 
 - Recibos em `base44-export-20261127`: `centro-custo-reconciliation.private.json`, `conta-3-1-01-centros-source-proof.private.json`. Nao repetir importacao; o 14o nao tem Empresa comprovada. Para a venda da CPA, buscar documento/rateio nativo, nao usar CC011 por disponibilidade nominal nem a conta de Grupo como regra autonoma de Empresa.
 
+## CPA3: proximo passo do Plano de Contas (2026-11-27)
+
+- Export e conciliacao em `base44-export-20261127/plano-de-contas-identity.private.json` e `plano-de-contas-reconciliation-v2.private.json`. Nao repetir export nem misturar `codigo` sequencial com `codigo_conta` contabil. Reusar os 21 do preflight para ensaio de arvore fechada conforme contrato; preservar quatro pais ausentes em revisao e exigir parametrizacao comprovada antes de usar contas de Grupo em venda por Empresa. CC011 continua fora.
+
