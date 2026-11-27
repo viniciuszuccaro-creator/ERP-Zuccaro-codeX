@@ -160,6 +160,30 @@ test('CRUD count rejects missing or invalid totals and preserves authorization f
     new Response(JSON.stringify({ data: [], meta: { total: 0 } }), { status: 200 }) });
   assert.equal(await empty.entities.Cliente.count(), 0);
 });
+
+test('Cliente page returns the filtered total and next-page flag in one scoped request', async () => {
+  const signal = new AbortController().signal;
+  let calls = 0;
+  const client = createHttpApiClient({
+    baseUrl: 'https://erp.synthetic.test',
+    getScope: () => ({ groupId: 'group', empresaId: 'company', token: 'synthetic' }),
+    fetchImpl: async (url, init) => {
+      calls++;
+      assert.equal(init.signal, signal);
+      assert.equal(new Headers(init.headers).get('x-empresa-id'), 'company');
+      const query = new URL(url).searchParams;
+      assert.equal(query.get('search'), 'synthetic');
+      assert.equal(query.get('offset'), '20');
+      const total = calls === 1 ? 21 : calls === 2 ? 0 : undefined;
+      return Response.json({ data: calls === 1 ? [{ id: 'synthetic' }] : [], meta: { total, hasMore: false } });
+    },
+  });
+  const read = () => client.entities.Cliente.filterPage({ search: 'synthetic' }, 'nome', 20, 20, signal);
+  assert.deepEqual(await read(), { data: [{ id: 'synthetic' }], meta: { total: 21, hasMore: false } });
+  assert.deepEqual(await read(), { data: [], meta: { total: 0, hasMore: false } });
+  await assert.rejects(read, /CLIENTE_PAGE_INVALID/);
+  assert.equal(calls, 3);
+});
 import {
   HTTP_PILOT_ENTITIES,
   resolveErpApiBaseUrl,

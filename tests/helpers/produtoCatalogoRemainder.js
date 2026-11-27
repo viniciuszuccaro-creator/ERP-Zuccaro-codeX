@@ -84,7 +84,92 @@ const markers = {
   'src/components/cadastros/VisualizadorUniversalEntidadeV24.jsx': 'const produtoHttp',
 };
 
+const clientePageHunks = {
+  "src/api/base44Client.js": [
+    {
+      "before": "              filter.search = String(payload.search).trim();\n            }\n            return runLocalEntityReadFunction(name, { ...payload, filter }, {\n              expandFilter: (_entity, nextFilter) => nextFilter || {},\n              listEntity: async (entity, nextFilter, order, limit, skip) => {\n                const rows = await http.entities[entity].filter(nextFilter, order, limit, skip);\n                return Array.isArray(rows) ? rows : [];\n              },\n            });\n          }\n        }\n",
+      "after": "              filter.search = String(payload.search).trim();\n            }\n            const clientePage = name === 'entityListSorted' && entityName === 'Cliente' && payload.includePageMeta === true;\n            let meta;\n            const result = await runLocalEntityReadFunction(name, { ...payload, filter }, {\n              expandFilter: (_entity, nextFilter) => nextFilter || {},\n              listEntity: async (entity, nextFilter, order, limit, skip) => {\n                if (clientePage) {\n                  const page = await http.entities.Cliente.filterPage(nextFilter, order, limit, skip, payload.signal);\n                  meta = page.meta;\n                  return page.data;\n                }\n                const rows = await http.entities[entity].filter(nextFilter, order, limit, skip);\n                return Array.isArray(rows) ? rows : [];\n              },\n            });\n            return clientePage ? { ...result, meta } : result;\n          }\n        }\n"
+    }
+  ],
+  "src/api/httpApiClient.js": [
+    {
+      "before": "    const searchKeys = opts.searchKeys || ['search', 'nome', 'descricao'];\n    const ativoKeys = opts.ativoKeys || ['ativo', 'ativa'];\n    async function readFilterPage(query = {}, orderBy, limit = 100, skip = 0, unwrap = true) {\n        if (typeof orderBy === 'number') {\n          skip = limit || 0;\n",
+      "after": "    const searchKeys = opts.searchKeys || ['search', 'nome', 'descricao'];\n    const ativoKeys = opts.ativoKeys || ['ativo', 'ativa'];\n    async function readFilterPage(query = {}, orderBy, limit = 100, skip = 0, unwrap = true, signal) {\n        if (typeof orderBy === 'number') {\n          skip = limit || 0;\n"
+    },
+    {
+      "before": "          query: { limit, offset, search, ativo: ativoQuery, ...exact, ...normalizeOrderByQuery(orderBy) },\n          unwrap,\n        });\n    }\n",
+      "after": "          query: { limit, offset, search, ativo: ativoQuery, ...exact, ...normalizeOrderByQuery(orderBy) },\n          unwrap,\n          signal,\n        });\n    }\n"
+    },
+    {
+      "before": "        return total;\n      },\n      async get(id) {\n        return request(`${basePath}/${encodeURIComponent(id)}`);\n",
+      "after": "        return total;\n      },\n      filterPage(query, orderBy, limit, skip, signal) {\n        return readFilterPage(query, orderBy, limit, skip, false, signal);\n      },\n      async get(id) {\n        return request(`${basePath}/${encodeURIComponent(id)}`);\n"
+    },
+    {
+      "before": "          return Array.isArray(rows) ? rows.map(hydrateClienteHttpRowForUi) : rows;\n        },\n        async create(data) {\n          return hydrateClienteHttpRowForUi(\n",
+      "after": "          return Array.isArray(rows) ? rows.map(hydrateClienteHttpRowForUi) : rows;\n        },\n        async filterPage(query, orderBy, limit, skip, signal) {\n          const page = await base.filterPage(query, orderBy, limit, skip, signal);\n          if (!Array.isArray(page?.data) || !Number.isSafeInteger(page.meta?.total) ||\n              page.meta.total < page.data.length || typeof page.meta.hasMore !== 'boolean') {\n            throw new Error('CLIENTE_PAGE_INVALID');\n          }\n          return { data: page.data.map(hydrateClienteHttpRowForUi), meta: page.meta };\n        },\n        async create(data) {\n          return hydrateClienteHttpRowForUi(\n"
+    }
+  ],
+  "src/components/cadastros/VisualizadorUniversalEntidadeV24.jsx": [
+    {
+      "before": "  const clienteHttpSemPiloto =\n    ENTITY === \"Cliente\" && isHttpBackendMode && !isHttpClienteListMode;\n  /** Modo local puro: store local explícito (≠ HML). */\n  const clienteFonteLocalOnly =\n",
+      "after": "  const clienteHttpSemPiloto =\n    ENTITY === \"Cliente\" && isHttpBackendMode && !isHttpClienteListMode;\n  const clienteHttpPage = ENTITY === \"Cliente\" && isHttpClienteListMode;\n  /** Modo local puro: store local explícito (≠ HML). */\n  const clienteFonteLocalOnly =\n"
+    },
+    {
+      "before": "  const [supplierEpoch, setSupplierEpoch] = useState(0);\n  const [supplierDetail, setSupplierDetail] = useState(null);\n  const supplierSession = canonicalRead ? readErpHttpSession() : null;\n  const supplierMatches = Boolean(supplierSession?.actorId && supplierSession.groupId === groupId &&\n    (supplierSession.empresaId || null) === empresaId);\n",
+      "after": "  const [supplierEpoch, setSupplierEpoch] = useState(0);\n  const [supplierDetail, setSupplierDetail] = useState(null);\n  const scopedPageRead = canonicalRead || clienteHttpPage;\n  const supplierSession = scopedPageRead ? readErpHttpSession() : null;\n  const supplierMatches = Boolean(supplierSession?.actorId && supplierSession.groupId === groupId &&\n    (supplierSession.empresaId || null) === empresaId);\n"
+    },
+    {
+      "before": "  };\n  useEffect(() => {\n    if (!canonicalRead) return;\n    const reset = () => { setSupplierEpoch(value => value + 1); setSupplierDetail(null); };\n    window.addEventListener(HTTP_CONTEXT_CHANGED, reset);\n    return () => window.removeEventListener(HTTP_CONTEXT_CHANGED, reset);\n  }, [canonicalRead]);\n  const showSupplierDetail = fornecedorHttp && supplierMatches && canViewCadastro && supplierDetail?.scope === supplierScope;\n  const supplierDetailQuery = useQuery({\n",
+      "after": "  };\n  useEffect(() => {\n    if (!scopedPageRead) return;\n    const reset = () => { setSupplierEpoch(value => value + 1); setSupplierDetail(null); };\n    window.addEventListener(HTTP_CONTEXT_CHANGED, reset);\n    return () => window.removeEventListener(HTTP_CONTEXT_CHANGED, reset);\n  }, [scopedPageRead]);\n  const showSupplierDetail = fornecedorHttp && supplierMatches && canViewCadastro && supplierDetail?.scope === supplierScope;\n  const supplierDetailQuery = useQuery({\n"
+    },
+    {
+      "before": "    function() {\n      const legacyKey = [\"viz-v33\", ENTITY, sortField, sortDir, page, pageSize, debouncedSearch, empresaId, groupId];\n      return canonicalRead ? [...legacyKey, supplierScope] : legacyKey;\n    },\n    [ENTITY, sortField, sortDir, page, pageSize, debouncedSearch, empresaId, groupId, canonicalRead, supplierScope]\n  );\n  const visibleScope = JSON.stringify([ENTITY, groupId, empresaId, debouncedSearch, canonicalRead ? supplierScope : null]);\n  // Limpa cache no render ao trocar tenant/busca — evita um frame com linhas do contexto anterior.\n  if (lastGoodScope.current !== visibleScope) {\n",
+      "after": "    function() {\n      const legacyKey = [\"viz-v33\", ENTITY, sortField, sortDir, page, pageSize, debouncedSearch, empresaId, groupId];\n      return scopedPageRead ? [...legacyKey, supplierScope] : legacyKey;\n    },\n    [ENTITY, sortField, sortDir, page, pageSize, debouncedSearch, empresaId, groupId, scopedPageRead, supplierScope]\n  );\n  const visibleScope = JSON.stringify([ENTITY, groupId, empresaId, debouncedSearch, scopedPageRead ? supplierScope : null]);\n  // Limpa cache no render ao trocar tenant/busca — evita um frame com linhas do contexto anterior.\n  if (lastGoodScope.current !== visibleScope) {\n"
+    },
+    {
+      "before": "        return result;\n      }\n      const res = await base44.functions.invoke(\"entityListSorted\", {\n        entityName: ENTITY,\n",
+      "after": "        return result;\n      }\n      if (clienteHttpPage) assertSupplierScope();\n      const res = await base44.functions.invoke(\"entityListSorted\", {\n        entityName: ENTITY,\n"
+    },
+    {
+      "before": "        limit: pageSize,\n        skip: skip,\n      });\n      return Array.isArray(res && res.data) ? res.data : [];\n    },\n",
+      "after": "        limit: pageSize,\n        skip: skip,\n        ...(clienteHttpPage ? { includePageMeta: true, signal } : {}),\n      });\n      if (clienteHttpPage) {\n        assertSupplierScope();\n        if (signal?.aborted) throw new DOMException('Consulta cancelada', 'AbortError');\n        if (!Array.isArray(res?.data) || !Number.isSafeInteger(res.meta?.total) ||\n            res.meta.total < res.data.length || typeof res.meta.hasMore !== 'boolean') throw new Error('CLIENTE_PAGE_INVALID');\n        return { items: res.data, total: res.meta.total, hasMore: res.meta.hasMore };\n      }\n      return Array.isArray(res && res.data) ? res.data : [];\n    },\n"
+    },
+    {
+      "before": "    refetchOnMount: 'always',\n    placeholderData: function(prev, previousQuery) {\n      if (canonicalRead) return undefined;\n      return getScopedCadastroPlaceholder(prev, previousQuery?.queryKey, queryKey);\n    },\n    // HTTP + Cliente sem piloto: não consultar store local (evita lista vazia como “sucesso”).\n    enabled: !!ENTITY && contextoValido && canViewCadastro && !clienteHttpSemPiloto && (!canonicalRead || supplierMatches),\n  });\n  const produtoTotal = produtoHttp && supplierMatches && canViewCadastro && !isError ? rawItems?.total : undefined;\n\n  // items: estabilidade total — nunca desaparece durante sort/paginação/exclusão\n  const items = useMemo(function() {\n    if (canonicalRead) return supplierMatches && canViewCadastro && Array.isArray(rawItems?.items) ? rawItems.items : [];\n    const arr = Array.isArray(rawItems) ? rawItems : [];\n    if (arr.length > 0) {\n",
+      "after": "    refetchOnMount: 'always',\n    placeholderData: function(prev, previousQuery) {\n      if (scopedPageRead) return undefined;\n      return getScopedCadastroPlaceholder(prev, previousQuery?.queryKey, queryKey);\n    },\n    // HTTP + Cliente sem piloto: não consultar store local (evita lista vazia como “sucesso”).\n    enabled: !!ENTITY && contextoValido && canViewCadastro && !clienteHttpSemPiloto && (!scopedPageRead || supplierMatches),\n  });\n  const produtoTotal = produtoHttp && supplierMatches && canViewCadastro && !isError ? rawItems?.total : undefined;\n  const clientePageTotal = clienteHttpPage && supplierMatches && canViewCadastro && !isError ? rawItems?.total : undefined;\n\n  // items: estabilidade total — nunca desaparece durante sort/paginação/exclusão\n  const items = useMemo(function() {\n    if (scopedPageRead) return supplierMatches && canViewCadastro && Array.isArray(rawItems?.items) ? rawItems.items : [];\n    const arr = Array.isArray(rawItems) ? rawItems : [];\n    if (arr.length > 0) {\n"
+    },
+    {
+      "before": "    lastGoodData.current = [];\n    return [];\n  }, [rawItems, isFetching, isError, status, canonicalRead, supplierMatches, canViewCadastro]);\n\n  // Reset do cache quando muda de entidade, empresa, grupo ou busca\n",
+      "after": "    lastGoodData.current = [];\n    return [];\n  }, [rawItems, isFetching, isError, status, scopedPageRead, supplierMatches, canViewCadastro]);\n\n  // Reset do cache quando muda de entidade, empresa, grupo ou busca\n"
+    },
+    {
+      "before": "      );\n    }\n    if (items.length === 0 && !isFetching) {\n      let emptyMsg = debouncedSearch\n",
+      "after": "      );\n    }\n    if (clienteHttpPage && (!supplierMatches || status === 'pending')) {\n      return <p role=\"status\" className=\"p-4\">Aguardando a consulta de Clientes.</p>;\n    }\n    if (items.length === 0 && !isFetching) {\n      let emptyMsg = debouncedSearch\n"
+    },
+    {
+      "before": "        <span>\n          Pág. {page} · {items.length} exibidos ·{\" \"}\n          {produtoTotal !== undefined ? produtoTotal + \" total\" : countsUnavailable\n            ? \"total indisponível\"\n            : !countKnown\n",
+      "after": "        <span>\n          Pág. {page} · {items.length} exibidos ·{\" \"}\n          {clienteHttpPage\n            ? clientePageTotal !== undefined ? clientePageTotal + \" total\" : isError ? \"total indisponível\" : \"total …\"\n            : produtoTotal !== undefined ? produtoTotal + \" total\" : countsUnavailable\n            ? \"total indisponível\"\n            : !countKnown\n"
+    },
+    {
+      "before": "            type=\"button\"\n            onClick={function() { setPage(function(p) { return p + 1; }); }}\n            disabled={(canonicalRead ? !rawItems?.hasMore : items.length < pageSize) || isFetching}\n            className=\"h-7 px-2 border border-slate-200 rounded-sm bg-white hover:bg-slate-50 disabled:opacity-40\"\n            data-action={`Cadastros.${ENTITY}.proxima-pagina`}\n",
+      "after": "            type=\"button\"\n            onClick={function() { setPage(function(p) { return p + 1; }); }}\n            disabled={(scopedPageRead ? !rawItems?.hasMore : items.length < pageSize) || isFetching}\n            className=\"h-7 px-2 border border-slate-200 rounded-sm bg-white hover:bg-slate-50 disabled:opacity-40\"\n            data-action={`Cadastros.${ENTITY}.proxima-pagina`}\n"
+    }
+  ]
+};
+
 export function produtoCatalogoRemainder(file, source) {
+  const pageMarker = { 'src/api/base44Client.js': 'payload.includePageMeta === true',
+    'src/api/httpApiClient.js': 'CLIENTE_PAGE_INVALID',
+    'src/components/cadastros/VisualizadorUniversalEntidadeV24.jsx': 'const clienteHttpPage' };
+  if (pageMarker[file] && source.includes(pageMarker[file])) {
+    const crlf = source.includes('\r\n');
+    let projected = source.replace(/\r\n/g, '\n');
+    for (const { before, after } of clientePageHunks[file]) {
+      assert.equal(projected.split(after).length, 2, `Exact Cliente page hunk: ${file}`);
+      projected = projected.replace(after, () => before);
+    }
+    source = crlf ? projected.replace(/\n/g, '\r\n') : projected;
+  }
   if (file === 'tests/perfil-pedido-contract-reconciliation.test.js' && source.includes('produtoHttp: false')) {
     const binding = "ENTITY: 'PerfilAcesso', produtoHttp: false, hasCadastroEntityPermission";
     assert.equal(source.split(binding).length, 2);

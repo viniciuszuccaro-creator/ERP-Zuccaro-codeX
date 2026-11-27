@@ -222,13 +222,21 @@ function createHttpHybridClient() {
             if (payload.search != null && String(payload.search).trim()) {
               filter.search = String(payload.search).trim();
             }
-            return runLocalEntityReadFunction(name, { ...payload, filter }, {
+            const clientePage = name === 'entityListSorted' && entityName === 'Cliente' && payload.includePageMeta === true;
+            let meta;
+            const result = await runLocalEntityReadFunction(name, { ...payload, filter }, {
               expandFilter: (_entity, nextFilter) => nextFilter || {},
               listEntity: async (entity, nextFilter, order, limit, skip) => {
+                if (clientePage) {
+                  const page = await http.entities.Cliente.filterPage(nextFilter, order, limit, skip, payload.signal);
+                  meta = page.meta;
+                  return page.data;
+                }
                 const rows = await http.entities[entity].filter(nextFilter, order, limit, skip);
                 return Array.isArray(rows) ? rows : [];
               },
             });
+            return clientePage ? { ...result, meta } : result;
           }
         }
         if (name === 'countEntities') {

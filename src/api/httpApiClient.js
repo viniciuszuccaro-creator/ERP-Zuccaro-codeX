@@ -230,7 +230,7 @@ export function createHttpApiClient(options = {}) {
   function createCrudEntity(basePath, opts = {}) {
     const searchKeys = opts.searchKeys || ['search', 'nome', 'descricao'];
     const ativoKeys = opts.ativoKeys || ['ativo', 'ativa'];
-    async function readFilterPage(query = {}, orderBy, limit = 100, skip = 0, unwrap = true) {
+    async function readFilterPage(query = {}, orderBy, limit = 100, skip = 0, unwrap = true, signal) {
         if (typeof orderBy === 'number') {
           skip = limit || 0;
           limit = orderBy;
@@ -276,6 +276,7 @@ export function createHttpApiClient(options = {}) {
         return request(basePath, {
           query: { limit, offset, search, ativo: ativoQuery, ...exact, ...normalizeOrderByQuery(orderBy) },
           unwrap,
+          signal,
         });
     }
     return {
@@ -297,6 +298,9 @@ export function createHttpApiClient(options = {}) {
           throw new Error('HTTP_COUNT_UNAVAILABLE: total autoritativo ausente ou invalido.');
         }
         return total;
+      },
+      filterPage(query, orderBy, limit, skip, signal) {
+        return readFilterPage(query, orderBy, limit, skip, false, signal);
       },
       async get(id) {
         return request(`${basePath}/${encodeURIComponent(id)}`);
@@ -478,6 +482,14 @@ SeparacaoConferencia: {
         async filter(query = {}, orderBy, limit = 100, skip = 0) {
           const rows = await base.filter(query, orderBy, limit, skip);
           return Array.isArray(rows) ? rows.map(hydrateClienteHttpRowForUi) : rows;
+        },
+        async filterPage(query, orderBy, limit, skip, signal) {
+          const page = await base.filterPage(query, orderBy, limit, skip, signal);
+          if (!Array.isArray(page?.data) || !Number.isSafeInteger(page.meta?.total) ||
+              page.meta.total < page.data.length || typeof page.meta.hasMore !== 'boolean') {
+            throw new Error('CLIENTE_PAGE_INVALID');
+          }
+          return { data: page.data.map(hydrateClienteHttpRowForUi), meta: page.meta };
         },
         async create(data) {
           return hydrateClienteHttpRowForUi(

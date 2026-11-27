@@ -1,5 +1,7 @@
 ## Retomada imediata (2026-11-27)
 
+- **Total filtrado de Clientes corrigido em candidata de validação:** a grade HTTP usa total e hasMore da própria página; a contagem geral e os consumidores de array foram preservados. Requisição cancelável e vinculada à sessão/empresa; zero e falha aparecem separados. 80 testes focados passaram, incluindo Chrome protegido. Aguardar CI Ubuntu e revalidar com base restaurada antes de integrar. Sem deploy; HML mantém `a305a143`.
+
 - **Causa do total de Clientes identificada:** `GET /api/v1/clientes` devolve a página, mas `httpApiClient.filter` e a ponte `entityListSorted` preservam só o array. O rodapé usa a contagem geral de `useEntityCounts`. Próximo lote: levar total filtrado e hasMore da mesma resposta à grade HTTP de Clientes, mantendo a contagem geral separada e o contrato de array dos demais consumidores. Testar busca, zero, erro e troca de contexto. Sem alteração de acesso, escrita ou deploy.
 
 - **Clientes no Chrome isolado:** predicado da política de leitura e RLS forçada conferidos contra a HML; somente SELECT de Clientes reproduzido temporariamente no clone. Grupo, CPA e 3Z mostraram 15.972 clientes e duas páginas. Busca por código e nome passou no Grupo; na 3Z, após busca por código, a grade mostrou 1 registro, mas manteve 15.972 como total. Primeira abertura CPA/3Z ~3,4/~3,2 s, reabertura 3Z ~0,8 s (tempos de interface, não benchmark controlado de cache). Revogação e parada do banco comprovadas.
