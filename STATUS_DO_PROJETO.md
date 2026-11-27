@@ -1,5 +1,7 @@
 ## Estado atual e próxima ação (2026-11-27)
 
+- **Cadastros, validação corrigida:** `d8d3c38f`, [CI Ubuntu 46029813435](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/46029813435). A CI anterior falhou somente no fixture de perfil que avaliava a expressão real sem `produtoHttp`. Corrigido o contexto sintético; 64 testes de contrato e 44 regressões focadas passaram. Sem mudança de runtime neste fix. Aguardar suíte, lint, tipos e build do SHA corrigido. Em serviço: HML `a305a143`, sem ajuste de acesso novo.
+
 - **Cadastros em CI Ubuntu:** autorização específica para validação em branch separada, sem merge, deploy ou escrita na HML, permanece válida até ordem do proprietário. Candidata `a5306262c7e165f7b09072db2f61a351f227f1b3`, [CI 46028600217](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/46028600217): A1 e Expedição/Comercial verdes; frontend e backend pendentes na conferência. HML continua em `a305a143`; conferir o resultado de todos os jobs antes da integração e do gate de publicação.
 - **Pré-publicação:** SHA do backup de referência no HD, pacote de retorno e SQLs de aplicação/reversão de Produtos reconferidos. Isso não substitui verificar frescor e restauração antes da intervenção. Dashboard: links de vendas/ticket para o relatório com período, 17 testes focados, ainda em WIP separado sem fonte agregada homologada.
 

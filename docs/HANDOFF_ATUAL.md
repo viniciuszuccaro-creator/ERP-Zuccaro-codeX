@@ -1,5 +1,7 @@
 ## Retomada imediata (2026-11-27)
 
+- **Acompanhar agora:** [CI 46029813435](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/46029813435) do `d8d3c38fff0d4bf78607e23d812cb36b19867336`. Corrigido o binding do fixture de PerfilAcesso, mantendo permissões e verificações de auditoria; 108 testes focados verdes. Não integrar ou publicar com CI parcial. HML segue `a305a143`; manter o WIP de Dashboard e Fornecedores separado.
+
 - **Retomada pelo GitHub:** acompanhar [CI 46028600217](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/46028600217) do SHA `a5306262c7e165f7b09072db2f61a351f227f1b3`, branch `codex/validacao-ubuntu-cadastros-20261127`. A autorização do proprietário para esse canal é somente validação, sem merge/deploy/escrita, válida até revogação explícita. Não publicar a partir da branch de validação. Depois de todos os checks, preparar a entrega integrada sob a autorização contínua da HML e conferir a CI do SHA a servir. Nenhum deploy nem SELECT novo executado.
 
 - **Retomada do executor:** VM privada desligada; WIP e log `cadastros-corrigida-tcg.log` preservados no disco de trabalho do D:. A sonda q35/WHPX com IRQ chip de kernel desligado iniciou Linux sem disco; a partida com o disco de trabalho foi bloqueada pelo executor. Usar um canal autorizado para iniciar a VM acelerada ou outro Linux privado com Chrome protegido. Não repetir a suíte em TCG como evidência de aceite.
