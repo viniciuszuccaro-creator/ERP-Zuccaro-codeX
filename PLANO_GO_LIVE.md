@@ -1,5 +1,16 @@
 ﻿# PLANO_GO_LIVE.md — ERP ZUCCARO
 
+
+## Publicação automática na VPS de teste — decisão do proprietário em 27/11/2026
+
+Esta regra vale para Codex, Cursor e demais colaboradores em qualquer computador. Antes de trabalhar, sincronize o GitHub e consulte este plano na branch de integração `codex/casa-fechamento-hml-20261114`. Codex mantém a integração e o deploy. Cursor entrega suas mudanças de interface pela branch de trabalho para integração.
+
+- Reutilizar o CI e o procedimento de publicação existentes. Configurar a branch de entrega confirmada pelo projeto para que cada push pronto para teste, com alteração de runtime, dispare checagens e publicação automática na HML assim que os checks exigidos para o SHA passarem. Preparar artefatos durante os testes. A autorização contínua do proprietário já cobre API e web juntas na HML. Usar credenciais exclusivas de HML no ambiente protegido do GitHub, sem depender de um computador pessoal.
+- Publicar uma versão geral por vez, com API e web do mesmo SHA e hashes registrados. Validar identidade do destino, requisitos de backup e retorno. Conferir SHA servido, saúde, login e o teste funcional aplicável. Em caso de falha, voltar API e web juntas e verificar a versão anterior. Registrar no STATUS e no HANDOFF o link da execução, versão servida e roteiro de teste do proprietário.
+- Para Cadastros, validar a rota completa com login, zero consultas de registros antes do clique, busca, paginação e troca Grupo CPA/CPA/3Z. Reutilizar a autorização específica já registrada para a leitura restrita de Produtos. Cargas, migrações e outras alterações de acesso seguem seu próprio escopo. A VPS final recebe os mesmos artefatos e hashes apenas após o aceite do proprietário.
+- Acompanhar a suíte em andamento e executar a entrega de Cadastros pelo procedimento existente assim que estiver apta, sem esperar pela implementação da automação. Concluir a automação com uma publicação comprovada e registrar a branch de entrega, o workflow e a versão servida. Este registro documenta a decisão. A automação só fica concluída após essa prova.
+- Trabalhar remotamente ou no HD externo, com zero artefatos da tarefa no C:. Dados reais do legado, backups e credenciais ficam fora do GitHub.
+
 ## Plano detalhado para colocar o ERP em operação real com segurança
 
 Este documento transforma a evolução do ERP Zuccaro em uma sequência objetiva de liberação operacional. Deve ser executado em conjunto com `AGENTS.md`, `PLANO_MELHORIA_ERP_ZUCCARO.md` e `STATUS_DO_PROJETO.md`.
