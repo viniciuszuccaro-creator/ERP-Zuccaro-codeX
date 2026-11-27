@@ -1,5 +1,7 @@
 ## CPA3: gate de publicacao de Cadastros (2026-11-27)
 
+- Proxima candidata inclui consulta sob demanda no layout e modo de leitura `catalogo=true` na grade de Produtos, sem ativacao operacional. Passaram teste montado, cliente HTTP, PostgreSQL sintetico e prova HTTP no backup restaurado para Grupo/CPA/3Z. O acesso de Produtos exige gate separado: SELECT e uma policy na tabela do schema HML, sem escrita ou fallback public. Aplicacao e reversao ensaiadas no clone; nenhuma permissao atual foi alterada. Checks finais e CI do SHA exato continuam pendentes.
+
 - Aceite autenticado de `c2dcf435`: Grupo CPA -> CPA -> 3Z -> Grupo CPA passou na interface; Clientes paginou e buscou por codigo e nome. Produtos exibiu zero no Grupo. Em recarga limpa sem entidade aberta, CDP registrou GET `/api/v1/clientes` com `limit=500`, antes de qualquer clique. Aceite negativo: API e web voltaram a `a305a143`, com meta, HTML, readiness e rota de login verificados. Nao republicar este SHA. Rastrear disparador no layout e adicionar regressao montando a rota completa. Sem escrita de dados ou operacional.
 
 - Autorizacao explicita do proprietario em 2026-11-27: publicar API e web juntas do SHA `c2dcf43536e12e1abbad1db379056d00af49944c` somente na VPS de teste. Reaproveitar nas retomadas do mesmo pacote, destino e escopo. Tar `runtime-cadastros-c2dcf435.tar` verificado no HD externo; SHA registrado no STATUS. Ensaio de retorno sem banco passou. Revalidar backup, versao servida e retorno antes da troca. Manter Financeiro/historico desligados, sem escrita de dados, DDL ou grants.

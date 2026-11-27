@@ -1,5 +1,7 @@
 ## CPA3: candidata de Cadastros pronta para decisao (2026-11-27)
 
+- Produtos: catalogo HML confirmado em leitura com o principal da API: RLS forcada, zero policies, sem SELECT e sem BYPASSRLS. Backup restaurado: 273 ativos do Grupo. Ensaio HTTP isolado com Auth sintetico e papel restrito: 273 no Grupo e nas duas Empresas, duas paginas distintas e busca por codigo, empresa incompatível negada. Delta SELECT/policy aplicado e revertido no clone, sem alterar HML. Codigo de Cadastros ainda em validacao, sem publicacao.
+
 - Aceite posterior: troca CPA/3Z, busca e paginacao de Clientes passaram na interface autenticada. A captura de rede encontrou GET de Clientes com limite 500 na abertura sem entidade. Reversao conjunta executada; HML voltou a `a305a143`, conferida pela API, HTML e readiness. Bloqueada republicacao de `c2dcf435` ate corrigir o disparador global e provar a rota completa.
 
 - Publicada na VPS de teste sob a autorizacao registrada. API e web servem `c2dcf43536e12e1abbad1db379056d00af49944c`; readiness e rota de login HTTP 200, sessao anonima 401. Primeira tentativa voltou automaticamente a `a305a143` por falha de inicializacao do Nginx; segunda passou com as mesmas capacidades do Nginx anterior. Retorno preservado. Aceite autenticado CPA/3Z pendente. Sem DDL, grants, cargas ou operacional.
