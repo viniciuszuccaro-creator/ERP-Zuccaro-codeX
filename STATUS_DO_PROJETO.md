@@ -1,5 +1,8 @@
 ## Estado atual e próxima ação (2026-11-27)
 
+- **Cadastros em CI Ubuntu:** autorização específica para validação em branch separada, sem merge, deploy ou escrita na HML, permanece válida até ordem do proprietário. Candidata `a5306262c7e165f7b09072db2f61a351f227f1b3`, [CI 46028600217](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/46028600217): A1 e Expedição/Comercial verdes; frontend e backend pendentes na conferência. HML continua em `a305a143`; conferir o resultado de todos os jobs antes da integração e do gate de publicação.
+- **Pré-publicação:** SHA do backup de referência no HD, pacote de retorno e SQLs de aplicação/reversão de Produtos reconferidos. Isso não substitui verificar frescor e restauração antes da intervenção. Dashboard: links de vendas/ticket para o relatório com período, 17 testes focados, ainda em WIP separado sem fonte agregada homologada.
+
 - **Bloqueio atual de Cadastros:** a VM privada está desligada, com disco de trabalho preservado. Chrome protegido em TCG não renderizou nem página mínima em 75 s; a execução já negativa teve log arquivado antes do desligamento. A sonda q35/WHPX sem disco iniciou Linux em menos de 2 s, mas o executor bloqueou por política a partida com o disco de trabalho. Retomar por um executor autorizado e capaz, sem abrir o WSL instalado em C: nem alterar o sandbox.
 - **Dashboard:** 16 testes focados passaram, incluindo ticket médio sem cancelamentos ou pedidos fora do período. Os pedidos ainda vêm de listagem limitada sem prova de completude; falta agregação oficial e comparação com o relatório. WIP separado, sem publicação.
 
