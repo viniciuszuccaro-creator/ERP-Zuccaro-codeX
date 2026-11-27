@@ -1,0 +1,58 @@
+name: Validacao web isolada 0110cd9e
+
+on:
+  push:
+    branches: [codex/validacao-ubuntu-web-0110cd9e]
+    paths: [.github/workflows/validacao-web-0110cd9e.yml]
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  web:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    env:
+      SOURCE_SHA: 0110cd9edc9f056f64036f4d0876a2ab9ef2f0a1
+    steps:
+      - name: Check exact source CI
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          timeout 420 gh run watch 46050866174 --repo "$GITHUB_REPOSITORY" --exit-status --interval 15
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/46050866174" |
+            jq -e --arg sha "$SOURCE_SHA" '.head_sha == $sha and .name == "erp-runtime-ci" and .conclusion == "success"'
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build same-origin web for the isolated clone
+        env:
+          VITE_ERP_BACKEND: http
+          VITE_ERP_HTTP_CLIENTE_360: 'true'
+          VITE_ERP_HTTP_PRODUTO: 'true'
+          VITE_ERP_API_SAME_ORIGIN: 'true'
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+          npm ci --no-audit --no-fund
+          node --input-type=module -e 'import {build} from "vite"; await build({envDir:false, mode:"production"});'
+          test -s dist/index.html
+          printf '%s\n' "$SOURCE_SHA" > "$RUNNER_TEMP/source-sha.txt"
+          tar -czf "$RUNNER_TEMP/web-0110cd9e.tar.gz" dist
+          cd "$RUNNER_TEMP"
+          sha256sum web-0110cd9e.tar.gz > web-0110cd9e.tar.gz.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: web-isolada-0110cd9e
+          path: |
+            ${{ runner.temp }}/source-sha.txt
+            ${{ runner.temp }}/web-0110cd9e.tar.gz
+            ${{ runner.temp }}/web-0110cd9e.tar.gz.sha256
+          if-no-files-found: error
+          retention-days: 3
