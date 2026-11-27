@@ -8,6 +8,14 @@ O objetivo imediato não é “terminar tudo que um ERP pode ter”. O objetivo 
 
 ## Execucao prioritaria: legado, primeira versao e evolucao (2026-11-26)
 
+### Ordem de entrega confirmada em 2026-11-27
+
+1. **Cadastros na HML.** A HML voltou a `a305a143`: a troca Grupo/CPA/3Z e a busca/paginacao de Clientes passaram em `c2dcf435`, mas a rede mostrou 500 Clientes consultados antes do clique. Fechar a correcao de Acoes Rapidas, CI e prova da rota completa. Produtos tem 273 mestres ativos no backup, mas a grade usa a fonte local; ligar apenas a leitura paginada a API existente, sem ativacao global ou migracao de escrita. Medir primeira pagina e busca por contexto.
+2. **Dados e Base44 em paralelo.** Nao reimportar Clientes do Base44. Conciliar por entidade os demais Cadastros, com origem, identidade e empresa/grupo. Aproveitar os lotes ja conciliados. Finalizar Fornecedores pelo manifesto revisado; manter Obras e Precos sem vinculos presumidos. Baixas historicas nao viram pagamentos confirmados, titulos ou saldo.
+3. **Dashboard e modulos.** Substituir a composicao na mesma rota, usando Base44 como referencia e APIs oficiais como fonte. Distinguir zero, indisponibilidade e falta de acesso. Validar indicadores contra relatorios do mesmo periodo e escopo; nao somar amostras como totais. Unificar modulos equivalentes antes de criar outro.
+4. **Primeiro uso e seguranca.** Cadastros compartilhaveis referenciados pelo mesmo ID, sequencia atomica e codigo legado literal preservado. Empresa opera seus pedidos, titulos e movimentos; Grupo autorizado consolida sem duplicar. Antes do primeiro uso, validar a jornada comercial ate saldo zero, alcas de aprovacao, RBAC/RLS, auditoria, backup e retorno.
+5. **Versao geral frequente.** A diretriz explicita do proprietario e levar cada mudanca pronta e validada a VPS de teste, sem republicar SHA reprovado nem incluir WIP. API/web do mesmo SHA, CI, backup e retorno; deltas e cargas seguem seus gates. A VPS final so recebe a mesma versao e os mesmos artefatos apos aceite e aprovacao de promocao. Um bloqueio isolado nao impede o proximo trabalho autorizado.
+
 Este roteiro atualiza a ordem de trabalho, sem dispensar os Gates abaixo.
 Codex responde por execucao e integracao. Cursor, quando disponivel, pode
 trabalhar no visual em checkout separado; nao e dependencia da entrega.
