@@ -1,5 +1,8 @@
 ## Retomada imediata (2026-11-27)
 
+- **Em serviço: `a305a143`.** O aceite autenticado de `3f06be54` mostrou Produtos com 273 registros e duas páginas na CPA e no Grupo CPA. Na 3Z, o contexto mudou, mas a contagem e a grade ficaram indisponíveis mesmo após reabrir. Retorno conjunto de API/web e verificação da ACL anterior concluídos. Backup fresco `hml-20261127T171525Z-4eb7dd48` restaurado e cópia externa conferida. Sem cargas ou alteração operacional.
+- **Próxima ação:** reproduzir a falha na 3Z no clone, capturar status e código sanitizado da API e conferir contexto e leitura efetiva; não ampliar permissões. Antes da próxima troca, completar a captura de rede desde a abertura da rota e o aceite de busca e paginação em Clientes e Produtos. Deploy automático ainda sem prova de entrega.
+
 - **Versão atual `a305a143`:** retorno conjunto e reversão da leitura Produtos confirmados. Em `3f06be54`, expansão da categoria sem consultas e login anônimo confirmados; o botão inicial de Produtos estava desabilitado. Prova posterior em `a305a143` mostrou habilitação depois da hidratação. Na próxima troca, testar a mesma janela com espera explícita pelo contexto, sem tratar loading como negação. Sem escrita de cadastros ou operacional.
 
 - **Nova troca:** `3f06be54` serve API e web; somente SELECT/policy de Produtos no schema da HML. Backup fresco `398b3d0b` restaurado e copiado ao HD com ACK. No Chrome anonimo do proprietario, recarregar Cadastros e validar buscas, paginacao e contexto; a sessao anterior em janela anonima abriu, mas ainda nao e aceite deste SHA. Manter retorno conjunto de API/web e ACL; sem carga ou operacional.
