@@ -410,3 +410,8 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 
 - ERP Integra, contagens visiveis pelo acesso atual: Fornecedor 4, Produto 871, GrupoProduto 91, SetorAtividade 11, Empresa 2, UnidadeMedida 14, Marca 6, CentroCusto 14. Clientes nao consultados. Export direto de Fornecedor em duas paginas, quatro IDs e codigos distintos, campos de identidade/estado/escopo, 1.333 bytes na VPS privada, SHA `d95a84bc96ce6f050b426cb37eac991fff40a2dc0f4b18c6c35faaf06442313b`. Zero coincidencias literais com codigo/codigo_legado no manifesto dos 789; isso nao prova identidade nem autoriza fusao. Sem alteracao no Base44 ou HML.
 
+## CPA3: Produtos Base44 conciliados por ID (2026-11-27)
+
+- Exportacao direta: 871 Produtos visiveis em 35 paginas por cursor, contagens inicial/final iguais, 871 IDs unicos. VPS privada: 277.945 bytes, SHA-256 `0afb458057b4b952f3d3d9edecca20db7e4d672e6657e8949b15b3da746d96b9`. Manifesto ja aplicado `8cfcc611`: 273/273 IDs encontrados, codigos literais intactos, estado atual Base44 Ativo nos 273 (nao comparar com a classificacao candidate do preflight).
+- Restam 598 fora do manifesto anterior (597 ativos e um inativo): zero colisao literal com os 273 e zero codigo ausente. Em 221, os campos de Empresa, GrupoProduto, Setor e unidade principal estao presentes; ainda comprovar os vinculos no destino. Em 323 falta atribuicao de Empresa e em 54 falta tanto GrupoProduto quanto Setor (contagens podem se sobrepor). Sem carga ou alteracao de dados. Recibo v2 `5dd282dceb96bddb1c7f29f844ad320a25824ae4c09c2be5623427b3a2ae84c2`.
+

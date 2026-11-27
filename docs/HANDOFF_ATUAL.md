@@ -381,3 +381,7 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 
 - Conector Base44 confirmou count e v2/list com cursor. Recorte privado `base44-export-20261127/fornecedor-identity.private.json`: 4/4 visiveis, duas paginas, nao repetir. Proximo: projetar IDs, codigo/unidade/grupo/setor/empresa e estado dos Produtos; paginar e reconciliar com os 273 sem duplicar. Excluir Clientes e manter os 789 do legado separados. Totais visiveis nao provam cobertura fora do acesso atual.
 
+## CPA3: continuar catalogo Base44 por vinculo (2026-11-27)
+
+- Consultar `base44-export-20261127/produto-identity.private.json` e `produto-reconciliation-v2.private.json`. Nao reexportar os 871 nem repetir os 273. Priorizar os 221 com referencias presentes: reconciliar entidades relacionadas por ID original e codigo, Empresa autorizada e unidade canonica; separar 323 sem atribuicao de Empresa sem presumir vinculo. Contagens de pendencias nao sao mutuamente exclusivas. Sem escrita antes de clone, manifesto e aprovacao especifica. Clientes fora do export.
+
