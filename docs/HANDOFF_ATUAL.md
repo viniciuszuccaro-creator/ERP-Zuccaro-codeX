@@ -401,3 +401,7 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 
 - `base44-export-20261127/produto-43-group-comparison.private.json`: os cinco GruposProduto do destino candidato estao inativos na origem atual e no pacote aplicado. Nao repetir o ensaio do mesmo recorte ou propor ativacao automatica; exigir fonte de uma classificacao ativa correta ou regra explicita para preservacao historica separada. Prosseguir por recortes independentes.
 
+## CPA3: preservar os 13 Centros conciliados (2026-11-27)
+
+- Recibos em `base44-export-20261127`: `centro-custo-reconciliation.private.json`, `conta-3-1-01-centros-source-proof.private.json`. Nao repetir importacao; o 14o nao tem Empresa comprovada. Para a venda da CPA, buscar documento/rateio nativo, nao usar CC011 por disponibilidade nominal nem a conta de Grupo como regra autonoma de Empresa.
+

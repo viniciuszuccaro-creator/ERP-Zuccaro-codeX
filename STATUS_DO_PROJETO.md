@@ -432,3 +432,8 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 
 - Os 43 candidatos possuem codigo literal unico, nome/natureza exatos e Empresa/Grupo coerentes no cruzamento historico. Os cinco GruposProduto candidatos correspondentes estao inativos tanto no pacote conciliado como no export atual (43/43 Produtos). Zero apto sob o contrato ativo; manter os 51 Grupos inativos preservados. Recibo privado `9c18bfcc0dcc46028db1adf83f4586a2a444ea75eb90c505db5b26ca8f0b0f01`. Nao houve carga, reclassificacao ou reativacao.
 
+## CPA3: Centros de Custo e conta 3.1.01 no Base44 (2026-11-27)
+
+- 14 Centros exportados em duas paginas; os 13 do manifesto `57d3cbbb` correspondem ao export anterior por ID, codigo literal, Empresa, estado e pai (13/13 em cada). O 14o ja estava na origem e segue sem Empresa/pai. Recibo `d6c5b3cd`; nao reaplicar nem inventar vinculo.
+- Consulta dirigida confirmou uma conta `3.1.01` analitica e ativa, sem Empresa proprietaria no Base44. CC001 e CC011 tem Empresa, mas nao tem conta padrao e nao vinculam a conta por esse campo. Nao comprova uso na venda da CPA; CC011 permanece fora. Recibo privado `6dc16eeb`. Sem alteracao na HML/operacional.
+
