@@ -377,3 +377,7 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 
 - Reusar prova sintetica de consolidacao por lista autorizada. Na candidata, a lista precisa vir da autorizacao no servidor por requisicao, nunca do navegador; repetir o contrato com ACL efetiva no clone e reconciliar os oito eventos legados separadamente. Precos vigentes e HML intocados.
 
+## CPA3: proximo export do ERP Integra (2026-11-27)
+
+- Conector Base44 confirmou count e v2/list com cursor. Recorte privado `base44-export-20261127/fornecedor-identity.private.json`: 4/4 visiveis, duas paginas, nao repetir. Proximo: projetar IDs, codigo/unidade/grupo/setor/empresa e estado dos Produtos; paginar e reconciliar com os 273 sem duplicar. Excluir Clientes e manter os 789 do legado separados. Totais visiveis nao provam cobertura fora do acesso atual.
+

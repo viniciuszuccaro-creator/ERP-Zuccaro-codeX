@@ -406,3 +406,7 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 
 - PostgreSQL embutido descartavel: oito verificacoes com RLS forcada e papel somente leitura. Grupo consolida empresas permitidas sem duplicar; CPA e 3Z veem seus eventos; outra Empresa, outro Grupo e contextos incompletos nao leem; UPDATE negado. Eventos arquivados excluidos e decimal preservado. Dados inteiramente sinteticos: nao equivale a ACL da API, permissao de acesso real ou aplicacao dos oito eventos legados. Sem escrita na HML.
 
+## CPA3: export por cursor do Base44 (2026-11-27)
+
+- ERP Integra, contagens visiveis pelo acesso atual: Fornecedor 4, Produto 871, GrupoProduto 91, SetorAtividade 11, Empresa 2, UnidadeMedida 14, Marca 6, CentroCusto 14. Clientes nao consultados. Export direto de Fornecedor em duas paginas, quatro IDs e codigos distintos, campos de identidade/estado/escopo, 1.333 bytes na VPS privada, SHA `d95a84bc96ce6f050b426cb37eac991fff40a2dc0f4b18c6c35faaf06442313b`. Zero coincidencias literais com codigo/codigo_legado no manifesto dos 789; isso nao prova identidade nem autoriza fusao. Sem alteracao no Base44 ou HML.
+
