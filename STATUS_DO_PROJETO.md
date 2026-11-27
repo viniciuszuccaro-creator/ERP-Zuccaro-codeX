@@ -441,3 +441,7 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 
 - 26 contas visiveis em duas paginas, mesmas 26 identidades do export anterior e 21/21 do preflight. Codigos contabeis e sequenciais internos preservados separadamente, 26/26; escopo, estado/tipo e pai tambem 26/26. 12 analiticas ativas, nenhuma conta com Empresa proprietaria, quatro pais distintos ausentes da origem visivel/lixeira/snapshots de maio e zero ciclo encontrado. Nao criar pais nem vincular conta por Empresa. Recibo privado v2 `ae00ae41bdb5bc9dd9419fa6e5ff19a9dfae9b8bcf2bd553ea97435d588b6e16`; sem carga.
 
+## CPA3: ensaio da arvore de 21 contas (2026-11-27)
+
+- PostgreSQL embutido descartavel, export e preflight fixados por SHA: 21/21 contas conciliadas por ID, escopo, pai, dois codigos e estado; nove analiticas ativas. Replay zero; FK recusou pai inexistente e restricao recusou Empresa artificial. Somente tabela de revisao, sem restauracao integral ou plano operacional. Recibo `645e1eb2f3b279de25f36d5ddc71ec55d62e7f6fe8bef4843927dce7d81a2fc5`. Sem alteracao na HML.
+

@@ -409,3 +409,7 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 
 - Export e conciliacao em `base44-export-20261127/plano-de-contas-identity.private.json` e `plano-de-contas-reconciliation-v2.private.json`. Nao repetir export nem misturar `codigo` sequencial com `codigo_conta` contabil. Reusar os 21 do preflight para ensaio de arvore fechada conforme contrato; preservar quatro pais ausentes em revisao e exigir parametrizacao comprovada antes de usar contas de Grupo em venda por Empresa. CC011 continua fora.
 
+## CPA3: preservar arvore historica sem parametrizar empresa (2026-11-27)
+
+- `base44-export-20261127/plano-21-tree-rehearsal.private.json` confirma arvore fechada, reexecucao idempotente e bloqueios no staging. Nao repetir como se validasse o financeiro real: a API de Pedido exige plano da Empresa responsavel. Proximo: confirmar documento/rateio nativo e parametrizacao por Empresa antes de ensaiar a venda real; CC011 permanece fora.
+
