@@ -1,5 +1,8 @@
 ## Estado atual e próxima ação (2026-11-27)
 
+- **Em serviço após novo retorno:** `a305a143`, API/web no mesmo SHA e readiness 200. Em `3f06be54`, a janela anônima autenticou e Clientes abriu na CPA com 15.972 registros. Expandir Produtos não disparou listagem, mas o botão Abrir ainda estava desabilitado na observação imediata. Retorno de runtime e SELECT/policy confirmado. Na versão anterior, o botão abriu para interação após hidratar o contexto. Isso não comprova regressão sustentada na candidata.
+- **Próximo aceite:** preparar a janela autenticada e medir hidratação antes de declarar perda de contexto. Revalidar backup antes da troca; aguardar estabilização do bloco, verificar lista de Produtos na CPA, no Grupo e na 3Z e registrar busca/pagina sem salvar. Não mudar RBAC com base no estado inicial.
+
 - **Em serviço agora:** API/web `3f06be54` na HML com leitura restrita de Produtos, sem escrita. Proprietario confirmou login em janela anonima na versao anterior; nova troca executada apos backup `398b3d0b` restaurado em 26 tabelas, copia externa e ACK. Readiness e protecao anonima passaram; aceite autenticado da nova versao segue pendente. Testar Cadastros em Grupo/CPA/3Z, Clientes e Produtos, sem salvar. Retorno `a305a143` preservado.
 
 - **Em serviço:** API e web da HML voltaram juntas a `a305a143`, com readiness HTTP 200 e consulta anônima protegida. A API e a web de `3f06be54` chegaram a servir juntas após corrigir o entrypoint do Nginx, mas o aceite foi bloqueado pelo erro de cota ao gravar a sessão no Chrome existente. Reversão do SELECT/policy de Produtos conferida. Não houve carga, acesso ao operacional ou limpeza do navegador.

@@ -1,5 +1,7 @@
 ## Retomada imediata (2026-11-27)
 
+- **Versão atual `a305a143`:** retorno conjunto e reversão da leitura Produtos confirmados. Em `3f06be54`, expansão da categoria sem consultas e login anônimo confirmados; o botão inicial de Produtos estava desabilitado. Prova posterior em `a305a143` mostrou habilitação depois da hidratação. Na próxima troca, testar a mesma janela com espera explícita pelo contexto, sem tratar loading como negação. Sem escrita de cadastros ou operacional.
+
 - **Nova troca:** `3f06be54` serve API e web; somente SELECT/policy de Produtos no schema da HML. Backup fresco `398b3d0b` restaurado e copiado ao HD com ACK. No Chrome anonimo do proprietario, recarregar Cadastros e validar buscas, paginacao e contexto; a sessao anterior em janela anonima abriu, mas ainda nao e aceite deste SHA. Manter retorno conjunto de API/web e ACL; sem carga ou operacional.
 
 - **Retorno confirmado:** `a305a143` serve API/web. Backup `d94729e5` restaurado (26 tabelas), cópia externa e ACK verificados. Tar `3f06be54` conferido no D: e na área privada da HML, 2.239 arquivos. Primeira troca falhou no entrypoint padrão do Nginx; a segunda serviu o SHA, mas o Chrome bloqueou o login por cota de armazenamento. Retorno dos dois containers e reversão da leitura Produtos confirmados. Não repetir deploy sem preparar o teste de login e revalidar o backup; não limpar o perfil atual sem autorização. Sem carga ou operacional.
