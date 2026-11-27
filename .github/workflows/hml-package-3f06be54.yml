@@ -1,0 +1,62 @@
+name: hml-package-3f06be54
+
+on:
+  push:
+    branches: [codex/empacotamento-hml-20261127]
+    paths: [.github/workflows/hml-package-3f06be54.yml]
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  package:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      RELEASE_SHA: 3f06be54b1a6e3356f73ce4e19c2ec124c32e096
+      RELEASE_BRANCH: codex/casa-fechamento-hml-20261114
+      RELEASE_CI: '46031839533'
+    steps:
+      - name: Verify the approved CI run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$RELEASE_CI" |
+            jq -e --arg sha "$RELEASE_SHA" --arg branch "$RELEASE_BRANCH" \
+              '.head_sha == $sha and .head_branch == $branch and .status == "completed" and .conclusion == "success" and .name == "erp-runtime-ci"'
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_BRANCH }}
+          persist-credentials: false
+      - name: Pin the release source
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$RELEASE_SHA"
+          test "$(git branch --show-current)" = "$RELEASE_BRANCH"
+          test -z "$(git status --porcelain)"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build and archive the complete runtime
+        run: |
+          set -euo pipefail
+          npm ci --no-audit --no-fund
+          npm ci --prefix server --no-audit --no-fund
+          name="runtime-cadastros-${RELEASE_SHA:0:8}"
+          node scripts/vps/package-hml-runtime.mjs "$RUNNER_TEMP/$name"
+          jq -e --arg sha "$RELEASE_SHA" \
+            '.sha == $sha and .sourceState == "PUBLISHED_CLEAN" and .databaseOrSecretsIncluded == false and .migrationsExecuted == false' \
+            "$RUNNER_TEMP/$name/manifest.json"
+          cd "$RUNNER_TEMP"
+          tar -cf "$name.tar" "$name"
+          sha256sum "$name.tar" | tee "$name.tar.sha256"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: runtime-cadastros-3f06be54
+          path: |
+            ${{ runner.temp }}/runtime-cadastros-3f06be54.tar
+            ${{ runner.temp }}/runtime-cadastros-3f06be54.tar.sha256
+          if-no-files-found: error
+          retention-days: 7
