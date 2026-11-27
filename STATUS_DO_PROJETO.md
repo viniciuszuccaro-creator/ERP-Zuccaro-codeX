@@ -1,5 +1,8 @@
 ## Estado atual e próxima ação (2026-11-27)
 
+- **Clientes no Chrome isolado:** predicado da política de leitura e RLS forçada conferidos contra a HML; somente SELECT de Clientes reproduzido temporariamente no clone. Grupo, CPA e 3Z mostraram 15.972 clientes e duas páginas. Busca por código e nome passou no Grupo; na 3Z, após busca por código, a grade mostrou 1 registro, mas manteve 15.972 como total. Primeira abertura CPA/3Z ~3,4/~3,2 s, reabertura 3Z ~0,8 s (tempos de interface, não benchmark controlado de cache). Revogação e parada do banco comprovadas.
+- **Próxima ação:** separar total filtrado de total geral no rodapé de Clientes e validar busca por nome em CPA/3Z antes de fechar o aceite. Sem novas permissões ou deploy; HML mantida em `a305a143`.
+
 - **Ações Rápidas passou no clone:** menu Novo → Novo Cliente abriu Dados Gerais, sem salvar. Clientes habilitou depois da hidratação, mas a lista retornou HTTP 500 `INTERNAL_ERROR`; PostgreSQL do clone registrou `42501` na tabela `clientes`. Retorno de permissões temporárias e parada do banco isolado confirmados.
 - **Próxima ação:** reconciliar somente no clone a ACL atual da HML antes de retestar Clientes e medir cache. Em transação somente leitura, a HML `a305a143` confirmou SELECT em clientes, grupos_produto, marcas, setores_atividade e unidades_medida, com RLS forçada; Produtos permanece sem SELECT após rollback. Comparar também políticas e acesso de escopo, sem ampliar o papel da HML. Nenhum deploy ou escrita na HML.
 
