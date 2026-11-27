@@ -3,6 +3,7 @@
 - **Versão servida:** `a305a143` na HML. Retomar a suíte Linux corrigida `erp-cadastros-corrigida` na VM privada do D:. O teste de abertura no Chrome protegido voltou a exceder o prazo; não usar os resultados parciais como gate. Manter WIP de Dashboard separado.
 - **Próxima ação:** concluir os checks e a CI do SHA de Cadastros; verificar backup/restauração, cópia externa e retorno. Reutilizar a aprovação do SELECT/policy de Produtos e a autorização de API/web juntas na HML, sem Financeiro/histórico ou mudanças no operacional. Validar com login e registrar link, versão e roteiro.
 - **Depois de Cadastros:** implementar e comprovar a publicação automática pelo CI na branch de entrega, conforme `PLANO_GO_LIVE.md` (`59ecc16d`). Não confundir decisão registrada com execução comprovada. VPS final só com aceite do proprietário; cargas e acessos não são parte do deploy automático.
+- **Frentes independentes:** preservar a correção do ticket médio no WIP do Dashboard; conciliar indicadores com relatórios no mesmo escopo antes de publicar. Fornecedores `4905483e` ainda exige aceite do escopo compartilhado e escrita específica. Obras e Preços continuam pela comprovação de vínculos; reutilizar os 273 Produtos já conciliados e excluir Clientes dos novos exports Base44. Comercial exige conta e centro aprovados por empresa; não presumir CC011.
 
 ## CPA3: gate de publicacao de Cadastros (2026-11-27)
 

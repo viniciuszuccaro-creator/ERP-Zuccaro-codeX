@@ -31,8 +31,10 @@ Este roteiro atualiza a ordem de trabalho, sem dispensar os Gates abaixo.
 Codex responde por execucao e integracao. Cursor, quando disponivel, pode
 trabalhar no visual em checkout separado; nao e dependencia da entrega.
 Cada lote aprovado termina com verificacao, STATUS, HANDOFF, commit e push
-na branch de trabalho, sem merge ou deploy implicito. Nao usar o C: para
-artefatos, nem reabrir Codespace como requisito desta rodada.
+na branch de trabalho, sem merge implicito. Na branch de entrega, a publicacao
+automatica de API e web na VPS de teste segue a secao vigente no topo deste
+plano. VPS final, cargas e alteracoes de acesso conservam gates proprios.
+Nao usar o C: para artefatos, nem reabrir Codespace como requisito desta rodada.
 
 1. **Inventario diferencial HD para VPS agora.** Identificar o volume pela
    pasta de backup, ler os inventarios e cruzar por caminho, tamanho e
