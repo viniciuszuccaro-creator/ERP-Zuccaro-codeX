@@ -385,3 +385,7 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 
 - Consultar `base44-export-20261127/produto-identity.private.json` e `produto-reconciliation-v2.private.json`. Nao reexportar os 871 nem repetir os 273. Priorizar os 221 com referencias presentes: reconciliar entidades relacionadas por ID original e codigo, Empresa autorizada e unidade canonica; separar 323 sem atribuicao de Empresa sem presumir vinculo. Contagens de pendencias nao sao mutuamente exclusivas. Sem escrita antes de clone, manifesto e aprovacao especifica. Clientes fora do export.
 
+## CPA3: lacuna de GrupoProduto e Setor no Base44 (2026-11-27)
+
+- Nao repetir a exportacao dos 871 ou das quatro entidades referenciadas. Provas privadas em `base44-export-20261127`: `product-references.private.json`, `produto-221-reference-gates.private.json`, `produto-221-crosswalk-coverage.private.json`. Proximo: recuperar export historico/mapa oficial dos 55 IDs de GrupoProduto e nove de Setor ausentes; validar os 92 candidatos de Setor e os 87 Produtos do preflight anterior sem inferir por nome/codigo. Nenhum dos 221 apto a carga nesta prova.
+
