@@ -1,5 +1,7 @@
 ## CPA3: gate de publicacao de Cadastros (2026-11-27)
 
+- Retomada da validacao: guardar logs da suite anterior, que rodou sem a correcao das comparacoes historicas. Usar o WIP completo de Cadastros, incluindo a projecao exata de Catalogo e a prova de resposta atrasada; manter o WIP de Dashboard separado. 79 testes focados e prova Chrome Windows passaram. Chrome na VM com sandbox padrao instalou, mas os tres testes iniciais expiraram. Validar em executor Linux capaz de cumprir os limites atuais, sem alterar as protecoes nem contar o teste Windows como CI. HML segue em a305a143; nenhuma aplicacao do grant.
+
 - Aprovacao do proprietario registrada para o delta SELECT/policy de Produtos ja ensaiado, exclusivamente na HML e sem escrita. Reutilizar a aprovacao do mesmo escopo; identificar papel e schema efetivos, conferir os SQLs de aplicacao e retorno e aguardar CI do SHA exato e backup restauravel com copia externa antes de aplicar. API/web juntas; sem cargas, Financeiro/historico ou alteracao operacional.
 
 - Proxima candidata inclui consulta sob demanda no layout e modo de leitura `catalogo=true` na grade de Produtos, sem ativacao operacional. Passaram teste montado, cliente HTTP, PostgreSQL sintetico e prova HTTP no backup restaurado para Grupo/CPA/3Z. O acesso de Produtos exige gate separado: SELECT e uma policy na tabela do schema HML, sem escrita ou fallback public. Aplicacao e reversao ensaiadas no clone; nenhuma permissao atual foi alterada. Checks finais e CI do SHA exato continuam pendentes.

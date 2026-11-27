@@ -1,5 +1,7 @@
 ## CPA3: candidata de Cadastros pronta para decisao (2026-11-27)
 
+- Validacao da candidata apos 13e33979: Chrome 158 instalado na VM privada do D: com sandbox padrao. Tres provas de navegador da VM canceladas por timeout; prova focada no Chrome Windows passou, inclusive resposta CPA tardia descartada apos trocar para 3Z. Na suite integrada, quatro comparacoes historicas tambem falharam pelo delta de Catalogo. Projecao exata corrigida no WIP, preservando as verificacoes ancestrais; 79 testes focados passaram. Ainda falta reexecutar a suite no snapshot corrigido e confirmar CI do SHA de codigo. Sem SELECT, publicacao ou carga.
+
 - Proprietario aprovou o delta ensaiado de leitura de Produtos somente na HML: SELECT e uma policy para o papel da API, restritos ao Grupo e Empresas autorizadas, sem escrita. Aplicar somente apos CI do SHA exato, revalidacao de destino, backup restauravel com copia externa e retorno. Nenhuma aplicacao registrada nesta aprovacao.
 
 - Produtos: catalogo HML confirmado em leitura com o principal da API: RLS forcada, zero policies, sem SELECT e sem BYPASSRLS. Backup restaurado: 273 ativos do Grupo. Ensaio HTTP isolado com Auth sintetico e papel restrito: 273 no Grupo e nas duas Empresas, duas paginas distintas e busca por codigo, empresa incompatível negada. Delta SELECT/policy aplicado e revertido no clone, sem alterar HML. Codigo de Cadastros ainda em validacao, sem publicacao.
