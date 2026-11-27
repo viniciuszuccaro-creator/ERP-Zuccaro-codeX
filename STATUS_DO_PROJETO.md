@@ -424,3 +424,7 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 
 - Lixeira Base44 consultada somente por ID: zero dos 55 GruposProduto e dos nove Setores ausentes retornaram. No acervo, o CSV recuperado de GrupoProduto (91 linhas) nao coincide com os IDs procurados. O mapa historico dos 11 Setores localiza a referencia nativa nos 221 Produtos; 151 conferem Grupo e Empresa na origem, 70 permanecem sem essa conciliacao. Nenhum Produto passa os dois vinculos; sem escrita. Recibo privado `bdccb739dda4949f7475dc8af58be32f326dc53f8e96f0b9fb056142529d2a11`.
 
+## CPA3: snapshot nativo de maio para GrupoProduto (2026-11-27)
+
+- Dois exports somente leitura do mesmo app Base44 recuperados no acervo privado: 138/221 Produtos encontram o ID historico de GrupoProduto no mesmo Grupo de origem e os 221 encontram Setor. Entre os 138, 87 tambem conferem Empresa e Grupo no mapa de Setor, e 43 tem ambas as referencias ativas na evidencia consultada. Nenhum dos IDs historicos GrupoProduto e ID original do pacote de Grupos conciliado: 138 codigos literais unicos sao apenas candidatos a crosswalk. Nao usar codigo sozinho para liberar carga. Recibos privados `c45c7e9f` e `0861e09f`. Sem escrita.
+

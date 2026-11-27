@@ -393,3 +393,7 @@ Arvore original EXETPS: 1.839 arquivos, 2.438.903.826 bytes, todos equivalentes 
 
 - `base44-export-20261127/produto-221-historical-ids.private.json` fixa os 151 Produtos com Setor historico, Grupo e Empresa coincidentes na origem. Manter outros 70 em revisao de escopo. Proximo: buscar outro snapshot nativo para os 55 IDs GrupoProduto; o CSV de recuperacao e a lixeira ja foram conferidos. Validar estado e ACL no clone apos o vinculo de Grupo; nenhuma escrita autorizada por esta prova.
 
+## CPA3: retomar crosswalk historico dos Grupos (2026-11-27)
+
+- `base44-export-20261127/produto-221-native-may-snapshots.private.json` e `produto-221-native-may-target-coverage.private.json`: priorizar os 43 com Grupo e Setor historicos ativos e escopo Setor comprovado. Validar em clone o mapa ID historico -> ID conciliado de Grupo com Grupo/Empresa, estado e procedencia; codigo literal unico sozinho nao aprova identidade. 83 dos 221 ainda sem ID Grupo historico no acervo consultado. Nao repetir export nem gravar na HML.
+
