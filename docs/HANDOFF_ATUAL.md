@@ -1,5 +1,7 @@
 ## Retomada imediata (2026-11-27)
 
+- **Correção do gate de Cadastros:** a CI de Clientes identificou três verificações históricas da fachada que não descontavam o novo trecho exato de paginação. O guarda comum agora usa o recorte já auditado, sem mudar hashes ou tolerar edições fora dele. Os 27 testes afetados passaram localmente. Aguardar a CI da revisão corrigida e gerar a web desse SHA, não da candidata anterior. HML permanece em `a305a143`.
+
 - **Candidata integrada, somente CI:** total filtrado de Clientes e espera de contexto de Produtos/Clientes consolidados na grade existente. 81 testes locais focados passaram, incluindo Chrome protegido, abertura sob demanda, Ações Rápidas, paginação, zero, erro e troca de empresa. Próximo passo: CI do SHA integrado, build Ubuntu e aceite no clone restaurado. HML segue em `a305a143`, sem merge ou deploy.
 
 - **Total filtrado de Clientes corrigido em candidata de validação:** a grade HTTP usa total e hasMore da própria página; a contagem geral e os consumidores de array foram preservados. Requisição cancelável e vinculada à sessão/empresa; zero e falha aparecem separados. 80 testes focados passaram, incluindo Chrome protegido. Aguardar CI Ubuntu e revalidar com base restaurada antes de integrar. Sem deploy; HML mantém `a305a143`.

@@ -3,6 +3,7 @@ import crypto from 'node:crypto';
 import { clienteLocaisReviewRemainder } from './clienteLocaisReviewRemainder.js';
 import { clienteLocaisPurposeRemainder } from './clienteLocaisPurposeRemainder.js';
 import { fornecedorHttpRemainder } from './fornecedorHttpRemainder.js';
+import { produtoCatalogoRemainder } from './produtoCatalogoRemainder.js';
 import { clienteContatosHunks, clienteContatosRemainder, clienteContatosHistoricalInput } from './clienteContatosRemainder.js';
 export const consolidation81Hunks={
   "src/api/base44Client.js": {
@@ -67,7 +68,10 @@ export const consolidation81Hunks={
     ]
   }
 };
-export function consolidation81Remainder(file,text,verify=true){return exactSourceRemainder(file,clienteContatosRemainder(file,text),consolidation81Hunks[file],verify); }
+export function consolidation81Remainder(file,text,verify=true){
+ if(file==='src/api/base44Client.js')text=produtoCatalogoRemainder(file,text);
+ return exactSourceRemainder(file,clienteContatosRemainder(file,text),consolidation81Hunks[file],verify);
+}
 export function clienteConferenciaRemainder(file,text,verify=true){
  return clienteConferenciaHistoricalRemainder(file,clienteSelectedReferenceRemainder(file,text,verify),verify);
 }
