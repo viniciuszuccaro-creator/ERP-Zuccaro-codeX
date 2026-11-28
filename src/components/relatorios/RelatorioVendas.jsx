@@ -16,7 +16,7 @@ import usePermissions from "@/components/lib/usePermissions";
 import { useUser } from "@/components/lib/UserContext";
 import FiltrosPeriodoEmpresa from "@/components/relatorios/FiltrosPeriodoEmpresa";
 import { exportarCSV } from "@/components/relatorios/exportUtils";
-import { resolveDashboardReportFiltersFromSearch } from "@/components/lib/dashboardKpiPolicy";
+import { isDateInCalendarRange, resolveDashboardReportFiltersFromSearch } from "@/components/lib/dashboardKpiPolicy";
 
 const COLORS = ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#06b6d4','#64748b'];
 
@@ -53,11 +53,8 @@ export default function RelatorioVendas() {
   });
 
   const pedidosFiltrados = useMemo(() => {
-    const ini = new Date(filtros.data_inicio + 'T00:00:00');
-    const fim = new Date(filtros.data_fim + 'T23:59:59');
     return pedidos.filter(p => {
-      const d = new Date(p.data_pedido || p.created_date);
-      if (!(d >= ini && d <= fim && p.status !== 'Cancelado')) return false;
+      if (!(isDateInCalendarRange(p.data_pedido || p.created_date, filtros.data_inicio, filtros.data_fim) && p.status !== 'Cancelado')) return false;
       if (filtros.status && String(p.status || '').toLowerCase() !== String(filtros.status).toLowerCase()) return false;
       return true;
     });

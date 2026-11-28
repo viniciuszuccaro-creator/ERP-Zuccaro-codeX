@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
+  isDateInCalendarRange,
   computeDashboardDerivedKpis,
   isDashboardReceivableOverdue,
   filterFinancialReportItems,
@@ -343,12 +344,43 @@ test("Dashboard alinha drill-down de entregas_pendentes e otd_entregas para Expe
   assert.doesNotMatch(src, /tab:\s*'producao',\s*kpi:\s*'otd_entregas'/);
 });
 
-test("relatórios de Vendas, Estoque, DRE e Produção iniciam o intervalo à meia-noite local, como o Dashboard", () => {
+test("relatórios de Vendas, Estoque, DRE e Produção filtram por intervalo de calendário compartilhado com o Dashboard", () => {
   for (const file of ["RelatorioVendas", "RelatorioEstoque", "RelatorioDRE", "RelatorioProducao"]) {
     const src = readFileSync(`src/components/relatorios/${file}.jsx`, "utf8");
-    assert.match(src, /const ini = new Date\(filtros\.data_inicio \+ 'T00:00:00'\);/, file);
-    assert.doesNotMatch(src, /const ini = new Date\(filtros\.data_inicio\);/, file);
+    assert.match(src, /import \{[^}]*isDateInCalendarRange[^}]*\} from "@\/components\/lib\/dashboardKpiPolicy"/, file);
+    assert.match(src, /isDateInCalendarRange\(/, file);
+    assert.doesNotMatch(src, /new Date\(filtros\.data_inicio/, file);
   }
+});
+
+test("data SQL em meia-noite UTC conta no dia de calendário, inclusive no primeiro dia do intervalo", () => {
+  const ref = new Date(2026, 10, 28, 12, 0, 0);
+  assert.equal(isDateInCalendarRange("2026-11-01T00:00:00.000Z", "2026-11-01", "2026-11-07"), true);
+  assert.equal(isDateInCalendarRange("2026-11-01T00:00:00Z", "2026-11-01", "2026-11-01"), true);
+  assert.equal(isDateInCalendarRange("2026-10-31T00:00:00.000Z", "2026-11-01", "2026-11-07"), false);
+  assert.equal(isDateInCalendarRange("2026-11-08T00:00:00.000Z", "2026-11-01", "2026-11-07"), false);
+  assert.equal(
+    isDashboardReceivableOverdue({ status: "Pendente", data_vencimento: "2026-11-28T00:00:00.000Z" }, ref),
+    false,
+  );
+  assert.equal(
+    isDashboardReceivableOverdue({ status: "Pendente", data_vencimento: "2026-11-27T00:00:00.000Z" }, ref),
+    true,
+  );
+});
+
+test("timestamp de instante real continua no dia local, não no dia UTC", () => {
+  const instanteLocal = new Date(2026, 10, 1, 0, 30, 0).toISOString();
+  assert.equal(isDateInCalendarRange(instanteLocal, "2026-11-01", "2026-11-07"), true);
+  const diaAnteriorLocal = new Date(2026, 9, 31, 23, 30, 0).toISOString();
+  assert.equal(isDateInCalendarRange(diaAnteriorLocal, "2026-11-01", "2026-11-07"), false);
+});
+
+test("semana do Dashboard aceita data SQL em meia-noite UTC do primeiro dia da janela", () => {
+  const hoje = new Date();
+  const tresDiasAtras = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() - 3);
+  const chave = `${tresDiasAtras.getFullYear()}-${String(tresDiasAtras.getMonth() + 1).padStart(2, "0")}-${String(tresDiasAtras.getDate()).padStart(2, "0")}`;
+  assert.equal(filtrarPorPeriodoDashboard(`${chave}T00:00:00.000Z`, "semana"), true);
 });
 
 test("Dashboard usa um único predicado de aguardando aprovação para chip, lista e drill-down", () => {

@@ -15,6 +15,7 @@ import usePermissions from "@/components/lib/usePermissions";
 import { useUser } from "@/components/lib/UserContext";
 import FiltrosPeriodoEmpresa from "@/components/relatorios/FiltrosPeriodoEmpresa";
 import { exportarCSV } from "@/components/relatorios/exportUtils";
+import { isDateInCalendarRange } from "@/components/lib/dashboardKpiPolicy";
 
 export default function RelatorioDRE() {
   const [filtros, setFiltros] = useState({
@@ -47,9 +48,7 @@ export default function RelatorioDRE() {
   });
 
   const filtrar = (lista, campo) => {
-    const ini = new Date(filtros.data_inicio + 'T00:00:00');
-    const fim = new Date(filtros.data_fim + 'T23:59:59');
-    return lista.filter(i => { const d = new Date(i[campo]||i.created_date); return d>=ini && d<=fim; });
+    return lista.filter(i => isDateInCalendarRange(i[campo]||i.created_date, filtros.data_inicio, filtros.data_fim));
   };
 
   const pedidosFiltrados = useMemo(() => filtrar(pedidos.filter(p=>p.status!=='Cancelado'), 'data_pedido'), [pedidos, filtros]);

@@ -105,8 +105,8 @@ export const filtrarPorPeriodoDashboard = (data, periodo = 'mes') => {
   }
   if (periodo === 'semana') {
     const { data_inicio: inicio, data_fim: fim } = resolveDashboardPeriodRange('semana', hoje);
-    const dataIso = toIsoDate(dataComparacao);
-    return dataIso >= inicio && dataIso <= fim;
+    const dataIso = toComparableLocalIsoDate(data);
+    return Boolean(dataIso) && dataIso >= inicio && dataIso <= fim;
   }
   if (periodo === 'mes') {
     return dataComparacao.getMonth() === hoje.getMonth()
@@ -447,13 +447,33 @@ const parseValidIsoDateOnly = (value) => {
   return trimmed;
 };
 
+const SQL_UTC_MIDNIGHT_RE = /^(\d{4}-\d{2}-\d{2})T00:00:00(?:\.0+)?Z$/;
+
+// Colunas `date` do SQL chegam como meia-noite UTC: o dia de calendario e a propria data, nao o dia anterior em UTC-3.
+const parseSqlUtcMidnightDate = (value) => {
+  const match = SQL_UTC_MIDNIGHT_RE.exec(String(value || '').trim());
+  return match ? parseValidIsoDateOnly(match[1]) : null;
+};
+
 const toComparableLocalIsoDate = (raw) => {
   if (!raw) return null;
   const dateOnly = parseValidIsoDateOnly(String(raw));
   if (dateOnly) return dateOnly;
+  const sqlDate = parseSqlUtcMidnightDate(raw);
+  if (sqlDate) return sqlDate;
   const d = new Date(raw);
   if (Number.isNaN(d.getTime())) return null;
   return toIsoDate(d);
+};
+
+export const isDateInCalendarRange = (raw, dataInicio, dataFim) => {
+  const itemIso = toComparableLocalIsoDate(raw);
+  if (!itemIso) return false;
+  const iniIso = parseValidIsoDateOnly(dataInicio) || toComparableLocalIsoDate(dataInicio);
+  const fimIso = parseValidIsoDateOnly(dataFim) || toComparableLocalIsoDate(dataFim);
+  if (iniIso && itemIso < iniIso) return false;
+  if (fimIso && itemIso > fimIso) return false;
+  return true;
 };
 
 export const isDashboardReceivableOverdue = (conta, referenceDate = new Date()) => {
@@ -468,6 +488,8 @@ export const isDashboardReceivableOverdue = (conta, referenceDate = new Date()) 
     if (!validDue) return false;
     return validDue < toIsoDate(ref);
   }
+  const sqlDue = parseSqlUtcMidnightDate(raw);
+  if (sqlDue) return sqlDue < toIsoDate(ref);
   const due = new Date(raw);
   if (Number.isNaN(due.getTime())) return false;
   return due < ref;

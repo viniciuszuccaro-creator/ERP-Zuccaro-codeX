@@ -13,7 +13,7 @@ import { useUser } from "@/components/lib/UserContext";
 import { base44 } from "@/api/base44Client";
 import FiltrosPeriodoEmpresa from "@/components/relatorios/FiltrosPeriodoEmpresa";
 import { exportarCSV } from "@/components/relatorios/exportUtils";
-import { resolveDashboardReportFiltersFromSearch } from "@/components/lib/dashboardKpiPolicy";
+import { isDateInCalendarRange, resolveDashboardReportFiltersFromSearch } from "@/components/lib/dashboardKpiPolicy";
 
 const COLORS = ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4'];
 
@@ -57,11 +57,8 @@ export default function RelatorioProducao() {
   });
 
   const orsFiltrados = useMemo(() => {
-    const ini = new Date(filtros.data_inicio + 'T00:00:00');
-    const fim = new Date(filtros.data_fim + 'T23:59:59');
     return ordens.filter(o => {
-      const d = new Date(o.data_inicio || o.created_date);
-      return d >= ini && d <= fim;
+      return isDateInCalendarRange(o.data_inicio || o.created_date, filtros.data_inicio, filtros.data_fim);
     });
   }, [ordens, filtros]);
 

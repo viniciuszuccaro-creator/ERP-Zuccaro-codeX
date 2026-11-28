@@ -1,3 +1,15 @@
+## Frontend Dashboard: rodada 5 da revisao Bugbot no PR #601 (2026-11-28)
+
+- **Objetivo:** corrigir a regressao de datas em meia-noite UTC introduzida pela rodada 4 (Bugbot `8d6dcb8f`).
+- **Causa:** datas `date` do SQL chegam como `YYYY-MM-DDT00:00:00Z`. A conversao local as deslocava para o dia anterior em UTC-3, e os limites `YYYY-MM-DD` as excluiam do periodo. A rodada 4 propagou o mesmo problema aos quatro relatorios.
+- **Corrigido:**
+  - `dashboardKpiPolicy.js`: `parseSqlUtcMidnightDate` trata `YYYY-MM-DDT00:00:00(.000)Z` como dia de calendario; usado em `toComparableLocalIsoDate`, em `isDashboardReceivableOverdue` e na semana do Dashboard. Instantes reais continuam no dia local.
+  - Novo export `isDateInCalendarRange(raw, dataInicio, dataFim)` no mesmo modulo, usado por `RelatorioVendas`, `RelatorioEstoque`, `RelatorioDRE` e `RelatorioProducao` em vez de `new Date(...)` com limites locais. Os relatorios e o Dashboard passam a usar a mesma regra.
+- **Limite conhecido:** um `created_date` gravado exatamente em `00:00:00.000Z` cai no dia UTC, nao no local. Aceito por ser raro; registrado para revisao se o contrato de dados mudar.
+- **Testes:** `tests/dashboard-overhaul-contracts.test.js` ganha casos para meia-noite UTC no primeiro dia da janela, vencimento de meia-noite UTC, instante real local e a semana do Dashboard.
+- **Validacao:** `npm test` 3079/3079 em `TZ=America/Sao_Paulo`; teste direcionado tambem em `TZ=UTC`; build, typecheck, `audit:baseline`, `git diff --check` e lint (0 erros, 2 warnings preexistentes).
+- **Proximo passo:** aguardar nova revisao do PR #601.
+
 ## Frontend Dashboard: rodada 4 da revisao Bugbot no PR #601 (2026-11-28)
 
 - **Objetivo:** corrigir divergencias entre o Dashboard e os drill-downs de Relatorios (intervalo da semana e contador de aprovacoes).
