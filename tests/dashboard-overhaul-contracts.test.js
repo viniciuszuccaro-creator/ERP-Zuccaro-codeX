@@ -4,6 +4,7 @@ import {
   computeDashboardDerivedKpis,
   isDashboardReceivableOverdue,
   filterFinancialReportItems,
+  filtrarPorPeriodoDashboard,
   resolveDashboardPeriodRange,
   resolveDashboardReportFiltersFromSearch,
   resolveIndicatorState,
@@ -251,4 +252,42 @@ test("filterFinancialReportItems e isDashboardReceivableOverdue reproduzem exata
   const totalDrillDown = filtradosInadimplencia.reduce((s, c) => s + c.valor, 0);
   const derived = computeDashboardDerivedKpis({ periodo: "mes", contasReceber });
   assert.equal(totalDrillDown, derived.valorVencido);
+});
+
+test("filtrarPorPeriodoDashboard('semana') usa o mesmo intervalo de calendário do drill-down", () => {
+  const hoje = new Date();
+  const seteDiasAtras = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() - 7, 10, 0, 0);
+  const oitoDiasAtras = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() - 8, 23, 0, 0);
+  assert.equal(filtrarPorPeriodoDashboard(seteDiasAtras.toISOString(), 'semana'), true);
+  assert.equal(filtrarPorPeriodoDashboard(oitoDiasAtras.toISOString(), 'semana'), false);
+  assert.equal(filtrarPorPeriodoDashboard(hoje.toISOString(), 'semana'), true);
+});
+
+test("filterFinancialReportItems não aplica status de receber às contas a pagar", () => {
+  const ref = new Date("2026-11-28T12:00:00Z");
+  const pagar = [
+    { id: "p1", status: "Pendente", valor: 100, data_vencimento: "2026-11-10" },
+    { id: "p2", status: "Pago", valor: 50, data_vencimento: "2026-11-12" },
+  ];
+  const cobrancasPagas = filterFinancialReportItems(pagar, {
+    data_inicio: "2026-11-01", data_fim: "2026-11-28", status: "Recebido",
+    kpi: "cobrancas_pagas", kind: "pagar", referenceDate: ref,
+  });
+  assert.deepEqual(cobrancasPagas.map((c) => c.id), ["p1", "p2"]);
+
+  const contasPagar = filterFinancialReportItems(pagar, {
+    data_inicio: "2026-11-01", data_fim: "2026-11-28", status: "Pendente",
+    kpi: "contas_pagar", kind: "pagar", referenceDate: ref,
+  });
+  assert.deepEqual(contasPagar.map((c) => c.id), ["p1"]);
+});
+
+test("KPI de aguardando aprovação conta além de 8 e só o status do drill-down", () => {
+  const hoje = new Date().toISOString();
+  const pedidos = Array.from({ length: 10 }, (_, i) => ({
+    id: `a${i}`, status: "Aguardando Aprovação", valor_total: 10, data_pedido: hoje,
+  }));
+  pedidos.push({ id: "sp", status: "Aprovado", status_aprovacao: "pendente", valor_total: 10, data_pedido: hoje });
+  const derived = computeDashboardDerivedKpis({ periodo: "mes", pedidos });
+  assert.equal(derived.pedidosAguardandoAprovacao, 10);
 });

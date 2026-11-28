@@ -1,3 +1,20 @@
+## Frontend Dashboard e Cadastros Gerais: correcoes da revisao Bugbot/Codex no PR #601 (2026-11-28)
+
+- **Objetivo:** corrigir os achados de revisao automatica do PR #601 sobre KPIs do Dashboard e seletor de cadastro.
+- **Corrigido:**
+  - Aguardando Aprovacao: contador do KPI e do chip agora usa a contagem do periodo (`status === 'Aguardando Aprovação'`), alinhada ao drill-down; deixou de ser limitada a 8 itens.
+  - Semana: `filtrarPorPeriodoDashboard('semana')` usa o intervalo de calendario de `resolveDashboardPeriodRange` (mesmo do drill-down), e nao mais janela rolante de 7x24h.
+  - Relatorio financeiro: filtro de status so se aplica a contas a pagar quando o KPI e `contas_pagar`; contas a receber mantem o filtro.
+  - Subtitulos de Vendas, Fluxo de Caixa e Inadimplencia passam por `formatDisplayByState`; nao exibem "0 pedidos", "Negativo" ou "R$ 0,00 vencido" em estados `carregando`/`erro`/`sem_acesso`.
+  - `amostraLimitada` (listas no teto de 9999) passa do hook de KPIs ao view-model, sinalizando dados parciais.
+  - `CadastroEntitySelect`: com ID salvo, a resolucao e somente por ID; rotulo homonimo fora da pagina de 200 registros nao substitui o ID.
+- **Estruturas reutilizadas:** `computeDashboardDerivedKpis`, `resolveDashboardPeriodRange`, `filterFinancialReportItems`, `formatDisplayByState`, `CadastroEntitySelect` existentes. Nenhum arquivo novo.
+- **Multiempresa/RBAC/auditoria:** sem mudanca de escopo; contadores continuam derivados de listas ja filtradas por `filterInContext` (groupId/empresaId).
+- **Testes:** novos casos em `tests/dashboard-overhaul-contracts.test.js` (semana calendario, status de pagar, contagem de aprovacao acima de 8) e `tests/cadastros-ux-keyboard.test.js` (ID salvo sem fallback por rotulo). `tests/helpers/restoreDashboardCadastroCounts.js` espelha as edicoes do Dashboard para manter o pin de fronteira.
+- **Validacao:** `npm run typecheck`, `npm run build`, `npm run audit:baseline`, `git diff --check` e `npm test` (3071/3071). `npm run lint` sem erros (2 warnings preexistentes em `PedidoTabsContainer.jsx` e `EntregasListagem.jsx`).
+- **Pendencias (nao cobertas aqui):** contraprova com componente React montado para os KPIs corrigidos; integracao com endpoint oficial de agregados do periodo (backend Codex); verificacao de sessao/queryKey e revogacao no `CadastroEntitySelect`.
+- **Proximo passo:** revisar PR #601 com os novos commits e, se aprovado, decidir a integracao dos agregados oficiais com o Codex.
+
 ## Frontend Dashboard e Cadastros Gerais em branch separada (2026-11-28)
 
 - **Branch de entrega frontend:** `cursor/frontend-dashboard-cadastros-3cfd` (a partir de `codex/casa-fechamento-hml-20261114`), sem alterar sessão/API/paginação conduzidas pelo Codex (`src/api/*`, `VisualizadorUniversalEntidadeV24.jsx`, `server/*`) e sem deploy na HML (HML mantida em `a305a143`).

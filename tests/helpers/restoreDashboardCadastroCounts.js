@@ -142,7 +142,8 @@ export function restoreDashboardCadastroCounts(text) {
     },
     derived: {
       pedidosPeriodo,
-      pedidosAguardandoAprovacao: pedidosAguardandoAprovacao.length,
+      pedidosAguardandoAprovacao: totalAguardandoAprovacaoPeriodo,
+      amostraLimitada,
       totalVendas,
       ticketMedio,
       receitasPendentes,
@@ -171,7 +172,7 @@ export function restoreDashboardCadastroCounts(text) {
       key: "vendas_periodo",
       title: "Vendas do Período",
       value: dashboardViewModel.formatDisplayByState(vmStates.vendas, dashboardViewModel.formatBRL, vmEffective.totalVendas),
-      subtitle: \`\${vmEffective.pedidosPeriodoCount ?? pedidosPeriodo.length} pedidos\`,
+      subtitle: dashboardViewModel.formatDisplayByState(vmStates.pedidosPeriodo, (n) => \`\${n} pedidos\`, vmEffective.pedidosPeriodoCount ?? pedidosPeriodo.length),
       icon: DollarSign,
       color: "from-green-500 to-green-600",
       bgColor: "bg-green-50",
@@ -199,7 +200,7 @@ export function restoreDashboardCadastroCounts(text) {
       key: "fluxo_caixa",
       title: "Fluxo de Caixa",
       value: dashboardViewModel.formatDisplayByState(vmStates.fluxoCaixa, dashboardViewModel.formatBRL, vmEffective.fluxoCaixa),
-      subtitle: \`\${(vmEffective.fluxoCaixa ?? fluxoCaixa) >= 0 ? 'Positivo' : 'Negativo'}\`,
+      subtitle: dashboardViewModel.formatDisplayByState(vmStates.fluxoCaixa, (v) => (Number(v) >= 0 ? 'Positivo' : 'Negativo'), vmEffective.fluxoCaixa ?? fluxoCaixa),
       icon: DollarSign,
       color: fluxoCaixa >= 0 ? "from-emerald-500 to-emerald-600" : "from-orange-500 to-orange-600",
       bgColor: fluxoCaixa >= 0 ? "bg-emerald-50" : "bg-orange-50",
@@ -268,7 +269,7 @@ export function restoreDashboardCadastroCounts(text) {
       key: "inadimplencia",
       title: "Inadimplência",
       value: dashboardViewModel.formatDisplayByState(vmStates.inadimplencia, (v) => \`\${v}%\`, vmEffective.taxaInadimplencia),
-      subtitle: \`R$ \${(vmEffective.valorVencido ?? valorVencido).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} vencido\`,
+      subtitle: dashboardViewModel.formatDisplayByState(vmStates.inadimplencia, (v) => \`R$ \${Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} vencido\`, vmEffective.valorVencido ?? valorVencido),
       icon: AlertCircle,
       color: Number(taxaInadimplencia) < 5 ? "text-green-600" : Number(taxaInadimplencia) < 10 ? "text-orange-600" : "text-red-600",
       bgColor: Number(taxaInadimplencia) < 5 ? "bg-green-50" : Number(taxaInadimplencia) < 10 ? "bg-orange-50" : "bg-red-50",
@@ -689,5 +690,11 @@ export function restoreDashboardCadastroCounts(text) {
       value: !canSeeCRM ? 'Sem acesso' : !hasContextoAtivo ? 'Indisponível'
         : clientesCountPending ? 'Carregando' : totalClientes ?? 'Indisponível',`, `title: "Clientes Ativos",
       value: clientesAtivos,`);
+  restoreCountHunk(`    pedidosPeriodo,
+    pedidosAguardandoAprovacao: totalAguardandoAprovacaoPeriodo,
+    amostraLimitada,
+    totalVendas,`, `     pedidosPeriodo,
+    totalVendas,`);
+  restoreCountHunk(`<Badge className="bg-red-100 text-red-700">{totalAguardandoAprovacaoPeriodo}</Badge>`, `<Badge className="bg-red-100 text-red-700">{pedidosAguardandoAprovacao.length}</Badge>`);
   return text;
 }

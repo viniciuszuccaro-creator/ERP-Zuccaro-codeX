@@ -424,7 +424,9 @@ export default function Dashboard({ aggregateOverride = null } = {}) {
   const cobrancasPagas = (cobrancas || []).filter(c => (c?.status === 'Recebido') || (c?.status_cobranca === 'paga')).length;
 
   const {
-     pedidosPeriodo,
+    pedidosPeriodo,
+    pedidosAguardandoAprovacao: totalAguardandoAprovacaoPeriodo,
+    amostraLimitada,
     totalVendas,
     ticketMedio,
     receitasPendentes,
@@ -693,7 +695,8 @@ export default function Dashboard({ aggregateOverride = null } = {}) {
     },
     derived: {
       pedidosPeriodo,
-      pedidosAguardandoAprovacao: pedidosAguardandoAprovacao.length,
+      pedidosAguardandoAprovacao: totalAguardandoAprovacaoPeriodo,
+      amostraLimitada,
       totalVendas,
       ticketMedio,
       receitasPendentes,
@@ -722,7 +725,7 @@ export default function Dashboard({ aggregateOverride = null } = {}) {
       key: "vendas_periodo",
       title: "Vendas do Período",
       value: dashboardViewModel.formatDisplayByState(vmStates.vendas, dashboardViewModel.formatBRL, vmEffective.totalVendas),
-      subtitle: `${vmEffective.pedidosPeriodoCount ?? pedidosPeriodo.length} pedidos`,
+      subtitle: dashboardViewModel.formatDisplayByState(vmStates.pedidosPeriodo, (n) => `${n} pedidos`, vmEffective.pedidosPeriodoCount ?? pedidosPeriodo.length),
       icon: DollarSign,
       color: "from-green-500 to-green-600",
       bgColor: "bg-green-50",
@@ -750,7 +753,7 @@ export default function Dashboard({ aggregateOverride = null } = {}) {
       key: "fluxo_caixa",
       title: "Fluxo de Caixa",
       value: dashboardViewModel.formatDisplayByState(vmStates.fluxoCaixa, dashboardViewModel.formatBRL, vmEffective.fluxoCaixa),
-      subtitle: `${(vmEffective.fluxoCaixa ?? fluxoCaixa) >= 0 ? 'Positivo' : 'Negativo'}`,
+      subtitle: dashboardViewModel.formatDisplayByState(vmStates.fluxoCaixa, (v) => (Number(v) >= 0 ? 'Positivo' : 'Negativo'), vmEffective.fluxoCaixa ?? fluxoCaixa),
       icon: DollarSign,
       color: fluxoCaixa >= 0 ? "from-emerald-500 to-emerald-600" : "from-orange-500 to-orange-600",
       bgColor: fluxoCaixa >= 0 ? "bg-emerald-50" : "bg-orange-50",
@@ -819,7 +822,7 @@ export default function Dashboard({ aggregateOverride = null } = {}) {
       key: "inadimplencia",
       title: "Inadimplência",
       value: dashboardViewModel.formatDisplayByState(vmStates.inadimplencia, (v) => `${v}%`, vmEffective.taxaInadimplencia),
-      subtitle: `R$ ${(vmEffective.valorVencido ?? valorVencido).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} vencido`,
+      subtitle: dashboardViewModel.formatDisplayByState(vmStates.inadimplencia, (v) => `R$ ${Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} vencido`, vmEffective.valorVencido ?? valorVencido),
       icon: AlertCircle,
       color: Number(taxaInadimplencia) < 5 ? "text-green-600" : Number(taxaInadimplencia) < 10 ? "text-orange-600" : "text-red-600",
       bgColor: Number(taxaInadimplencia) < 5 ? "bg-green-50" : Number(taxaInadimplencia) < 10 ? "bg-orange-50" : "bg-red-50",
@@ -1108,7 +1111,7 @@ export default function Dashboard({ aggregateOverride = null } = {}) {
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <h3 className="font-semibold text-slate-900">Aguardando Aprovação</h3>
-                      <Badge className="bg-red-100 text-red-700">{pedidosAguardandoAprovacao.length}</Badge>
+                      <Badge className="bg-red-100 text-red-700">{totalAguardandoAprovacaoPeriodo}</Badge>
                     </div>
                     <div className="space-y-2 max-h-64 overflow-auto">
                       {pedidosAguardandoAprovacao.map((p) => (

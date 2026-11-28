@@ -104,8 +104,9 @@ export const filtrarPorPeriodoDashboard = (data, periodo = 'mes') => {
     return dataComparacao.toDateString() === hoje.toDateString();
   }
   if (periodo === 'semana') {
-    const semanaAtras = new Date(hoje.getTime() - 7 * 24 * 60 * 60 * 1000);
-    return dataComparacao >= semanaAtras && dataComparacao <= hoje;
+    const { data_inicio: inicio, data_fim: fim } = resolveDashboardPeriodRange('semana', hoje);
+    const dataIso = toIsoDate(dataComparacao);
+    return dataIso >= inicio && dataIso <= fim;
   }
   if (periodo === 'mes') {
     return dataComparacao.getMonth() === hoje.getMonth()
@@ -462,7 +463,8 @@ export const filterFinancialReportItems = (
 
   const ini = data_inicio ? new Date(data_inicio) : null;
   const fim = data_fim ? new Date(`${data_fim}T23:59:59`) : null;
-  const expectedStatus = status ? String(status).toLowerCase() : null;
+  const statusDoLedger = kind === 'pagar' && kpi !== 'contas_pagar' ? null : status;
+  const expectedStatus = statusDoLedger ? String(statusDoLedger).toLowerCase() : null;
 
   return rows.filter((item) => {
     const rawDate = item?.[campo] || item?.created_date;

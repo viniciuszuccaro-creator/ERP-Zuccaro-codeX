@@ -116,3 +116,8 @@ test("ColaboradorForm reutiliza CadastroEntitySelect com IDs oficiais (cargo_id,
   assert.match(src, /entityName="Turno"/);
   assert.match(src, /turno_id/);
 });
+
+test("CadastroEntitySelect não substitui ID salvo por rótulo homônimo fora da página carregada", () => {
+  const src = readFileSync("src/components/cadastros/CadastroEntitySelect.jsx", "utf8");
+  assert.match(src, /if \(valueId\) \{\s*return options\.find\(\(o\) => o\.id === String\(valueId\)\) \|\| null;/);
+});

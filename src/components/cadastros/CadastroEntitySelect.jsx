@@ -63,11 +63,10 @@ export default function CadastroEntitySelect(/** @type {any} */ {
       .sort((a, b) => a.label.localeCompare(b.label, "pt-BR"));
   }, [records, labelFields]);
 
-  // Resolve valor atual por ID oficial ou por correspondência exata de rótulo legado
+  // Com ID salvo, a identidade é só o ID: rótulo homônimo não pode substituí-lo (ex.: ID fora da página de 200)
   const matchedOption = useMemo(() => {
     if (valueId) {
-      const byId = options.find((o) => o.id === String(valueId));
-      if (byId) return byId;
+      return options.find((o) => o.id === String(valueId)) || null;
     }
     const cleanFallback = String(fallbackLabel || "").trim().toLowerCase();
     if (cleanFallback) {
