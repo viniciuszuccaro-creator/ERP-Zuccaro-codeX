@@ -217,3 +217,80 @@ jobs:
             exit 1
           fi
           echo "COMPOSE_POSTGRES_STATUS=OK ref=$COMERCIAL_MIGRATIONS_REF"
+
+  hml-runtime-package:
+    # Packaging only. Deployment still requires the private HML gates.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/codex/casa-fechamento-hml-20261114'
+    needs: [a1-native-runtime, frontend, backend, expedicao-comercial-compose]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    concurrency:
+      group: hml-runtime-package-${{ github.ref }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.ref_name }}
+      - name: Check exact published source and detect package changes
+        id: package
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test -z "$(git status --porcelain)"
+          if git diff --name-only "$GITHUB_SHA^" "$GITHUB_SHA" | grep -Eq '^(src/|server/(src/|package[^/]*json$|tsconfig)|scripts/vps/(hml-bootstrap|package-hml-runtime)\.mjs$|package[^/]*json$|vite\.config|\.github/workflows/erp-runtime-ci\.yml$)'; then
+            echo 'required=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'required=false' >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/setup-node@v4
+        if: steps.package.outputs.required == 'true'
+        with: { node-version: '22', cache: npm }
+      - name: Install locked public build dependencies
+        if: steps.package.outputs.required == 'true'
+        run: |
+          npm ci
+          npm ci --prefix server
+      - name: Build and verify canonical API and web package
+        if: steps.package.outputs.required == 'true'
+        env:
+          HML_PACKAGE_DIR: ${{ runner.temp }}/hml-runtime-${{ github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/vps/package-hml-runtime.mjs "$HML_PACKAGE_DIR"
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import fs from 'node:fs';
+          import path from 'node:path';
+          import { fileManifest } from './scripts/vps/package-hml-runtime.mjs';
+          const root = process.env.HML_PACKAGE_DIR;
+          const manifest = JSON.parse(fs.readFileSync(path.join(root, 'manifest.json')));
+          const version = JSON.parse(fs.readFileSync(path.join(root, 'web/.well-known/erp-version.json')));
+          assert.equal(manifest.sha, process.env.GITHUB_SHA);
+          assert.equal(manifest.sourceState, 'PUBLISHED_CLEAN');
+          assert.equal(manifest.databaseOrSecretsIncluded, false);
+          assert.equal(manifest.migrationsExecuted, false);
+          assert.equal(version.sha, manifest.sha);
+          assert.equal(version.apiSha, manifest.sha);
+          assert.equal(version.webSha, manifest.sha);
+          assert.equal(version.dataInBuild, false);
+          assert.deepEqual(fileManifest(root).filter(file => file.path !== 'manifest.json'), manifest.files);
+          console.log('HML_RUNTIME_PACKAGE_VERIFIED=' + manifest.sha);
+          NODE
+          tar -czf "$RUNNER_TEMP/hml-runtime-$GITHUB_SHA.tar.gz" -C "$HML_PACKAGE_DIR" .
+          (cd "$RUNNER_TEMP" && sha256sum "hml-runtime-$GITHUB_SHA.tar.gz" > "hml-runtime-$GITHUB_SHA.sha256")
+          test -z "$(git status --porcelain)"
+      - uses: actions/upload-artifact@v4
+        if: steps.package.outputs.required == 'true'
+        with:
+          name: hml-runtime-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/hml-runtime-${{ github.sha }}.tar.gz
+            ${{ runner.temp }}/hml-runtime-${{ github.sha }}.sha256
+            ${{ runner.temp }}/hml-runtime-${{ github.sha }}/manifest.json
+          retention-days: 3
+          compression-level: 0
+          if-no-files-found: error

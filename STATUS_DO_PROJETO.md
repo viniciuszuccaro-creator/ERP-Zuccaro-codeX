@@ -1,3 +1,10 @@
+## Pacote geral remoto no CI existente (2026-11-28)
+
+- Integracao ea085c022d496abf885078e38b2faf62c4aa2eaa publicada; CI46137666877 em execucao no momento deste registro. Estendida a reserva594/7238254303 para um job de empacotamento no workflow erp-runtime-ci EXISTENTE. Nao nova automacao/servidor ou checkout local.
+- Job hml-runtime-package restrito a push na branch de integracao, depois dos quatro jobs obrigatorios; detecta runtime/config de build, exige HEAD exato/checkout limpo/publicado e usa package-hml-runtime.mjs sem --validation. API/web do mesmo SHA, manifesto conferido byte a byte e marcador de versao; tar e SHA256 em artifact somente de CODIGO, retencao3dias. Dados reais/configs privadas/backups/credenciais nao entram. A execucao real deste job ainda PENDENTE; nao declarar entrega ou publicacao automatica comprovada antes do resultado.
+- Publicacao HML continua separada: nao ha credencial de HML nem comando de deploy no job. Precisam canal privado/destino atual/backup fresco restaurado/copiaexterna/retorno e delta restritoProdutos; Financeiro/historico permanecem desativados. Sem build naVPS e zero arquivos da tarefa noC:.
+- Proxima acao: verificar todos os checks e o artifact deste SHA; registrar bytes/SHA/filesSha256 reais. Depois, disponibilizar pelo canal remoto autorizado sem downloadCasa. Se externo exigirHD ausente, preservar pacote remoto e avancar contratoBackendDashboard com Cursor, sem publicar ou usar recibo antigo como backup fresco.
+
 ## Integracao remota de Cadastros e gates HML (2026-11-28)
 
 - Responsavel CodexCasa; base230e00a2, fonte validada0110cd9e/CI46050866174SUCCESS. Integrados exatamente sete blobs de runtime/testes da candidata; ambos historicos documentais e ancestrais Git preservados. Cursor continua em branch separada. Reservas594/7238237643 e599/7238237821. CI obrigatoria do novo SHA ainda PENDENTE; nenhuma publicacao ou novo acesso inferido das provas anteriores.
