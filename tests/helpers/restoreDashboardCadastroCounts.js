@@ -324,7 +324,7 @@ export function restoreDashboardCadastroCounts(text) {
       bgColor: "bg-orange-50",
       indicatorState: vmStates.entregas,
       drillDownUrl: dashboardViewModel.drillDownUrls.entregas,
-      drillDown: () => handleDrillDown(createPageUrl("Relatorios"), { tab: 'producao', kpi: 'entregas_pendentes' })
+      drillDown: () => handleDrillDown(createPageUrl("Expedicao"), { kpi: 'entregas_pendentes' })
     },
     {
       key: "estoque_baixo",

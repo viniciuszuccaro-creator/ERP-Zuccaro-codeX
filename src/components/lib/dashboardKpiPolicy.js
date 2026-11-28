@@ -428,13 +428,48 @@ export const computeRealtimeKpisFromStores = ({
   };
 };
 
+const DATE_ONLY_ISO_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+const parseValidIsoDateOnly = (value) => {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  if (!DATE_ONLY_ISO_RE.test(trimmed)) return null;
+  const [y, m, d] = trimmed.split('-').map(Number);
+  const parsed = new Date(y, m - 1, d);
+  if (
+    Number.isNaN(parsed.getTime()) ||
+    parsed.getFullYear() !== y ||
+    parsed.getMonth() !== m - 1 ||
+    parsed.getDate() !== d
+  ) {
+    return null;
+  }
+  return trimmed;
+};
+
+const toComparableLocalIsoDate = (raw) => {
+  if (!raw) return null;
+  const dateOnly = parseValidIsoDateOnly(String(raw));
+  if (dateOnly) return dateOnly;
+  const d = new Date(raw);
+  if (Number.isNaN(d.getTime())) return null;
+  return toIsoDate(d);
+};
+
 export const isDashboardReceivableOverdue = (conta, referenceDate = new Date()) => {
   if (!conta) return false;
   if (String(conta.status || '').toLowerCase() === 'atrasado') return true;
   if (conta.status !== 'Pendente' || !conta.data_vencimento) return false;
-  const due = new Date(conta.data_vencimento);
-  if (Number.isNaN(due.getTime())) return false;
   const ref = referenceDate instanceof Date ? referenceDate : new Date(referenceDate);
+  if (Number.isNaN(ref.getTime())) return false;
+  const raw = String(conta.data_vencimento).trim();
+  if (DATE_ONLY_ISO_RE.test(raw)) {
+    const validDue = parseValidIsoDateOnly(raw);
+    if (!validDue) return false;
+    return validDue < toIsoDate(ref);
+  }
+  const due = new Date(raw);
+  if (Number.isNaN(due.getTime())) return false;
   return due < ref;
 };
 
@@ -451,26 +486,24 @@ export const filterFinancialReportItems = (
   } = {},
 ) => {
   const rows = Array.isArray(lista) ? lista : [];
-  if (kpi === 'inadimplencia' && kind === 'receber') {
+  if (kpi === 'inadimplencia') {
+    if (kind !== 'receber') return [];
     return rows.filter((item) => isDashboardReceivableOverdue(item, referenceDate));
   }
-  if (kpi === 'contas_receber' && kind === 'receber') {
-    return rows.filter((item) => String(item?.status || '').toLowerCase() === 'pendente');
-  }
-  if (kpi === 'contas_pagar' && kind === 'pagar') {
+  if (kpi === 'fluxo_caixa' || kpi === 'contas_receber' || kpi === 'contas_pagar') {
     return rows.filter((item) => String(item?.status || '').toLowerCase() === 'pendente');
   }
 
-  const ini = data_inicio ? new Date(data_inicio) : null;
-  const fim = data_fim ? new Date(`${data_fim}T23:59:59`) : null;
+  const iniIso = parseValidIsoDateOnly(data_inicio) || toComparableLocalIsoDate(data_inicio);
+  const fimIso = parseValidIsoDateOnly(data_fim) || toComparableLocalIsoDate(data_fim);
   const statusDoLedger = kind === 'pagar' && kpi !== 'contas_pagar' ? null : status;
   const expectedStatus = statusDoLedger ? String(statusDoLedger).toLowerCase() : null;
 
   return rows.filter((item) => {
     const rawDate = item?.[campo] || item?.created_date;
-    const d = new Date(rawDate);
-    if (ini && !Number.isNaN(ini.getTime()) && !(d >= ini)) return false;
-    if (fim && !Number.isNaN(fim.getTime()) && !(d <= fim)) return false;
+    const itemIso = toComparableLocalIsoDate(rawDate);
+    if (iniIso && (!itemIso || itemIso < iniIso)) return false;
+    if (fimIso && (!itemIso || itemIso > fimIso)) return false;
     if (expectedStatus && String(item?.status || '').toLowerCase() !== expectedStatus) return false;
     return true;
   });

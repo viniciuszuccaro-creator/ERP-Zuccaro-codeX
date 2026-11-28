@@ -168,10 +168,12 @@ export default function RelatorioFinanceiro() {
         </Alert>
       )}
       <FiltrosPeriodoEmpresa filtros={filtros} setFiltros={handleSetFiltros} />
-      {filtros.kpi === 'inadimplencia' && (
+      {['inadimplencia', 'fluxo_caixa', 'contas_receber', 'contas_pagar'].includes(filtros.kpi) && (
         <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-200 bg-amber-50/80 px-3 py-2 text-xs text-amber-900">
           <span>
-            Exibindo inadimplência do Dashboard: títulos a receber vencidos (status Pendente vencido ou Atrasado), sem recorte de data de vencimento.
+            {filtros.kpi === 'inadimplencia'
+              ? 'Exibindo inadimplência do Dashboard: apenas títulos a receber vencidos (status Pendente vencido ou Atrasado), sem recorte de data de vencimento.'
+              : 'Exibindo carteira pendente do Dashboard: títulos a receber e a pagar com status Pendente, sem recorte de data de vencimento.'}
           </span>
           <Button
             type="button"

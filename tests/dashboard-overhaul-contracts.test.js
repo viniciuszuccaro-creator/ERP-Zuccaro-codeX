@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import {
   computeDashboardDerivedKpis,
   isDashboardReceivableOverdue,
@@ -290,4 +291,54 @@ test("KPI de aguardando aprovação conta além de 8 e só o status do drill-dow
   pedidos.push({ id: "sp", status: "Aprovado", status_aprovacao: "pendente", valor_total: 10, data_pedido: hoje });
   const derived = computeDashboardDerivedKpis({ periodo: "mes", pedidos });
   assert.equal(derived.pedidosAguardandoAprovacao, 10);
+});
+
+test("isDashboardReceivableOverdue compara data YYYY-MM-DD em calendário local (não meia-noite UTC)", () => {
+  const localDay27Late = new Date(2026, 10, 27, 23, 30, 0);
+  const localDay28Noon = new Date(2026, 10, 28, 12, 0, 0);
+  const tituloDia28 = { id: "t28", status: "Pendente", valor: 100, data_vencimento: "2026-11-28" };
+  const tituloDia27 = { id: "t27", status: "Pendente", valor: 100, data_vencimento: "2026-11-27" };
+  const tituloInvalido = { id: "tinv", status: "Pendente", valor: 100, data_vencimento: "2026-02-31" };
+
+  assert.equal(isDashboardReceivableOverdue(tituloDia28, localDay27Late), false);
+  assert.equal(isDashboardReceivableOverdue(tituloDia28, localDay28Noon), false);
+  assert.equal(isDashboardReceivableOverdue(tituloDia27, localDay28Noon), true);
+  assert.equal(isDashboardReceivableOverdue(tituloInvalido, localDay28Noon), false);
+});
+
+test("filterFinancialReportItems mantém escopo coerente entre receber e pagar nos KPIs do Dashboard", () => {
+  const ref = new Date(2026, 10, 28, 12, 0, 0);
+  const receber = [
+    { id: "r-old", status: "Pendente", valor: 500, data_vencimento: "2026-08-10" },
+    { id: "r-cur", status: "Pendente", valor: 300, data_vencimento: "2026-11-15" },
+    { id: "r-rec", status: "Recebido", valor: 200, data_vencimento: "2026-11-10" },
+  ];
+  const pagar = [
+    { id: "p-old", status: "Pendente", valor: 400, data_vencimento: "2026-09-05" },
+    { id: "p-cur", status: "Pendente", valor: 100, data_vencimento: "2026-11-20" },
+    { id: "p-pag", status: "Pago", valor: 50, data_vencimento: "2026-11-18" },
+  ];
+  const opts = { data_inicio: "2026-11-01", data_fim: "2026-11-28", referenceDate: ref };
+
+  // Inadimplência não mistura contas a pagar do período no saldo
+  assert.deepEqual(
+    filterFinancialReportItems(pagar, { ...opts, kpi: "inadimplencia", kind: "pagar" }),
+    [],
+  );
+
+  // KPIs de carteira pendente aplicam o mesmo escopo em ambos os lados
+  for (const kpi of ["fluxo_caixa", "contas_receber", "contas_pagar"]) {
+    const rec = filterFinancialReportItems(receber, { ...opts, kpi, kind: "receber" });
+    const pag = filterFinancialReportItems(pagar, { ...opts, kpi, kind: "pagar" });
+    assert.deepEqual(rec.map((i) => i.id), ["r-old", "r-cur"]);
+    assert.deepEqual(pag.map((i) => i.id), ["p-old", "p-cur"]);
+  }
+});
+
+test("Dashboard alinha drill-down de entregas_pendentes e otd_entregas para Expedicao", () => {
+  const src = readFileSync("src/pages/Dashboard.jsx", "utf8");
+  assert.match(src, /handleDrillDown\(createPageUrl\("Expedicao"\),\s*\{\s*kpi:\s*'entregas_pendentes'\s*\}\)/);
+  assert.match(src, /handleDrillDown\(createPageUrl\("Expedicao"\),\s*\{\s*kpi:\s*'otd_entregas'\s*\}\)/);
+  assert.doesNotMatch(src, /tab:\s*'producao',\s*kpi:\s*'entregas_pendentes'/);
+  assert.doesNotMatch(src, /tab:\s*'producao',\s*kpi:\s*'otd_entregas'/);
 });
