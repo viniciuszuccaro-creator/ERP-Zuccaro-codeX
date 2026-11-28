@@ -10,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { z } from "zod";
 import FormWrapper from "@/components/common/FormWrapper";
+import CadastroEntitySelect from "@/components/cadastros/CadastroEntitySelect";
 import { Save, User, Trash2, Power, PowerOff } from "lucide-react";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
@@ -183,31 +184,39 @@ function ColaboradorForm({ colaborador: colaboradorProp, item, data, onSubmit, o
               </div>
 
               <div>
-                <Label>Cargo *</Label>
-                <Input
-                  value={formData.cargo}
-                  onChange={(e) => setFormData({ ...formData, cargo: e.target.value })}
-                  required
+                <Label>Cargo * (Cadastros Gerais)</Label>
+                <CadastroEntitySelect
+                  entityName="Cargo"
+                  valueId={formData.cargo_id}
+                  fallbackLabel={formData.cargo}
+                  placeholder="Selecione o cargo oficial..."
+                  labelFields={["nome_cargo", "nome", "descricao"]}
+                  onSelect={({ id, label }) => setFormData({ ...formData, cargo_id: id || '', cargo: label })}
                 />
               </div>
 
               <div>
-                <Label>Departamento *</Label>
-                <Select value={formData.departamento} onValueChange={(v) => setFormData({ ...formData, departamento: v })}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Administrativo">Administrativo</SelectItem>
-                    <SelectItem value="Comercial">Comercial</SelectItem>
-                    <SelectItem value="Financeiro">Financeiro</SelectItem>
-                    <SelectItem value="RH">RH</SelectItem>
-                    <SelectItem value="Operacional">Operacional</SelectItem>
-                    <SelectItem value="TI">TI</SelectItem>
-                    <SelectItem value="Logística">Logística</SelectItem>
-                    <SelectItem value="Compras">Compras</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label>Departamento * (Cadastros Gerais)</Label>
+                <CadastroEntitySelect
+                  entityName="Departamento"
+                  valueId={formData.departamento_id}
+                  fallbackLabel={formData.departamento}
+                  placeholder="Selecione o departamento oficial..."
+                  labelFields={["nome", "descricao"]}
+                  onSelect={({ id, label }) => setFormData({ ...formData, departamento_id: id || '', departamento: label })}
+                />
+              </div>
+
+              <div>
+                <Label>Turno (Cadastros Gerais)</Label>
+                <CadastroEntitySelect
+                  entityName="Turno"
+                  valueId={formData.turno_id}
+                  fallbackLabel={formData.turno_nome}
+                  placeholder="Selecione o turno oficial..."
+                  labelFields={["nome_turno", "nome", "descricao"]}
+                  onSelect={({ id, label }) => setFormData({ ...formData, turno_id: id || '', turno_nome: label })}
+                />
               </div>
 
               <div>

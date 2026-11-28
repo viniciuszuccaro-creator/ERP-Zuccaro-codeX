@@ -21,11 +21,11 @@ import TabelaPrecoFormCompleto from "@/components/cadastros/TabelaPrecoFormCompl
 import KitProdutoForm from "@/components/cadastros/KitProdutoForm";
 import CatalogoWebForm from "@/components/cadastros/CatalogoWebForm";
 import UnidadeMedidaForm from "@/components/cadastros/UnidadeMedidaForm";
+import { matchesCadastroSearch, handleCadastroTileKeyDown } from "@/components/cadastros/cadastrosSearchFilter";
 
 function filterTiles(tiles, searchTerm) {
-  const q = String(searchTerm || "").trim().toLowerCase();
-  if (!q) return tiles;
-  return tiles.filter(({ k, title }) => `${k} ${title}`.toLowerCase().includes(q));
+  if (!String(searchTerm || "").trim()) return tiles;
+  return tiles.filter(({ k, title }) => matchesCadastroSearch(searchTerm, k, title));
 }
 
 export default function Bloco2Produtos({ allCounts, isLoading, searchTerm = "", missingCounts = [] }) {
@@ -166,6 +166,7 @@ export default function Bloco2Produtos({ allCounts, isLoading, searchTerm = "", 
     { k: 'UnidadeMedida',  title: 'Unidades de Medida',       Icon: Ruler,     campos: ['codigo','sigla','nome','descricao'],                     form: UnidadeMedidaForm },
   ];
   const filteredTiles = filterTiles(tiles, searchTerm);
+  const showProdutoTile = matchesCadastroSearch(searchTerm, "Produto", "Produtos", "catalogo sku item estoque");
 
   useEffect(() => {
     const termo = String(searchTerm || "").trim().replace(/\s+/g, " ").slice(0, 120);
@@ -173,14 +174,17 @@ export default function Bloco2Produtos({ allCounts, isLoading, searchTerm = "", 
     void registrarAuditoria("Bloco2Produtos", "Filtro aplicado", contextoValido, {
       termo,
       total_itens_bloco: tiles.length + 1,
-      total_itens_filtrados: filteredTiles.length + 1,
-      entidades_filtradas: ["Produto", ...filteredTiles.map(({ k }) => k)],
+      total_itens_filtrados: filteredTiles.length + (showProdutoTile ? 1 : 0),
+      entidades_filtradas: [...(showProdutoTile ? ["Produto"] : []), ...filteredTiles.map(({ k }) => k)],
       motivo: contextoValido ? null : "contexto_obrigatorio",
     });
-  }, [searchTerm, contextoValido, filteredTiles.length]);
+  }, [searchTerm, contextoValido, filteredTiles.length, showProdutoTile]);
+
+  const podeVerProduto = canViewEntity("Produto", "Estoque");
+  const produtoBloqueado = !contextoValido || !podeVerProduto;
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6" data-cadastros-grid="bloco2">
       <Card className="rounded-sm shadow-sm border bg-white/80 backdrop-blur">
         <CardHeader className="bg-gradient-to-r from-sky-50 to-cyan-50 border-b rounded-t-sm">
           <div className="flex items-center justify-between">
@@ -194,9 +198,22 @@ export default function Bloco2Produtos({ allCounts, isLoading, searchTerm = "", 
         </CardContent>
       </Card>
 
+      {!showProdutoTile && filteredTiles.length === 0 && (
+        <div className="lg:col-span-2 rounded-sm border border-dashed border-slate-200 bg-slate-50 p-4 text-xs text-slate-500 flex items-center">
+          Nenhum cadastro de Produtos &amp; Serviços corresponde à busca.
+        </div>
+      )}
+
       {/* Card Produtos (abre VisualizadorProdutos especializado) */}
-      <Card className="rounded-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-150 cursor-pointer group border"
+      {showProdutoTile && (
+      <Card
+        role="button"
+        tabIndex={0}
+        aria-disabled={produtoBloqueado}
+        data-cadastros-tile="true"
+        className={`rounded-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-150 cursor-pointer group border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 ${produtoBloqueado ? "opacity-75" : ""}`}
         onClick={openProdutos}
+        onKeyDown={(e) => handleCadastroTileKeyDown(e, openProdutos)}
         data-permission="Cadastros.Produto.visualizar"
         data-action="Cadastros.Produto.abrir"
         data-context-required="group-or-company">
@@ -211,7 +228,7 @@ export default function Bloco2Produtos({ allCounts, isLoading, searchTerm = "", 
             </CardTitle>
             <Button size="sm" className="bg-sky-600 hover:bg-sky-700 rounded-sm text-xs h-7"
               onClick={(e) => { e.stopPropagation(); openProdutos(); }}
-              disabled={!contextoValido || !canViewEntity("Produto", "Estoque")}
+              disabled={produtoBloqueado}
               data-permission="Cadastros.Produto.visualizar"
               data-action="Cadastros.Produto.abrir"
               data-context-required="group-or-company">
@@ -219,12 +236,29 @@ export default function Bloco2Produtos({ allCounts, isLoading, searchTerm = "", 
             </Button>
           </div>
         </CardHeader>
-        <CardContent className="p-3 text-xs text-slate-500">Listagem e edição completa com filtros avançados.</CardContent>
+        <CardContent className="p-3 text-xs text-slate-500">
+          {!contextoValido
+            ? "Selecione grupo ou empresa para abrir."
+            : !podeVerProduto
+              ? "Sem permissão para visualizar produtos."
+              : "Listagem e edição completa com filtros avançados."}
+        </CardContent>
       </Card>
+      )}
 
-      {filteredTiles.map(({ k, title, Icon, campos, form: FormComp }) => (
-        <Card key={k} className="rounded-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-150 cursor-pointer group border"
-          onClick={openList(k, title, Icon, campos, FormComp)}
+      {filteredTiles.map(({ k, title, Icon, campos, form: FormComp }) => {
+        const permitido = canViewEntity(k);
+        const bloqueado = !contextoValido || !permitido;
+        const handleOpen = openList(k, title, Icon, campos, FormComp);
+        return (
+        <Card key={k}
+          role="button"
+          tabIndex={0}
+          aria-disabled={bloqueado}
+          data-cadastros-tile="true"
+          className={`rounded-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-150 cursor-pointer group border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 ${bloqueado ? "opacity-75" : ""}`}
+          onClick={handleOpen}
+          onKeyDown={(e) => handleCadastroTileKeyDown(e, handleOpen)}
           data-permission={`Cadastros.${k}.visualizar`}
           data-action={`Cadastros.${k}.abrir`}
           data-context-required="group-or-company">
@@ -238,8 +272,8 @@ export default function Bloco2Produtos({ allCounts, isLoading, searchTerm = "", 
                 <CountBadgeSimplificado entities={[k]} allCounts={allCounts} missing={missingCounts} isLoading={isLoading} />
               </CardTitle>
               <Button size="sm" className="bg-sky-600 hover:bg-sky-700 rounded-sm text-xs h-7"
-                onClick={(e) => { e.stopPropagation(); openList(k, title, Icon, campos, FormComp)(); }}
-                disabled={!contextoValido || !canViewEntity(k)}
+                onClick={(e) => { e.stopPropagation(); handleOpen(); }}
+                disabled={bloqueado}
                 data-permission={`Cadastros.${k}.visualizar`}
                 data-action={`Cadastros.${k}.abrir`}
                 data-context-required="group-or-company">
@@ -247,9 +281,16 @@ export default function Bloco2Produtos({ allCounts, isLoading, searchTerm = "", 
               </Button>
             </div>
           </CardHeader>
-          <CardContent className="p-3 text-xs text-slate-500">Clique para listar, criar e editar.</CardContent>
+          <CardContent className="p-3 text-xs text-slate-500">
+            {!contextoValido
+              ? "Selecione grupo ou empresa para abrir."
+              : !permitido
+                ? "Sem permissão para visualizar este cadastro."
+                : "Clique ou pressione Enter para listar, criar e editar."}
+          </CardContent>
         </Card>
-      ))}
+        );
+      })}
     </div>
   );
 }

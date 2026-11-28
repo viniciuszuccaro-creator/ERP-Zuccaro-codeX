@@ -1,11 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import useCadastrosAllCounts from "@/components/cadastros/hooks/useCadastrosAllCounts";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Accordion, AccordionContent, AccordionItem, AccordionTrigger
 } from "@/components/ui/accordion";
 import {
-  Users, Building2, Truck, DollarSign, Package, Cpu
+  Users, Building2, Truck, DollarSign, Package, Cpu, RefreshCw, Keyboard, Layers, ChevronsUpDown, SearchX
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SearchInput from "@/components/ui/SearchInput";
@@ -18,16 +21,22 @@ import Bloco4Logistica from "@/components/cadastros/blocks/Bloco4Logistica";
 import Bloco5Organizacional from "@/components/cadastros/blocks/Bloco5Organizacional";
 import Bloco6Tecnologia from "@/components/cadastros/blocks/Bloco6Tecnologia";
 import GroupCountBadge from "@/components/cadastros/GroupCountBadge";
+import { matchCadastrosCatalog, handleCadastroTileKeyDown } from "@/components/cadastros/cadastrosSearchFilter";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { useUser } from "@/components/lib/UserContext";
 import { useWindowManager } from "@/components/lib/WindowManager";
 import { useToast } from "@/components/ui/use-toast";
 import ExternalAppsHub from "@/components/administracao-sistema/ExternalAppsHub";
 
+const ALL_BLOCOS = ["bloco1", "bloco2", "bloco3", "bloco4", "bloco5", "bloco6"];
+
 export default function Cadastros() {
   const [searchTerm, setSearchTerm] = useState("");
   const [acordeonAberto, setAcordeonAberto] = useState([]);
   const [abaGerenciamento, setAbaGerenciamento] = useState("cadastros");
+  const searchInputRef = useRef(null);
+  const acordeonAntesDaBuscaRef = useRef(null);
+  const queryClient = useQueryClient();
   const { windows, activeWindowId } = useWindowManager();
   const cadastroSelecionado = windows.some(window =>
     window.id === activeWindowId && !window.isMinimized &&
@@ -42,13 +51,53 @@ export default function Cadastros() {
     countsPartial,
     missing: countsMissing,
   } = useCadastrosAllCounts(podeVerCadastros && cadastroSelecionado && abaGerenciamento === "cadastros" ? acordeonAberto : []);
-  const { empresaAtual, grupoAtual, createInContext } = useContextoVisual();
+  const { empresaAtual, grupoAtual, contexto, createInContext } = useContextoVisual();
   const { user } = useUser();
   const { toast } = useToast();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || null;
   const empresaId = empresaAtual?.id || null;
   const podeVerAppsExternos = isAdmin?.() || hasPermission("Sistema", "Integracoes", "visualizar") || hasPermission("Sistema", "Integracoes", "ver");
   const contextoAtivo = Boolean(empresaAtual?.id || grupoAtual?.id);
+  const escopoLabel = contexto === "grupo"
+    ? `Grupo: ${grupoAtual?.nome_do_grupo || grupoAtual?.nome || grupoAtual?.nome_grupo || "Consolidado"}`
+    : empresaAtual
+      ? `Empresa: ${empresaAtual?.nome_fantasia || empresaAtual?.razao_social || empresaAtual?.id}`
+      : "Sem contexto selecionado";
+  const searchCatalog = useMemo(() => matchCadastrosCatalog(searchTerm), [searchTerm]);
+
+  const handleRetryCounts = () => {
+    queryClient.invalidateQueries({ queryKey: ["cadastros-all-counts-v5"] });
+  };
+
+  const handleSearchChange = (nextVal) => {
+    const prevActive = Boolean(String(searchTerm || "").trim());
+    const nextMatch = matchCadastrosCatalog(nextVal);
+    setSearchTerm(nextVal);
+    if (nextMatch.active) {
+      if (!prevActive) {
+        acordeonAntesDaBuscaRef.current = acordeonAberto;
+      }
+      setAcordeonAberto(nextMatch.matchingBlocks);
+    } else if (prevActive) {
+      const restored = Array.isArray(acordeonAntesDaBuscaRef.current) ? acordeonAntesDaBuscaRef.current : [];
+      acordeonAntesDaBuscaRef.current = null;
+      setAcordeonAberto(restored);
+    }
+  };
+
+  useEffect(() => {
+    const onGlobalKeyDown = (event) => {
+      if (abaGerenciamento !== "cadastros") return;
+      const tag = String(event.target?.tagName || "").toLowerCase();
+      const isEditable = tag === "input" || tag === "textarea" || tag === "select" || event.target?.isContentEditable;
+      if (event.key === "/" && !event.ctrlKey && !event.metaKey && !event.altKey && !isEditable) {
+        event.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", onGlobalKeyDown);
+    return () => window.removeEventListener("keydown", onGlobalKeyDown);
+  }, [abaGerenciamento]);
   const blocosMeta = {
     bloco1: { nome: "Pessoas e Parceiros", permissao: "Cadastros.Pessoas.visualizar" },
     bloco2: { nome: "Produtos e Servicos", permissao: "Cadastros.Produtos.visualizar" },
@@ -239,7 +288,39 @@ export default function Cadastros() {
         </TabsContent>
 
         {/* ABA: CADASTROS */}
-        <TabsContent value="cadastros" className="space-y-6 mt-6">
+        <TabsContent value="cadastros" className="space-y-5 mt-4">
+          {/* BARRA COMPACTA DE CONTEXTO E CARREGAMENTO SOB DEMANDA */}
+          <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 rounded-sm border border-slate-200 bg-slate-50/90 text-xs text-slate-700" data-cadastros-status-bar="true">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="outline" className={contextoAtivo ? "bg-white border-sky-200 text-sky-900" : "bg-amber-50 border-amber-300 text-amber-900"}>
+                <Layers className="w-3 h-3 mr-1" aria-hidden />
+                {escopoLabel}
+              </Badge>
+              <span className="text-slate-600" data-cadastros-selection-state={cadastroSelecionado ? "selecionado" : "vazio"}>
+                {cadastroSelecionado
+                  ? "Cadastro aberto em janela flutuante"
+                  : "Abertura limpa: selecione um bloco e clique no cadastro para carregar os dados"}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="hidden md:inline-flex items-center gap-1 text-[11px] text-slate-500">
+                <Keyboard className="w-3.5 h-3.5" aria-hidden />
+                <span><kbd className="px-1 py-0.5 bg-white border rounded text-[10px]">/</kbd> buscar · <kbd className="px-1 py-0.5 bg-white border rounded text-[10px]">Setas</kbd> navegar · <kbd className="px-1 py-0.5 bg-white border rounded text-[10px]">Enter</kbd> abrir</span>
+              </span>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-7 px-2 text-xs bg-white"
+                onClick={() => setAcordeonAberto(acordeonAberto.length === ALL_BLOCOS.length ? [] : [...ALL_BLOCOS])}
+                data-action="alternar-todos-blocos-cadastros"
+              >
+                <ChevronsUpDown className="w-3.5 h-3.5 mr-1" aria-hidden />
+                {acordeonAberto.length === ALL_BLOCOS.length ? "Recolher blocos" : "Expandir blocos"}
+              </Button>
+            </div>
+          </div>
+
           {!contextoAtivo && (
             <Card className="rounded-sm border border-amber-200 bg-amber-50" data-context-required="true">
               <CardContent className="p-3 text-sm text-amber-900">
@@ -250,100 +331,233 @@ export default function Cadastros() {
 
           {countsUnavailable && contextoAtivo && (
             <Card className="rounded-sm border border-amber-300 bg-amber-50" data-counts-unavailable="true" role="status">
-              <CardContent className="p-3 text-sm text-amber-950">
-                Contagens indisponíveis por erro de consulta — isso <strong>não</strong> significa
-                que os cadastros estejam vazios. Tente novamente ou confira permissão/contexto.
-                Badges exibem &quot;—&quot; até a contagem responder.
+              <CardContent className="p-3 text-sm text-amber-950 flex flex-wrap items-center justify-between gap-2">
+                <span>
+                  Contagens indisponíveis por erro de consulta — isso <strong>não</strong> significa
+                  que os cadastros estejam vazios. Tente novamente ou confira permissão/contexto.
+                  Badges exibem &quot;—&quot; até a contagem responder.
+                </span>
+                <Button type="button" variant="outline" size="sm" className="h-7 text-xs bg-white border-amber-300 text-amber-950 hover:bg-amber-100" onClick={handleRetryCounts}>
+                  <RefreshCw className="w-3.5 h-3.5 mr-1" aria-hidden />
+                  Tentar novamente
+                </Button>
               </CardContent>
             </Card>
           )}
 
           {countsPartial && !countsUnavailable && contextoAtivo && (
             <Card className="rounded-sm border border-amber-200 bg-amber-50/80" data-counts-partial="true" role="status">
-              <CardContent className="p-3 text-sm text-amber-950">
-                Contagem auxiliar parcial — algumas entidades não responderam
-                {Array.isArray(countsMissing) && countsMissing.length > 0
-                  ? ` (${countsMissing.slice(0, 4).join(", ")}${countsMissing.length > 4 ? "…" : ""})`
-                  : ""}
-                . Blocos afetados exibem &quot;—&quot;; demais totais permanecem válidos. Não é zero confirmado.
+              <CardContent className="p-3 text-sm text-amber-950 flex flex-wrap items-center justify-between gap-2">
+                <span>
+                  Contagem auxiliar parcial — algumas entidades não responderam
+                  {Array.isArray(countsMissing) && countsMissing.length > 0
+                    ? ` (${countsMissing.slice(0, 4).join(", ")}${countsMissing.length > 4 ? "…" : ""})`
+                    : ""}
+                  . Blocos afetados exibem &quot;—&quot;; demais totais permanecem válidos. Não é zero confirmado.
+                </span>
+                <Button type="button" variant="outline" size="sm" className="h-7 text-xs bg-white border-amber-300 text-amber-950 hover:bg-amber-100" onClick={handleRetryCounts}>
+                  <RefreshCw className="w-3.5 h-3.5 mr-1" aria-hidden />
+                  Recarregar
+                </Button>
               </CardContent>
             </Card>
           )}
 
           {/* DASHBOARD DE TOTAIS */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-            <Card className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-blue-50 to-blue-100" onClick={() => handleCardClick('bloco1')} data-permission="Cadastros.Pessoas.visualizar" data-action="alternar-bloco-pessoas" data-context-required="group-or-company">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3" data-cadastros-grid="blocos-resumo">
+            <Card
+              role="button"
+              tabIndex={0}
+              aria-expanded={acordeonAberto.includes('bloco1')}
+              data-cadastros-tile="true"
+              className={`border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-blue-50 to-blue-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${acordeonAberto.includes('bloco1') ? 'ring-2 ring-blue-500' : ''}`}
+              onClick={() => handleCardClick('bloco1')}
+              onKeyDown={(e) => handleCadastroTileKeyDown(e, () => handleCardClick('bloco1'))}
+              data-permission="Cadastros.Pessoas.visualizar"
+              data-action="alternar-bloco-pessoas"
+              data-context-required="group-or-company"
+            >
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-2">
                   <Users className="w-5 h-5 text-blue-600" />
                   <GroupCountBadge precomputedTotal={totals.bloco1} badgeClassName="bg-blue-600 text-white text-xs px-1.5 border-blue-600" countsUnavailable={countsUnavailable || totals.bloco1 == null} />
                 </div>
                 <div className="text-lg font-bold text-blue-900">Pessoas</div>
-                <p className="text-xs text-blue-700">& Parceiros</p>
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-blue-700">& Parceiros</p>
+                  {searchCatalog.active && <span className="text-[10px] font-semibold text-blue-800">{searchCatalog.matchesByBlock.bloco1 || 0} match</span>}
+                </div>
               </CardContent>
             </Card>
-            <Card className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-purple-50 to-purple-100" onClick={() => handleCardClick('bloco2')} data-permission="Cadastros.Produtos.visualizar" data-action="alternar-bloco-produtos" data-context-required="group-or-company">
+            <Card
+              role="button"
+              tabIndex={0}
+              aria-expanded={acordeonAberto.includes('bloco2')}
+              data-cadastros-tile="true"
+              className={`border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-purple-50 to-purple-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 ${acordeonAberto.includes('bloco2') ? 'ring-2 ring-purple-500' : ''}`}
+              onClick={() => handleCardClick('bloco2')}
+              onKeyDown={(e) => handleCadastroTileKeyDown(e, () => handleCardClick('bloco2'))}
+              data-permission="Cadastros.Produtos.visualizar"
+              data-action="alternar-bloco-produtos"
+              data-context-required="group-or-company"
+            >
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-2">
                   <Package className="w-5 h-5 text-purple-600" />
                   <GroupCountBadge precomputedTotal={totals.bloco2} badgeClassName="bg-purple-600 text-white text-xs px-1.5 border-purple-600" countsUnavailable={countsUnavailable || totals.bloco2 == null} />
                 </div>
                 <div className="text-lg font-bold text-purple-900">Produtos</div>
-                <p className="text-xs text-purple-700">& Serviços</p>
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-purple-700">& Serviços</p>
+                  {searchCatalog.active && <span className="text-[10px] font-semibold text-purple-800">{searchCatalog.matchesByBlock.bloco2 || 0} match</span>}
+                </div>
               </CardContent>
             </Card>
-            <Card className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-green-50 to-green-100" onClick={() => handleCardClick('bloco3')} data-permission="Cadastros.Financeiro.visualizar" data-action="alternar-bloco-financeiro-fiscal" data-context-required="group-or-company">
+            <Card
+              role="button"
+              tabIndex={0}
+              aria-expanded={acordeonAberto.includes('bloco3')}
+              data-cadastros-tile="true"
+              className={`border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-green-50 to-green-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 ${acordeonAberto.includes('bloco3') ? 'ring-2 ring-green-500' : ''}`}
+              onClick={() => handleCardClick('bloco3')}
+              onKeyDown={(e) => handleCadastroTileKeyDown(e, () => handleCardClick('bloco3'))}
+              data-permission="Cadastros.Financeiro.visualizar"
+              data-action="alternar-bloco-financeiro-fiscal"
+              data-context-required="group-or-company"
+            >
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-2">
                   <DollarSign className="w-5 h-5 text-green-600" />
                   <GroupCountBadge precomputedTotal={totals.bloco3} badgeClassName="bg-green-600 text-white text-xs px-1.5 border-green-600" countsUnavailable={countsUnavailable || totals.bloco3 == null} />
                 </div>
                 <div className="text-lg font-bold text-green-900">Financeiro</div>
-                <p className="text-xs text-green-700">& Fiscal</p>
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-green-700">& Fiscal</p>
+                  {searchCatalog.active && <span className="text-[10px] font-semibold text-green-800">{searchCatalog.matchesByBlock.bloco3 || 0} match</span>}
+                </div>
               </CardContent>
             </Card>
-            <Card className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-orange-50 to-orange-100" onClick={() => handleCardClick('bloco4')} data-permission="Cadastros.Logistica.visualizar" data-action="alternar-bloco-logistica" data-context-required="group-or-company">
+            <Card
+              role="button"
+              tabIndex={0}
+              aria-expanded={acordeonAberto.includes('bloco4')}
+              data-cadastros-tile="true"
+              className={`border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-orange-50 to-orange-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 ${acordeonAberto.includes('bloco4') ? 'ring-2 ring-orange-500' : ''}`}
+              onClick={() => handleCardClick('bloco4')}
+              onKeyDown={(e) => handleCadastroTileKeyDown(e, () => handleCardClick('bloco4'))}
+              data-permission="Cadastros.Logistica.visualizar"
+              data-action="alternar-bloco-logistica"
+              data-context-required="group-or-company"
+            >
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-2">
                   <Truck className="w-5 h-5 text-orange-600" />
                   <GroupCountBadge precomputedTotal={totals.bloco4} badgeClassName="bg-orange-600 text-white text-xs px-1.5 border-orange-600" countsUnavailable={countsUnavailable || totals.bloco4 == null} />
                 </div>
                 <div className="text-lg font-bold text-orange-900">Logística</div>
-                <p className="text-xs text-orange-700">Frota & Almox.</p>
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-orange-700">Frota & Almox.</p>
+                  {searchCatalog.active && <span className="text-[10px] font-semibold text-orange-800">{searchCatalog.matchesByBlock.bloco4 || 0} match</span>}
+                </div>
               </CardContent>
             </Card>
-            <Card className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-indigo-50 to-indigo-100" onClick={() => handleCardClick('bloco5')} data-permission="Cadastros.Organizacional.visualizar" data-action="alternar-bloco-organizacional" data-context-required="group-or-company">
+            <Card
+              role="button"
+              tabIndex={0}
+              aria-expanded={acordeonAberto.includes('bloco5')}
+              data-cadastros-tile="true"
+              className={`border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-indigo-50 to-indigo-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${acordeonAberto.includes('bloco5') ? 'ring-2 ring-indigo-500' : ''}`}
+              onClick={() => handleCardClick('bloco5')}
+              onKeyDown={(e) => handleCadastroTileKeyDown(e, () => handleCardClick('bloco5'))}
+              data-permission="Cadastros.Organizacional.visualizar"
+              data-action="alternar-bloco-organizacional"
+              data-context-required="group-or-company"
+            >
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-2">
                   <Building2 className="w-5 h-5 text-indigo-600" />
                   <GroupCountBadge precomputedTotal={totals.bloco5} badgeClassName="bg-indigo-600 text-white text-xs px-1.5 border-indigo-600" countsUnavailable={countsUnavailable || totals.bloco5 == null} />
                 </div>
                 <div className="text-lg font-bold text-indigo-900">Organizacional</div>
-                <p className="text-xs text-indigo-700">Estrutura</p>
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-indigo-700">Estrutura</p>
+                  {searchCatalog.active && <span className="text-[10px] font-semibold text-indigo-800">{searchCatalog.matchesByBlock.bloco5 || 0} match</span>}
+                </div>
               </CardContent>
             </Card>
-            <Card className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-cyan-50 to-cyan-100" onClick={() => handleCardClick('bloco6')} data-permission="Cadastros.Tecnologia.visualizar" data-action="alternar-bloco-tecnologia" data-context-required="group-or-company">
+            <Card
+              role="button"
+              tabIndex={0}
+              aria-expanded={acordeonAberto.includes('bloco6')}
+              data-cadastros-tile="true"
+              className={`border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-cyan-50 to-cyan-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 ${acordeonAberto.includes('bloco6') ? 'ring-2 ring-cyan-500' : ''}`}
+              onClick={() => handleCardClick('bloco6')}
+              onKeyDown={(e) => handleCadastroTileKeyDown(e, () => handleCardClick('bloco6'))}
+              data-permission="Cadastros.Tecnologia.visualizar"
+              data-action="alternar-bloco-tecnologia"
+              data-context-required="group-or-company"
+            >
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-2">
                   <Cpu className="w-5 h-5 text-cyan-600" />
                   <GroupCountBadge precomputedTotal={totals.bloco6} badgeClassName="bg-cyan-600 text-white text-xs px-1.5 border-cyan-600" countsUnavailable={countsUnavailable || totals.bloco6 == null} />
                 </div>
                 <div className="text-lg font-bold text-cyan-900">Tecnologia</div>
-                <p className="text-xs text-cyan-700">IA & Parâmetros</p>
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-cyan-700">IA & Parâmetros</p>
+                  {searchCatalog.active && <span className="text-[10px] font-semibold text-cyan-800">{searchCatalog.matchesByBlock.bloco6 || 0} match</span>}
+                </div>
               </CardContent>
             </Card>
           </div>
 
           {/* BUSCA UNIVERSAL */}
-          <SearchInput
-            placeholder="🔍 Busca Universal - Digite para filtrar em todos os 6 blocos simultaneamente..."
-            value={searchTerm}
-            onChange={(val) => setSearchTerm(val)}
-            className="h-12 text-base shadow-md border-slate-300"
-            data-permission="Cadastros.Busca.visualizar"
-            data-action="buscar-cadastros-gerais"
-            data-context-required="group-or-company"
-          />
+          <div className="space-y-2">
+            <SearchInput
+              ref={searchInputRef}
+              placeholder="Busca Universal — digite sem precisar de acentos para filtrar nos 6 blocos..."
+              value={searchTerm}
+              onChange={handleSearchChange}
+              shortcutHint="/"
+              className="h-12 text-base shadow-md border-slate-300"
+              data-permission="Cadastros.Busca.visualizar"
+              data-action="buscar-cadastros-gerais"
+              data-context-required="group-or-company"
+            />
+            {searchCatalog.active && (
+              <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600 px-1" role="status" data-cadastros-search-summary="true">
+                <span>
+                  {searchCatalog.matchCount > 0
+                    ? `${searchCatalog.matchCount} cadastro(s) encontrado(s) em ${searchCatalog.matchingBlocks.length} bloco(s) para "${searchTerm.trim()}"`
+                    : `Nenhum cadastro encontrado para "${searchTerm.trim()}"`}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleSearchChange("")}
+                  className="text-sky-700 hover:underline font-medium"
+                >
+                  Limpar busca (Esc)
+                </button>
+              </div>
+            )}
+          </div>
+
+          {searchCatalog.active && searchCatalog.matchCount === 0 && (
+            <Card className="rounded-sm border border-slate-200 bg-slate-50" data-cadastros-empty-search="true">
+              <CardContent className="p-6 flex flex-col items-center justify-center text-center gap-2">
+                <SearchX className="w-7 h-7 text-slate-400" aria-hidden />
+                <p className="text-sm font-medium text-slate-800">
+                  Nenhum cadastro corresponde a &quot;{searchTerm.trim()}&quot;
+                </p>
+                <p className="text-xs text-slate-500">
+                  Tente buscar por Clientes, Produtos, Bancos, Motoristas, Empresas ou NF-e.
+                </p>
+                <Button type="button" variant="outline" size="sm" className="mt-1 h-8 text-xs" onClick={() => handleSearchChange("")}>
+                  Limpar busca
+                </Button>
+              </CardContent>
+            </Card>
+          )}
 
           {/* ACCORDIONS - 6 BLOCOS */}
           <Accordion type="multiple" value={acordeonAberto} onValueChange={setAcordeonAberto} className="space-y-4">

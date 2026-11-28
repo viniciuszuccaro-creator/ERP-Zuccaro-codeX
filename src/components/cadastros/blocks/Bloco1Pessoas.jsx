@@ -19,11 +19,11 @@ import RepresentanteFormCompleto from "@/components/cadastros/RepresentanteFormC
 import ContatoB2BForm from "@/components/cadastros/ContatoB2BForm";
 import SegmentoClienteForm from "@/components/cadastros/SegmentoClienteForm";
 import RegiaoAtendimentoForm from "@/components/cadastros/RegiaoAtendimentoForm";
+import { matchesCadastroSearch, handleCadastroTileKeyDown } from "@/components/cadastros/cadastrosSearchFilter";
 
 function filterTiles(tiles, searchTerm) {
-  const q = String(searchTerm || "").trim().toLowerCase();
-  if (!q) return tiles;
-  return tiles.filter(({ k, t }) => `${k} ${t}`.toLowerCase().includes(q));
+  if (!String(searchTerm || "").trim()) return tiles;
+  return tiles.filter(({ k, t }) => matchesCadastroSearch(searchTerm, k, t));
 }
 
 export default function Bloco1Pessoas({ allCounts, isLoading, searchTerm = "", missingCounts = [] }) {
@@ -159,7 +159,7 @@ export default function Bloco1Pessoas({ allCounts, isLoading, searchTerm = "", m
   }, [searchTerm, contextoValido, filteredTiles.length]);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6" data-cadastros-grid="bloco1">
       <Card className="rounded-sm shadow-sm border bg-white/80 backdrop-blur">
         <CardHeader className="bg-gradient-to-r from-sky-50 to-cyan-50 border-b rounded-t-sm">
           <div className="flex items-center justify-between">
@@ -173,9 +173,25 @@ export default function Bloco1Pessoas({ allCounts, isLoading, searchTerm = "", m
         </CardContent>
       </Card>
 
-      {filteredTiles.map(({ k, t, i: Icon, c, f: FormComp }) => (
-        <Card key={k} className="rounded-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-150 cursor-pointer group border"
-          onClick={openList(k, t, Icon, c, FormComp)}
+      {filteredTiles.length === 0 && (
+        <div className="lg:col-span-2 rounded-sm border border-dashed border-slate-200 bg-slate-50 p-4 text-xs text-slate-500 flex items-center">
+          Nenhum cadastro de Pessoas &amp; Parceiros corresponde à busca.
+        </div>
+      )}
+
+      {filteredTiles.map(({ k, t, i: Icon, c, f: FormComp }) => {
+        const permitido = canViewEntity(k);
+        const bloqueado = !contextoValido || !permitido;
+        const handleOpen = openList(k, t, Icon, c, FormComp);
+        return (
+        <Card key={k}
+          role="button"
+          tabIndex={0}
+          aria-disabled={bloqueado}
+          data-cadastros-tile="true"
+          className={`rounded-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-150 cursor-pointer group border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 ${bloqueado ? "opacity-75" : ""}`}
+          onClick={handleOpen}
+          onKeyDown={(e) => handleCadastroTileKeyDown(e, handleOpen)}
           data-permission={`Cadastros.${k}.visualizar`}
           data-action={`Cadastros.${k}.abrir`}
           data-context-required="group-or-company">
@@ -189,8 +205,8 @@ export default function Bloco1Pessoas({ allCounts, isLoading, searchTerm = "", m
                 <CountBadgeSimplificado entities={[k]} allCounts={allCounts} missing={missingCounts} isLoading={isLoading} />
               </CardTitle>
               <Button size="sm" className="bg-sky-600 hover:bg-sky-700 rounded-sm text-xs h-7"
-                onClick={(e) => { e.stopPropagation(); openList(k, t, Icon, c, FormComp)(); }}
-                disabled={!contextoValido || !canViewEntity(k)}
+                onClick={(e) => { e.stopPropagation(); handleOpen(); }}
+                disabled={bloqueado}
                 data-permission={`Cadastros.${k}.visualizar`}
                 data-action={`Cadastros.${k}.abrir`}
                 data-context-required="group-or-company">
@@ -199,10 +215,15 @@ export default function Bloco1Pessoas({ allCounts, isLoading, searchTerm = "", m
             </div>
           </CardHeader>
           <CardContent className="p-3 text-xs text-slate-500">
-            Clique para listar, criar e editar em janela flutuante.
+            {!contextoValido
+              ? "Selecione grupo ou empresa para abrir."
+              : !permitido
+                ? "Sem permissão para visualizar este cadastro."
+                : "Clique ou pressione Enter para listar, criar e editar em janela flutuante."}
           </CardContent>
         </Card>
-      ))}
+        );
+      })}
     </div>
   );
 }
