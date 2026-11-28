@@ -252,7 +252,7 @@ jobs:
             echo "::error::PACKAGE_CHECKOUT_NOT_CLEAN"
             exit 1
           fi
-          if git diff --name-only "$GITHUB_SHA^" "$GITHUB_SHA" | grep -Eq '^(src/|server/(src/|package[^/]*json$|tsconfig)|scripts/vps/(hml-bootstrap|package-hml-runtime)\.mjs$|package[^/]*json$|vite\.config|\.github/workflows/erp-runtime-ci\.yml$)'; then
+          if git diff --name-only "$GITHUB_SHA^" "$GITHUB_SHA" | grep -Eq '^(src/|tests/|server/(src/|tests/|package[^/]*json$|tsconfig)|scripts/vps/(hml-bootstrap|package-hml-runtime)\.mjs$|package[^/]*json$|vite\.config|\.github/workflows/erp-runtime-ci\.yml$)'; then
             echo 'required=true' >> "$GITHUB_OUTPUT"
           else
             echo 'required=false' >> "$GITHUB_OUTPUT"

@@ -1,4 +1,4 @@
-import { organizacionalSourceForPath } from './helpers/organizacionalRemainder.js';
+import { organizacionalSourceForPath, organizacionalRemainder, pedidoSummaryRouterHunk } from './helpers/organizacionalRemainder.js';
 const readOrganizacionalSource = (file, ...args) => organizacionalSourceForPath(file, readFileSync(file, ...args));
 import assert from 'node:assert/strict';
 import test from 'node:test';
@@ -57,5 +57,26 @@ test('operational address wiring peels only exact additions and retains every an
     assert.throws(() => file.endsWith('router.ts')
       ? clienteLocalBatchRemainder(file, forged, true)
       : clienteConferenciaRemainder(file, forged));
+  }
+});
+
+// Raw source is checked before projection; this does not bless arbitrary current router text.
+test('Pedido summary preserves the full prior router and rejects missing repeated modified and outside bytes', () => {
+  const file = 'server/src/api/router.ts';
+  const raw = readFileSync(file, 'utf8').replace(/\r\n/g, '\n');
+  const prior = execFileSync('git', ['show', '439802972c99e1ab254a0afd08c67e047c0560a3:' + file], { encoding: 'utf8' }).replace(/\r\n/g, '\n');
+  const hunk = pedidoSummaryRouterHunk;
+  assert.equal(raw.split(hunk.after).length, 2);
+  assert.equal(raw.replace(hunk.after, () => hunk.before), prior);
+  const historical = organizacionalRemainder(file, prior);
+  assert.equal(organizacionalRemainder(file, raw), historical);
+  for (const invalid of [raw.replace(hunk.after, ''), raw + hunk.after,
+    raw.replace("req.authVerified !== true", "req.authVerified === true"),
+    raw.replace("'no-store'", "'public'"),
+    raw.replace('req.query.periodo_inicio, periodoFim: req.query.periodo_fim', 'undefined, periodoFim: undefined'),
+    raw + '\n// OUTSIDE_SUMMARY_DELTA\n']) {
+    let rejected = false;
+    try { rejected = organizacionalRemainder(file, invalid) !== historical; } catch { rejected = true; }
+    assert.equal(rejected, true);
   }
 });

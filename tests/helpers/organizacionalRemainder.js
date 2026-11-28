@@ -747,7 +747,20 @@ const entries = {
   }
 };
 
+
+// Exact Pedido read-summary evolution; historical router bytes and pins remain authoritative.
+export const pedidoSummaryRouterHunk = {
+  "before": "      res.json(await service.list(ctxFromReq(req), {\n        limit: req.query.limit === undefined ? undefined : Number(req.query.limit),\n        offset: req.query.offset === undefined ? undefined : Number(req.query.offset),\n        search: typeof req.query.search === 'string' ? req.query.search : undefined,\n        status: typeof req.query.status === 'string' ? req.query.status : undefined,\n        clienteEmpresaId: typeof req.query.clienteEmpresaId === 'string' ? req.query.clienteEmpresaId : undefined,\n        clienteId: typeof req.query.clienteId === 'string'\n          ? req.query.clienteId\n          : (typeof req.query.cliente_id === 'string' ? req.query.cliente_id : undefined),\n        tipoOperacao: typeof req.query.tipoOperacao === 'string' ? req.query.tipoOperacao : undefined,\n",
+  "after": "      if (req.query.incluir_resumo !== undefined) {\n        res.setHeader('Cache-Control', 'no-store');\n        if (req.authVerified !== true) throw new AppError(401, 'AUTH_REQUIRED', 'Verified session required');\n        const allowed = new Set(['limit','offset','search','status','clienteEmpresaId','clienteId','cliente_id','tipoOperacao',\n          'group_id','empresa_id','periodo_inicio','periodo_fim','excluir_cancelados','incluir_resumo']);\n        if (Object.entries(req.query).some(([key, value]) => !allowed.has(key) || typeof value !== 'string')) {\n          throw new AppError(422, 'VALIDATION_ERROR', 'Invalid order summary filters');\n        }\n        for (const key of ['limit', 'offset']) {\n          const value = req.query[key];\n          if (value !== undefined && (!/^\\d{1,9}$/.test(String(value)) || (key === 'limit' && Number(value) < 1))) {\n            throw new AppError(422, 'VALIDATION_ERROR', 'Invalid order summary pagination');\n          }\n        }\n        if ((req.query.group_id !== undefined && req.query.group_id !== req.groupId)\n          || (req.query.empresa_id !== undefined && req.query.empresa_id !== req.empresaId)\n          || (req.query.clienteId !== undefined && req.query.cliente_id !== undefined && req.query.clienteId !== req.query.cliente_id)) {\n          throw new AppError(422, 'VALIDATION_ERROR', 'Conflicting order summary scope or customer');\n        }\n      }\n      res.json(await service.list(ctxFromReq(req), {\n        limit: req.query.limit === undefined ? undefined : Number(req.query.limit),\n        offset: req.query.offset === undefined ? undefined : Number(req.query.offset),\n        search: typeof req.query.search === 'string' ? req.query.search : undefined,\n        status: typeof req.query.status === 'string' ? req.query.status : undefined,\n        clienteEmpresaId: typeof req.query.clienteEmpresaId === 'string' ? req.query.clienteEmpresaId : undefined,\n        clienteId: typeof req.query.clienteId === 'string'\n          ? req.query.clienteId\n          : (typeof req.query.cliente_id === 'string' ? req.query.cliente_id : undefined),\n        tipoOperacao: typeof req.query.tipoOperacao === 'string' ? req.query.tipoOperacao : undefined,\n        periodoInicio: req.query.periodo_inicio, periodoFim: req.query.periodo_fim,\n        excluirCancelados: req.query.excluir_cancelados, incluirResumo: req.query.incluir_resumo,\n"
+};
+
 export function organizacionalRemainder(file, source) {
+ if(file==='server/src/api/router.ts' && /incluir_resumo|Invalid order summary/.test(source)) {
+  const normalized=source.replace(/\r\n/g,'\n');
+  assert.equal(normalized.split(pedidoSummaryRouterHunk.after).length,2,'Exact Pedido summary route hunk');
+  const previous=normalized.replace(pedidoSummaryRouterHunk.after,()=>pedidoSummaryRouterHunk.before);
+  source=source.includes('\r\n')?previous.replace(/\n/g,'\r\n'):previous;
+ }
  source=produtoCatalogoRemainder(file,source);
  const entry=entries[file]; if(!entry) return source;
  let result=source.replace(/\r\n/g,'\n');

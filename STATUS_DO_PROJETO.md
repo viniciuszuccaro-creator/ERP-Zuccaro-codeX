@@ -1,3 +1,11 @@
+## 28/11/2026 — fechamento remoto do resumo canônico de Pedidos
+
+Base 4f0c48bd: CI46140471003 backend/typecheck/build/PostgreSQL/R07B e composição SUCCESS; frontend falhou nas comparações históricas do router pelo novo hunk. Correção registra somente bytes exatos desse hunk em organizacionalRemainder, mantendo todos os hashes históricos; contraprova lê fonte bruta e compara router439 completo, rejeitando omissão/repetição/alteração interna/externa. Detecção do pacote passa a incluir correções de testes (SHA final deve gerar pacote próprio). CI deste fechamento ainda pendente; não declarar verde antes do resultado terminal.
+
+Ambiente GitHub hml criado: única branch codex/casa-fechamento-hml-20261114, nenhuma tag, bypass administrativo desativado, sem segredos/variáveis e sem deploy configurado. Pacote439 verificado privadamente na VPS; HML permanece API/web a305a143. Backup28/11 restaurado, cópia externa atual ainda não verificada. Nenhum deploy/DDL/grant/carga. Base44: recibo privado de conferência de500 itens/tabela com871 referências de produtos; não é export bruto persistido nem mapeamento no destino. Empresa dos500 itens ausente: manter pendente sem atribuição inferida.
+
+Fila finita: fechar CI/pacote deste SHA → revisão independente do resumo por Empresa → consolidação Grupo com contextos autorizados e consumidor Dashboard coordenado → gates de cópia externa/credencial HML → publicação API/web conjunta autorizada. Financeiro/histórico seguem desativados nesta entrega. Sem arquivos da tarefa em C: ou mudanças em branches Cursor.
+
 ## Retomada remota e próximo contrato de backend (2026-11-28)
 
 - Cadastros integrado em ea085c022d496abf885078e38b2faf62c4aa2eaa; CI46137666877 SUCCESS. Pacote geral API/web439802972c99e1ab254a0afd08c67e047c0560a3, CI46138395801 SUCCESS com cinco jobs, artifact15261490273. 2.239 arquivos/17.998.269 bytes; filesSha256 fd3275fc74344b26e5d4a03bee8fe507966636e88ab0db4be6bf69ed9d490c58. Recebido e conferido arquivo por arquivo SOMENTE na área privada da VPS: shared-artifacts/incoming/runtime-43980297-ci-46138395801. Tar4.113.486bytes, SHA256 f40c80a7eb03281e12328bc45c20da0db143c6a192ca8e0672ea7f86343c2154. Kit preservado, sem executar/extrair runtime em serviço.
