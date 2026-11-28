@@ -18,11 +18,11 @@ import TipoFreteForm from "@/components/cadastros/TipoFreteForm";
 import LocalEstoqueForm from "@/components/cadastros/LocalEstoqueForm";
 import RotaPadraoForm from "@/components/cadastros/RotaPadraoForm";
 import ModeloDocumentoForm from "@/components/cadastros/ModeloDocumentoForm";
-import { matchesCadastroSearch, handleCadastroTileKeyDown } from "@/components/cadastros/cadastrosSearchFilter";
+import { matchesCadastroEntitySearch, handleCadastroTileKeyDown } from "@/components/cadastros/cadastrosSearchFilter";
 
 function filterTiles(tiles, searchTerm) {
   if (!String(searchTerm || "").trim()) return tiles;
-  return tiles.filter(({ k, t }) => matchesCadastroSearch(searchTerm, k, t));
+  return tiles.filter(({ k, t }) => matchesCadastroEntitySearch(searchTerm, k, t));
 }
 
 export default function Bloco4Logistica({ allCounts, isLoading, searchTerm = "", missingCounts = [] }) {

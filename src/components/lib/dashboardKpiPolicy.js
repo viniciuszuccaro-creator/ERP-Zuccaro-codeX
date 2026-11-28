@@ -427,6 +427,53 @@ export const computeRealtimeKpisFromStores = ({
   };
 };
 
+export const isDashboardReceivableOverdue = (conta, referenceDate = new Date()) => {
+  if (!conta) return false;
+  if (String(conta.status || '').toLowerCase() === 'atrasado') return true;
+  if (conta.status !== 'Pendente' || !conta.data_vencimento) return false;
+  const due = new Date(conta.data_vencimento);
+  if (Number.isNaN(due.getTime())) return false;
+  const ref = referenceDate instanceof Date ? referenceDate : new Date(referenceDate);
+  return due < ref;
+};
+
+export const filterFinancialReportItems = (
+  lista = [],
+  {
+    campo = 'data_vencimento',
+    data_inicio = '',
+    data_fim = '',
+    status = null,
+    kpi = null,
+    kind = 'receber',
+    referenceDate = new Date(),
+  } = {},
+) => {
+  const rows = Array.isArray(lista) ? lista : [];
+  if (kpi === 'inadimplencia' && kind === 'receber') {
+    return rows.filter((item) => isDashboardReceivableOverdue(item, referenceDate));
+  }
+  if (kpi === 'contas_receber' && kind === 'receber') {
+    return rows.filter((item) => String(item?.status || '').toLowerCase() === 'pendente');
+  }
+  if (kpi === 'contas_pagar' && kind === 'pagar') {
+    return rows.filter((item) => String(item?.status || '').toLowerCase() === 'pendente');
+  }
+
+  const ini = data_inicio ? new Date(data_inicio) : null;
+  const fim = data_fim ? new Date(`${data_fim}T23:59:59`) : null;
+  const expectedStatus = status ? String(status).toLowerCase() : null;
+
+  return rows.filter((item) => {
+    const rawDate = item?.[campo] || item?.created_date;
+    const d = new Date(rawDate);
+    if (ini && !Number.isNaN(ini.getTime()) && !(d >= ini)) return false;
+    if (fim && !Number.isNaN(fim.getTime()) && !(d <= fim)) return false;
+    if (expectedStatus && String(item?.status || '').toLowerCase() !== expectedStatus) return false;
+    return true;
+  });
+};
+
 export const computeDashboardDerivedKpis = ({
   pedidos = [],
   contasReceber = [],
@@ -482,12 +529,11 @@ export const computeDashboardDerivedKpis = ({
   const aproveitamentoBarra = totalPlanejado > 0
     ? (((totalProduzido - totalRefugado) / totalPlanejado) * 100).toFixed(1)
     : 0;
-  const contasVencidas = (contasReceber || []).filter((c) => {
-    if (c.status !== 'Pendente' || !c.data_vencimento) return false;
-    return new Date(c.data_vencimento) < new Date();
-  });
+  const contasVencidas = (contasReceber || []).filter((c) => isDashboardReceivableOverdue(c));
   const valorVencido = contasVencidas.reduce((sum, c) => sum + (c.valor || 0), 0);
-  const totalContas = (contasReceber || []).filter((c) => c.status === 'Pendente').reduce((sum, c) => sum + (c.valor || 0), 0);
+  const totalContas = (contasReceber || [])
+    .filter((c) => c.status === 'Pendente' || String(c.status || '').toLowerCase() === 'atrasado')
+    .reduce((sum, c) => sum + (c.valor || 0), 0);
   const taxaInadimplencia = totalContas > 0 ? ((valorVencido / totalContas) * 100).toFixed(1) : 0;
 
   const vendasPorStatus = pedidosPeriodo.reduce((acc, p) => {

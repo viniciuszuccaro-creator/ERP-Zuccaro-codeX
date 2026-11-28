@@ -14,7 +14,11 @@ import usePermissions from "@/components/lib/usePermissions";
 import { useUser } from "@/components/lib/UserContext";
 import FiltrosPeriodoEmpresa from "@/components/relatorios/FiltrosPeriodoEmpresa";
 import { exportarCSV } from "@/components/relatorios/exportUtils";
-import { resolveDashboardReportFiltersFromSearch } from "@/components/lib/dashboardKpiPolicy";
+import {
+  filterFinancialReportItems,
+  isDashboardReceivableOverdue,
+  resolveDashboardReportFiltersFromSearch,
+} from "@/components/lib/dashboardKpiPolicy";
 
 export default function RelatorioFinanceiro() {
   const [filtros, setFiltros] = useState(() => {
@@ -53,24 +57,42 @@ export default function RelatorioFinanceiro() {
     enabled: contextoValido && canViewRelatorio,
   });
 
-  const filtrar = (lista, campo) => {
-    const ini = new Date(filtros.data_inicio);
-    const fim = new Date(filtros.data_fim + 'T23:59:59');
-    return lista.filter(i => {
-      const d = new Date(i[campo] || i.created_date);
-      if (!(d >= ini && d <= fim)) return false;
-      if (filtros.status && String(i.status || '').toLowerCase() !== String(filtros.status).toLowerCase()) return false;
-      return true;
+  const handleSetFiltros = (updater) => {
+    setFiltros((prev) => {
+      const next = typeof updater === 'function' ? updater(prev) : updater;
+      if (!next) return prev;
+      const dateChanged = next.data_inicio !== prev.data_inicio || next.data_fim !== prev.data_fim;
+      return dateChanged ? { ...next, kpi: null } : next;
     });
   };
 
-  const receberFiltrado = useMemo(() => filtrar(receber, 'data_vencimento'), [receber, filtros]);
-  const pagarFiltrado = useMemo(() => filtrar(pagar, 'data_vencimento'), [pagar, filtros]);
+  const receberFiltrado = useMemo(
+    () => filterFinancialReportItems(receber, {
+      campo: 'data_vencimento',
+      data_inicio: filtros.data_inicio,
+      data_fim: filtros.data_fim,
+      status: filtros.status,
+      kpi: filtros.kpi,
+      kind: 'receber',
+    }),
+    [receber, filtros],
+  );
+  const pagarFiltrado = useMemo(
+    () => filterFinancialReportItems(pagar, {
+      campo: 'data_vencimento',
+      data_inicio: filtros.data_inicio,
+      data_fim: filtros.data_fim,
+      status: filtros.status,
+      kpi: filtros.kpi,
+      kind: 'pagar',
+    }),
+    [pagar, filtros],
+  );
 
   const totalReceber = receberFiltrado.reduce((s,i) => s+(i.valor||0), 0);
   const totalPagar = pagarFiltrado.reduce((s,i) => s+(i.valor||0), 0);
   const saldo = totalReceber - totalPagar;
-  const inadimplentes = receberFiltrado.filter(i => i.status === 'Atrasado').length;
+  const inadimplentes = receberFiltrado.filter((i) => isDashboardReceivableOverdue(i)).length;
 
   const fluxoMensal = useMemo(() => {
     const mapa = {};
@@ -145,7 +167,23 @@ export default function RelatorioFinanceiro() {
           <AlertDescription>Selecione grupo ou empresa e confirme permissao para visualizar o relatorio financeiro.</AlertDescription>
         </Alert>
       )}
-      <FiltrosPeriodoEmpresa filtros={filtros} setFiltros={setFiltros} />
+      <FiltrosPeriodoEmpresa filtros={filtros} setFiltros={handleSetFiltros} />
+      {filtros.kpi === 'inadimplencia' && (
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-200 bg-amber-50/80 px-3 py-2 text-xs text-amber-900">
+          <span>
+            Exibindo inadimplência do Dashboard: títulos a receber vencidos (status Pendente vencido ou Atrasado), sem recorte de data de vencimento.
+          </span>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="h-7 text-xs bg-white"
+            onClick={() => setFiltros((prev) => ({ ...prev, kpi: null, status: null }))}
+          >
+            Filtrar por período
+          </Button>
+        </div>
+      )}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[

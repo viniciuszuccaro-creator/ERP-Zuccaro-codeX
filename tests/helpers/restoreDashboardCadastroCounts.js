@@ -238,7 +238,7 @@ export function restoreDashboardCadastroCounts(text) {
       bgColor: Number(otd) >= 90 ? "bg-green-50" : Number(otd) >= 70 ? "bg-orange-50" : "bg-red-50",
       indicatorState: vmStates.otd,
       drillDownUrl: dashboardViewModel.drillDownUrls.otd,
-      drillDown: () => handleDrillDown(createPageUrl("Relatorios"), { tab: 'producao', kpi: 'otd_entregas' })
+      drillDown: () => handleDrillDown(createPageUrl("Expedicao"), { kpi: 'otd_entregas' })
     },
     {
       key: "peso_produzido",
@@ -274,7 +274,7 @@ export function restoreDashboardCadastroCounts(text) {
       bgColor: Number(taxaInadimplencia) < 5 ? "bg-green-50" : Number(taxaInadimplencia) < 10 ? "bg-orange-50" : "bg-red-50",
       indicatorState: vmStates.inadimplencia,
       drillDownUrl: dashboardViewModel.drillDownUrls.inadimplencia,
-      drillDown: () => handleDrillDown(createPageUrl("Relatorios"), { tab: 'financeiro', kpi: 'inadimplencia', status: 'Atrasado' })
+      drillDown: () => handleDrillDown(createPageUrl("Relatorios"), { tab: 'financeiro', kpi: 'inadimplencia' })
     }
   ];
 

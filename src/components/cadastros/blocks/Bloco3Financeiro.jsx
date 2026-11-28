@@ -22,11 +22,11 @@ import PlanoContasForm from "@/components/cadastros/PlanoContasForm";
 import TipoDespesaForm from "@/components/cadastros/TipoDespesaForm";
 import MoedaIndiceForm from "@/components/cadastros/MoedaIndiceForm";
 import OperadorCaixaForm from "@/components/cadastros/OperadorCaixaForm";
-import { matchesCadastroSearch, handleCadastroTileKeyDown } from "@/components/cadastros/cadastrosSearchFilter";
+import { matchesCadastroEntitySearch, handleCadastroTileKeyDown } from "@/components/cadastros/cadastrosSearchFilter";
 
 function filterTiles(tiles, searchTerm) {
   if (!String(searchTerm || "").trim()) return tiles;
-  return tiles.filter(({ k, t }) => matchesCadastroSearch(searchTerm, k, t));
+  return tiles.filter(({ k, t }) => matchesCadastroEntitySearch(searchTerm, k, t));
 }
 
 export default function Bloco3Financeiro({ allCounts, isLoading, searchTerm = "", missingCounts = [] }) {

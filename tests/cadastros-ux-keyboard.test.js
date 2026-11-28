@@ -2,8 +2,10 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
+  CADASTROS_BLOCO_CATALOG,
   normalizeCadastroSearch,
   matchesCadastroSearch,
+  matchesCadastroEntitySearch,
   matchCadastrosCatalog,
   handleCadastroTileKeyDown,
 } from "../src/components/cadastros/cadastrosSearchFilter.js";
@@ -36,6 +38,38 @@ test("matchCadastrosCatalog identifica blocos e total de correspondências sem r
   assert.equal(none.active, true);
   assert.deepEqual(none.matchingBlocks, []);
   assert.equal(none.matchCount, 0);
+});
+
+test("matchesCadastroEntitySearch usa keywords do catálogo para manter paridade total com matchCadastrosCatalog", () => {
+  assert.equal(matchesCadastroEntitySearch("cpf", "Cliente", "Clientes"), true);
+  assert.equal(matchesCadastroEntitySearch("pix", "FormaPagamento", "Formas de Pagamento"), true);
+  assert.equal(matchesCadastroEntitySearch("sefaz", "ConfiguracaoNFe", "Configurações NF-e"), true);
+  assert.equal(matchesCadastroEntitySearch("cfop", "TabelaFiscal", "Tabelas Fiscais"), true);
+  assert.equal(matchesCadastroEntitySearch("cpf", "Banco", "Bancos"), false);
+
+  for (const items of Object.values(CADASTROS_BLOCO_CATALOG)) {
+    for (const item of items) {
+      const firstKeyword = String(item.keywords || "").split(/\s+/).filter(Boolean)[0];
+      if (!firstKeyword) continue;
+      assert.equal(
+        matchesCadastroEntitySearch(firstKeyword, item.key, item.label),
+        true,
+        `Keyword '${firstKeyword}' deveria casar com o tile '${item.key}'`,
+      );
+    }
+  }
+
+  for (const blocoFile of [
+    "src/components/cadastros/blocks/Bloco1Pessoas.jsx",
+    "src/components/cadastros/blocks/Bloco2Produtos.jsx",
+    "src/components/cadastros/blocks/Bloco3Financeiro.jsx",
+    "src/components/cadastros/blocks/Bloco4Logistica.jsx",
+    "src/components/cadastros/blocks/Bloco5Organizacional.jsx",
+    "src/components/cadastros/blocks/Bloco6Tecnologia.jsx",
+  ]) {
+    const src = readFileSync(blocoFile, "utf8");
+    assert.match(src, /matchesCadastroEntitySearch/, `${blocoFile} deve filtrar tiles usando matchesCadastroEntitySearch`);
+  }
 });
 
 test("handleCadastroTileKeyDown aciona Enter/Space e navega entre cards com setas/Home/End", () => {

@@ -82,6 +82,29 @@ export const CADASTROS_BLOCO_CATALOG = {
   ],
 };
 
+const CATALOG_BY_ENTITY_KEY = new Map(
+  Object.values(CADASTROS_BLOCO_CATALOG)
+    .flat()
+    .map((item) => [item.key, item]),
+);
+
+/**
+ * Reaproveita exatamente o catálogo (key, label e keywords) ao filtrar tiles de entidades,
+ * garantindo que qualquer termo contabilizado por `matchCadastrosCatalog` exiba o card correspondente.
+ */
+export function matchesCadastroEntitySearch(searchTerm, entityKey, ...extraFields) {
+  const normalized = normalizeCadastroSearch(searchTerm);
+  if (!normalized) return true;
+  const catalogEntry = CATALOG_BY_ENTITY_KEY.get(entityKey);
+  return matchesCadastroSearch(
+    normalized,
+    entityKey,
+    catalogEntry?.label,
+    catalogEntry?.keywords,
+    ...extraFields,
+  );
+}
+
 export function matchCadastrosCatalog(searchTerm) {
   const normalized = normalizeCadastroSearch(searchTerm);
   if (!normalized) {

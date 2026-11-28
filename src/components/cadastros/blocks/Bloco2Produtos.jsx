@@ -21,11 +21,11 @@ import TabelaPrecoFormCompleto from "@/components/cadastros/TabelaPrecoFormCompl
 import KitProdutoForm from "@/components/cadastros/KitProdutoForm";
 import CatalogoWebForm from "@/components/cadastros/CatalogoWebForm";
 import UnidadeMedidaForm from "@/components/cadastros/UnidadeMedidaForm";
-import { matchesCadastroSearch, handleCadastroTileKeyDown } from "@/components/cadastros/cadastrosSearchFilter";
+import { matchesCadastroEntitySearch, handleCadastroTileKeyDown } from "@/components/cadastros/cadastrosSearchFilter";
 
 function filterTiles(tiles, searchTerm) {
   if (!String(searchTerm || "").trim()) return tiles;
-  return tiles.filter(({ k, title }) => matchesCadastroSearch(searchTerm, k, title));
+  return tiles.filter(({ k, title }) => matchesCadastroEntitySearch(searchTerm, k, title));
 }
 
 export default function Bloco2Produtos({ allCounts, isLoading, searchTerm = "", missingCounts = [] }) {
@@ -166,7 +166,7 @@ export default function Bloco2Produtos({ allCounts, isLoading, searchTerm = "", 
     { k: 'UnidadeMedida',  title: 'Unidades de Medida',       Icon: Ruler,     campos: ['codigo','sigla','nome','descricao'],                     form: UnidadeMedidaForm },
   ];
   const filteredTiles = filterTiles(tiles, searchTerm);
-  const showProdutoTile = matchesCadastroSearch(searchTerm, "Produto", "Produtos", "catalogo sku item estoque");
+  const showProdutoTile = matchesCadastroEntitySearch(searchTerm, "Produto", "Produtos");
 
   useEffect(() => {
     const termo = String(searchTerm || "").trim().replace(/\s+/g, " ").slice(0, 120);

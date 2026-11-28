@@ -19,11 +19,11 @@ import RepresentanteFormCompleto from "@/components/cadastros/RepresentanteFormC
 import ContatoB2BForm from "@/components/cadastros/ContatoB2BForm";
 import SegmentoClienteForm from "@/components/cadastros/SegmentoClienteForm";
 import RegiaoAtendimentoForm from "@/components/cadastros/RegiaoAtendimentoForm";
-import { matchesCadastroSearch, handleCadastroTileKeyDown } from "@/components/cadastros/cadastrosSearchFilter";
+import { matchesCadastroEntitySearch, handleCadastroTileKeyDown } from "@/components/cadastros/cadastrosSearchFilter";
 
 function filterTiles(tiles, searchTerm) {
   if (!String(searchTerm || "").trim()) return tiles;
-  return tiles.filter(({ k, t }) => matchesCadastroSearch(searchTerm, k, t));
+  return tiles.filter(({ k, t }) => matchesCadastroEntitySearch(searchTerm, k, t));
 }
 
 export default function Bloco1Pessoas({ allCounts, isLoading, searchTerm = "", missingCounts = [] }) {

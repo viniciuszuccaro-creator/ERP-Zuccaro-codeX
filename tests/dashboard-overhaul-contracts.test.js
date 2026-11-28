@@ -2,6 +2,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   computeDashboardDerivedKpis,
+  isDashboardReceivableOverdue,
+  filterFinancialReportItems,
   resolveDashboardPeriodRange,
   resolveDashboardReportFiltersFromSearch,
   resolveIndicatorState,
@@ -171,6 +173,16 @@ test("buildDashboardViewModel monta estados corretos para Grupo, CPA, 3Z, perfil
   assert.match(vmGrupo.drillDownUrls.vendas, /tab=vendas/);
   assert.match(vmGrupo.drillDownUrls.vendas, /scopeType=grupo/);
   assert.match(vmGrupo.drillDownUrls.vendas, /group_id=grp-cpa/);
+  assert.match(vmGrupo.drillDownUrls.entregas, /^\/Expedicao\?/);
+  assert.match(vmGrupo.drillDownUrls.entregas, /kpi=entregas_pendentes/);
+  assert.match(vmGrupo.drillDownUrls.otd, /^\/Expedicao\?/);
+  assert.match(vmGrupo.drillDownUrls.otd, /kpi=otd_entregas/);
+  assert.doesNotMatch(vmGrupo.drillDownUrls.entregas, /tab=producao/);
+  assert.doesNotMatch(vmGrupo.drillDownUrls.otd, /tab=producao/);
+  assert.match(vmGrupo.drillDownUrls.inadimplencia, /^\/Relatorios\?/);
+  assert.match(vmGrupo.drillDownUrls.inadimplencia, /tab=financeiro/);
+  assert.match(vmGrupo.drillDownUrls.inadimplencia, /kpi=inadimplencia/);
+  assert.doesNotMatch(vmGrupo.drillDownUrls.inadimplencia, /status=Atrasado/);
 
   const vmRestrito = buildDashboardViewModel({
     hasContextoAtivo: true,
@@ -206,4 +218,37 @@ test("buildDashboardViewModel monta estados corretos para Grupo, CPA, 3Z, perfil
   assert.equal(vmErro.states.colaboradoresCount.state, "zero_confirmado");
   assert.ok(vmErro.failedSources.includes("Pedidos"));
   assert.ok(vmErro.failedSources.includes("Clientes"));
+});
+
+test("filterFinancialReportItems e isDashboardReceivableOverdue reproduzem exatamente a inadimplência do Dashboard", () => {
+  const ref = new Date("2026-11-28T12:00:00Z");
+  const contasReceber = [
+    { id: "r1", status: "Pendente", valor: 500, data_vencimento: "2026-09-15" }, // vencido antes do mês atual
+    { id: "r2", status: "Pendente", valor: 300, data_vencimento: "2026-11-10" }, // vencido dentro do mês
+    { id: "r3", status: "Atrasado", valor: 200, data_vencimento: "2026-08-01" }, // status Atrasado antigo
+    { id: "r4", status: "Pendente", valor: 1500, data_vencimento: "2026-12-20" }, // a vencer
+    { id: "r5", status: "Recebido", valor: 700, data_vencimento: "2026-10-01" }, // já recebido
+  ];
+
+  assert.equal(isDashboardReceivableOverdue(contasReceber[0], ref), true);
+  assert.equal(isDashboardReceivableOverdue(contasReceber[1], ref), true);
+  assert.equal(isDashboardReceivableOverdue(contasReceber[2], ref), true);
+  assert.equal(isDashboardReceivableOverdue(contasReceber[3], ref), false);
+  assert.equal(isDashboardReceivableOverdue(contasReceber[4], ref), false);
+
+  const filtradosInadimplencia = filterFinancialReportItems(contasReceber, {
+    data_inicio: "2026-11-01",
+    data_fim: "2026-11-28",
+    status: null,
+    kpi: "inadimplencia",
+    kind: "receber",
+    referenceDate: ref,
+  });
+  assert.deepEqual(
+    filtradosInadimplencia.map((c) => c.id),
+    ["r1", "r2", "r3"],
+  );
+  const totalDrillDown = filtradosInadimplencia.reduce((s, c) => s + c.valor, 0);
+  const derived = computeDashboardDerivedKpis({ periodo: "mes", contasReceber });
+  assert.equal(totalDrillDown, derived.valorVencido);
 });

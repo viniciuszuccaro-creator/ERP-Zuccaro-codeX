@@ -69,6 +69,20 @@ export function buildDashboardViewModel(/** @type {any} */ {
       }),
     );
 
+  const expedicaoUrl = (kpi, status = "") =>
+    buildKpiDrillDownUrl(
+      "/Expedicao",
+      buildKpiDrillDownParams({
+        kpi,
+        periodo: periodoRange.periodo,
+        status,
+        groupId,
+        empresaId: scopeType === "grupo" ? null : empresaId,
+        scopeType,
+        referenceDate,
+      }),
+    );
+
   const p = {
     comercial: Boolean(permissions.canSeeComercial),
     financeiro: Boolean(permissions.canSeeFinanceiro),
@@ -283,15 +297,15 @@ export function buildDashboardViewModel(/** @type {any} */ {
     receber: reportUrl("financeiro", "contas_receber", "Pendente"),
     pagar: reportUrl("financeiro", "contas_pagar", "Pendente"),
     fluxoCaixa: reportUrl("financeiro", "fluxo_caixa"),
-    inadimplencia: reportUrl("financeiro", "inadimplencia", "Atrasado"),
+    inadimplencia: reportUrl("financeiro", "inadimplencia"),
     anomalia: reportUrl("financeiro", "anomalias_financeiras"),
     cobrancas: reportUrl("financeiro", "cobrancas_pagas", "Recebido"),
     estoque: reportUrl("estoque", "estoque_baixo"),
     produtos: reportUrl("estoque", "produtos_cadastrados"),
     producao: reportUrl("producao", "peso_produzido"),
     aproveitamento: reportUrl("producao", "aproveitamento_barra"),
-    entregas: reportUrl("producao", "entregas_pendentes"),
-    otd: reportUrl("producao", "otd_entregas"),
+    entregas: expedicaoUrl("entregas_pendentes"),
+    otd: expedicaoUrl("otd_entregas"),
     clientes: reportUrl("vendas", "clientes_cadastrados"),
     relatoriosGeral: reportUrl("vendas", "resumo_periodo"),
   };

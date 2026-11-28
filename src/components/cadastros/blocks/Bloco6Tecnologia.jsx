@@ -19,11 +19,11 @@ import JobAgendadoForm from "@/components/cadastros/JobAgendadoForm";
 import WebhookForm from "@/components/cadastros/WebhookForm";
 import ConfiguracaoNFeForm from "@/components/cadastros/ConfiguracaoNFeForm";
 import EventoNotificacaoForm from "@/components/cadastros/EventoNotificacaoForm";
-import { matchesCadastroSearch, handleCadastroTileKeyDown } from "@/components/cadastros/cadastrosSearchFilter";
+import { matchesCadastroEntitySearch, handleCadastroTileKeyDown } from "@/components/cadastros/cadastrosSearchFilter";
 
 function filterTiles(tiles, searchTerm) {
   if (!String(searchTerm || "").trim()) return tiles;
-  return tiles.filter(({ k, t }) => matchesCadastroSearch(searchTerm, k, t));
+  return tiles.filter(({ k, t }) => matchesCadastroEntitySearch(searchTerm, k, t));
 }
 
 export default function Bloco6Tecnologia({ allCounts, isLoading, searchTerm = "", missingCounts = [] }) {

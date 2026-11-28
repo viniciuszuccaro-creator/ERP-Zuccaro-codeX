@@ -17,11 +17,11 @@ import DepartamentoForm from "@/components/cadastros/DepartamentoForm";
 import CargoForm from "@/components/cadastros/CargoForm";
 import TurnoForm from "@/components/cadastros/TurnoForm";
 import PerfilAcessoForm from "@/components/cadastros/PerfilAcessoForm";
-import { matchesCadastroSearch, handleCadastroTileKeyDown } from "@/components/cadastros/cadastrosSearchFilter";
+import { matchesCadastroEntitySearch, handleCadastroTileKeyDown } from "@/components/cadastros/cadastrosSearchFilter";
 
 function filterTiles(tiles, searchTerm) {
   if (!String(searchTerm || "").trim()) return tiles;
-  return tiles.filter(({ k, t }) => matchesCadastroSearch(searchTerm, k, t));
+  return tiles.filter(({ k, t }) => matchesCadastroEntitySearch(searchTerm, k, t));
 }
 
 export default function Bloco5Organizacional({ allCounts, isLoading, searchTerm = "", missingCounts = [] }) {
