@@ -94,3 +94,53 @@ test('R09 PostgreSQL real: chave da criação direta serializa retries concorren
     assert.deepEqual((await repo.history(scope, first.id)).map(row => row.status_novo), ['EM_ABERTO']);
   } finally { let error: unknown; try { await cleanup(db, ids); } catch (cause) { error = cause; } finally { await db.end(); } if (error) throw error; }
 });
+test('R09 PostgreSQL real: resumo exato usa filtro completo acima de 200 em uma unica leitura sem escrita', { skip: !enabled && 'DATABASE_URL not available' }, async () => {
+  const db = createDbClient(loadConfig({ NODE_ENV: 'test', ERP_ENV: 'dev', REQUIRE_DATABASE: 'true', DATABASE_URL: process.env.DATABASE_URL }));
+  const repo = new PostgresPedidoRepository(db);
+  const rollback = new Error('ROLLBACK_SYNTHETIC_SUMMARY_FIXTURE');
+  const ownIds: string[] = [];
+  try {
+    const original = await input(db);
+    const data = { ...original, itens: [{ ...original.itens[0], quantidade: '1.000000', preco_unitario: '0.000001', desconto: '0.000000' }] };
+    await assert.rejects(repo.withTransaction(async tx => {
+      assert.ok(tx);
+      const created: Array<Awaited<ReturnType<typeof repo.create>>> = [];
+      for (let i = 0; i < 204; i++) created.push(await repo.create(scope, data, SEED_IDS.runtimeActorA, tx));
+      ownIds.push(...created.map(row => row.id));
+      await tx.query('UPDATE pedidos SET created_at=$1 WHERE id=ANY($2::uuid[])', ['2040-01-15T12:00:00.000Z', created.map(row => row.id)]);
+      await tx.query('UPDATE pedidos SET created_at=$1 WHERE id=$2', ['2040-01-01T00:00:00.000Z', created[0].id]);
+      await repo.changeStatus(scope, created[201].id, 'CANCELADO', SEED_IDS.runtimeActorA, 'Synthetic summary exclusion', tx);
+      await tx.query('UPDATE pedidos SET created_at=$1 WHERE id=$2', ['2040-02-01T00:00:00.000Z', created[202].id]);
+      await tx.query('UPDATE pedidos SET created_at=$1 WHERE id=$2', ['2039-12-31T23:59:59.999Z', created[203].id]);
+      const snapshot = async () => (await tx.query(`SELECT
+        (SELECT jsonb_agg(to_jsonb(p) ORDER BY p.id) FROM pedidos p WHERE p.id=ANY($1::uuid[])) AS orders,
+        (SELECT jsonb_agg(to_jsonb(i) ORDER BY i.id) FROM pedido_itens i WHERE i.pedido_id=ANY($1::uuid[])) AS items,
+        (SELECT jsonb_agg(to_jsonb(h) ORDER BY h.id) FROM pedido_historico h WHERE h.pedido_id=ANY($1::uuid[])) AS history,
+        (SELECT count(*) FROM audit_logs WHERE entity='Pedido' AND entity_id::text=ANY($1::text[])) AS audits`, [ownIds])).rows[0];
+      const before = await snapshot();
+      const filters = { periodoInicio: '2040-01-01T00:00:00.000Z', periodoFim: '2040-02-01T00:00:00.000Z',
+        excluirCancelados: true, incluirResumo: true };
+      let reads = 0;
+      const counter = { query: (async (...args: Parameters<typeof tx.query>) => {
+        reads++; return tx.query(...args);
+      }) as typeof tx.query };
+      const page = await repo.list(scope, 1, 0, counter, filters);
+      assert.equal(reads, 1);
+      assert.equal(page.rows.length, 1);
+      assert.equal(page.total, 201);
+      assert.deepEqual(page.resumo, { valor_total: '0.000201', ticket_medio: '0.000001' });
+      const beyond = await repo.list(scope, 1, 999, tx, filters);
+      assert.equal(beyond.rows.length, 0); assert.equal(beyond.total, 201); assert.deepEqual(beyond.resumo, page.resumo);
+      const included = await repo.list(scope, 1, 0, tx, { ...filters, excluirCancelados: false });
+      assert.equal(included.total, 202); assert.equal(included.resumo?.valor_total, '0.000202');
+      const found = await repo.list(scope, 1, 0, tx, { ...filters, search: created[0].numero });
+      assert.equal(found.total, 1); assert.equal(found.rows[0].id, created[0].id);
+      const foreign = await repo.list(other, 1, 0, tx, filters);
+      assert.equal(foreign.total, 0); assert.deepEqual(foreign.resumo, { valor_total: '0.000000', ticket_medio: '0.000000' });
+      assert.deepEqual(await snapshot(), before, 'summary must not write business rows, history or audits');
+      console.log('PEDIDO_SUMMARY_COMPLETE_201_EXACT_READONLY_VERIFIED');
+      throw rollback;
+    }), error => error === rollback);
+    assert.equal((await db.query<{ n: number }>('SELECT count(*)::int n FROM pedidos WHERE id=ANY($1::uuid[])', [ownIds])).rows[0].n, 0);
+  } finally { await db.end(); }
+});

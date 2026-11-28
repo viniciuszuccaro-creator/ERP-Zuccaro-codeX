@@ -1207,6 +1207,26 @@ function mountPedidoRoutes(router: Router, service: PedidoService) {
   const base = '/api/v1/pedidos';
   router.get(base, requireTenantScope, async (req, res, next) => {
     try {
+      if (req.query.incluir_resumo !== undefined) {
+        res.setHeader('Cache-Control', 'no-store');
+        if (req.authVerified !== true) throw new AppError(401, 'AUTH_REQUIRED', 'Verified session required');
+        const allowed = new Set(['limit','offset','search','status','clienteEmpresaId','clienteId','cliente_id','tipoOperacao',
+          'group_id','empresa_id','periodo_inicio','periodo_fim','excluir_cancelados','incluir_resumo']);
+        if (Object.entries(req.query).some(([key, value]) => !allowed.has(key) || typeof value !== 'string')) {
+          throw new AppError(422, 'VALIDATION_ERROR', 'Invalid order summary filters');
+        }
+        for (const key of ['limit', 'offset']) {
+          const value = req.query[key];
+          if (value !== undefined && (!/^\d{1,9}$/.test(String(value)) || (key === 'limit' && Number(value) < 1))) {
+            throw new AppError(422, 'VALIDATION_ERROR', 'Invalid order summary pagination');
+          }
+        }
+        if ((req.query.group_id !== undefined && req.query.group_id !== req.groupId)
+          || (req.query.empresa_id !== undefined && req.query.empresa_id !== req.empresaId)
+          || (req.query.clienteId !== undefined && req.query.cliente_id !== undefined && req.query.clienteId !== req.query.cliente_id)) {
+          throw new AppError(422, 'VALIDATION_ERROR', 'Conflicting order summary scope or customer');
+        }
+      }
       res.json(await service.list(ctxFromReq(req), {
         limit: req.query.limit === undefined ? undefined : Number(req.query.limit),
         offset: req.query.offset === undefined ? undefined : Number(req.query.offset),
@@ -1217,6 +1237,8 @@ function mountPedidoRoutes(router: Router, service: PedidoService) {
           ? req.query.clienteId
           : (typeof req.query.cliente_id === 'string' ? req.query.cliente_id : undefined),
         tipoOperacao: typeof req.query.tipoOperacao === 'string' ? req.query.tipoOperacao : undefined,
+        periodoInicio: req.query.periodo_inicio, periodoFim: req.query.periodo_fim,
+        excluirCancelados: req.query.excluir_cancelados, incluirResumo: req.query.incluir_resumo,
       }));
     } catch (error) { next(error); }
   });

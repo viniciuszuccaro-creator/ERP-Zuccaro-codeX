@@ -245,7 +245,7 @@ if (process.env.DATABASE_URL) test('Entrada PostgreSQL: login Grupo Cliente Orca
     const base = 'http://127.0.0.1:' + address.port;
     const groupHeaders = { authorization: 'Bearer synthetic-entry-token', 'x-group-id': ID.groupA, 'Content-Type': 'application/json' };
     const companyHeaders = { ...groupHeaders, 'x-empresa-id': ID.empresaA };
-    type Row = { id: string; codigo?: string; cliente_id?: string; empresa_id?: string | null; status?: string; orcamento_id?: string; itens?: unknown[] };
+    type Row = { id: string; total?: string; codigo?: string; cliente_id?: string; empresa_id?: string | null; status?: string; orcamento_id?: string; itens?: unknown[] };
     const request = async <T = Row>(method: string, path: string, expected: number, body?: unknown, headers: Record<string, string> = companyHeaders) => {
       const response = await fetch(base + path, { method, headers, ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
       const result = await response.json() as { data: T; error?: { code?: string }; };
@@ -353,6 +353,24 @@ if (process.env.DATABASE_URL) test('Entrada PostgreSQL: login Grupo Cliente Orca
     assert.equal((await request('GET', '/api/v1/pedidos/' + order.id, 200)).id, order.id);
     await request('GET', '/api/v1/pedidos/' + order.id, 404, undefined, { ...companyHeaders, 'x-empresa-id': ID.empresaA2 });
     await request('GET', '/api/v1/pedidos/' + order.id, 403, undefined, { ...companyHeaders, 'x-group-id': ID.groupB });
+    // Canonical authenticated HTTP + restricted PostgreSQL LOGIN, not the in-memory fallback.
+    const summaryQuery = 'incluir_resumo=true&periodo_inicio=2000-01-01T00%3A00%3A00.000Z&periodo_fim=2100-01-01T00%3A00%3A00.000Z&excluir_cancelados=true&limit=1';
+    const summaryResponse = await fetch(base + '/api/v1/pedidos?' + summaryQuery, { headers: companyHeaders });
+    assert.equal(summaryResponse.status, 200);
+    assert.equal(summaryResponse.headers.get('cache-control'), 'no-store');
+    const summary = await summaryResponse.json() as { data: Row[]; meta: { total: number; resumo: { quantidade: number; valor_total: string; ticket_medio: string } } };
+    assert.equal(summary.data.length, 1);
+    assert.equal(summary.meta.total, 1);
+    assert.equal(summary.meta.resumo.quantidade, 1);
+    assert.equal(summary.meta.resumo.valor_total, order.total);
+    assert.equal(summary.meta.resumo.ticket_medio, order.total);
+    for (const bad of ['&unknown_filter=discard-me', '&status[]=EM_ABERTO', '&offset=not-a-number', '&clienteId=a&cliente_id=b']) {
+      const denied = await fetch(base + '/api/v1/pedidos?' + summaryQuery + bad, { headers: companyHeaders });
+      assert.equal(denied.status, 422, bad);
+    }
+    const groupSummary = await fetch(base + '/api/v1/pedidos?' + summaryQuery, { headers: groupHeaders });
+    assert.equal(groupSummary.status, 400, 'Group summary is not silently a confirmed zero');
+    console.log('PEDIDO_SUMMARY_HTTP_RESTRICTED_LOGIN_VERIFIED');
     const ctx = { groupId: ID.groupA, empresaId: null, actorId: ID.runtimeActorA, requestId: randomUUID() };
     const supplier = new FornecedorService(new PostgresFornecedorRepository(clients.db), new PostgresAuditRepository(clients.db), new PostgresRbacGuard(clients.db));
     const payload = { tipo_pessoa: 'Pessoa Juridica', cpf_cnpj: SEED_DOCS.clientePjA, razao_social: 'SYNTHETIC ENTRY SUPPLIER',

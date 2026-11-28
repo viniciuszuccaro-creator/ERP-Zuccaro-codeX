@@ -188,8 +188,29 @@ export class PedidoService {
   async get(ctx: RequestContext, id: string) { const scope = await this.prepare(ctx, 'visualizar'); this.assertId(id, 'pedidoId'); return this.requirePedido(scope, id); }
   async history(ctx: RequestContext, id: string) { const scope = await this.prepare(ctx, 'visualizar'); this.assertId(id, 'pedidoId'); await this.requirePedido(scope, id); return this.repo.history(scope, id); }
 
-  async list(ctx: RequestContext, options: { limit?: number; offset?: number; search?: string; status?: string; clienteEmpresaId?: string; clienteId?: string; tipoOperacao?: string } = {}) {
+  async list(ctx: RequestContext, options: { limit?: number; offset?: number; search?: string; status?: string; clienteEmpresaId?: string; clienteId?: string; tipoOperacao?: string; periodoInicio?: unknown; periodoFim?: unknown; excluirCancelados?: unknown; incluirResumo?: unknown } = {}) {
+    ctx = Object.freeze({ ...ctx });
     const scope = await this.prepare(ctx, 'visualizar');
+    const bool = z.union([z.boolean(), z.enum(['true', 'false'])]).transform(value => value === true || value === 'true').optional();
+    const report = z.object({
+      periodoInicio: z.string().datetime({ offset: true }).optional(),
+      periodoFim: z.string().datetime({ offset: true }).optional(),
+      excluirCancelados: bool, incluirResumo: bool,
+    }).safeParse({ periodoInicio: options.periodoInicio, periodoFim: options.periodoFim,
+      excluirCancelados: options.excluirCancelados, incluirResumo: options.incluirResumo });
+    if (!report.success) this.validation(report.error.flatten());
+    const { periodoInicio, periodoFim, excluirCancelados, incluirResumo } = report.data;
+    if (Boolean(periodoInicio) !== Boolean(periodoFim) || (incluirResumo && !periodoInicio)
+      || (periodoInicio && periodoFim && Date.parse(periodoInicio) >= Date.parse(periodoFim))) {
+      this.validation({ periodo: 'inicio_inclusive_e_fim_exclusivo_obrigatorios_em_ordem' });
+    }
+    const resumoMeta = (value: { valor_total: string; ticket_medio: string } | undefined, quantidade: number) => {
+      if (!incluirResumo) return {};
+      if (!value) throw new AppError(503, 'PEDIDO_RESUMO_UNAVAILABLE', 'Complete order summary unavailable');
+      return { resumo: { estado: 'confirmado', fonte: 'Pedido', escopo: 'empresa', quantidade,
+        ...value, periodo: { inicio: periodoInicio, fim: periodoFim, fim_exclusivo: true },
+        excluir_cancelados: excluirCancelados === true, natureza: 'valor_de_pedidos' } };
+    };
     const limit = Math.min(200, Math.max(1, Number.isFinite(options.limit) ? Math.trunc(options.limit!) : 50));
     const offset = Math.max(0, Number.isFinite(options.offset) ? Math.trunc(options.offset!) : 0);
     const search = options.search?.trim();
@@ -207,12 +228,16 @@ export class PedidoService {
     if (options.clienteId) {
       const link = await this.clientes.getEmpresaLink(scope, options.clienteId, scope.empresaId);
       if (!link) {
-        return { data: [], meta: { limit, offset, total: 0, hasMore: false } };
+        if (incluirResumo) await this.prepare(ctx, 'visualizar');
+        return { data: [], meta: { limit, offset, total: 0, hasMore: false, ...resumoMeta({ valor_total: '0.000000', ticket_medio: '0.000000' }, 0) } };
       }
       clienteEmpresaId = link.id;
     }
-    const page = await this.repo.list(scope, limit, offset, undefined, { search: search || undefined, status: options.status as PedidoStatus | undefined, clienteEmpresaId, tipoOperacao: options.tipoOperacao as 'ENTREGA' | 'RETIRADA' | undefined });
-    return { data: page.rows, meta: { limit, offset, total: page.total, hasMore: offset + page.rows.length < page.total } };
+    const page = await this.repo.list(scope, limit, offset, undefined, { search: search || undefined, status: options.status as PedidoStatus | undefined, clienteEmpresaId, tipoOperacao: options.tipoOperacao as 'ENTREGA' | 'RETIRADA' | undefined,
+      periodoInicio, periodoFim, excluirCancelados, incluirResumo });
+    if (incluirResumo) await this.prepare(ctx, 'visualizar');
+    return { data: page.rows, meta: { limit, offset, total: page.total, hasMore: offset + page.rows.length < page.total,
+      ...resumoMeta(page.resumo, page.total) } };
   }
 
   async update(ctx: RequestContext, id: string, payload: unknown) {

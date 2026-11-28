@@ -90,6 +90,8 @@ jobs:
         working-directory: .
       - run: npm install
       - run: npm run typecheck
+      - name: Focus canonical Pedido read-summary contract before full backend suite
+        run: node --import tsx --test tests/runtime09-pedido-service.test.ts
       - run: npm test
       - run: npm run build
       - run: npm run migrate
@@ -238,6 +240,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          git diff --check "$GITHUB_SHA^" "$GITHUB_SHA"
           actual_sha="$(git rev-parse HEAD)"
           if [ "$actual_sha" != "$GITHUB_SHA" ]; then
             echo "::error::PACKAGE_SHA_MISMATCH actual=$actual_sha expected=$GITHUB_SHA"

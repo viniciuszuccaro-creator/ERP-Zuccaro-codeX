@@ -117,12 +117,37 @@ export class PostgresPedidoRepository implements PedidoRepository {
 
   async list(scope: PedidoScope, limit = 50, offset = 0, executor?: DbQueryExecutor, filters: PedidoListFilters = {}) {
     const query = executor ?? this.db;
-    const where = `p.group_id=$1 AND p.empresa_id=$2 AND ($3::text IS NULL OR p.numero ILIKE '%'||$3||'%') AND ($4::text IS NULL OR p.status=$4) AND ($5::uuid IS NULL OR p.cliente_empresa_id=$5) AND ($6::text IS NULL OR p.tipo_operacao=$6)`;
-    const filterParams = [scope.groupId, scope.empresaId, filters.search || null, filters.status || null, filters.clienteEmpresaId || null, filters.tipoOperacao || null];
+    // One predicate for the aggregate, filtered count and paged rows.
+    const where = `p.group_id=$1 AND p.empresa_id=$2 AND ($3::text IS NULL OR p.numero ILIKE '%'||$3||'%') AND ($4::text IS NULL OR p.status=$4) AND ($5::uuid IS NULL OR p.cliente_empresa_id=$5) AND ($6::text IS NULL OR p.tipo_operacao=$6)
+      AND ($7::timestamptz IS NULL OR p.created_at >= $7::timestamptz)
+      AND ($8::timestamptz IS NULL OR p.created_at < $8::timestamptz)
+      AND (NOT $9::boolean OR p.status <> 'CANCELADO')`;
+    const filterParams = [scope.groupId, scope.empresaId, filters.search || null, filters.status || null, filters.clienteEmpresaId || null, filters.tipoOperacao || null,
+      filters.periodoInicio ?? null, filters.periodoFim ?? null, filters.excluirCancelados === true];
     const params = [...filterParams, Math.min(200, Math.max(1, Math.trunc(limit))), Math.max(0, Math.trunc(offset))];
+    if (filters.incluirResumo) {
+      // A single statement gives count, exact NUMERIC totals and page the same snapshot.
+      // The totals carrier preserves confirmed zero and totals beyond the final page.
+      const pageSelect = SELECT.replace('FROM pedidos p', 'FROM filtered p');
+      const result = await query.query<{ total: number; valor_total: string; ticket_medio: string; rows: Row[] }>(`WITH filtered AS MATERIALIZED (
+          SELECT p.* FROM pedidos p WHERE ${where}
+        ), totals AS (
+          SELECT count(*)::int AS total,
+            round(COALESCE(sum(total),0),6)::text AS valor_total,
+            round(COALESCE(avg(total),0),6)::text AS ticket_medio FROM filtered
+        ), paged AS (${pageSelect} ORDER BY p.numero DESC,p.id DESC LIMIT $10 OFFSET $11)
+        SELECT totals.*,COALESCE((SELECT json_agg(paged) FROM paged),'[]'::json) AS rows FROM totals`, params);
+      const row = result.rows[0];
+      if (!row || !Array.isArray(row.rows) || !Number.isSafeInteger(row.total) || row.total < 0
+        || !/^\d+\.\d{6}$/.test(row.valor_total) || !/^\d+\.\d{6}$/.test(row.ticket_medio)) {
+        throw new AppError(503, 'PEDIDO_RESUMO_UNAVAILABLE', 'Complete order summary unavailable');
+      }
+      return { rows: row.rows.map(map), total: row.total,
+        resumo: { valor_total: row.valor_total, ticket_medio: row.ticket_medio } };
+    }
     const [count, rows] = await Promise.all([
       query.query<{ total: number }>(`SELECT count(*)::int total FROM pedidos p WHERE ${where}`, filterParams),
-      query.query<Row>(`${SELECT} WHERE ${where} ORDER BY p.numero DESC,p.id DESC LIMIT $7 OFFSET $8`, params),
+      query.query<Row>(`${SELECT} WHERE ${where} ORDER BY p.numero DESC,p.id DESC LIMIT $10 OFFSET $11`, params),
     ]);
     return { rows: rows.rows.map(map), total: Number(count.rows[0]?.total ?? 0) };
   }

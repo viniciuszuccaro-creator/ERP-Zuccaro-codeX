@@ -63,8 +63,8 @@ export type Pedido = {
 };
 
 export type PedidoScope = { groupId: string; empresaId: string };
-export type PedidoListFilters = { search?: string; status?: PedidoStatus; clienteEmpresaId?: string; tipoOperacao?: typeof PEDIDO_TIPOS_OPERACAO[number] };
-export type PedidoPage = { rows: Pedido[]; total: number };
+export type PedidoListFilters = { search?: string; status?: PedidoStatus; clienteEmpresaId?: string; tipoOperacao?: typeof PEDIDO_TIPOS_OPERACAO[number]; periodoInicio?: string; periodoFim?: string; excluirCancelados?: boolean; incluirResumo?: boolean };
+export type PedidoPage = { rows: Pedido[]; total: number; resumo?: { valor_total: string; ticket_medio: string } };
 
 export function calculatePedido(items: z.infer<typeof pedidoItemSchema>[]): Pick<Pedido, 'itens' | 'subtotal' | 'desconto' | 'total'> {
   const calculated = calculateOrcamento(items);
