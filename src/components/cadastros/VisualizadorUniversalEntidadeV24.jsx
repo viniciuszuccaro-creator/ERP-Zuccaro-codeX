@@ -17,6 +17,7 @@ import {
   isHttpBackendMode,
   isHttpProdutoEnabled,
   getHttpProdutoApi,
+  listHttpClientePage,
   isHttpClienteListMode,
   isLocalOnlyMode,
 } from "@/api/base44Client";
@@ -316,6 +317,7 @@ export default function VisualizadorUniversalEntidadeV24({
   /** Cliente: em HTTP, sem piloto ≠ fallback local silencioso (sucesso fictício). */
   const clienteHttpSemPiloto =
     ENTITY === "Cliente" && isHttpBackendMode && !isHttpClienteListMode;
+  const clienteHttpPage = ENTITY === "Cliente" && isHttpClienteListMode;
   /** Modo local puro: store local explícito (≠ HML). */
   const clienteFonteLocalOnly =
     ENTITY === "Cliente" && isLocalOnlyMode;
@@ -334,7 +336,8 @@ export default function VisualizadorUniversalEntidadeV24({
   const canDeleteCadastro = !produtoHttp && hasCadastroEntityPermission(ENTITY, "excluir", permCheckers);
   const [supplierEpoch, setSupplierEpoch] = useState(0);
   const [supplierDetail, setSupplierDetail] = useState(null);
-  const supplierSession = canonicalRead ? readErpHttpSession() : null;
+  const scopedPageRead = canonicalRead || clienteHttpPage;
+  const supplierSession = scopedPageRead ? readErpHttpSession() : null;
   const supplierMatches = Boolean(supplierSession?.actorId && supplierSession.groupId === groupId &&
     (supplierSession.empresaId || null) === empresaId);
   const supplierScope = JSON.stringify([supplierSession?.actorId, groupId, empresaId, supplierEpoch]);
@@ -345,11 +348,11 @@ export default function VisualizadorUniversalEntidadeV24({
         (current.empresaId || null) !== empresaId) throw new Error('CONTEXT_CHANGED');
   };
   useEffect(() => {
-    if (!canonicalRead) return;
+    if (!scopedPageRead) return;
     const reset = () => { setSupplierEpoch(value => value + 1); setSupplierDetail(null); };
     window.addEventListener(HTTP_CONTEXT_CHANGED, reset);
     return () => window.removeEventListener(HTTP_CONTEXT_CHANGED, reset);
-  }, [canonicalRead]);
+  }, [scopedPageRead]);
   const showSupplierDetail = fornecedorHttp && supplierMatches && canViewCadastro && supplierDetail?.scope === supplierScope;
   const supplierDetailQuery = useQuery({
     queryKey: ['fornecedor-http-detalhe', supplierScope, supplierDetail?.id],
@@ -575,11 +578,11 @@ export default function VisualizadorUniversalEntidadeV24({
   const queryKey = useMemo(
     function() {
       const legacyKey = ["viz-v33", ENTITY, sortField, sortDir, page, pageSize, debouncedSearch, empresaId, groupId];
-      return canonicalRead ? [...legacyKey, supplierScope] : legacyKey;
+      return scopedPageRead ? [...legacyKey, supplierScope] : legacyKey;
     },
-    [ENTITY, sortField, sortDir, page, pageSize, debouncedSearch, empresaId, groupId, canonicalRead, supplierScope]
+    [ENTITY, sortField, sortDir, page, pageSize, debouncedSearch, empresaId, groupId, scopedPageRead, supplierScope]
   );
-  const visibleScope = JSON.stringify([ENTITY, groupId, empresaId, debouncedSearch, canonicalRead ? supplierScope : null]);
+  const visibleScope = JSON.stringify([ENTITY, groupId, empresaId, debouncedSearch, scopedPageRead ? supplierScope : null]);
   // Limpa cache no render ao trocar tenant/busca — evita um frame com linhas do contexto anterior.
   if (lastGoodScope.current !== visibleScope) {
     lastGoodScope.current = visibleScope;
@@ -611,7 +614,8 @@ export default function VisualizadorUniversalEntidadeV24({
         if (!Array.isArray(result?.items) || typeof result.hasMore !== 'boolean') throw new Error('FORNECEDOR_PAGE_INVALID');
         return result;
       }
-      const res = await base44.functions.invoke("entityListSorted", {
+      if (clienteHttpPage) assertSupplierScope();
+      const request = {
         entityName: ENTITY,
         filter: readFilter,
         group_id: groupId,
@@ -621,7 +625,17 @@ export default function VisualizadorUniversalEntidadeV24({
         sortDirection: backendSortDir,
         limit: pageSize,
         skip: skip,
-      });
+      };
+      const res = clienteHttpPage
+        ? await listHttpClientePage(request, signal)
+        : await base44.functions.invoke("entityListSorted", request);
+      if (clienteHttpPage) {
+        assertSupplierScope();
+        if (signal?.aborted) throw new DOMException('Consulta cancelada', 'AbortError');
+        if (!Array.isArray(res?.data) || !Number.isSafeInteger(res.meta?.total) ||
+            res.meta.total < res.data.length || typeof res.meta.hasMore !== 'boolean') throw new Error('CLIENTE_PAGE_INVALID');
+        return { items: res.data, total: res.meta.total, hasMore: res.meta.hasMore };
+      }
       return Array.isArray(res && res.data) ? res.data : [];
     },
     staleTime: 0,
@@ -631,17 +645,18 @@ export default function VisualizadorUniversalEntidadeV24({
     refetchOnWindowFocus: false,
     refetchOnMount: 'always',
     placeholderData: function(prev, previousQuery) {
-      if (canonicalRead) return undefined;
+      if (scopedPageRead) return undefined;
       return getScopedCadastroPlaceholder(prev, previousQuery?.queryKey, queryKey);
     },
     // HTTP + Cliente sem piloto: não consultar store local (evita lista vazia como “sucesso”).
-    enabled: !!ENTITY && contextoValido && canViewCadastro && !clienteHttpSemPiloto && (!canonicalRead || supplierMatches),
+    enabled: !!ENTITY && contextoValido && canViewCadastro && !clienteHttpSemPiloto && (!scopedPageRead || supplierMatches),
   });
   const produtoTotal = produtoHttp && supplierMatches && canViewCadastro && !isError ? rawItems?.total : undefined;
+  const clientePageTotal = clienteHttpPage && supplierMatches && canViewCadastro && !isError ? rawItems?.total : undefined;
 
   // items: estabilidade total — nunca desaparece durante sort/paginação/exclusão
   const items = useMemo(function() {
-    if (canonicalRead) return supplierMatches && canViewCadastro && Array.isArray(rawItems?.items) ? rawItems.items : [];
+    if (scopedPageRead) return supplierMatches && canViewCadastro && Array.isArray(rawItems?.items) ? rawItems.items : [];
     const arr = Array.isArray(rawItems) ? rawItems : [];
     if (arr.length > 0) {
       lastGoodData.current = arr;
@@ -663,7 +678,7 @@ export default function VisualizadorUniversalEntidadeV24({
     everLoadedRef.current = true;
     lastGoodData.current = [];
     return [];
-  }, [rawItems, isFetching, isError, status, canonicalRead, supplierMatches, canViewCadastro]);
+  }, [rawItems, isFetching, isError, status, scopedPageRead, supplierMatches, canViewCadastro]);
 
   // Reset do cache quando muda de entidade, empresa, grupo ou busca
   // NÃO reseta ao mudar sort/page para manter estabilidade visual
@@ -1224,6 +1239,12 @@ export default function VisualizadorUniversalEntidadeV24({
         </div>
       );
     }
+    if (scopedPageRead && !supplierMatches) {
+      return <p role="status" className="p-4" data-fonte-estado="aguardando-contexto">Aguarde a confirmação do contexto.</p>;
+    }
+    if (clienteHttpPage && status === 'pending') {
+      return <p role="status" className="p-4">Aguardando a consulta de Clientes.</p>;
+    }
     if (items.length === 0 && !isFetching) {
       let emptyMsg = debouncedSearch
         ? "Nenhum resultado para \"" + debouncedSearch + "\""
@@ -1574,9 +1595,6 @@ export default function VisualizadorUniversalEntidadeV24({
           </button>
         </div>
       )}
-      {canonicalRead && !supplierMatches && (
-        <p role="alert" className="text-sm text-amber-800">Aguarde a confirmação do contexto para consultar {produtoHttp ? "produtos" : "fornecedores"}.</p>
-      )}
       {produtoHttp && isError && (
         <p role="alert" className="text-sm text-amber-800">{listError && 'status' in listError && listError.status === 403 ? "Acesso negado à consulta de Produtos." : "Consulta de Produtos indisponível."}</p>
       )}
@@ -1584,7 +1602,9 @@ export default function VisualizadorUniversalEntidadeV24({
       <div className="flex items-center justify-between text-xs text-slate-500 shrink-0 flex-wrap gap-1">
         <span>
           Pág. {page} · {items.length} exibidos ·{" "}
-          {produtoTotal !== undefined ? produtoTotal + " total" : countsUnavailable
+          {scopedPageRead && !supplierMatches ? "aguardando contexto" : clienteHttpPage
+            ? clientePageTotal !== undefined ? clientePageTotal + " total" : isError ? "total indisponível" : "total …"
+            : produtoTotal !== undefined ? produtoTotal + " total" : countsUnavailable
             ? "total indisponível"
             : !countKnown
               ? "total …"
@@ -1609,7 +1629,7 @@ export default function VisualizadorUniversalEntidadeV24({
           <button
             type="button"
             onClick={function() { setPage(function(p) { return p + 1; }); }}
-            disabled={(canonicalRead ? !rawItems?.hasMore : items.length < pageSize) || isFetching}
+            disabled={(scopedPageRead ? !rawItems?.hasMore : items.length < pageSize) || isFetching}
             className="h-7 px-2 border border-slate-200 rounded-sm bg-white hover:bg-slate-50 disabled:opacity-40"
             data-action={`Cadastros.${ENTITY}.proxima-pagina`}
           >Próx. →</button>

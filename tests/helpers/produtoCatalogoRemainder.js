@@ -84,7 +84,104 @@ const markers = {
   'src/components/cadastros/VisualizadorUniversalEntidadeV24.jsx': 'const produtoHttp',
 };
 
+const clientePageHunks = {
+  "src/api/base44Client.js": [
+    {
+      "before": "}\n\n/**\n * Contrato publico unico para os clientes remoto, local e http.\n",
+      "after": "}\n\nexport async function listHttpClientePage(payload, signal) {\n  if (!isHttpClienteListMode || !httpHybridClient) throw new Error('Cliente HTTP indisponivel');\n  const filter = { ...payload.filter };\n  if (typeof payload.search === 'string' && payload.search.trim()) filter.search = payload.search.trim();\n  let meta;\n  const result = await runLocalEntityReadFunction('entityListSorted', { ...payload, entityName: 'Cliente', filter }, {\n    expandFilter: (_entity, nextFilter) => nextFilter,\n    listEntity: async (_entity, nextFilter, order, limit, skip) => {\n      const page = await httpHybridClient.entities.Cliente.filterPage(nextFilter, order, limit, skip, signal);\n      meta = page.meta;\n      return page.data;\n    },\n  });\n  return { ...result, meta };\n}\n\n/**\n * Contrato publico unico para os clientes remoto, local e http.\n"
+    }
+  ],
+  "src/api/httpApiClient.js": [
+    {
+      "before": "    const searchKeys = opts.searchKeys || ['search', 'nome', 'descricao'];\n    const ativoKeys = opts.ativoKeys || ['ativo', 'ativa'];\n    async function readFilterPage(query = {}, orderBy, limit = 100, skip = 0, unwrap = true) {\n        if (typeof orderBy === 'number') {\n          skip = limit || 0;\n",
+      "after": "    const searchKeys = opts.searchKeys || ['search', 'nome', 'descricao'];\n    const ativoKeys = opts.ativoKeys || ['ativo', 'ativa'];\n    async function readFilterPage(query = {}, orderBy, limit = 100, skip = 0, unwrap = true, signal) {\n        if (typeof orderBy === 'number') {\n          skip = limit || 0;\n"
+    },
+    {
+      "before": "          query: { limit, offset, search, ativo: ativoQuery, ...exact, ...normalizeOrderByQuery(orderBy) },\n          unwrap,\n        });\n    }\n",
+      "after": "          query: { limit, offset, search, ativo: ativoQuery, ...exact, ...normalizeOrderByQuery(orderBy) },\n          unwrap,\n          signal,\n        });\n    }\n"
+    },
+    {
+      "before": "        return total;\n      },\n      async get(id) {\n        return request(`${basePath}/${encodeURIComponent(id)}`);\n",
+      "after": "        return total;\n      },\n      filterPage(query, orderBy, limit, skip, signal) {\n        return readFilterPage(query, orderBy, limit, skip, false, signal);\n      },\n      async get(id) {\n        return request(`${basePath}/${encodeURIComponent(id)}`);\n"
+    },
+    {
+      "before": "          return Array.isArray(rows) ? rows.map(hydrateClienteHttpRowForUi) : rows;\n        },\n        async create(data) {\n          return hydrateClienteHttpRowForUi(\n",
+      "after": "          return Array.isArray(rows) ? rows.map(hydrateClienteHttpRowForUi) : rows;\n        },\n        async filterPage(query, orderBy, limit, skip, signal) {\n          const page = await base.filterPage(query, orderBy, limit, skip, signal);\n          if (!Array.isArray(page?.data) || !Number.isSafeInteger(page.meta?.total) ||\n              page.meta.total < page.data.length || typeof page.meta.hasMore !== 'boolean') {\n            throw new Error('CLIENTE_PAGE_INVALID');\n          }\n          return { data: page.data.map(hydrateClienteHttpRowForUi), meta: page.meta };\n        },\n        async create(data) {\n          return hydrateClienteHttpRowForUi(\n"
+    },
+    {
+      "before": "    },\n  };\n  /** @type {Record<string, ReturnType<typeof createCrudEntity>>} */\n  const entities = {};\n  for (const name of ['GrupoEmpresarial', 'Empresa']) entities[name] = createOrganizacionalHttp(name, request, getScope);\n",
+      "after": "    },\n  };\n  /** @type {Record<string, Omit<ReturnType<typeof createCrudEntity>, 'filterPage'>> & { Cliente?: typeof entityRoutes.Cliente }} */\n  const entities = {};\n  for (const name of ['GrupoEmpresarial', 'Empresa']) entities[name] = createOrganizacionalHttp(name, request, getScope);\n"
+    }
+  ],
+  "src/components/cadastros/VisualizadorUniversalEntidadeV24.jsx": [
+    {
+      "before": "  isHttpProdutoEnabled,\n  getHttpProdutoApi,\n  isHttpClienteListMode,\n  isLocalOnlyMode,\n",
+      "after": "  isHttpProdutoEnabled,\n  getHttpProdutoApi,\n  listHttpClientePage,\n  isHttpClienteListMode,\n  isLocalOnlyMode,\n"
+    },
+    {
+      "before": "  const clienteHttpSemPiloto =\n    ENTITY === \"Cliente\" && isHttpBackendMode && !isHttpClienteListMode;\n  /** Modo local puro: store local explícito (≠ HML). */\n  const clienteFonteLocalOnly =\n",
+      "after": "  const clienteHttpSemPiloto =\n    ENTITY === \"Cliente\" && isHttpBackendMode && !isHttpClienteListMode;\n  const clienteHttpPage = ENTITY === \"Cliente\" && isHttpClienteListMode;\n  /** Modo local puro: store local explícito (≠ HML). */\n  const clienteFonteLocalOnly =\n"
+    },
+    {
+      "before": "  const [supplierEpoch, setSupplierEpoch] = useState(0);\n  const [supplierDetail, setSupplierDetail] = useState(null);\n  const supplierSession = canonicalRead ? readErpHttpSession() : null;\n  const supplierMatches = Boolean(supplierSession?.actorId && supplierSession.groupId === groupId &&\n    (supplierSession.empresaId || null) === empresaId);\n",
+      "after": "  const [supplierEpoch, setSupplierEpoch] = useState(0);\n  const [supplierDetail, setSupplierDetail] = useState(null);\n  const scopedPageRead = canonicalRead || clienteHttpPage;\n  const supplierSession = scopedPageRead ? readErpHttpSession() : null;\n  const supplierMatches = Boolean(supplierSession?.actorId && supplierSession.groupId === groupId &&\n    (supplierSession.empresaId || null) === empresaId);\n"
+    },
+    {
+      "before": "  };\n  useEffect(() => {\n    if (!canonicalRead) return;\n    const reset = () => { setSupplierEpoch(value => value + 1); setSupplierDetail(null); };\n    window.addEventListener(HTTP_CONTEXT_CHANGED, reset);\n    return () => window.removeEventListener(HTTP_CONTEXT_CHANGED, reset);\n  }, [canonicalRead]);\n  const showSupplierDetail = fornecedorHttp && supplierMatches && canViewCadastro && supplierDetail?.scope === supplierScope;\n  const supplierDetailQuery = useQuery({\n",
+      "after": "  };\n  useEffect(() => {\n    if (!scopedPageRead) return;\n    const reset = () => { setSupplierEpoch(value => value + 1); setSupplierDetail(null); };\n    window.addEventListener(HTTP_CONTEXT_CHANGED, reset);\n    return () => window.removeEventListener(HTTP_CONTEXT_CHANGED, reset);\n  }, [scopedPageRead]);\n  const showSupplierDetail = fornecedorHttp && supplierMatches && canViewCadastro && supplierDetail?.scope === supplierScope;\n  const supplierDetailQuery = useQuery({\n"
+    },
+    {
+      "before": "    function() {\n      const legacyKey = [\"viz-v33\", ENTITY, sortField, sortDir, page, pageSize, debouncedSearch, empresaId, groupId];\n      return canonicalRead ? [...legacyKey, supplierScope] : legacyKey;\n    },\n    [ENTITY, sortField, sortDir, page, pageSize, debouncedSearch, empresaId, groupId, canonicalRead, supplierScope]\n  );\n  const visibleScope = JSON.stringify([ENTITY, groupId, empresaId, debouncedSearch, canonicalRead ? supplierScope : null]);\n  // Limpa cache no render ao trocar tenant/busca — evita um frame com linhas do contexto anterior.\n  if (lastGoodScope.current !== visibleScope) {\n",
+      "after": "    function() {\n      const legacyKey = [\"viz-v33\", ENTITY, sortField, sortDir, page, pageSize, debouncedSearch, empresaId, groupId];\n      return scopedPageRead ? [...legacyKey, supplierScope] : legacyKey;\n    },\n    [ENTITY, sortField, sortDir, page, pageSize, debouncedSearch, empresaId, groupId, scopedPageRead, supplierScope]\n  );\n  const visibleScope = JSON.stringify([ENTITY, groupId, empresaId, debouncedSearch, scopedPageRead ? supplierScope : null]);\n  // Limpa cache no render ao trocar tenant/busca — evita um frame com linhas do contexto anterior.\n  if (lastGoodScope.current !== visibleScope) {\n"
+    },
+    {
+      "before": "        return result;\n      }\n      const res = await base44.functions.invoke(\"entityListSorted\", {\n        entityName: ENTITY,\n        filter: readFilter,\n",
+      "after": "        return result;\n      }\n      if (clienteHttpPage) assertSupplierScope();\n      const request = {\n        entityName: ENTITY,\n        filter: readFilter,\n"
+    },
+    {
+      "before": "        limit: pageSize,\n        skip: skip,\n      });\n      return Array.isArray(res && res.data) ? res.data : [];\n    },\n",
+      "after": "        limit: pageSize,\n        skip: skip,\n      };\n      const res = clienteHttpPage\n        ? await listHttpClientePage(request, signal)\n        : await base44.functions.invoke(\"entityListSorted\", request);\n      if (clienteHttpPage) {\n        assertSupplierScope();\n        if (signal?.aborted) throw new DOMException('Consulta cancelada', 'AbortError');\n        if (!Array.isArray(res?.data) || !Number.isSafeInteger(res.meta?.total) ||\n            res.meta.total < res.data.length || typeof res.meta.hasMore !== 'boolean') throw new Error('CLIENTE_PAGE_INVALID');\n        return { items: res.data, total: res.meta.total, hasMore: res.meta.hasMore };\n      }\n      return Array.isArray(res && res.data) ? res.data : [];\n    },\n"
+    },
+    {
+      "before": "    refetchOnMount: 'always',\n    placeholderData: function(prev, previousQuery) {\n      if (canonicalRead) return undefined;\n      return getScopedCadastroPlaceholder(prev, previousQuery?.queryKey, queryKey);\n    },\n    // HTTP + Cliente sem piloto: não consultar store local (evita lista vazia como “sucesso”).\n    enabled: !!ENTITY && contextoValido && canViewCadastro && !clienteHttpSemPiloto && (!canonicalRead || supplierMatches),\n  });\n  const produtoTotal = produtoHttp && supplierMatches && canViewCadastro && !isError ? rawItems?.total : undefined;\n\n  // items: estabilidade total — nunca desaparece durante sort/paginação/exclusão\n  const items = useMemo(function() {\n    if (canonicalRead) return supplierMatches && canViewCadastro && Array.isArray(rawItems?.items) ? rawItems.items : [];\n    const arr = Array.isArray(rawItems) ? rawItems : [];\n    if (arr.length > 0) {\n",
+      "after": "    refetchOnMount: 'always',\n    placeholderData: function(prev, previousQuery) {\n      if (scopedPageRead) return undefined;\n      return getScopedCadastroPlaceholder(prev, previousQuery?.queryKey, queryKey);\n    },\n    // HTTP + Cliente sem piloto: não consultar store local (evita lista vazia como “sucesso”).\n    enabled: !!ENTITY && contextoValido && canViewCadastro && !clienteHttpSemPiloto && (!scopedPageRead || supplierMatches),\n  });\n  const produtoTotal = produtoHttp && supplierMatches && canViewCadastro && !isError ? rawItems?.total : undefined;\n  const clientePageTotal = clienteHttpPage && supplierMatches && canViewCadastro && !isError ? rawItems?.total : undefined;\n\n  // items: estabilidade total — nunca desaparece durante sort/paginação/exclusão\n  const items = useMemo(function() {\n    if (scopedPageRead) return supplierMatches && canViewCadastro && Array.isArray(rawItems?.items) ? rawItems.items : [];\n    const arr = Array.isArray(rawItems) ? rawItems : [];\n    if (arr.length > 0) {\n"
+    },
+    {
+      "before": "    lastGoodData.current = [];\n    return [];\n  }, [rawItems, isFetching, isError, status, canonicalRead, supplierMatches, canViewCadastro]);\n\n  // Reset do cache quando muda de entidade, empresa, grupo ou busca\n",
+      "after": "    lastGoodData.current = [];\n    return [];\n  }, [rawItems, isFetching, isError, status, scopedPageRead, supplierMatches, canViewCadastro]);\n\n  // Reset do cache quando muda de entidade, empresa, grupo ou busca\n"
+    },
+    {
+      "before": "      );\n    }\n    if (items.length === 0 && !isFetching) {\n      let emptyMsg = debouncedSearch\n",
+      "after": "      );\n    }\n    if (scopedPageRead && !supplierMatches) {\n      return <p role=\"status\" className=\"p-4\" data-fonte-estado=\"aguardando-contexto\">Aguarde a confirmação do contexto.</p>;\n    }\n    if (clienteHttpPage && status === 'pending') {\n      return <p role=\"status\" className=\"p-4\">Aguardando a consulta de Clientes.</p>;\n    }\n    if (items.length === 0 && !isFetching) {\n      let emptyMsg = debouncedSearch\n"
+    },
+    {
+      "before": "        </div>\n      )}\n      {canonicalRead && !supplierMatches && (\n        <p role=\"alert\" className=\"text-sm text-amber-800\">Aguarde a confirmação do contexto para consultar {produtoHttp ? \"produtos\" : \"fornecedores\"}.</p>\n      )}\n      {produtoHttp && isError && (\n        <p role=\"alert\" className=\"text-sm text-amber-800\">{listError && 'status' in listError && listError.status === 403 ? \"Acesso negado à consulta de Produtos.\" : \"Consulta de Produtos indisponível.\"}</p>\n",
+      "after": "        </div>\n      )}\n      {produtoHttp && isError && (\n        <p role=\"alert\" className=\"text-sm text-amber-800\">{listError && 'status' in listError && listError.status === 403 ? \"Acesso negado à consulta de Produtos.\" : \"Consulta de Produtos indisponível.\"}</p>\n"
+    },
+    {
+      "before": "        <span>\n          Pág. {page} · {items.length} exibidos ·{\" \"}\n          {produtoTotal !== undefined ? produtoTotal + \" total\" : countsUnavailable\n            ? \"total indisponível\"\n            : !countKnown\n",
+      "after": "        <span>\n          Pág. {page} · {items.length} exibidos ·{\" \"}\n          {scopedPageRead && !supplierMatches ? \"aguardando contexto\" : clienteHttpPage\n            ? clientePageTotal !== undefined ? clientePageTotal + \" total\" : isError ? \"total indisponível\" : \"total …\"\n            : produtoTotal !== undefined ? produtoTotal + \" total\" : countsUnavailable\n            ? \"total indisponível\"\n            : !countKnown\n"
+    },
+    {
+      "before": "            type=\"button\"\n            onClick={function() { setPage(function(p) { return p + 1; }); }}\n            disabled={(canonicalRead ? !rawItems?.hasMore : items.length < pageSize) || isFetching}\n            className=\"h-7 px-2 border border-slate-200 rounded-sm bg-white hover:bg-slate-50 disabled:opacity-40\"\n            data-action={`Cadastros.${ENTITY}.proxima-pagina`}\n",
+      "after": "            type=\"button\"\n            onClick={function() { setPage(function(p) { return p + 1; }); }}\n            disabled={(scopedPageRead ? !rawItems?.hasMore : items.length < pageSize) || isFetching}\n            className=\"h-7 px-2 border border-slate-200 rounded-sm bg-white hover:bg-slate-50 disabled:opacity-40\"\n            data-action={`Cadastros.${ENTITY}.proxima-pagina`}\n"
+    }
+  ]
+};
+
 export function produtoCatalogoRemainder(file, source) {
+  const pageMarker = { 'src/api/base44Client.js': 'export async function listHttpClientePage',
+    'src/api/httpApiClient.js': 'CLIENTE_PAGE_INVALID',
+    'src/components/cadastros/VisualizadorUniversalEntidadeV24.jsx': 'const clienteHttpPage' };
+  if (pageMarker[file] && source.includes(pageMarker[file])) {
+    const crlf = source.includes('\r\n');
+    let projected = source.replace(/\r\n/g, '\n');
+    for (const { before, after } of clientePageHunks[file]) {
+      assert.equal(projected.split(after).length, 2, `Exact Cliente page hunk: ${file}`);
+      projected = projected.replace(after, () => before);
+    }
+    source = crlf ? projected.replace(/\n/g, '\r\n') : projected;
+  }
   if (file === 'tests/perfil-pedido-contract-reconciliation.test.js' && source.includes('produtoHttp: false')) {
     const binding = "ENTITY: 'PerfilAcesso', produtoHttp: false, hasCadastroEntityPermission";
     assert.equal(source.split(binding).length, 2);

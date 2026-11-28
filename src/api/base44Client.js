@@ -312,6 +312,22 @@ export function getHttpProdutoApi() {
   return httpHybridClient.preparedEntities.Produto;
 }
 
+export async function listHttpClientePage(payload, signal) {
+  if (!isHttpClienteListMode || !httpHybridClient) throw new Error('Cliente HTTP indisponivel');
+  const filter = { ...payload.filter };
+  if (typeof payload.search === 'string' && payload.search.trim()) filter.search = payload.search.trim();
+  let meta;
+  const result = await runLocalEntityReadFunction('entityListSorted', { ...payload, entityName: 'Cliente', filter }, {
+    expandFilter: (_entity, nextFilter) => nextFilter,
+    listEntity: async (_entity, nextFilter, order, limit, skip) => {
+      const page = await httpHybridClient.entities.Cliente.filterPage(nextFilter, order, limit, skip, signal);
+      meta = page.meta;
+      return page.data;
+    },
+  });
+  return { ...result, meta };
+}
+
 /**
  * Contrato publico unico para os clientes remoto, local e http.
  * @type {import('@base44/sdk').Base44Client}

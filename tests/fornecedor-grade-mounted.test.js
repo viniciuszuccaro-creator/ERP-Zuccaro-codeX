@@ -8,17 +8,19 @@ import { join } from 'node:path';
 import test from 'node:test';
 import { build } from 'esbuild';
 
-for (const entity of ['Fornecedor', 'Produto']) {
-test(`grade de ${entity} usa leitura HTTP paginada sem habilitar escrita legada`, { timeout: 30000 }, async () => {
+for (const entity of ['Fornecedor', 'Produto', 'Cliente']) {
+test(`grade de ${entity} usa leitura HTTP paginada no contexto atual`, { timeout: 30000 }, async () => {
   const produto = entity === 'Produto';
+  const cliente = entity === 'Cliente';
   const binary = process.env.CHROME_BIN || (process.platform === 'win32'
     ? 'C:/Program Files/Google/Chrome/Application/chrome.exe' : '/usr/bin/google-chrome');
   assert.ok(existsSync(binary), 'Chrome existente necessário');
   const modules = {
-    base44Client: `export const isHttpBackendMode=true,isHttpProdutoEnabled=${produto},isHttpClienteListMode=false,isLocalOnlyMode=false,erpBackendMode='http';
+    base44Client: `export const isHttpBackendMode=true,isHttpProdutoEnabled=${produto},isHttpClienteListMode=${cliente},isLocalOnlyMode=false,erpBackendMode='http';
       export const getHttpProdutoApi=()=>({
         listCatalogPage:async ({offset,search,signal})=>{
           const company=window.company||'Grupo';
+          if(window.pendingCompanyContext)throw Error('REQUEST_BEFORE_CONTEXT');
           if(company==='CPA'&&window.holdCpa) {
             window.cpaSignal=signal;
             await new Promise(resolve=>{window.releaseCpa=resolve;});
@@ -28,14 +30,22 @@ test(`grade de ${entity} usa leitura HTTP paginada sem habilitar escrita legada`
             meta:{total:search?1:21,hasMore:offset===0&&!search}};
         }
       });
-      export const base44={entities:{},functions:{invoke:async()=>{throw Error('LEGACY_LIST');}}};`,
+      export const base44={entities:{},functions:{invoke:async()=>{throw Error('LEGACY_LIST');}}};
+      export async function listHttpClientePage(payload,signal){
+        if(!${cliente}||!(signal instanceof AbortSignal))throw Error('MISSING_NATIVE_ABORT_SIGNAL');
+        const company=window.company||'Grupo';
+        const search=payload.search;
+        if(search==='falha')throw Error('HTTP_FAILED');
+        return {data: search==='zero' ? [] : [{id:'c',codigo:'001',nome:company+'-page-'+payload.skip+(search||'')}],
+          meta:{total:search==='zero'?0:search?1:21,hasMore:payload.skip===0&&!search}};
+      }`,
     useContextoVisual: `export const useContextoVisual=()=>({empresaAtual:{id:window.company},grupoAtual:{id:'group'},empresasDoGrupo:[]});`,
     usePermissions: `export default()=>({hasPermission:()=>true,hasPermissionKey:()=>true,canView:()=>true,canCreate:()=>true,canEdit:()=>true,canDelete:()=>true});`,
-    useEntityCounts: `export default names=>{if(names.length)throw Error('LEGACY_COUNTS');return{counts:{}};};`,
+    useEntityCounts: `export default names=>{if(names.length&&!${cliente})throw Error('LEGACY_COUNTS');return{counts:${cliente}?{Cliente:15972}:{}};};`,
     useWindow: `export const useWindow=()=>({openWindow:()=>{throw Error('LEGACY_FORM');}});`,
     useClienteCadastroNavigation: `export default()=>({});`,
     erpHttpSession: `export const HTTP_CONTEXT_CHANGED='fixture-context';
-      export const readErpHttpSession=()=>({groupId:'group',empresaId:window.company,actorId:'actor',token:'synthetic'});`,
+      export const readErpHttpSession=()=>({groupId:'group',empresaId:window.pendingCompanyContext?'CPA':window.company,actorId:'actor',token:'synthetic'});`,
     httpApiClient: `export const fornecedorReadApi={
       list:async ({offset,search})=>({items:[{id:'f',codigo:'001',nome:window.company+'-page-'+offset+(search||''),status:'Ativo'}],hasMore:offset===0}),
       get:async()=>({codigo:'001',razao_social:'Detalhe oficial'})};`,
@@ -54,6 +64,27 @@ test(`grade de ${entity} usa leitura HTTP paginada sem habilitar escrita legada`
     createRoot(root).render(<QueryClientProvider client={new QueryClient()}><Grid nomeEntidade="${entity}"/></QueryClientProvider>);
     (async()=>{
       await wait(()=>root.textContent.includes('CPA-page-0'));
+      if (${cliente}) {
+        if (!root.textContent.includes('21 total') || next().disabled) throw Error('PAGE_META_NOT_USED');
+        next().click();
+        await wait(()=>root.textContent.includes('CPA-page-20')&&next().disabled);
+        window.company='3Z';window.dispatchEvent(new Event('fixture-context'));
+        await wait(()=>root.textContent.includes('3Z-page-0'));
+        if(root.textContent.includes('CPA-page-'))throw Error('STALE_COMPANY');
+        const search=root.querySelector('input[placeholder*="Buscar"]');
+        const fill=value=>{
+          Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(search,value);
+          search.dispatchEvent(new Event('input',{bubbles:true}));
+        };
+        fill('001');
+        await wait(()=>root.textContent.includes('3Z-page-0001')&&root.textContent.includes('1 total')&&next().disabled);
+        fill('zero');
+        await wait(()=>root.querySelector('[data-fonte-estado="busca-vazia"]')&&root.textContent.includes('0 total'));
+        fill('falha');
+        await wait(()=>root.querySelector('[data-fonte-estado="erro-api"]')&&root.textContent.includes('total indisponível'));
+        await report({ok:true});
+        return;
+      }
       const writes=root.querySelectorAll('[data-action="Cadastros.${entity}.criar"],[data-action="Cadastros.${entity}.editar"],[data-action="Cadastros.${entity}.excluir"]');
       if([...writes].some(button=>!button.disabled))throw Error('LEGACY_WRITE_ENABLED');
       next().click();
@@ -66,7 +97,14 @@ test(`grade de ${entity} usa leitura HTTP paginada sem habilitar escrita legada`
         root.querySelector('[aria-label="Visualizar fornecedor"]').click();
         await wait(()=>document.body.textContent.includes('Detalhe oficial'));
       }
+      window.pendingCompanyContext=${produto};
       window.company='3Z';window.dispatchEvent(new Event('fixture-context'));
+      if (${produto}) {
+        await wait(()=>root.querySelector('[data-fonte-estado="aguardando-contexto"]'));
+        if(root.querySelector('[data-fonte-estado="lista-vazia"]') || root.textContent.includes('Grupo-page-0'))throw Error('PENDING_CONTEXT_DISPLAY');
+        window.pendingCompanyContext=false;
+        window.dispatchEvent(new Event('fixture-context'));
+      }
       await wait(()=>root.textContent.includes('3Z-page-0')&&!document.body.textContent.includes('Detalhe oficial'));
       if(root.textContent.includes('CPA-page-'))throw Error('STALE_COMPANY');
       const search=root.querySelector('input[placeholder*="Buscar"]');
