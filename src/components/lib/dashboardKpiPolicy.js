@@ -94,31 +94,31 @@ export const resolveDashboardCount = ({ countValue, list = [], softLimit = DASHB
   };
 };
 
-export const filtrarPorPeriodoDashboard = (data, periodo = 'mes') => {
+export const filtrarPorPeriodoDashboard = (data, periodo = 'mes', referenceDate = new Date()) => {
   if (!data) return false;
-  const hoje = new Date();
-  const dataComparacao = new Date(data);
-  if (Number.isNaN(dataComparacao.getTime())) return false;
+  const ref = referenceDate instanceof Date ? referenceDate : new Date(referenceDate);
+  const hoje = Number.isNaN(ref.getTime()) ? new Date() : ref;
+  const dataIso = toComparableLocalIsoDate(data);
+  if (!dataIso) return false;
 
   if (periodo === 'dia') {
-    return dataComparacao.toDateString() === hoje.toDateString();
+    return dataIso === toIsoDate(hoje);
   }
   if (periodo === 'semana') {
     const { data_inicio: inicio, data_fim: fim } = resolveDashboardPeriodRange('semana', hoje);
-    const dataIso = toComparableLocalIsoDate(data);
-    return Boolean(dataIso) && dataIso >= inicio && dataIso <= fim;
+    return dataIso >= inicio && dataIso <= fim;
   }
+  const [ano, mes] = dataIso.split('-').map(Number);
   if (periodo === 'mes') {
-    return dataComparacao.getMonth() === hoje.getMonth()
-      && dataComparacao.getFullYear() === hoje.getFullYear();
+    return (mes - 1) === hoje.getMonth() && ano === hoje.getFullYear();
   }
   if (periodo === 'trimestre') {
     const trimestre = Math.floor(hoje.getMonth() / 3);
-    const trimestreData = Math.floor(dataComparacao.getMonth() / 3);
-    return trimestreData === trimestre && dataComparacao.getFullYear() === hoje.getFullYear();
+    const trimestreData = Math.floor((mes - 1) / 3);
+    return trimestreData === trimestre && ano === hoje.getFullYear();
   }
   if (periodo === 'ano') {
-    return dataComparacao.getFullYear() === hoje.getFullYear();
+    return ano === hoje.getFullYear();
   }
   return true;
 };

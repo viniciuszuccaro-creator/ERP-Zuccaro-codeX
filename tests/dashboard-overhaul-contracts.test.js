@@ -383,6 +383,21 @@ test("semana do Dashboard aceita data SQL em meia-noite UTC do primeiro dia da j
   assert.equal(filtrarPorPeriodoDashboard(`${chave}T00:00:00.000Z`, "semana"), true);
 });
 
+test("filtrarPorPeriodoDashboard preserva primeiro dia de dia/mes/trimestre/ano para YYYY-MM-DD e meia-noite UTC", () => {
+  const ref = new Date(2026, 10, 28, 12, 0, 0);
+  assert.equal(filtrarPorPeriodoDashboard("2026-11-28", "dia", ref), true);
+  assert.equal(filtrarPorPeriodoDashboard("2026-11-28T00:00:00.000Z", "dia", ref), true);
+  assert.equal(filtrarPorPeriodoDashboard("2026-11-01", "mes", ref), true);
+  assert.equal(filtrarPorPeriodoDashboard("2026-11-01T00:00:00.000Z", "mes", ref), true);
+  assert.equal(filtrarPorPeriodoDashboard("2026-10-31", "mes", ref), false);
+  assert.equal(filtrarPorPeriodoDashboard("2026-10-01", "trimestre", ref), true);
+  assert.equal(filtrarPorPeriodoDashboard("2026-10-01T00:00:00.000Z", "trimestre", ref), true);
+  assert.equal(filtrarPorPeriodoDashboard("2026-09-30", "trimestre", ref), false);
+  assert.equal(filtrarPorPeriodoDashboard("2026-01-01", "ano", ref), true);
+  assert.equal(filtrarPorPeriodoDashboard("2026-01-01T00:00:00.000Z", "ano", ref), true);
+  assert.equal(filtrarPorPeriodoDashboard("2025-12-31", "ano", ref), false);
+});
+
 test("Dashboard usa um único predicado de aguardando aprovação para chip, lista e drill-down", () => {
   const src = readFileSync("src/pages/Dashboard.jsx", "utf8");
   assert.match(src, /const pedidosAguardandoAprovacaoPeriodo = pedidosPeriodo\.filter\(p => p\?\.status === 'Aguardando Aprovação'\);/);
