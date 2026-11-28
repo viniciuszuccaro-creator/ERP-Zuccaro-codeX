@@ -1,3 +1,18 @@
+## Frontend Dashboard: rodada 4 da revisao Bugbot no PR #601 (2026-11-28)
+
+- **Objetivo:** corrigir divergencias entre o Dashboard e os drill-downs de Relatorios (intervalo da semana e contador de aprovacoes).
+- **Corrigido:**
+  - Intervalo de datas: `RelatorioVendas`, `RelatorioEstoque`, `RelatorioDRE` e `RelatorioProducao` passam a iniciar o filtro em `new Date(filtros.data_inicio + 'T00:00:00')` (meia-noite local, como o fim `T23:59:59`). Antes, `new Date('YYYY-MM-DD')` era meia-noite UTC e incluia registros das 21:00 do dia anterior em UTC-3. Isso afetava todos os periodos, nao apenas a semana.
+  - Aguardando Aprovacao: chip, lista e drill-down usam o mesmo predicado do periodo (`pedidosPeriodo` com `status === 'Aguardando Aprovação'`). A lista exibe no maximo 8 itens e mostra "Exibindo X de Y no periodo" quando Y > 8.
+  - Decisao registrada: o predicado de aprovacao passa a ser somente por `status`. O antigo `status_aprovacao === 'pendente'` saiu da previa do Dashboard para bater com a contagem do drill-down. Se o negocio exigir os dois criterios, a mudanca precisa ser decidida antes de reintroduzir o campo.
+- **Estruturas reutilizadas:** `pedidosPeriodo` do hook de KPIs existente, `dashboardKpiPolicy` e os relatorios existentes. Nenhum arquivo novo.
+- **Multiempresa/RBAC/auditoria:** sem mudanca de escopo. Listas continuam vindas de `filterInContext` (groupId/empresaId).
+- **Helper de pin:** `tests/helpers/restoreDashboardCadastroCounts.js` espelha o novo bloco de aprovacao e a linha de "Exibindo X de Y".
+- **Testes:** novos casos em `tests/dashboard-overhaul-contracts.test.js` para `T00:00:00` nos quatro relatorios e para o predicado unico de aprovacao no Dashboard.
+- **Validacao:** `npm run typecheck`, `npm run build`, `npm run audit:baseline`, `git diff --check`, testes direcionados em `TZ=America/Sao_Paulo` e `npm test` (3076/3076). `npm run lint` sem erros (2 warnings preexistentes).
+- **Pendencias:** mesmas da rodada anterior (contraprova React montada dos KPIs, endpoint oficial de agregados do Codex, verificacao de sessao/queryKey e revogacao em `CadastroEntitySelect`). Datas somente-data em `data_pedido` (ex.: `2026-11-20`) continuam sendo interpretadas como UTC pelo `new Date(...)` dos dois lados; isso e consistente entre Dashboard e relatorios, mas merece revisao de contrato de dados.
+- **Proximo passo:** aguardar nova revisao do PR #601.
+
 ## Frontend Dashboard e Cadastros Gerais: correcoes da revisao Bugbot/Codex no PR #601 (2026-11-28)
 
 - **Objetivo:** corrigir os achados de revisao automatica do PR #601 sobre KPIs do Dashboard e seletor de cadastro.

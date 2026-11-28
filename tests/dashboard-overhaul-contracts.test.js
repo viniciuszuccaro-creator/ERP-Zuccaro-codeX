@@ -342,3 +342,20 @@ test("Dashboard alinha drill-down de entregas_pendentes e otd_entregas para Expe
   assert.doesNotMatch(src, /tab:\s*'producao',\s*kpi:\s*'entregas_pendentes'/);
   assert.doesNotMatch(src, /tab:\s*'producao',\s*kpi:\s*'otd_entregas'/);
 });
+
+test("relatórios de Vendas, Estoque, DRE e Produção iniciam o intervalo à meia-noite local, como o Dashboard", () => {
+  for (const file of ["RelatorioVendas", "RelatorioEstoque", "RelatorioDRE", "RelatorioProducao"]) {
+    const src = readFileSync(`src/components/relatorios/${file}.jsx`, "utf8");
+    assert.match(src, /const ini = new Date\(filtros\.data_inicio \+ 'T00:00:00'\);/, file);
+    assert.doesNotMatch(src, /const ini = new Date\(filtros\.data_inicio\);/, file);
+  }
+});
+
+test("Dashboard usa um único predicado de aguardando aprovação para chip, lista e drill-down", () => {
+  const src = readFileSync("src/pages/Dashboard.jsx", "utf8");
+  assert.match(src, /const pedidosAguardandoAprovacaoPeriodo = pedidosPeriodo\.filter\(p => p\?\.status === 'Aguardando Aprovação'\);/);
+  assert.match(src, /const totalAguardandoAprovacaoPeriodo = pedidosAguardandoAprovacaoPeriodo\.length;/);
+  assert.match(src, /const pedidosAguardandoAprovacao = pedidosAguardandoAprovacaoPeriodo\.slice\(0, 8\);/);
+  assert.match(src, /<Badge className="bg-red-100 text-red-700">\{totalAguardandoAprovacaoPeriodo\}<\/Badge>/);
+  assert.match(src, /Exibindo \{pedidosAguardandoAprovacao\.length\} de \{totalAguardandoAprovacaoPeriodo\} no período\./);
+});

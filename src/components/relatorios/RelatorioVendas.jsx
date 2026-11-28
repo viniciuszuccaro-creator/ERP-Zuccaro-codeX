@@ -53,7 +53,7 @@ export default function RelatorioVendas() {
   });
 
   const pedidosFiltrados = useMemo(() => {
-    const ini = new Date(filtros.data_inicio);
+    const ini = new Date(filtros.data_inicio + 'T00:00:00');
     const fim = new Date(filtros.data_fim + 'T23:59:59');
     return pedidos.filter(p => {
       const d = new Date(p.data_pedido || p.created_date);

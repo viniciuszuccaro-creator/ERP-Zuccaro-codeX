@@ -425,7 +425,6 @@ export default function Dashboard({ aggregateOverride = null } = {}) {
 
   const {
     pedidosPeriodo,
-    pedidosAguardandoAprovacao: totalAguardandoAprovacaoPeriodo,
     amostraLimitada,
     totalVendas,
     ticketMedio,
@@ -466,7 +465,9 @@ export default function Dashboard({ aggregateOverride = null } = {}) {
   // Pedidos - listas rápidas (recentes/pendentes/aprovação)
   const pedidosRecentes = (pedidos || []).slice(0, 8);
   const pedidosPendentes = (pedidos || []).filter(p => ['Rascunho','Em Produção','Pronto para Faturar','Em Expedição'].includes(p?.status)).slice(0, 8);
-  const pedidosAguardandoAprovacao = (pedidos || []).filter(p => (p?.status_aprovacao === 'pendente') || (p?.status === 'Aguardando Aprovação')).slice(0, 8);
+  const pedidosAguardandoAprovacaoPeriodo = pedidosPeriodo.filter(p => p?.status === 'Aguardando Aprovação');
+  const totalAguardandoAprovacaoPeriodo = pedidosAguardandoAprovacaoPeriodo.length;
+  const pedidosAguardandoAprovacao = pedidosAguardandoAprovacaoPeriodo.slice(0, 8);
 
 
   // Dados e gráficos agora são providos por useDashboardDerivedData()
@@ -1124,6 +1125,7 @@ export default function Dashboard({ aggregateOverride = null } = {}) {
                         </div>
                       ))}
                       {pedidosAguardandoAprovacao.length === 0 && (<p className="text-sm text-slate-500">Sem aprovações pendentes.</p>)}
+                      {totalAguardandoAprovacaoPeriodo > pedidosAguardandoAprovacao.length && (<p className="text-xs text-slate-500">Exibindo {pedidosAguardandoAprovacao.length} de {totalAguardandoAprovacaoPeriodo} no período.</p>)}
                     </div>
                   </div>
                 </div>

@@ -57,7 +57,7 @@ export default function RelatorioProducao() {
   });
 
   const orsFiltrados = useMemo(() => {
-    const ini = new Date(filtros.data_inicio);
+    const ini = new Date(filtros.data_inicio + 'T00:00:00');
     const fim = new Date(filtros.data_fim + 'T23:59:59');
     return ordens.filter(o => {
       const d = new Date(o.data_inicio || o.created_date);

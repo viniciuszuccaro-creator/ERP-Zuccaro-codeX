@@ -691,10 +691,14 @@ export function restoreDashboardCadastroCounts(text) {
         : clientesCountPending ? 'Carregando' : totalClientes ?? 'Indisponível',`, `title: "Clientes Ativos",
       value: clientesAtivos,`);
   restoreCountHunk(`    pedidosPeriodo,
-    pedidosAguardandoAprovacao: totalAguardandoAprovacaoPeriodo,
     amostraLimitada,
     totalVendas,`, `     pedidosPeriodo,
     totalVendas,`);
+  restoreCountHunk(`  const pedidosAguardandoAprovacaoPeriodo = pedidosPeriodo.filter(p => p?.status === 'Aguardando Aprovação');
+  const totalAguardandoAprovacaoPeriodo = pedidosAguardandoAprovacaoPeriodo.length;
+  const pedidosAguardandoAprovacao = pedidosAguardandoAprovacaoPeriodo.slice(0, 8);`, `  const pedidosAguardandoAprovacao = (pedidos || []).filter(p => (p?.status_aprovacao === 'pendente') || (p?.status === 'Aguardando Aprovação')).slice(0, 8);`);
+  restoreCountHunk(`
+                      {totalAguardandoAprovacaoPeriodo > pedidosAguardandoAprovacao.length && (<p className="text-xs text-slate-500">Exibindo {pedidosAguardandoAprovacao.length} de {totalAguardandoAprovacaoPeriodo} no período.</p>)}`, ``);
   restoreCountHunk(`<Badge className="bg-red-100 text-red-700">{totalAguardandoAprovacaoPeriodo}</Badge>`, `<Badge className="bg-red-100 text-red-700">{pedidosAguardandoAprovacao.length}</Badge>`);
   return text;
 }

@@ -47,7 +47,7 @@ export default function RelatorioDRE() {
   });
 
   const filtrar = (lista, campo) => {
-    const ini = new Date(filtros.data_inicio);
+    const ini = new Date(filtros.data_inicio + 'T00:00:00');
     const fim = new Date(filtros.data_fim + 'T23:59:59');
     return lista.filter(i => { const d = new Date(i[campo]||i.created_date); return d>=ini && d<=fim; });
   };
