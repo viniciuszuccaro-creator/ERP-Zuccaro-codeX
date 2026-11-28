@@ -13,13 +13,21 @@ import { useUser } from "@/components/lib/UserContext";
 import { base44 } from "@/api/base44Client";
 import FiltrosPeriodoEmpresa from "@/components/relatorios/FiltrosPeriodoEmpresa";
 import { exportarCSV } from "@/components/relatorios/exportUtils";
+import { resolveDashboardReportFiltersFromSearch } from "@/components/lib/dashboardKpiPolicy";
 
 const COLORS = ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4'];
 
 export default function RelatorioProducao() {
-  const [filtros, setFiltros] = useState({
-    data_inicio: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
-    data_fim: new Date().toISOString().split('T')[0],
+  const [filtros, setFiltros] = useState(() => {
+    const synced = resolveDashboardReportFiltersFromSearch(typeof window !== 'undefined' ? window.location.search : '');
+    return {
+      data_inicio: synced.data_inicio || new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
+      data_fim: synced.data_fim || new Date().toISOString().split('T')[0],
+      status: synced.status || null,
+      kpi: synced.kpi || null,
+      origem: synced.origem || null,
+      periodoLabel: synced.periodoLabel || null,
+    };
   });
   const { filterInContext, empresaAtual, grupoAtual } = useContextoVisual();
   const { hasPermission } = usePermissions();

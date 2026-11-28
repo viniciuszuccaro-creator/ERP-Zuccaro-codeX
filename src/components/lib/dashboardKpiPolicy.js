@@ -122,22 +122,203 @@ export const filtrarPorPeriodoDashboard = (data, periodo = 'mes') => {
   return true;
 };
 
+const toIsoDate = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const PERIOD_LABELS = {
+  dia: 'Hoje',
+  semana: 'Últimos 7 dias',
+  mes: 'Este Mês',
+  trimestre: 'Trimestre',
+  ano: 'Este Ano',
+};
+
+/**
+ * Resolve intervalo ISO (YYYY-MM-DD) idêntico para Dashboard e Relatórios.
+ * @param {string} [periodo]
+ * @param {Date | string | number} [referenceDate]
+ */
+export const resolveDashboardPeriodRange = (periodo = 'mes', referenceDate = new Date()) => {
+  const normalized = PERIOD_LABELS[periodo] ? periodo : 'mes';
+  const ref = referenceDate instanceof Date ? new Date(referenceDate.getTime()) : new Date(referenceDate);
+  const hoje = Number.isNaN(ref.getTime()) ? new Date() : ref;
+  const end = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
+  let start = new Date(end.getTime());
+
+  if (normalized === 'semana') {
+    start = new Date(end.getTime() - 7 * 24 * 60 * 60 * 1000);
+  } else if (normalized === 'mes') {
+    start = new Date(end.getFullYear(), end.getMonth(), 1);
+  } else if (normalized === 'trimestre') {
+    const firstMonth = Math.floor(end.getMonth() / 3) * 3;
+    start = new Date(end.getFullYear(), firstMonth, 1);
+  } else if (normalized === 'ano') {
+    start = new Date(end.getFullYear(), 0, 1);
+  }
+
+  return {
+    periodo: normalized,
+    label: PERIOD_LABELS[normalized],
+    data_inicio: toIsoDate(start),
+    data_fim: toIsoDate(end),
+  };
+};
+
+export const resolveDashboardReportFiltersFromSearch = (search = '') => {
+  const params = new URLSearchParams(typeof search === 'string' ? search : '');
+  const origem = firstText(params.get('origem'));
+  const periodoParam = firstText(params.get('periodo'));
+  const range = periodoParam ? resolveDashboardPeriodRange(periodoParam) : null;
+  const dataInicioParam = firstText(params.get('data_inicio'));
+  const dataFimParam = firstText(params.get('data_fim'));
+  const isIsoDate = (v) => /^\d{4}-\d{2}-\d{2}$/.test(v);
+
+  return {
+    fromDashboard: origem === 'dashboard',
+    origem: origem || null,
+    tab: firstText(params.get('tab')) || null,
+    kpi: firstText(params.get('kpi')) || null,
+    periodo: range?.periodo || null,
+    periodoLabel: range?.label || null,
+    data_inicio: isIsoDate(dataInicioParam) ? dataInicioParam : (range?.data_inicio || null),
+    data_fim: isIsoDate(dataFimParam) ? dataFimParam : (range?.data_fim || null),
+    status: firstText(params.get('status')) || null,
+    group_id: firstText(params.get('group_id')) || null,
+    empresa_id: firstText(params.get('empresa_id')) || null,
+    scopeType: firstText(params.get('scopeType')) || null,
+  };
+};
+
+/**
+ * Classifica o estado canônico de um indicador do Dashboard (fail-closed):
+ * nunca confunde erro/indisponível/sem acesso/carregando com zero confirmado.
+ * @param {{
+ *   hasContext?: boolean,
+ *   hasPermission?: boolean,
+ *   isLoading?: boolean,
+ *   isError?: boolean,
+ *   value?: number | string | null,
+ *   isPartial?: boolean,
+ *   isAggregateOfficial?: boolean,
+ * }} [input]
+ */
+export const resolveIndicatorState = ({
+  hasContext = true,
+  hasPermission = true,
+  isLoading = false,
+  isError = false,
+  value = null,
+  isPartial = false,
+  isAggregateOfficial = false,
+} = {}) => {
+  if (!hasContext) {
+    return { state: 'sem_contexto', label: 'Selecione contexto', isZeroConfirmed: false, isPartial: false, isAggregateOfficial: false };
+  }
+  if (!hasPermission) {
+    return { state: 'sem_acesso', label: 'Sem acesso', isZeroConfirmed: false, isPartial: false, isAggregateOfficial: false };
+  }
+  if (isLoading) {
+    return { state: 'carregando', label: 'Carregando...', isZeroConfirmed: false, isPartial: false, isAggregateOfficial: false };
+  }
+  if (isError || value === null || value === undefined || value === '') {
+    return { state: 'erro', label: 'Indisponível', isZeroConfirmed: false, isPartial: false, isAggregateOfficial: false };
+  }
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) {
+    return { state: 'erro', label: 'Indisponível', isZeroConfirmed: false, isPartial: false, isAggregateOfficial: false };
+  }
+  if (numeric === 0) {
+    return { state: 'zero_confirmado', label: 'Zero confirmado', isZeroConfirmed: true, isPartial: Boolean(isPartial), isAggregateOfficial: Boolean(isAggregateOfficial) };
+  }
+  return { state: 'ok', label: 'Confirmado', isZeroConfirmed: false, isPartial: Boolean(isPartial), isAggregateOfficial: Boolean(isAggregateOfficial) };
+};
+
+/**
+ * Adaptador para o contrato oficial de agregados de período do backend Codex
+ * (ex.: GET /api/v1/dashboard/aggregates ou invoke('dashboardAggregates')).
+ * Retorna null quando ausente ou inválido (mantendo modo fail-closed / derivado transparente).
+ * @param {any} payload
+ */
+export const normalizeDashboardAggregateContract = (payload) => {
+  if (!payload || typeof payload !== 'object') return null;
+  const operational = payload.operational && typeof payload.operational === 'object' ? payload.operational : null;
+  const counts = payload.counts && typeof payload.counts === 'object' ? payload.counts : null;
+  if (!operational && !counts) return null;
+
+  const numOrNull = (v) => {
+    if (v === null || v === undefined || v === '') return null;
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+  };
+
+  return {
+    contractVersion: firstText(payload.contractVersion, payload.version, 'v1'),
+    source: 'backend_aggregate',
+    generatedAt: firstText(payload.generatedAt, payload.generated_at) || null,
+    scope: payload.scope && typeof payload.scope === 'object' ? {
+      groupId: firstText(payload.scope.groupId, payload.scope.group_id) || null,
+      empresaId: firstText(payload.scope.empresaId, payload.scope.empresa_id) || null,
+      scopeType: firstText(payload.scope.scopeType, payload.scope.scope_type) || 'empresa',
+    } : null,
+    period: payload.period && typeof payload.period === 'object' ? {
+      periodo: firstText(payload.period.periodo) || 'mes',
+      data_inicio: firstText(payload.period.data_inicio) || null,
+      data_fim: firstText(payload.period.data_fim) || null,
+    } : null,
+    counts: counts ? {
+      Cliente: numOrNull(counts.Cliente ?? counts.clientes),
+      Produto: numOrNull(counts.Produto ?? counts.produtos),
+      Colaborador: numOrNull(counts.Colaborador ?? counts.colaboradores),
+      Fornecedor: numOrNull(counts.Fornecedor ?? counts.fornecedores),
+    } : null,
+    operational: operational ? {
+      totalVendas: numOrNull(operational.totalVendas ?? operational.total_vendas),
+      pedidosPeriodoCount: numOrNull(operational.pedidosPeriodoCount ?? operational.pedidos_periodo_count),
+      pedidosValidosCount: numOrNull(operational.pedidosValidosCount ?? operational.pedidos_validos_count),
+      pedidosAguardandoAprovacao: numOrNull(operational.pedidosAguardandoAprovacao ?? operational.pedidos_aguardando_aprovacao),
+      ticketMedio: numOrNull(operational.ticketMedio ?? operational.ticket_medio),
+      receitasPendentes: numOrNull(operational.receitasPendentes ?? operational.receitas_pendentes),
+      despesasPendentes: numOrNull(operational.despesasPendentes ?? operational.despesas_pendentes),
+      fluxoCaixa: numOrNull(operational.fluxoCaixa ?? operational.fluxo_caixa),
+      produtosBaixoEstoque: numOrNull(operational.produtosBaixoEstoque ?? operational.produtos_baixo_estoque),
+      entregasPendentes: numOrNull(operational.entregasPendentes ?? operational.entregas_pendentes),
+      otd: numOrNull(operational.otd),
+      pesoProduzido: numOrNull(operational.pesoProduzido ?? operational.peso_produzido),
+      aproveitamentoBarra: numOrNull(operational.aproveitamentoBarra ?? operational.aproveitamento_barra),
+      taxaInadimplencia: numOrNull(operational.taxaInadimplencia ?? operational.taxa_inadimplencia),
+      valorVencido: numOrNull(operational.valorVencido ?? operational.valor_vencido),
+    } : null,
+  };
+};
+
 export const buildKpiDrillDownParams = ({
+  tab = '',
   kpi = '',
   periodo = 'mes',
   status = '',
   groupId = null,
   empresaId = null,
   scopeType = 'empresa',
-} = {}) => ({
-  origem: 'dashboard',
-  kpi: firstText(kpi),
-  periodo: firstText(periodo) || 'mes',
-  status: firstText(status) || undefined,
-  group_id: firstText(groupId) || undefined,
-  empresa_id: firstText(empresaId) || undefined,
-  scopeType: firstText(scopeType) || 'empresa',
-});
+  referenceDate = new Date(),
+} = {}) => {
+  const range = resolveDashboardPeriodRange(periodo, referenceDate);
+  return {
+    tab: firstText(tab) || undefined,
+    origem: 'dashboard',
+    kpi: firstText(kpi),
+    periodo: range.periodo,
+    data_inicio: range.data_inicio,
+    data_fim: range.data_fim,
+    status: firstText(status) || undefined,
+    group_id: firstText(groupId) || undefined,
+    empresa_id: firstText(empresaId) || undefined,
+    scopeType: firstText(scopeType) || 'empresa',
+  };
+};
 
 export const buildKpiDrillDownUrl = (basePath, params = {}) => {
   const path = firstText(basePath) || '/';
@@ -259,10 +440,11 @@ export const computeDashboardDerivedKpis = ({
 } = {}) => {
   const inPeriodo = (data) => filtrarPorPeriodoDashboard(data, periodo);
   const pedidosPeriodo = (pedidos || []).filter((p) => p.data_pedido && inPeriodo(p.data_pedido));
-  const totalVendas = pedidosPeriodo
-    .filter((p) => p.status !== 'Cancelado')
+  const pedidosValidosPeriodo = pedidosPeriodo.filter((p) => p.status !== 'Cancelado');
+  const pedidosAguardandoAprovacao = pedidosPeriodo.filter((p) => p.status === 'Aguardando Aprovação').length;
+  const totalVendas = pedidosValidosPeriodo
     .reduce((sum, p) => sum + (p.valor_total || 0), 0);
-  const ticketMedio = pedidosPeriodo.length > 0 ? totalVendas / pedidosPeriodo.length : 0;
+  const ticketMedio = pedidosValidosPeriodo.length > 0 ? totalVendas / pedidosValidosPeriodo.length : 0;
   const receitasPendentes = (contasReceber || [])
     .filter((c) => c.status === 'Pendente')
     .reduce((sum, c) => sum + (c.valor || 0), 0);
@@ -441,6 +623,8 @@ export const computeDashboardDerivedKpis = ({
 
   return {
     pedidosPeriodo,
+    pedidosValidosPeriodo,
+    pedidosAguardandoAprovacao,
     totalVendas,
     ticketMedio,
     receitasPendentes,

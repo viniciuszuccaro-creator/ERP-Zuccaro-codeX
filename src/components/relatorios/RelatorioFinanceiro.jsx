@@ -14,11 +14,19 @@ import usePermissions from "@/components/lib/usePermissions";
 import { useUser } from "@/components/lib/UserContext";
 import FiltrosPeriodoEmpresa from "@/components/relatorios/FiltrosPeriodoEmpresa";
 import { exportarCSV } from "@/components/relatorios/exportUtils";
+import { resolveDashboardReportFiltersFromSearch } from "@/components/lib/dashboardKpiPolicy";
 
 export default function RelatorioFinanceiro() {
-  const [filtros, setFiltros] = useState({
-    data_inicio: new Date(new Date().getFullYear(), 0, 1).toISOString().split('T')[0],
-    data_fim: new Date().toISOString().split('T')[0],
+  const [filtros, setFiltros] = useState(() => {
+    const synced = resolveDashboardReportFiltersFromSearch(typeof window !== 'undefined' ? window.location.search : '');
+    return {
+      data_inicio: synced.data_inicio || new Date(new Date().getFullYear(), 0, 1).toISOString().split('T')[0],
+      data_fim: synced.data_fim || new Date().toISOString().split('T')[0],
+      status: synced.status || null,
+      kpi: synced.kpi || null,
+      origem: synced.origem || null,
+      periodoLabel: synced.periodoLabel || null,
+    };
   });
   const { filterInContext, empresaAtual, grupoAtual } = useContextoVisual();
   const { hasPermission } = usePermissions();
@@ -48,7 +56,12 @@ export default function RelatorioFinanceiro() {
   const filtrar = (lista, campo) => {
     const ini = new Date(filtros.data_inicio);
     const fim = new Date(filtros.data_fim + 'T23:59:59');
-    return lista.filter(i => { const d = new Date(i[campo] || i.created_date); return d >= ini && d <= fim; });
+    return lista.filter(i => {
+      const d = new Date(i[campo] || i.created_date);
+      if (!(d >= ini && d <= fim)) return false;
+      if (filtros.status && String(i.status || '').toLowerCase() !== String(filtros.status).toLowerCase()) return false;
+      return true;
+    });
   };
 
   const receberFiltrado = useMemo(() => filtrar(receber, 'data_vencimento'), [receber, filtros]);

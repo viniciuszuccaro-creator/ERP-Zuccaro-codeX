@@ -16,13 +16,21 @@ import usePermissions from "@/components/lib/usePermissions";
 import { useUser } from "@/components/lib/UserContext";
 import FiltrosPeriodoEmpresa from "@/components/relatorios/FiltrosPeriodoEmpresa";
 import { exportarCSV } from "@/components/relatorios/exportUtils";
+import { resolveDashboardReportFiltersFromSearch } from "@/components/lib/dashboardKpiPolicy";
 
 const COLORS = ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#06b6d4','#64748b'];
 
 export default function RelatorioVendas() {
-  const [filtros, setFiltros] = useState({
-    data_inicio: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
-    data_fim: new Date().toISOString().split('T')[0],
+  const [filtros, setFiltros] = useState(() => {
+    const synced = resolveDashboardReportFiltersFromSearch(typeof window !== 'undefined' ? window.location.search : '');
+    return {
+      data_inicio: synced.data_inicio || new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
+      data_fim: synced.data_fim || new Date().toISOString().split('T')[0],
+      status: synced.status || null,
+      kpi: synced.kpi || null,
+      origem: synced.origem || null,
+      periodoLabel: synced.periodoLabel || null,
+    };
   });
   const { filterInContext, empresaAtual, grupoAtual } = useContextoVisual();
   const { hasPermission } = usePermissions();
@@ -49,7 +57,9 @@ export default function RelatorioVendas() {
     const fim = new Date(filtros.data_fim + 'T23:59:59');
     return pedidos.filter(p => {
       const d = new Date(p.data_pedido || p.created_date);
-      return d >= ini && d <= fim && p.status !== 'Cancelado';
+      if (!(d >= ini && d <= fim && p.status !== 'Cancelado')) return false;
+      if (filtros.status && String(p.status || '').toLowerCase() !== String(filtros.status).toLowerCase()) return false;
+      return true;
     });
   }, [pedidos, filtros]);
 
