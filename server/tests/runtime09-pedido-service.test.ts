@@ -128,6 +128,116 @@ test('Pedido get/list/history nao promovem ator trocado durante espera de tenant
 
 test('Pedido reabertura lista e historico preservam contexto capturado', async () => {
   const f = fixture();
+  const row = await f.service.create(ctx, direct);
+  const caller = { ...ctx };
+  const pendingGet = f.service.get(caller, row.id);
+  const pendingList = f.service.list(caller);
+  const pendingHistory = f.service.history(caller, row.id);
+  caller.groupId = '99999999-9999-4999-8999-999999999999';
+  caller.empresaId = caller.groupId;
+  caller.actorId = caller.groupId;
+  const [reopened, page, history] = await Promise.all([pendingGet, pendingList, pendingHistory]);
+  assert.equal(reopened.id, row.id);
+  assert.equal(page.data[0].id, row.id);
+  assert.equal(history[0].status_novo, 'EM_ABERTO');
+});
+
+test('Pedido exige motivo explicito de cancelamento sem efeitos em tentativas invalidas', async()=>{
+  const f=fixture(), order=await f.service.create(ctx,direct);
+  const scope={groupId,empresaId};
+  const snapshot=async()=>({row:await f.service.get(ctx,order.id),history:await f.repo.history(scope,order.id),audit:await f.audit.listByEntity('Pedido',order.id)});
+  const before=await snapshot();
+  for(const motivo of [undefined,null,'','  ','ab',' x ',123,{},'a'.repeat(501)]){
+    await assert.rejects(f.service.cancel(ctx,order.id,motivo),(error:any)=>error.statusCode===422&&error.code==='VALIDATION_ERROR');
+    assert.deepEqual(await snapshot(),before);
+  }
+  const cancelled=await f.service.cancel(ctx,order.id,'Cancelamento solicitado em teste');
+  assert.equal(cancelled.status,'CANCELADO');
+  assert.deepEqual(cancelled.itens,order.itens);
+  assert.equal(cancelled.numero,order.numero);
+  assert.deepEqual((await f.audit.listByEntity('Pedido',order.id)).map(row=>row.action),['create','change_status']);
+  await assert.rejects(f.service.cancel(ctx,order.id,'Cancelamento repetido'),(error:any)=>error.statusCode===409);
+});
+
+test('Pedido.list por clienteId resolve vínculo sem Cadastros.cliente_empresa e pagina', async () => {
+  const f = fixture();
+  await f.service.create(ctx, direct);
+  await f.service.create(ctx, { ...direct, itens: [{ ...direct.itens[0], quantidade: '1' }] });
+  const page = await f.service.list(ctx, { clienteId, limit: 1, offset: 0 });
+  assert.equal(page.meta.total, 2);
+  assert.equal(page.data.length, 1);
+  assert.equal(page.meta.hasMore, true);
+  const page2 = await f.service.list(ctx, { clienteId, limit: 1, offset: 1 });
+  assert.equal(page2.data.length, 1);
+  assert.equal(page2.meta.hasMore, false);
+  assert.notEqual(page.data[0].id, page2.data[0].id);
+  const empty = await f.service.list(ctx, { clienteId: '99999999-9999-4999-8999-999999999999' });
+  assert.equal(empty.meta.total, 0);
+  assert.deepEqual(empty.data, []);
+  // Fixture RBAC só tem Comercial.pedido — list por clienteId não exige cliente_empresa.
+  await assert.rejects(
+    f.service.list(ctx, { clienteId, clienteEmpresaId }),
+    (error: any) => error.statusCode === 422,
+  );
+});
+
+test('Pedido.list por clienteId preserva histórico quando vínculo ClienteEmpresa está inativo', async () => {
+  let linkAtivo = true;
+  const repo = new InMemoryPedidoRepository();
+  const orcamentos = new InMemoryOrcamentoRepository();
+  const audit = new InMemoryAuditRepository();
+  const tenant = new InMemoryTenantGuard();
+  const rbac = new InMemoryRbacGuard();
+  tenant.link(empresaId, groupId);
+  rbac.link({ actorId, groupId, permissions: { Comercial: { pedido: ['visualizar', 'criar', 'editar', 'cancelar', 'alterar-status'] } } });
+  const service = new PedidoService(
+    repo,
+    orcamentos,
+    audit,
+    tenant,
+    rbac,
+    {
+      getEmpresaLinkById: async () =>
+        ({ id: clienteEmpresaId, cliente_id: clienteId, ativo: linkAtivo, bloqueado: false, habilitado_operacao: true } as never),
+      getEmpresaLink: async (_scope: unknown, requestedClienteId: string) =>
+        (requestedClienteId === clienteId
+          ? ({ id: clienteEmpresaId, cliente_id: clienteId, ativo: linkAtivo, bloqueado: false, habilitado_operacao: true } as never)
+          : null),
+    },
+    { getById: async () => ({ id: produtoId, ativo: true, unidade_medida_id: unidadeId } as never) },
+    { getById: async () => ({ id: unidadeId, ativo: true } as never) },
+    { get: async () => ({ id: condicaoId, ativo: true } as never) },
+    { get: async () => ({ id: 'local', ativo: true } as never) },
+    { get: async () => ({ id: 'obra', ativo: true } as never) },
+    { get: async () => ({ id: 'tabela', ativo: true } as never) },
+    { resolveSalePrice: async () => ({ preco: '10.000000', tabela_preco_id: 'tabela' }) },
+  );
+  const created = await service.create(ctx, direct);
+  assert.equal((await service.list(ctx, { clienteId })).meta.total, 1);
+  linkAtivo = false;
+  const afterSoft = await service.list(ctx, { clienteId });
+  assert.equal(afterSoft.meta.total, 1);
+  assert.equal(afterSoft.data[0].id, created.id);
+  // Create com vínculo inativo continua bloqueado.
+  await assert.rejects(
+    service.create(ctx, { ...direct, itens: [{ ...direct.itens[0], quantidade: '1' }] }),
+    (error: any) => error.statusCode === 422 && error.code === 'PEDIDO_CLIENTE_INVALIDO',
+  );
+  // Update/edição indevida também bloqueia com vínculo inativo.
+  await assert.rejects(
+    service.update(ctx, created.id, { ...direct, itens: [{ ...direct.itens[0], quantidade: '3' }] }),
+    (error: any) => error.statusCode === 422 && error.code === 'PEDIDO_CLIENTE_INVALIDO',
+  );
+  // Ausência de vínculo → lista vazia (não amplia permissão).
+  const semVinculo = await service.list(ctx, { clienteId: '99999999-9999-4999-8999-999999999999' });
+  assert.equal(semVinculo.meta.total, 0);
+  assert.deepEqual(semVinculo.data, []);
+  // Outro tenant/empresa: fail-closed (sem acesso cruzado ao histórico).
+  await assert.rejects(
+    service.list({ ...ctx, empresaId: 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee' }, { clienteId }),
+  );
+});
+
 test('Pedido summary preserves exact metadata and rejects invalid filters before reading orders', async () => {
   const f = fixture();
   const period = { periodoInicio: '2040-01-01T00:00:00.000Z', periodoFim: '2040-02-01T00:00:00.000Z', incluirResumo: 'true', excluirCancelados: 'true' };

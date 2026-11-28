@@ -94,6 +94,7 @@ test('R09 PostgreSQL real: chave da criação direta serializa retries concorren
     assert.deepEqual((await repo.history(scope, first.id)).map(row => row.status_novo), ['EM_ABERTO']);
   } finally { let error: unknown; try { await cleanup(db, ids); } catch (cause) { error = cause; } finally { await db.end(); } if (error) throw error; }
 });
+
 test('R09 PostgreSQL real: resumo exato usa filtro completo acima de 200 em uma unica leitura sem escrita', { skip: !enabled && 'DATABASE_URL not available' }, async () => {
   const db = createDbClient(loadConfig({ NODE_ENV: 'test', ERP_ENV: 'dev', REQUIRE_DATABASE: 'true', DATABASE_URL: process.env.DATABASE_URL }));
   const repo = new PostgresPedidoRepository(db);
